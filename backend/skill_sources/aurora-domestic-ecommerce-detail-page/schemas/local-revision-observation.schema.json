@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Original and candidate local revision pixel observations",
+  "type": "object",
+  "required": [
+    "version",
+    "contract_sha256",
+    "intent_sha256",
+    "source_session_sha256",
+    "source_canvas_sha256",
+    "candidate_canvas_sha256",
+    "target_before_slice_sha256",
+    "target_candidate_slice_sha256",
+    "pair_id",
+    "module_ids",
+    "selected_module_id",
+    "change_only",
+    "preserve",
+    "must_not_regress",
+    "sibling"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "native-local-revision-pixel-v1"
+    },
+    "contract_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_session_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_canvas_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_canvas_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "target_before_slice_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "target_candidate_slice_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "pair_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "module_ids": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "selected_module_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "change_only": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "original_requirement",
+          "pass",
+          "before_observation",
+          "after_observation",
+          "visible_evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pass": {
+            "type": "boolean"
+          },
+          "before_observation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          },
+          "after_observation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          },
+          "visible_evidence": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          }
+        }
+      }
+    },
+    "preserve": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "original_requirement",
+          "pass",
+          "before_observation",
+          "after_observation",
+          "visible_evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pass": {
+            "type": "boolean"
+          },
+          "before_observation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          },
+          "after_observation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          },
+          "visible_evidence": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          }
+        }
+      }
+    },
+    "must_not_regress": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "original_requirement",
+          "pass",
+          "before_observation",
+          "after_observation",
+          "visible_evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pass": {
+            "type": "boolean"
+          },
+          "before_observation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          },
+          "after_observation": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          },
+          "visible_evidence": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8000
+          }
+        }
+      }
+    },
+    "sibling": {
+      "type": "object",
+      "required": [
+        "pass",
+        "before_observation",
+        "after_observation",
+        "visible_evidence",
+        "module_id",
+        "before_slice_sha256",
+        "candidate_slice_sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pass": {
+          "type": "boolean"
+        },
+        "before_observation": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8000
+        },
+        "after_observation": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8000
+        },
+        "visible_evidence": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8000
+        },
+        "module_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before_slice_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidate_slice_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

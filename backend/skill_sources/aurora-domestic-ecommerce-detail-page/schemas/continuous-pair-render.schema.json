@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "continuous-pair-render.schema.json",
+  "title": "Continuous Pair Rendering Contract v4.3",
+  "type": "object",
+  "required": ["enabled", "grouping_mode", "pair_size", "pair_merge_type", "pair_count", "pair_canvas_width_px", "pair_canvas_height_px", "pair_canvas_aspect_ratio", "decomposition_window_aspect_ratio", "pair_slice_height_px", "pair_ids", "pair_to_pair_transition_tokens"],
+  "properties": {
+    "enabled": {"const": true},
+    "grouping_mode": {"const": "TWO_SCREEN_PAIRS"},
+    "pair_size": {"const": 2},
+    "pair_merge_type": {"const": "PAIR_PLAN_MERGE"},
+    "pair_count": {"type": "integer", "minimum": 4, "maximum": 6},
+    "pair_canvas_width_px": {"type": "integer", "minimum": 1},
+    "pair_canvas_height_px": {"type": "integer", "minimum": 2},
+    "pair_canvas_aspect_ratio": {"const": "3:8"},
+    "decomposition_window_aspect_ratio": {"const": "3:4", "description": "仅用于把已生成的3:8组画布固定拆解为上下两张单屏，不是规划或审批项。"},
+    "pair_slice_height_px": {"type": "integer", "minimum": 1},
+    "pair_to_pair_transition_tokens": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "pair_ids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pair_id", "module_ids", "pair_merge_type", "internal_seam_zone", "internal_seam_method_id", "internal_seam_carrier", "internal_seam_source_region", "internal_seam_target_region", "internal_seam_geometry"],
+        "properties": {
+          "pair_id": {"type": "string", "pattern": "^P[0-9]{2,}$"},
+          "module_ids": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^M[0-9]{2,}$"}},
+          "pair_merge_type": {"const": "PAIR_PLAN_MERGE"},
+          "internal_seam_method_id": {"enum": ["EDGE_BLEED", "PRODUCT_OVERFLOW", "BACKGROUND_STRINGING", "PERSPECTIVE_TURN", "DECORATIVE_HANDOFF", "GRAPHIC_OVERLAY", "SUBJECT_STATE_HANDOFF", "CHAPTER_BAND"]},
+          "internal_seam_carrier": {"type": "string", "minLength": 2},
+          "internal_seam_source_region": {"type": "string", "minLength": 4},
+          "internal_seam_target_region": {"type": "string", "minLength": 4},
+          "internal_seam_geometry": {"type": "string", "minLength": 4},
+          "pair_transition_token": {"type": "string", "minLength": 1},
+          "transition_token": {"type": "string", "minLength": 1},
+          "internal_seam_zone": {
+            "type": "object",
+            "required": ["start_y", "end_y"],
+            "properties": {
+              "start_y": {"type": "integer", "minimum": 0},
+              "end_y": {"type": "integer", "minimum": 1}
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+

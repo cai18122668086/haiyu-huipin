@@ -1,0 +1,7 @@
+interface:
+  display_name: "星河电商详情"
+  short_description: "电商详情图直出与强制视觉规划 Agent/API 工作流"
+  default_prompt: "Use $xinghe-ecommerce-detail to turn my product images into a consistent ecommerce detail-page set with validated planning before generation."
+
+policy:
+  allow_implicit_invocation: true

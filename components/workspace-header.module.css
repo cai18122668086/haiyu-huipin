@@ -1,0 +1,3 @@
+.taskIdentity { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; color: var(--ink-500, #777281); font-size: 11px; line-height: 1.5; }
+.taskIdentity > span { min-width: 0; overflow-wrap: anywhere; }
+.taskIdentity a { color: var(--studio-orange, #675a88); white-space: nowrap; }

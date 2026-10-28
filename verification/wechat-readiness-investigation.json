@@ -1,0 +1,11 @@
+{
+  "current_merchant_signature_verified": true,
+  "signed_nonexistent_order_result": "ORDER_NOT_EXIST",
+  "production_api_v3_key_bytes": 41,
+  "required_api_v3_key_bytes": 32,
+  "existing_32_byte_candidate_belongs_to_other_merchant": true,
+  "merchant_credentials_changed": false,
+  "wechat_enabled": false,
+  "requires": "Current merchant valid API v3 key supplied through a restricted file, then end-to-end verification",
+  "official_reference": "https://pay.wechatpay.cn/doc/v3/merchant/4012072195"
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compiled-output-v0.1.1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "compiler_version",
+    "request_id",
+    "status",
+    "source_precedence",
+    "planner",
+    "pages",
+    "set_gates",
+    "applied_evidence_rule_count",
+    "rule_package",
+    "profile01_semantics_read",
+    "api_calls",
+    "generation_performed",
+    "holdout_validated"
+  ],
+  "properties": {
+    "schema_version": {"const": "domestic-ecommerce-compiled-output-0.1.1"},
+    "compiler_version": {"const": "domestic-ecommerce-prompt-compiler-0.1.1"},
+    "request_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["READY_FOR_CONTROLLED_PROMPT_USE", "BLOCKED"]},
+    "source_precedence": {
+      "const": [
+        "USER_FACT",
+        "EVIDENCE_DERIVED",
+        "ENGINEERED_DEFAULT",
+        "MODEL_FREEDOM"
+      ]
+    },
+    "planner": {
+      "type": "object",
+      "required": [
+        "input_type",
+        "planned_roles",
+        "business_to_research_mapping_path"
+      ]
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "surface",
+          "page_role",
+          "communication_goal",
+          "research_context_candidates",
+          "activated_evidence_rules",
+          "evidence_effects",
+          "visual_plan",
+          "field_sources",
+          "factual_content",
+          "generation_prompt",
+          "audit_contract",
+          "gates"
+        ],
+        "properties": {
+          "generation_prompt": {
+            "type": "string",
+            "minLength": 100,
+            "maxLength": 1800
+          },
+          "audit_contract": {"type": "object"},
+          "activated_evidence_rules": {"type": "array"},
+          "visual_plan": {"type": "object"},
+          "field_sources": {"type": "object"}
+        }
+      }
+    },
+    "set_gates": {"type": "object"},
+    "applied_evidence_rule_count": {"type": "integer", "minimum": 0},
+    "rule_package": {
+      "type": "object",
+      "required": [
+        "research_rules_path",
+        "research_rules_sha256",
+        "research_rule_count",
+        "role_map_path",
+        "role_map_sha256"
+      ]
+    },
+    "profile01_semantics_read": {"const": false},
+    "api_calls": {"const": 0},
+    "generation_performed": {"const": false},
+    "holdout_validated": {"const": false}
+  }
+}

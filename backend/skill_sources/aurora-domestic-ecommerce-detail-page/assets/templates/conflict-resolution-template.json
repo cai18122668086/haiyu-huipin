@@ -1,0 +1,12 @@
+{
+  "confirmation_text": "原样保存用户对全部冲突项的一次性确认",
+  "resolutions": [
+    {
+      "conflict_id": "C01",
+      "retained_fact_ids": ["F01"],
+      "rejected_fact_ids": ["F02"]
+    }
+  ]
+}
+
+

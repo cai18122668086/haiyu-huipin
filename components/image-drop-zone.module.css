@@ -1,0 +1,15 @@
+.zone { position: relative; min-width: 0; }
+.zone[data-dragging="true"] { outline: 2px solid var(--studio-orange, #675a88); outline-offset: -2px; }
+.hint, .error { grid-column: 1 / -1; margin: 0; font-size: 11px; line-height: 1.6; }
+.hint { width:100%;color:var(--haiyu-text-muted,var(--ink-500,#777281));text-align:center;overflow-wrap:anywhere; }
+.error { color: #a53b24; overflow-wrap: anywhere; }
+.overlay {
+  position: absolute; z-index: 5; inset: 2px; display: grid; place-content: center;
+  gap: 8px; border-radius: inherit; background: rgb(255 246 240 / 96%);
+  color: #a73e27; text-align: center; font-size: 14px; font-weight: 700; pointer-events: none;
+}
+.overlay svg { margin: auto; }
+.hiddenInput { display: none; }
+.assetTile { display: flex; flex-direction: column; min-height: 280px; border-radius: 12px; }
+.assetTile > button { width: 100%; height: 100%; flex: 1; }
+.assetTile .error { padding: 8px; }

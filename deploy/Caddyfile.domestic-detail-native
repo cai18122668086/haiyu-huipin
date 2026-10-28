@@ -1,0 +1,78 @@
+{
+	admin off
+	email {$POLARIS_ACME_EMAIL}
+}
+
+www.tengliapi.xyz {
+	encode zstd gzip
+
+	request_body {
+		max_size 25MB
+	}
+
+	log {
+		output stdout
+		format json
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	}
+
+	# SPA navigation keeps the entry document CSP, including the home page.
+	# Every entry point must allow the same restricted marketplace image hosts.
+	@standard_image_policy not path /style-replica
+	header @standard_image_policy {
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob: https://alicdn.com https://*.alicdn.com https://taobaocdn.com https://*.taobaocdn.com https://tbcdn.cn https://*.tbcdn.cn https://360buyimg.com https://*.360buyimg.com; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:8765/v1/enrollment http://127.0.0.1:8765/v1/enrollment; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:"
+		defer
+	}
+
+	@api {
+		path /api/* /health/*
+		not path /api/v1/workspaces/*/assets/*/content
+	}
+	header @api Cache-Control "no-store"
+
+	@immutable path /_polaris-static/* /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	# Signed private asset responses carry their own short-lived cache policy;
+	# keep the API no-store rule from defeating ETag reuse for image reloads.
+	@private_asset path /api/v1/workspaces/*/assets/*/content
+	handle @private_asset {
+		reverse_proxy api:8000
+	}
+
+	handle @api {
+		@one_click_replica path_regexp one_click_replica ^/api/v1/workspaces/[^/]+/replica/
+		handle @one_click_replica {
+			reverse_proxy replica-api:8000
+		}
+		@native_detail_jobs path /api/v1/runtime /api/v1/workspaces/*/jobs /api/v1/workspaces/*/jobs/*
+		handle @native_detail_jobs {
+			reverse_proxy detail-api:8000
+		}
+		handle {
+			reverse_proxy api:8000
+		}
+	}
+
+	# Direct replica-page loads also suppress the document referrer.
+	handle /style-replica {
+		header {
+			Referrer-Policy "no-referrer"
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob: https://alicdn.com https://*.alicdn.com https://taobaocdn.com https://*.taobaocdn.com https://tbcdn.cn https://*.tbcdn.cn https://360buyimg.com https://*.360buyimg.com; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:8765/v1/enrollment http://127.0.0.1:8765/v1/enrollment; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:"
+			defer
+		}
+		reverse_proxy frontend:3000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

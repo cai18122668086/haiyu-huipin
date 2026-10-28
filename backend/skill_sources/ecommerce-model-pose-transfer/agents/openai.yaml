@@ -1,0 +1,4 @@
+interface:
+  display_name: "电商模特换姿势"
+  short_description: "保留原模特身份与服装，仅迁移参考图姿势的电商图像编辑工作流"
+  default_prompt: "使用 $ecommerce-model-pose-transfer 将原始模特图调整为参考姿势，同时保留人物身份、服装与画面事实。"

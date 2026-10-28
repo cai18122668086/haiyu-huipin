@@ -1,0 +1,553 @@
+name: polaris-production
+
+x-backend-common-environment: &backend-common-environment
+  POLARIS_ENVIRONMENT: production
+  POLARIS_AUTH_MODE: external
+  POLARIS_METRICS_TOKEN: ${POLARIS_METRICS_TOKEN:-}
+  POLARIS_ACCESS_URL_SECRET: ${POLARIS_ACCESS_URL_SECRET:?set the existing server-local signing secret}
+  POLARIS_DATABASE_URL: postgresql+psycopg://polaris:${POLARIS_POSTGRES_PASSWORD:?set PostgreSQL password}@postgres:5432/polaris
+  # Each Celery child owns its own SQLAlchemy engine. Keep the aggregate
+  # connection budget below PostgreSQL's small-instance limit.
+  POLARIS_DATABASE_POOL_SIZE: ${POLARIS_DATABASE_POOL_SIZE:-3}
+  POLARIS_DATABASE_MAX_OVERFLOW: ${POLARIS_DATABASE_MAX_OVERFLOW:-2}
+  POLARIS_DATABASE_POOL_TIMEOUT_SECONDS: ${POLARIS_DATABASE_POOL_TIMEOUT_SECONDS:-5}
+  POLARIS_DATABASE_POOL_RECYCLE_SECONDS: ${POLARIS_DATABASE_POOL_RECYCLE_SECONDS:-1800}
+  POLARIS_AUTO_CREATE_SCHEMA: "false"
+  POLARIS_STORAGE_BACKEND: s3
+  POLARIS_S3_ENDPOINT_URL: http://minio:9000
+  POLARIS_S3_REGION: us-east-1
+  POLARIS_S3_ACCESS_KEY: ${POLARIS_MINIO_ROOT_USER:?set MinIO root user}
+  POLARIS_S3_SECRET_KEY: ${POLARIS_MINIO_ROOT_PASSWORD:?set MinIO root password}
+  POLARIS_S3_BUCKET: ${POLARIS_S3_BUCKET:?set the production asset bucket}
+  POLARIS_S3_AUTO_CREATE_BUCKET: "false"
+  POLARIS_ASSET_ACCESS_URL_MODE: same_origin
+  POLARIS_ECOMMERCE_PROXY_ENABLED: "false"
+  POLARIS_ECOMMERCE_LOGIN_ENABLED: ${POLARIS_ECOMMERCE_LOGIN_ENABLED:-false}
+  POLARIS_ECOMMERCE_LOGIN_TRANSPORT: ${POLARIS_ECOMMERCE_LOGIN_TRANSPORT:-headless_qr}
+  POLARIS_ECOMMERCE_LOGIN_SESSION_TIMEOUT_SECONDS: ${POLARIS_ECOMMERCE_LOGIN_SESSION_TIMEOUT_SECONDS:-600}
+  POLARIS_ECOMMERCE_SESSION_DIR: /app/.data/ecommerce-session/domestic-taobao-tmall
+  POLARIS_ECOMMERCE_1688_SESSION_DIR: /app/.data/ecommerce-session/domestic-1688
+  POLARIS_ECOMMERCE_JD_SESSION_DIR: /app/.data/ecommerce-session/domestic-jd
+  POLARIS_ECOMMERCE_PINDUODUO_SESSION_DIR: /app/.data/ecommerce-session/domestic-pinduoduo
+  # Domestic ecommerce containers must never inherit a host proxy.
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  ALL_PROXY: ""
+  http_proxy: ""
+  https_proxy: ""
+  all_proxy: ""
+  NO_PROXY: "*"
+  no_proxy: "*"
+  POLARIS_AURORA_WORK_ROOT: /app/.data/aurora-main-image
+  POLARIS_AURORA_EXECUTION_MODE: ${POLARIS_AURORA_EXECUTION_MODE:-sequential_v20}
+  POLARIS_AURORA_MAX_TRANSIENT_RETRIES: ${POLARIS_AURORA_MAX_TRANSIENT_RETRIES:-2}
+  POLARIS_AURORA_RETRY_BACKOFF_BASE_SECONDS: ${POLARIS_AURORA_RETRY_BACKOFF_BASE_SECONDS:-2}
+  POLARIS_AURORA_RETRY_BACKOFF_MAX_SECONDS: ${POLARIS_AURORA_RETRY_BACKOFF_MAX_SECONDS:-30}
+  # Troubleshooting only: store a bounded excerpt of undecodable planner bodies.
+  POLARIS_DIAGNOSTIC_CONTENT_SAMPLE: ${POLARIS_DIAGNOSTIC_CONTENT_SAMPLE:-0}
+  POLARIS_SUPERTOKENS_CONNECTION_URI: http://supertokens:3567
+  POLARIS_SUPERTOKENS_API_KEY: ${POLARIS_SUPERTOKENS_API_KEY:?set a server-local SuperTokens Core API key}
+  POLARIS_SUPERTOKENS_API_DOMAIN: https://www.tengliapi.xyz
+  POLARIS_SUPERTOKENS_WEBSITE_DOMAIN: https://www.tengliapi.xyz
+  POLARIS_SUPERTOKENS_API_BASE_PATH: /api/auth
+  POLARIS_SUPERTOKENS_WEBSITE_BASE_PATH: /auth
+  POLARIS_SUPERTOKENS_COOKIE_SECURE: "true"
+  POLARIS_SUPERTOKENS_COOKIE_SAME_SITE: lax
+  POLARIS_AUTH_SMS_ENABLED: ${POLARIS_AUTH_SMS_ENABLED:-false}
+  POLARIS_AUTH_SMS_SECRET_ID: ${POLARIS_AUTH_SMS_SECRET_ID:-}
+  POLARIS_AUTH_SMS_SECRET_KEY: ${POLARIS_AUTH_SMS_SECRET_KEY:-}
+  POLARIS_AUTH_SMS_REGION: ${POLARIS_AUTH_SMS_REGION:-ap-guangzhou}
+  POLARIS_AUTH_SMS_SDK_APP_ID: ${POLARIS_AUTH_SMS_SDK_APP_ID:-}
+  POLARIS_AUTH_SMS_SIGN_NAME: ${POLARIS_AUTH_SMS_SIGN_NAME:-}
+  POLARIS_AUTH_SMS_TEMPLATE_ID: ${POLARIS_AUTH_SMS_TEMPLATE_ID:-}
+  POLARIS_AUTH_SMS_REDIS_URL: ${POLARIS_AUTH_SMS_REDIS_URL:-}
+  POLARIS_AUTH_SMTP_HOST: ${POLARIS_AUTH_SMTP_HOST:-}
+  POLARIS_AUTH_SMTP_PORT: ${POLARIS_AUTH_SMTP_PORT:-587}
+  POLARIS_AUTH_SMTP_USERNAME: ${POLARIS_AUTH_SMTP_USERNAME:-}
+  POLARIS_AUTH_SMTP_PASSWORD: ${POLARIS_AUTH_SMTP_PASSWORD:-}
+  POLARIS_AUTH_SMTP_SECURE: ${POLARIS_AUTH_SMTP_SECURE:-false}
+  POLARIS_AUTH_EMAIL_FROM_NAME: ${POLARIS_AUTH_EMAIL_FROM_NAME:-Polaris Commerce Studio}
+  POLARIS_AUTH_EMAIL_FROM_ADDRESS: ${POLARIS_AUTH_EMAIL_FROM_ADDRESS:-}
+  POLARIS_ANNOUNCEMENT_ADMIN_EMAILS: ${POLARIS_ANNOUNCEMENT_ADMIN_EMAILS:?set the announcement administrator email allowlist}
+  POLARIS_PRODUCT_IMAGE_PROVIDER_ENABLED: ${POLARIS_PRODUCT_IMAGE_PROVIDER_ENABLED:-false}
+  POLARIS_REFERENCE_REMIX_PROVIDER_ENABLED: ${POLARIS_REFERENCE_REMIX_PROVIDER_ENABLED:-false}
+  POLARIS_MODEL_POSE_TRANSFER_PROVIDER_ENABLED: ${POLARIS_MODEL_POSE_TRANSFER_PROVIDER_ENABLED:-false}
+  POLARIS_CREATIVE_IMAGE_PROVIDER_ENABLED: ${POLARIS_CREATIVE_IMAGE_PROVIDER_ENABLED:-false}
+  POLARIS_AMAZON_VISUAL_SUITE_PROVIDER_ENABLED: ${POLARIS_AMAZON_VISUAL_SUITE_PROVIDER_ENABLED:-false}
+  POLARIS_DOMESTIC_MAIN_IMAGE_PROVIDER_ENABLED: ${POLARIS_DOMESTIC_MAIN_IMAGE_PROVIDER_ENABLED:-false}
+  POLARIS_CROSSBORDER_DETAIL_PROVIDER_ENABLED: ${POLARIS_CROSSBORDER_DETAIL_PROVIDER_ENABLED:-false}
+  # Only the current dispatcher publishes jobs. A frozen API must not steal
+  # pending jobs and send newer detail pipelines to its legacy default queue.
+  POLARIS_AUTO_PROCESS_JOBS: "false"
+  POLARIS_TASK_DISPATCHER: celery
+  POLARIS_CELERY_BROKER_URL: redis://:${POLARIS_REDIS_PASSWORD:?set Redis password}@redis:6379/0
+  POLARIS_IMAGE_CAPACITY_REDIS_URL: redis://:${POLARIS_REDIS_PASSWORD:?set Redis password}@redis:6379/0
+  POLARIS_IMAGE_GLOBAL_CONCURRENCY: ${POLARIS_IMAGE_GLOBAL_CONCURRENCY:-3000}
+  POLARIS_REPLICA_ANALYSIS_CONCURRENCY: ${POLARIS_REPLICA_ANALYSIS_CONCURRENCY:-0}
+  POLARIS_PROVIDER_ASYNC_TRANSPORT_ENABLED: "true"
+  POLARIS_WORKER_ASYNC_RUNTIME_ENABLED: "true"
+  POLARIS_OUTBOX_BATCH_SIZE: ${POLARIS_OUTBOX_BATCH_SIZE:-200}
+  POLARIS_CELERY_RESULT_BACKEND: redis://:${POLARIS_REDIS_PASSWORD:?set Redis password}@redis:6379/1
+  POLARIS_MAX_UPLOAD_BYTES: "20971520"
+  POLARIS_MAX_IMAGE_PIXELS: "40000000"
+  POLARIS_RETENTION_ENABLED: "true"
+  POLARIS_RETENTION_DAYS: "30"
+  POLARIS_RETENTION_INTERVAL_SECONDS: "3600"
+  POLARIS_RETENTION_BATCH_SIZE: "100"
+  POLARIS_CORS_ORIGINS: '["https://www.tengliapi.xyz"]'
+
+x-provider-environment: &provider-environment
+  POLARIS_TASK_RUNNER: ${POLARIS_TASK_RUNNER:-mock}
+  POLARIS_PROVIDER_QUOTA_ENABLED: ${POLARIS_PROVIDER_QUOTA_ENABLED:-true}
+  POLARIS_WORKSPACE_CREDIT_ENFORCEMENT_ENABLED: ${POLARIS_WORKSPACE_CREDIT_ENFORCEMENT_ENABLED:-false}
+  POLARIS_TENGLI_API_KEY: ${POLARIS_TENGLI_API_KEY:-}
+  POLARIS_TENGLI_BASE_URL: ${POLARIS_TENGLI_BASE_URL:-https://api.tengliapi.xyz:8443}
+  POLARIS_TENGLI_IMAGE_MODEL: ${POLARIS_TENGLI_IMAGE_MODEL:-gpt-image-2}
+  POLARIS_TENGLI_VISION_MODEL: ${POLARIS_TENGLI_VISION_MODEL:-gpt-5.6-terra}
+  POLARIS_ANALYSIS_API_KEY: ${POLARIS_ANALYSIS_API_KEY:-}
+  POLARIS_ANALYSIS_BASE_URL: ${POLARIS_ANALYSIS_BASE_URL:-https://api.ooapi.cc}
+  POLARIS_ANALYSIS_MODEL: ${POLARIS_ANALYSIS_MODEL:-gpt-5.6-sol}
+  POLARIS_ANALYSIS_TIMEOUT_SECONDS: ${POLARIS_ANALYSIS_TIMEOUT_SECONDS:-600}
+  POLARIS_IMAGE_API_KEY: ${POLARIS_IMAGE_API_KEY:-}
+  POLARIS_IMAGE_BASE_URL: ${POLARIS_IMAGE_BASE_URL:-https://api.artflow.vip}
+  POLARIS_IMAGE_MODEL: ${POLARIS_IMAGE_MODEL:-gpt-image-2.5-flare}
+  POLARIS_TENGLI_SMOKE_BUDGET_USD: ${POLARIS_TENGLI_SMOKE_BUDGET_USD:-200}
+  POLARIS_TENGLI_DAILY_BUDGET_USD: ${POLARIS_TENGLI_DAILY_BUDGET_USD:-0}
+  POLARIS_TENGLI_MONTHLY_BUDGET_USD: ${POLARIS_TENGLI_MONTHLY_BUDGET_USD:-0}
+  POLARIS_TENGLI_DAILY_REQUEST_LIMIT: ${POLARIS_TENGLI_DAILY_REQUEST_LIMIT:-0}
+  POLARIS_TENGLI_PLANNER_RESERVE_MICROS: ${POLARIS_TENGLI_PLANNER_RESERVE_MICROS:-250000}
+  POLARIS_XINGHE_CONCURRENCY: ${POLARIS_XINGHE_CONCURRENCY:-3000}
+  POLARIS_XINGHE_SKILL_ROOT: ${POLARIS_XINGHE_SKILL_ROOT:-/app/skill_sources/xinghe-ecommerce-detail}
+
+x-backend-build: &backend-build
+  context: ..
+  dockerfile: deploy/backend.Dockerfile
+  pull: false
+  args:
+    POLARIS_PYTHON_BASE_IMAGE: ${POLARIS_PYTHON_BASE_IMAGE:?set approved Python name@sha256 digest}
+
+x-crawl-worker-build: &crawl-worker-build
+  context: ..
+  dockerfile: backend/Dockerfile.crawl-worker
+  pull: false
+  args:
+    POLARIS_PYTHON_BASE_IMAGE: ${POLARIS_PYTHON_BASE_IMAGE:?set approved Python name@sha256 digest}
+
+x-service-security: &service-security
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: 20m
+      max-file: "5"
+
+services:
+  postgres:
+    <<: *service-security
+    image: ${POLARIS_POSTGRES_IMAGE:?set approved PostgreSQL name@sha256 digest}
+    pull_policy: never
+    environment:
+      POSTGRES_DB: polaris
+      POSTGRES_USER: polaris
+      POSTGRES_PASSWORD: ${POLARIS_POSTGRES_PASSWORD:?set PostgreSQL password}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polaris -d polaris"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: "0.50"
+    pids_limit: 256
+    stop_grace_period: 60s
+    restart: unless-stopped
+    networks: [backend]
+
+  redis:
+    <<: *service-security
+    image: ${POLARIS_REDIS_IMAGE:?set approved Redis name@sha256 digest}
+    pull_policy: never
+    environment:
+      REDISCLI_AUTH: ${POLARIS_REDIS_PASSWORD:?set Redis password}
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000", "--requirepass", "${POLARIS_REDIS_PASSWORD:?set Redis password}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    mem_limit: 112m
+    cpus: "0.25"
+    pids_limit: 128
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [backend]
+
+  minio:
+    <<: *service-security
+    image: ${POLARIS_MINIO_IMAGE:?set approved MinIO name@sha256 digest}
+    pull_policy: never
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${POLARIS_MINIO_ROOT_USER:?set MinIO root user}
+      MINIO_ROOT_PASSWORD: ${POLARIS_MINIO_ROOT_PASSWORD:?set MinIO root password}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 384m
+    cpus: "0.50"
+    pids_limit: 256
+    stop_grace_period: 60s
+    restart: unless-stopped
+    networks: [backend]
+
+  supertokens:
+    <<: *service-security
+    image: ${POLARIS_SUPERTOKENS_IMAGE:?set SuperTokens Core v12.0.10 linux/amd64 digest}
+    pull_policy: never
+    environment:
+      POSTGRESQL_CONNECTION_URI: postgresql://polaris:${POLARIS_POSTGRES_PASSWORD:?set PostgreSQL password}@postgres:5432/polaris
+      API_KEYS: ${POLARIS_SUPERTOKENS_API_KEY:?set SuperTokens Core API key}
+      DISABLE_TELEMETRY: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3567/hello"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp:uid=1000,gid=1000,mode=0700
+      - /home/supertokens/.cache:exec,uid=1000,gid=1000,mode=0700
+      - /usr/lib/supertokens/logs:uid=1000,gid=1000,mode=0700
+      - /usr/lib/supertokens/temp:uid=1000,gid=1000,mode=0700
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 384m
+    cpus: "0.50"
+    pids_limit: 256
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [backend]
+
+  migrate:
+    <<: *service-security
+    image: ${POLARIS_BACKEND_IMAGE:?set immutable backend release image}
+    pull_policy: never
+    build: *backend-build
+    environment:
+      <<: *backend-common-environment
+      POLARIS_TASK_RUNNER: mock
+    command: ["alembic", "-c", "alembic.ini", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700"]
+    cap_drop: [ALL]
+    mem_limit: 512m
+    cpus: "0.50"
+    pids_limit: 256
+    restart: "no"
+    networks: [backend]
+
+  api:
+    <<: *service-security
+    image: ${POLARIS_CRAWL_WORKER_IMAGE:?set immutable browser/crawl release image}
+    pull_policy: never
+    build: *crawl-worker-build
+    environment:
+      <<: [*backend-common-environment, *provider-environment]
+    volumes:
+      - polaris_aurora_work_data:/app/.data/aurora-main-image
+      - polaris_ecommerce_profiles:/app/.data/ecommerce-session
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=*"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      supertokens:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700"]
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 384m
+    cpus: "0.50"
+    pids_limit: 256
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [edge, backend, mail-egress, provider-egress]
+
+  crawl-worker:
+    <<: *service-security
+    image: ${POLARIS_CRAWL_WORKER_IMAGE:?set immutable browser/crawl release image}
+    pull_policy: never
+    build: *crawl-worker-build
+    environment:
+      <<: [*backend-common-environment, *provider-environment]
+    volumes:
+      - polaris_ecommerce_profiles:/app/.data/ecommerce-session
+    command: ["python", "-m", "celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=INFO", "--queues=crawl", "--concurrency=1", "--hostname=crawl@%h"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.celery_app:celery_app inspect ping --timeout 5 >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700"]
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 768m
+    cpus: "0.75"
+    pids_limit: 512
+    stop_grace_period: 90s
+    restart: unless-stopped
+    networks: [backend, provider-egress]
+
+  crawl-maintenance:
+    <<: *service-security
+    image: ${POLARIS_CRAWL_WORKER_IMAGE:?set immutable browser/crawl release image}
+    pull_policy: never
+    build: *crawl-worker-build
+    environment:
+      <<: [*backend-common-environment, *provider-environment]
+    volumes:
+      - polaris_ecommerce_profiles:/app/.data/ecommerce-session
+    command: ["python", "-m", "app.ecommerce_maintenance", "--interval", "60"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700"]
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 256m
+    cpus: "0.25"
+    pids_limit: 128
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [backend]
+
+  worker:
+    <<: *service-security
+    image: ${POLARIS_BACKEND_IMAGE:?set immutable backend release image}
+    pull_policy: never
+    build: *backend-build
+    environment:
+      <<: [*backend-common-environment, *provider-environment]
+    volumes:
+      - polaris_aurora_work_data:/app/.data/aurora-main-image
+    command: ["python", "-m", "celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=INFO", "--pool=threads", "--concurrency=${POLARIS_WORKER_CONCURRENCY:-3000}", "--prefetch-multiplier=1", "--queues=default"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.celery_app:celery_app inspect ping --timeout 5 >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700"]
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 8192m
+    cpus: "2.00"
+    pids_limit: 4096
+    stop_grace_period: 1800s
+    restart: unless-stopped
+    networks: [backend, provider-egress]
+
+  dispatcher:
+    <<: *service-security
+    image: ${POLARIS_BACKEND_IMAGE:?set immutable backend release image}
+    pull_policy: never
+    build: *backend-build
+    environment:
+      <<: *backend-common-environment
+      POLARIS_TASK_RUNNER: mock
+    volumes:
+      - polaris_aurora_work_data:/app/.data/aurora-main-image
+    command: ["python", "-m", "app.outbox_worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:uid=10001,gid=10001,mode=0700"]
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 192m
+    cpus: "0.25"
+    pids_limit: 128
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [backend]
+
+  frontend:
+    <<: *service-security
+    image: ${POLARIS_FRONTEND_IMAGE:?set immutable frontend release image}
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+      pull: false
+      args:
+        POLARIS_NODE_BASE_IMAGE: ${POLARIS_NODE_BASE_IMAGE:?set approved Node name@sha256 digest}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    user: "1000:1000"
+    read_only: true
+    tmpfs: ["/tmp:uid=1000,gid=1000,mode=0700"]
+    cap_drop: [ALL]
+    init: true
+    mem_limit: 384m
+    cpus: "0.25"
+    pids_limit: 256
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [edge]
+
+  caddy:
+    <<: *service-security
+    image: ${POLARIS_CADDY_IMAGE:?set approved Caddy name@sha256 digest}
+    pull_policy: never
+    environment:
+      POLARIS_ACME_EMAIL: ${POLARIS_ACME_EMAIL:?set the ACME contact email}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile.production:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    read_only: true
+    tmpfs: [/tmp:mode=0700]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    init: true
+    mem_limit: 160m
+    cpus: "0.25"
+    pids_limit: 128
+    stop_grace_period: 30s
+    restart: unless-stopped
+    networks: [edge, ingress]
+
+networks:
+  edge:
+    internal: true
+  backend:
+    internal: true
+  ingress:
+    internal: false
+  mail-egress:
+    internal: false
+  provider-egress:
+    internal: false
+
+volumes:
+  postgres_data:
+    name: polaris-internal-staging_postgres_data
+    external: true
+  redis_data:
+    name: polaris-internal-staging_redis_data
+    external: true
+  minio_data:
+    name: polaris-internal-staging_minio_data
+    external: true
+  caddy_data:
+  caddy_config:
+  polaris_aurora_work_data:
+  polaris_ecommerce_profiles:
+    name: polaris-production_ecommerce_profiles
+    external: true

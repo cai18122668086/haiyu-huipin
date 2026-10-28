@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "style-layout-separation-v0.1.5.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "status",
+    "style_lock",
+    "pages",
+    "set_gates",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "style-layout-separation-0.1.5"},
+    "request_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["READY", "BLOCKED"]},
+    "style_lock": {
+      "type": "object",
+      "required": [
+        "controls",
+        "must_not_control",
+        "campaign_style_lock_id",
+        "source_type"
+      ]
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "page_index",
+          "layout_archetype",
+          "product_anchor",
+          "product_occupancy",
+          "composition_axis",
+          "title_region_pct",
+          "reading_path",
+          "card_topology",
+          "representation_mode",
+          "difference_from_previous_page"
+        ]
+      }
+    },
+    "set_gates": {"type": "object", "additionalProperties": {"const": true}},
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  }
+}

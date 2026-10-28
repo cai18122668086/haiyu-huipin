@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "path",
+    "native_output_path",
+    "output_sha256",
+    "native_sha256",
+    "generator",
+    "resized",
+    "native_dimensions",
+    "verification"
+  ],
+  "properties": {
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "native_output_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "native_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "generator": {
+      "const": "artflow"
+    },
+    "resized": {
+      "const": false
+    },
+    "native_dimensions": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "verification": {
+      "const": "local_file_comparison_not_provider_attestation"
+    }
+  }
+}

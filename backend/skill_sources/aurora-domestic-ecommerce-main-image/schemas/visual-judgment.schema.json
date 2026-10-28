@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual-judgment.schema.json",
+  "type": "object",
+  "required": ["page_index", "image_sha256", "reviewer", "decision_summary", "performance_observation", "plan_fidelity_observation", "selling_point_proof_observation", "source_background_observation", "all_observed_deficiencies", "audit_completeness_confirmation", "checks"],
+  "properties": {
+    "page_index": {"type": "integer", "minimum": 0, "maximum": 5},
+    "image_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "reviewer": {
+      "type": "object",
+      "required": ["mode", "pixel_inspection_performed", "image_path"],
+      "properties": {
+        "mode": {"const": "AGENT_DIRECT_PIXEL_REVIEW"},
+        "pixel_inspection_performed": {"const": true},
+        "image_path": {"type": "string", "minLength": 1},
+        "comparison_reference_ids": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "decision_summary": {"type": "string", "minLength": 20},
+    "performance_observation": {
+      "type": "object",
+      "required": [
+        "estimated_product_occupancy_percent",
+        "headline_visual_rank",
+        "physical_evidence_seen",
+        "depth_layers_seen",
+        "commercial_closure_seen",
+        "background_competition",
+        "thumbnail_scan_order"
+      ],
+      "properties": {
+        "estimated_product_occupancy_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "headline_visual_rank": {"enum": ["FIRST", "JOINT_FIRST", "SECOND", "WEAK"]},
+        "physical_evidence_seen": {"type": "array", "items": {"type": "string"}},
+        "depth_layers_seen": {"type": "integer", "minimum": 0, "maximum": 5},
+        "commercial_closure_seen": {"type": "boolean"},
+        "background_competition": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "thumbnail_scan_order": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "plan_fidelity_observation": {
+      "type": "object",
+      "required": ["observed_subject_and_view", "observed_scene_geometry", "observed_composition", "observed_reading_path", "missing_required_elements", "unexpected_plan_changes"],
+      "properties": {
+        "observed_subject_and_view": {"type": "string", "minLength": 8},
+        "observed_scene_geometry": {"type": "string", "minLength": 8},
+        "observed_composition": {"type": "string", "minLength": 8},
+        "observed_reading_path": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"type": "string"}},
+        "missing_required_elements": {"type": "array", "items": {"type": "string"}},
+        "unexpected_plan_changes": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "selling_point_proof_observation": {
+      "type": "object",
+      "required": ["source_text", "observability_class", "visible_without_copy", "pixel_evidence", "text_only_dependency", "evidence_is_primary_visual", "estimated_evidence_occupancy_percent", "claim_takeaway_without_copy", "expression_mode"],
+      "properties": {
+        "source_text": {"type": "string", "minLength": 1},
+        "observability_class": {"enum": ["DIRECTLY_VISIBLE", "ACTION_DEMONSTRABLE", "TEXT_ONLY_VERIFIED", "NOT_RENDERABLE"]},
+        "visible_without_copy": {"type": "boolean"},
+        "pixel_evidence": {"type": "array", "items": {"type": "string"}},
+        "text_only_dependency": {"type": "boolean"},
+        "evidence_is_primary_visual": {"type": "boolean"},
+        "estimated_evidence_occupancy_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "claim_takeaway_without_copy": {"type": "string", "minLength": 8},
+        "expression_mode": {"enum": ["DIRECT", "INDIRECT", "COMPARATIVE", "SEQUENCE", "CONTEXTUAL", "TEXT_ONLY"]}
+      },
+      "additionalProperties": false
+    },
+    "source_background_observation": {
+      "type": "object",
+      "required": ["leaked_source_elements", "rebuilt_scene_evidence"],
+      "properties": {
+        "leaked_source_elements": {"type": "array", "items": {"type": "string"}},
+        "rebuilt_scene_evidence": {"type": "string", "minLength": 8}
+      },
+      "additionalProperties": false
+    },
+    "all_observed_deficiencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check", "visible_problem", "root_cause", "required_change"],
+        "properties": {
+          "check": {"type": "string"},
+          "visible_problem": {"type": "string", "minLength": 8},
+          "root_cause": {"type": "string", "minLength": 8},
+          "required_change": {"type": "string", "minLength": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "audit_completeness_confirmation": {"const": true},
+    "checks": {
+      "type": "object",
+      "required": [
+        "product_identity_match",
+        "factual_copy_match",
+        "typography_style_match",
+        "typography_legibility",
+        "page_role_expression",
+        "evidence_relation_visible",
+        "campaign_style_match",
+        "headline_treatment_match",
+        "palette_role_match",
+        "graphic_language_match",
+        "photography_finish_match",
+        "information_surface_match",
+        "layout_not_cloned",
+        "set_diversity_match",
+        "product_separation",
+        "numeric_hierarchy_if_applicable",
+        "design_intensity_controlled",
+        "visual_performance_match",
+        "baseline_performance_match",
+        "approved_plan_fidelity_match",
+        "campaign_constitution_match",
+        "source_background_noise_absent",
+        "selling_point_visible_without_copy",
+        "selling_point_visual_dominance",
+        "claim_to_evidence_relation_clear",
+        "text_not_substituting_for_visual_proof",
+        "thumbnail_success",
+        "no_unsupported_claim",
+        "no_hard_error"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "product_identity_match": {"$ref": "#/$defs/check"},
+        "factual_copy_match": {"$ref": "#/$defs/check"},
+        "typography_style_match": {"$ref": "#/$defs/check"},
+        "typography_legibility": {"$ref": "#/$defs/check"},
+        "page_role_expression": {"$ref": "#/$defs/check"},
+        "evidence_relation_visible": {"$ref": "#/$defs/check"},
+        "campaign_style_match": {"$ref": "#/$defs/check"},
+        "headline_treatment_match": {"$ref": "#/$defs/check"},
+        "palette_role_match": {"$ref": "#/$defs/check"},
+        "graphic_language_match": {"$ref": "#/$defs/check"},
+        "photography_finish_match": {"$ref": "#/$defs/check"},
+        "information_surface_match": {"$ref": "#/$defs/check"},
+        "layout_not_cloned": {"$ref": "#/$defs/check"},
+        "set_diversity_match": {"$ref": "#/$defs/check"},
+        "product_separation": {"$ref": "#/$defs/check"},
+        "numeric_hierarchy_if_applicable": {"$ref": "#/$defs/check"},
+        "design_intensity_controlled": {"$ref": "#/$defs/check"},
+        "visual_performance_match": {"$ref": "#/$defs/check"},
+        "baseline_performance_match": {"$ref": "#/$defs/check"},
+        "approved_plan_fidelity_match": {"$ref": "#/$defs/check"},
+        "campaign_constitution_match": {"$ref": "#/$defs/check"},
+        "source_background_noise_absent": {"$ref": "#/$defs/check"},
+        "selling_point_visible_without_copy": {"$ref": "#/$defs/check"},
+        "selling_point_visual_dominance": {"$ref": "#/$defs/check"},
+        "claim_to_evidence_relation_clear": {"$ref": "#/$defs/check"},
+        "text_not_substituting_for_visual_proof": {"$ref": "#/$defs/check"},
+        "thumbnail_success": {"$ref": "#/$defs/check"},
+        "no_unsupported_claim": {"$ref": "#/$defs/check"},
+        "no_hard_error": {"$ref": "#/$defs/check"}
+      }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["passed", "score", "observed_evidence"],
+      "properties": {
+        "passed": {"type": "boolean"},
+        "score": {"type": "number", "minimum": 0, "maximum": 100},
+        "observed_evidence": {"type": "string", "minLength": 12}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

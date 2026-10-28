@@ -1,0 +1,21 @@
+.taskNotice:global(.task-trigger) > i { color: #ddd5d0; background: rgb(255 255 255 / 12%); }
+
+@media (min-width: 1200px) and (max-width: 1599px) {
+  .header :global(.user-menu) > :global(.desktop-only) { display: none; }
+}
+
+.accountMenu { position: relative; }
+.accountMenuPanel {
+  position: absolute; top: calc(100% + 12px); right: 0; z-index: 100;
+  width: 228px; padding: 10px; display: grid; gap: 3px;
+  border: 1px solid #e7e1f2; border-radius: 16px; background: #fff;
+  box-shadow: 0 14px 40px #443a6424; color: #5e588e;
+}
+.accountMenuPanel > strong { padding: 10px; overflow-wrap: anywhere; font-size: 12px; }
+.accountMenuPanel > a, .accountMenuPanel > button {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px; border: 0; border-radius: 8px; background: transparent;
+  color: inherit; text-decoration: none; text-align: left; font-size: 13px; cursor: pointer;
+}
+.accountMenuPanel > a:hover, .accountMenuPanel > button:hover { background: #f3effc; }
+.accountMenuPanel small { font-size: 11px; color: #746a8b; }

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Product Identity Contract",
+  "type": "object",
+  "required": ["canonical_name", "category", "reference_image_ids", "invariant_features", "allowed_states", "uncertain_features", "forbidden_mutations", "brand_logo_source"],
+  "properties": {
+    "canonical_name": {"type": "string"}, "category": {"type": "string"}, "variant": {"type": "string"},
+    "reference_image_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "invariant_features": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "allowed_states": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "uncertain_features": {"type": "array", "items": {"type": "string"}},
+    "forbidden_mutations": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "forbidden_background_elements": {"type": "array", "items": {"type": "string"}},
+    "brand_logo_source": {
+      "type": "object",
+      "required": ["image_id", "authorization_basis", "readability", "usage"],
+      "properties": {
+        "mode": {
+          "enum": ["BRANDED", "BRANDLESS"],
+          "default": "BRANDED",
+          "description": "BRANDED: the product carries a readable brand mark. BRANDLESS: user-confirmed white-label product with no usable brand identity; zero independent logos anywhere and the first screen is identified by a non-logo product anchor."
+        },
+        "image_id": {"type": "string"},
+        "authorization_basis": {"enum": ["USER_SUPPLIED_CURRENT_PRODUCT", "NOT_APPLICABLE"]},
+        "readability": {"enum": ["READABLE", "NOT_APPLICABLE"]},
+        "usage": {"enum": ["FIRST_SCREEN_INDEPENDENT_LOGO", "FORBIDDEN_ALL_SCREENS"]},
+        "brandless_evidence": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Required in BRANDLESS mode: the user-confirmed basis for the product carrying no brand mark, kept as an auditable record."
+        }
+      },
+      "allOf": [
+        {
+          "if": {"not": {"required": ["mode"], "properties": {"mode": {"const": "BRANDLESS"}}}},
+          "then": {
+            "properties": {
+              "authorization_basis": {"const": "USER_SUPPLIED_CURRENT_PRODUCT"},
+              "readability": {"const": "READABLE"},
+              "usage": {"const": "FIRST_SCREEN_INDEPENDENT_LOGO"},
+              "image_id": {"minLength": 1}
+            }
+          },
+          "else": {
+            "required": ["brandless_evidence"],
+            "properties": {
+              "image_id": {"const": "NONE"},
+              "authorization_basis": {"const": "NOT_APPLICABLE"},
+              "readability": {"const": "NOT_APPLICABLE"},
+              "usage": {"const": "FORBIDDEN_ALL_SCREENS"},
+              "brandless_evidence": {"minLength": 1}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

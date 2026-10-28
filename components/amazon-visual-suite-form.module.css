@@ -1,0 +1,262 @@
+.amazonWorkspace {
+  --amazon-body-size: 14px;
+  --amazon-help-size: 13px;
+  --amazon-heading-size: 20px;
+  font-size: var(--amazon-body-size);
+}
+
+.amazonStepBar span {
+  font-size: var(--amazon-body-size);
+}
+
+.amazonStepBar i {
+  font-size: 12px;
+}
+
+.amazonWorkspace section h2 {
+  font-size: var(--amazon-heading-size);
+  font-weight: 700;
+}
+
+.amazonWorkspace section p,
+.amazonWorkspace section small {
+  font-size: var(--amazon-help-size);
+}
+
+.amazonWorkspace section strong,
+.amazonWorkspace section span {
+  font-size: var(--amazon-body-size);
+}
+
+.amazonWorkspace section button,
+.amazonWorkspace section input,
+.amazonWorkspace section textarea,
+.amazonWorkspace section select,
+.amazonWorkspace section label > span {
+  font-size: var(--amazon-body-size);
+}
+
+.amazonWorkspace footer p,
+.amazonWorkspace footer small {
+  font-size: var(--amazon-help-size);
+}
+
+.amazonWorkspace footer strong,
+.amazonWorkspace footer button {
+  font-size: var(--amazon-body-size);
+}
+
+.amazonWorkspace section textarea,
+.amazonWorkspace section input {
+  line-height: 1.6;
+}
+
+.amazonForm {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 920px);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.primaryUploadGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.optionalSections {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.simpleField {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.simpleField > span {
+  color: var(--ink-800);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.simpleField input,
+.simpleField textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ink-200);
+  border-radius: 12px;
+  outline: none;
+  background: white;
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.simpleField input {
+  height: 48px;
+  padding: 0 14px;
+}
+
+.simpleField textarea {
+  min-height: 116px;
+  padding: 13px 14px;
+  resize: vertical;
+}
+
+.simpleField input::placeholder,
+.simpleField textarea::placeholder {
+  color: var(--ink-400);
+}
+
+.simpleField input:hover:not(:disabled),
+.simpleField textarea:hover:not(:disabled) {
+  border-color: var(--ink-300);
+}
+
+.simpleField input:focus,
+.simpleField textarea:focus {
+  border-color: var(--studio-orange, var(--violet-500));
+  box-shadow: 0 0 0 3px var(--studio-orange-soft, var(--violet-100));
+}
+
+.simpleField input:disabled,
+.simpleField textarea:disabled {
+  background: var(--ink-50);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.advancedSection {
+  overflow: clip;
+  border: 1px solid var(--ink-150);
+  border-radius: 12px;
+  background: white;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.advancedSection:hover,
+.advancedSection[open] {
+  border-color: var(--ink-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.advancedSection[open] {
+  background: linear-gradient(180deg, var(--ink-50), white 88px);
+}
+
+.advancedSection > summary {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 10px 14px;
+  min-height: 54px;
+  padding: 13px 16px;
+  color: var(--ink-700);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.advancedSection > summary::-webkit-details-marker {
+  display: none;
+}
+
+.advancedSection > summary > span {
+  font-size: var(--amazon-body-size);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.advancedSection > summary > small {
+  overflow: hidden;
+  color: var(--ink-400);
+  font-size: var(--amazon-help-size);
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.advancedSection > summary::after {
+  content: "+";
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--ink-150);
+  border-radius: 8px;
+  background: white;
+  color: var(--studio-orange-dark, var(--violet-700));
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.advancedSection[open] > summary::after {
+  content: "\2212";
+}
+
+.advancedSection > summary:focus-visible {
+  outline: 3px solid var(--studio-orange-soft, var(--violet-100));
+  outline-offset: -3px;
+}
+
+.advancedSectionBody {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border-top: 1px solid var(--ink-100);
+}
+
+@media (max-width: 760px) {
+  .amazonForm {
+    gap: 16px;
+  }
+
+  .advancedSection > summary {
+    grid-template-columns: minmax(0, 1fr) 24px;
+    padding: 13px 14px;
+  }
+
+  .advancedSection > summary > small {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .advancedSection > summary::after {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .advancedSectionBody {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .simpleField textarea {
+    min-height: 108px;
+  }
+
+  .advancedSection {
+    border-radius: 10px;
+  }
+
+  .advancedSection > summary > small {
+    white-space: normal;
+  }
+}

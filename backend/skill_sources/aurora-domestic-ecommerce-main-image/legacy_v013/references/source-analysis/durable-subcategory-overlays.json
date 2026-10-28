@@ -1,0 +1,66 @@
+{
+  "ERGONOMIC_SEATING": {
+    "required_visual_grammar": [
+      "human-scale relation only when verified",
+      "support relationship rather than generic comfort icons",
+      "front/side/back evidence slots",
+      "relative geometry of headrest, back, lumbar, seat, arms and base"
+    ],
+    "forbidden_inference": [
+      "adjustability without visible mechanism",
+      "invented support zones",
+      "unverified recline angle or dimensions"
+    ],
+    "role_evidence": {
+      "DURABLE_IDENTITY_HERO": "CASE_SUPPORTED",
+      "CORE_FUNCTION_EVIDENCE": "CASE_SUPPORTED",
+      "SPACE_USE_SCENE": "ENGINEERED_DEFAULT_WITH_CROSS_CATEGORY_PATTERN",
+      "STRUCTURE_DETAIL_PROOF": "CASE_SUPPORTED",
+      "CONFIGURATION_TRUST_SUMMARY": "ENGINEERED_DEFAULT_WITH_CROSS_CATEGORY_PATTERN"
+    }
+  },
+  "STORAGE_CART_RACK": {
+    "required_visual_grammar": [
+      "layered capacity",
+      "under-desk/gap scale",
+      "wheel and opening direction when visible",
+      "front/side/interior-space evidence"
+    ],
+    "forbidden_inference": [
+      "invented load capacity",
+      "invented brake or drawer",
+      "invented material grade"
+    ],
+    "role_evidence": {
+      "DURABLE_IDENTITY_HERO": "CASE_SUPPORTED",
+      "CORE_FUNCTION_EVIDENCE": "CASE_SUPPORTED",
+      "SPACE_USE_SCENE": "CASE_SUPPORTED",
+      "STRUCTURE_DETAIL_PROOF": "CASE_SUPPORTED",
+      "CONFIGURATION_TRUST_SUMMARY": "CASE_SUPPORTED"
+    }
+  },
+  "TABLE_CABINET_SHELF": {
+    "required_visual_grammar": [
+      "structure proportion",
+      "shelf/door relation",
+      "dimension/material/install evidence only when verified"
+    ],
+    "forbidden_inference": [
+      "invented thickness",
+      "invented hinge system",
+      "invented material species"
+    ]
+  },
+  "SOFA_RECLINER": {
+    "required_visual_grammar": [
+      "sit/recline posture when verified",
+      "room scale",
+      "fabric/fill/function structure evidence"
+    ],
+    "forbidden_inference": [
+      "invented motor",
+      "invented fill density",
+      "invented recline angle"
+    ]
+  }
+}

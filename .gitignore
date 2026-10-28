@@ -1,0 +1,93 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/.vinext/
+/out/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.vinext-dev.stdout.log
+.vinext-dev.stderr.log
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+!backend/.env.example
+!deploy/.env.production.example
+
+# python
+__pycache__/
+*.py[cod]
+/.venv/
+/backend/.data/
+/backend/.pytest_cache/
+*.egg-info/
+
+# vercel
+.vercel
+
+# typescript
+next-env.d.ts
+/dist/
+/.wrangler/
+/outputs/
+/backend/outputs/
+/work/
+/.npm-cache/
+*.tsbuildinfo
+
+# Local runtime and recovery artifacts (keep out of release commits)
+/*.log
+/backend/*.log
+/tmp-*.db
+/backend/tmp-*.db
+/.codex-decompyle/
+/.decompiled/
+/.recovered-routes.py
+/polaris.patch
+
+# Codex local runtime artifacts
+/.venv-codex/
+/backend/backend/.data/
+/0
+/feishu_payload.json
+/make_feishu.py
+/make_update.py
+/update.json
+
+# Local package-manager lockfiles generated during verification
+/pnpm-lock.yaml
+/backend/uv.lock
+
+
+# Isolated membership release and verification packages
+/release-package/
+/deployment-test-wheels/
+/membership-release.tar.gz
+
+/membership-frontend-update.tar.gz
+
+# Hosting bindings and private local operations reports are machine-specific.
+/.openai/
+/local-reports/

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compiled-output-v0.1.2.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "compiler_version",
+    "request_id",
+    "status",
+    "product_identity_contract",
+    "pages",
+    "applied_evidence_rule_count",
+    "profile01_semantics_read",
+    "previous_generated_images_used"
+  ],
+  "properties": {
+    "schema_version": {"const": "domestic-ecommerce-compiled-output-0.1.2"},
+    "compiler_version": {"const": "domestic-ecommerce-prompt-compiler-0.1.2"},
+    "request_id": {"type": "string"},
+    "status": {"enum": ["READY_FOR_CONTROLLED_GENERATION", "BLOCKED"]},
+    "product_identity_contract": {"type": "object"},
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "page_role",
+          "generation_prompt",
+          "view_evidence_binding",
+          "audit_contract"
+        ]
+      }
+    },
+    "applied_evidence_rule_count": {"type": "integer", "minimum": 1},
+    "profile01_semantics_read": {"const": false},
+    "previous_generated_images_used": {"const": false}
+  }
+}

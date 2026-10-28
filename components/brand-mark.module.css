@@ -1,0 +1,26 @@
+.lockup {
+  flex-shrink: 0;
+  width: 166px;
+  line-height: 0;
+}
+
+.artwork {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.compact {
+  width: 40px;
+}
+
+@media (max-width: 760px) {
+  .lockup {
+    width: 142px;
+  }
+
+  .compact {
+    width: 32px;
+  }
+}

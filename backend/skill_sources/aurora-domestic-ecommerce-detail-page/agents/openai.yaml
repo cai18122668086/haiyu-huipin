@@ -1,0 +1,6 @@
+interface:
+  display_name: "极光国内电商详情图 v4.3.0｜多载体详情信息与签名双屏生成"
+  short_description: "成分强制路由、主体形式多样性与像素级反海报化；每组3:8生成后拆屏"
+  default_prompt: "Use $aurora-domestic-ecommerce-detail-page to plan and execute a fact-grounded domestic e-commerce detail page."
+
+

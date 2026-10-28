@@ -1,0 +1,13 @@
+{
+  "merchant_reused": true,
+  "source_platform_unchanged": true,
+  "private_keys_match_app_certificate": true,
+  "channels": [
+    "alipay"
+  ],
+  "wechat_api_v3_key_valid": false,
+  "wechat_key_source": "platform_environment",
+  "application_certificate_expires": "2031-04-26T03:31:54+00:00",
+  "public_base_url": "https://huipin.haiyushuke.com",
+  "secret_values_exported_to_client": false
+}

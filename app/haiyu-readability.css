@@ -1,0 +1,24 @@
+/* Pair foregrounds with their surfaces; never fade a complete disabled control. */
+:root {
+  --haiyu-text-on-light: #302a39;
+  --haiyu-text-muted: #6f667a;
+  --haiyu-text-on-dark: #ffffff;
+  --haiyu-surface: #ffffff;
+  --haiyu-surface-soft: #f5f1fc;
+  --haiyu-control-dark: #242424;
+  --haiyu-control-selected-bg: #d8ff00;
+  --haiyu-control-selected-text: #242424;
+  --haiyu-control-disabled-bg: #ece8f1;
+  --haiyu-control-disabled-text: #6f667a;
+  --ink-500: #6f667a;
+  --ink-400: #756b80;
+}
+.top-nav .usage-pill > span { color:inherit; }
+.app-shell :is(input,textarea)::placeholder { color:#81758e;opacity:1; }
+.app-shell :is(.primary-button,.generate-button,.button.primary):disabled { color:var(--haiyu-control-disabled-text);background:var(--haiyu-control-disabled-bg);border-color:#ded7e7;opacity:1;box-shadow:none; }
+.app-shell--creation .workspace-header > div > span { color:var(--haiyu-text-muted); }
+.creation-disclosure__trigger small { color:var(--haiyu-text-muted); }
+.creation-output-heading > span { color:var(--haiyu-text-muted); }
+.haiyu-start-card__body > p,.haiyu-start-card dd,.haiyu-start-card dt { color:var(--haiyu-text-muted); }
+.help-page :is(.help-hero > p,.guide-launcher__copy small,.support-card p,.support-card small) { color:var(--haiyu-text-muted); }
+.announcement-center :is(.announcement-center__empty p,.announcement-center__summary,.announcement-center__content) { color:var(--haiyu-text-muted); }

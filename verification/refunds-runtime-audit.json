@@ -1,0 +1,11 @@
+{
+  "migration": "20261028_0033",
+  "refund_table_present": true,
+  "admin_actions_present": true,
+  "payment_channels": [
+    "alipay"
+  ],
+  "source_files_checked": 586,
+  "missing_files": [],
+  "mismatched_files": []
+}

@@ -1,0 +1,154 @@
+{
+    "schema_version": "skill-runtime-manifest-v1",
+    "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+    "ignored_runtime_artifacts": [
+        "**/__pycache__/**",
+        "**/*.pyc"
+    ],
+    "skill_id": "xinghe-ecommerce-detail",
+    "content_hash": "c438e479eb465742115549779acd3de7b6c83e45745b9b4184fef7da6f86e932",
+    "capability": "ecommerce_detail_pack",
+    "input_contract": {
+        "schema_id": "polaris.skill.xinghe-ecommerce-detail.input.v1",
+        "required_fields": [
+            "product_groups",
+            "market_profile",
+            "language",
+            "page_count",
+            "product_information"
+        ]
+    },
+    "output_contract": {
+        "schema_id": "polaris.skill.xinghe-ecommerce-detail.output.v1",
+        "required_fields": [
+            "validated_plan",
+            "requested_page_count",
+            "page_asset_refs",
+            "usage"
+        ]
+    },
+    "policy": {
+        "schema_version": "skill-runtime-policy-v1",
+        "auto_review_regeneration_allowed": false,
+        "successful_page_auto_redraw_allowed": false,
+        "safe_expansion_mode": "disabled",
+        "safe_expansion": null,
+        "policy_version": "xinghe-foundation-v1",
+        "active_profile_id": "international_generic_v1",
+        "profiles": [
+            {
+                "profile_id": "international_generic_v1",
+                "market_scope": "international",
+                "enabled": true,
+                "default_language": "en-US",
+                "default_page_count": 8,
+                "min_page_count": 1,
+                "max_page_count": 12
+            },
+            {
+                "profile_id": "domestic_ecommerce_v1",
+                "market_scope": "domestic",
+                "enabled": false,
+                "default_language": "zh-CN",
+                "default_page_count": 8,
+                "min_page_count": 1,
+                "max_page_count": 12
+            }
+        ],
+        "iteration": {
+            "version": "iteration-disabled-v1",
+            "mode": "disabled",
+            "max_iteration_rounds": 0,
+            "trigger": "explicit_user_request_only"
+        }
+    },
+    "provider_type": "mock",
+    "cost_limit_micros": 0,
+    "real_provider_request_limit": 0,
+    "files": [
+        {
+            "path": "SKILL.md",
+            "sha256": "f5a446bcfc11be4bf071b2cb8f35d800948b450e50924b3da9a8f2ed57f6b534"
+        },
+        {
+            "path": "agents/openai.yaml",
+            "sha256": "24e79da515657dac3c3b07820c1158c6dcf3715a84053317861f77dae4783673"
+        },
+        {
+            "path": "references/agent-api-runtime.md",
+            "sha256": "77f8e1b7c8ece12fdf782cd5cdf17d3f3e0f06f583445e0e5bfdf75b6f1d124d"
+        },
+        {
+            "path": "references/beauty-personalcare-structures.md",
+            "sha256": "410bda7e95109c34a7fa9dd8a490ed28d7cdb13756266d932ca03653e420c954"
+        },
+        {
+            "path": "references/category-router.md",
+            "sha256": "6b611250b2af6fe8fe84c46be549d48cd0425fcfe6ee08b628df098cf6c6a904"
+        },
+        {
+            "path": "references/compliance.md",
+            "sha256": "427c9a0230f2bba0742a66a01ee70e66e2279abd07793e57c6d4c7755eba08f6"
+        },
+        {
+            "path": "references/design-strength-system.md",
+            "sha256": "6785b47be81716b51294b9cf8821056cf81f811f092abff31598ddb332b38f30"
+        },
+        {
+            "path": "references/electronics-structures.md",
+            "sha256": "768966a8bcd73b8f0263a96bfa28850c7adc60164a4a4ee955fceff183a27e50"
+        },
+        {
+            "path": "references/fashion-page-structures.md",
+            "sha256": "0c815f656d82c119d10d6610529724defe7abcfc212fb5561a5413797f7e3dd8"
+        },
+        {
+            "path": "references/food-page-structures.md",
+            "sha256": "1ad1a757bbd0f134601d980004726da56338e07736a6962bbb60288ab83e21a7"
+        },
+        {
+            "path": "references/general-page-structures.md",
+            "sha256": "e07fae5f50caea10357b9c87681b9a022014ac9ba66e40bff5ca89ef80f0789e"
+        },
+        {
+            "path": "references/generation-tools.md",
+            "sha256": "6ff0ca571db5ac5f89b51d68b262bcf076f4773e752086bb5a93f34d6a638d1d"
+        },
+        {
+            "path": "references/home-daily-structures.md",
+            "sha256": "7814e2105de5f84b733765ff0d3dbab82c9943d43dbfdca298422f2153ef7f45"
+        },
+        {
+            "path": "references/pet-page-structures.md",
+            "sha256": "a87d45ec9455c1545cba88e9915578b9da8d90d153f546d9806a75b886617fb1"
+        },
+        {
+            "path": "references/prompt-contract.md",
+            "sha256": "ef11e99d3819895c89427b3629267fca74bcab83d479df50c1c5876941465f68"
+        },
+        {
+            "path": "references/quality-control.md",
+            "sha256": "0e5eb01415ea914c49b9e1f4d6713643b7d426c4ebcc65ac7ce2f155a9e7fd2b"
+        },
+        {
+            "path": "xinghe_agent.py",
+            "sha256": "58e4286b00d5f9329ef3e52f815f2f2ca8458a1e9100191d056d9a425e90ed41"
+        },
+        {
+            "path": "xinghe_api.py",
+            "sha256": "765c931f4fc9af9bd7112e6279debf292bd54feb9095a8e85e77bf540cbb7a36"
+        },
+        {
+            "path": "xinghe_groups.py",
+            "sha256": "c54858c3fb19d02937b0dc9f57926831e1956cc01556cd25a9b332fd46823423"
+        },
+        {
+            "path": "xinghe_prompt.py",
+            "sha256": "6beacd2569dfac4c6b5b1678d5c28b679ef94269a89a0967e3385370edede131"
+        },
+        {
+            "path": "xinghe_usage.py",
+            "sha256": "6f19c35682cccd411cc3bf7b54441ab1fc3a628fa9d0a0d96f84799cab86e799"
+        }
+    ]
+}

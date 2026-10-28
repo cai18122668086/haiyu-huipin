@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reference remix input",
+  "type": "object",
+  "required": ["product_name", "product_images", "reference_images"],
+  "properties": {
+    "product_name": {"type": "string", "minLength": 1},
+    "product_images": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "selling_points": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "reference_images": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "campaign_type": {"enum": ["AUTO", "SEARCH_COVER", "CAROUSEL_SET", "DETAIL_PAGE", "SELLING_POINT_CARD", "PROMO_POSTER", "ECOMMERCE_BANNER", "SOCIAL_COMMERCE_CARD", "MARKETING_VISUAL_SET"]},
+    "fidelity_mode": {"enum": ["REMIX_BALANCED", "REMIX_STRICT", "STYLE_INSPIRED"], "default": "REMIX_STRICT"},
+    "target_platform": {"type": "string"},
+    "output_directory": {"type": "string"},
+    "review_plan_first": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "generated-output-audit-v0.1.2.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "product_identity_contract_sha256",
+    "pages",
+    "set_level",
+    "hard_gate_status",
+    "status",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "generated-output-audit-0.1.2"},
+    "request_id": {"type": "string"},
+    "product_identity_contract_sha256": {"type": "string"},
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "page_index",
+          "generated_image",
+          "generated_sha256",
+          "checks",
+          "errors",
+          "status"
+        ],
+        "properties": {
+          "page_index": {"type": "integer", "minimum": 1},
+          "generated_image": {"type": "string"},
+          "generated_sha256": {"type": "string"},
+          "checks": {
+            "type": "object",
+            "required": [
+              "product_identity_match",
+              "color_partition_match",
+              "silhouette_match",
+              "component_match",
+              "relative_geometry_match",
+              "material_match",
+              "view_evidence_match",
+              "text_fact_match",
+              "compliance_match",
+              "page_role_match",
+              "campaign_style_match"
+            ],
+            "additionalProperties": {"enum": ["PASS", "FAIL"]}
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "PRODUCT_COLOR_DRIFT",
+                "PRODUCT_STRUCTURE_DRIFT",
+                "COMPONENT_MISSING",
+                "COMPONENT_INVENTED",
+                "RELATIVE_GEOMETRY_DRIFT",
+                "WRONG_VIEW_EVIDENCE",
+                "PRODUCT_IDENTITY_INCONSISTENT_ACROSS_SET",
+                "TEXT_HALLUCINATION",
+                "OFFER_HALLUCINATION",
+                "PAGE_ROLE_MISSING",
+                "CAMPAIGN_STYLE_INCONSISTENT"
+              ]
+            }
+          },
+          "status": {"enum": ["PASS", "BLOCKED"]}
+        }
+      }
+    },
+    "set_level": {
+      "type": "object",
+      "required": ["same_product_across_set", "errors"],
+      "properties": {
+        "same_product_across_set": {"enum": ["PASS", "FAIL"]},
+        "errors": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "hard_gate_status": {"enum": ["PASS", "BLOCKED"]},
+    "status": {"enum": ["READY_FOR_CONTROLLED_USE", "BLOCKED"]},
+    "profile01_semantics_read": {"const": false}
+  }
+}

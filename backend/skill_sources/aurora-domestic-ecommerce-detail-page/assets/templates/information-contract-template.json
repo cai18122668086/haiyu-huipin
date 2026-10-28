@@ -1,0 +1,30 @@
+{
+  "information_contract_version": "4.1",
+  "hero_screen_contract": {
+    "hero_module_id": "M01",
+    "hero_entity_id": "product-main",
+    "hero_job": "建立商品身份与核心利益",
+    "hero_uniqueness": "ONE_PRIMARY_HERO",
+    "supporting_entities_allowed": true,
+    "co_equal_hero_forbidden": true,
+    "hero_identity_evidence": ["REPLACE_WITH_PRODUCT_IMAGE_ID"]
+  },
+  "detail_information_contract": {
+    "buyer_question_sequence": ["这是什么商品", "它解决什么问题", "如何选择或使用", "为什么值得购买"],
+    "non_repeating_overview_limit": 1,
+    "required_progression_jobs": ["IDENTITY", "PAIN", "BENEFIT", "DEDICATED_PROOF", "SELECTION_OR_USE", "CLOSURE"],
+    "every_pair_requires_information_delta": true
+  },
+  "detail_page_information_sufficiency": {
+    "identity_answered": true,
+    "pain_answered": true,
+    "core_benefit_answered": true,
+    "dedicated_proof_answered": true,
+    "selection_or_use_answered": true,
+    "result_or_experience_answered": true,
+    "closure_answered": true,
+    "primary_claim_progression": []
+  }
+}
+
+

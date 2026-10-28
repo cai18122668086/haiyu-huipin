@@ -1,0 +1,719 @@
+{
+  "schema_version": "durable-prototype-bundle-0.1.9-experimental",
+  "source_authority": "EXPERIMENTAL_PATTERN",
+  "factual_copy_reusable": false,
+  "prototype_count": 10,
+  "items": [
+    {
+      "prototype_id": "HERO_TECH_PRODUCT_COLUMN",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "DURABLE_IDENTITY_HERO",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-4ea0cceb5057-01",
+        "P-71a184a9a607-01",
+        "P-9b9f35bec0a7-01"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "ASYMMETRIC_TECH_PRODUCT_COLUMN",
+      "reading_path": "headline → complete product → one benefit",
+      "product_occupancy_range": [
+        48,
+        64
+      ],
+      "product_anchor": "CENTER_RIGHT",
+      "product_view": "THREE_QUARTER_OR_FRONT",
+      "composition_axis": "VERTICAL",
+      "title_region_pct": [
+        4,
+        5,
+        42,
+        20
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        25,
+        34,
+        12
+      ],
+      "evidence_or_offer_region_pct": [
+        5,
+        75,
+        38,
+        14
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.32,
+        "caption": 0.22
+      },
+      "headline_structure": "complete category + one verified benefit",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "editorial rule",
+        "single benefit marker"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "TECH_STAGE",
+      "background_material": "graphite field or light technical panel",
+      "background_tone": "high contrast",
+      "lighting_structure": "directional rim plus front fill",
+      "product_separation_method": "rim light and clean floor contact shadow",
+      "evidence_topology": "one product column plus one restrained benefit strip",
+      "information_module_topology": "one product column plus one restrained benefit strip",
+      "information_density": "LOW_TO_MEDIUM",
+      "applicable_subcategories": [
+        "ERGONOMIC_SEATING"
+      ],
+      "forbidden_conditions": [
+        "product silhouette cannot be isolated",
+        "product has no complete identity view"
+      ],
+      "difference_from_other_variants": "uses a tall technical axis; no room-scale lifestyle depth"
+    },
+    {
+      "prototype_id": "HERO_ARCHITECTURAL_ROOM_STAGE",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "DURABLE_IDENTITY_HERO",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-7bf2dabe7e69-01",
+        "P-dfa935feca29-01",
+        "P-reference-09-01"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "ARCHITECTURAL_ROOM_PRODUCT_STAGE",
+      "reading_path": "headline → complete product → one benefit",
+      "product_occupancy_range": [
+        36,
+        56
+      ],
+      "product_anchor": "LOWER_CENTER",
+      "product_view": "FRONT_CONTEXT",
+      "composition_axis": "DEPTH",
+      "title_region_pct": [
+        5,
+        5,
+        52,
+        17
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        23,
+        42,
+        12
+      ],
+      "evidence_or_offer_region_pct": [
+        62,
+        72,
+        32,
+        15
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.37,
+        "scene_label": 0.25
+      },
+      "headline_structure": "complete category + one verified benefit",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "editorial rule",
+        "single benefit marker"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "ROOM_STAGE",
+      "background_material": "plaster wall, light wood, soft floor plane",
+      "background_tone": "warm neutral",
+      "lighting_structure": "window-side key",
+      "product_separation_method": "luminance contrast and grounded contact shadow",
+      "evidence_topology": "wide product stage with architectural planes and one benefit marker",
+      "information_module_topology": "wide product stage with architectural planes and one benefit marker",
+      "information_density": "LOW",
+      "applicable_subcategories": [
+        "ERGONOMIC_SEATING",
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF",
+        "SOFA_RECLINER"
+      ],
+      "forbidden_conditions": [
+        "background obscures product outline",
+        "scene is not verified"
+      ],
+      "difference_from_other_variants": "uses room depth and smaller product scale; no tall technical column"
+    },
+    {
+      "prototype_id": "FUNCTION_BODY_PART_SUPPORT_CHAIN",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "CORE_FUNCTION_EVIDENCE",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-4ea0cceb5057-02",
+        "P-71a184a9a607-02",
+        "P-9b9f35bec0a7-02"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "BODY_PART_SUPPORT_CHAIN",
+      "reading_path": "function word → product/part → bounded evidence",
+      "product_occupancy_range": [
+        34,
+        52
+      ],
+      "product_anchor": "LEFT_OR_CENTER",
+      "product_view": "SIDE_WITH_BODY_OR_PART",
+      "composition_axis": "DIAGONAL",
+      "title_region_pct": [
+        5,
+        5,
+        56,
+        16
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        22,
+        42,
+        12
+      ],
+      "evidence_or_offer_region_pct": [
+        58,
+        18,
+        36,
+        68
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.31,
+        "evidence_label": 0.23
+      },
+      "headline_structure": "visible function noun + verified effect",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "macro inset",
+        "leader line",
+        "sequence number"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "TECH_EVIDENCE",
+      "background_material": "neutral or graphite technical surface",
+      "background_tone": "contrast neutral",
+      "lighting_structure": "rim on product plus localized proof light",
+      "product_separation_method": "edge light behind dark mesh or frame",
+      "evidence_topology": "one body/product relationship plus two vertically sequenced evidence modules",
+      "information_module_topology": "one body/product relationship plus two vertically sequenced evidence modules",
+      "information_density": "MEDIUM",
+      "applicable_subcategories": [
+        "ERGONOMIC_SEATING",
+        "SOFA_RECLINER"
+      ],
+      "forbidden_conditions": [
+        "human/body relationship is unverified",
+        "required part is not visible"
+      ],
+      "difference_from_other_variants": "shows functional relationship and evidence chain; not a clean identity hero"
+    },
+    {
+      "prototype_id": "FUNCTION_CAPACITY_MECHANISM_SEQUENCE",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "CORE_FUNCTION_EVIDENCE",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-744d83a5183c-02",
+        "P-reference-01-01",
+        "P-reference-11-02"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "CAPACITY_OR_MECHANISM_SEQUENCE",
+      "reading_path": "function word → product/part → bounded evidence",
+      "product_occupancy_range": [
+        32,
+        48
+      ],
+      "product_anchor": "CENTER_LEFT",
+      "product_view": "FRONT_AND_TOP_OR_SIDE",
+      "composition_axis": "VERTICAL",
+      "title_region_pct": [
+        5,
+        5,
+        56,
+        16
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        23,
+        40,
+        11
+      ],
+      "evidence_or_offer_region_pct": [
+        55,
+        18,
+        39,
+        69
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.33,
+        "sequence_label": 0.24
+      },
+      "headline_structure": "visible function noun + verified effect",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "macro inset",
+        "leader line",
+        "sequence number"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "WARM_TECH_EDITORIAL",
+      "background_material": "cream card surface and light wood context",
+      "background_tone": "warm light",
+      "lighting_structure": "soft side key with localized detail highlights",
+      "product_separation_method": "shadow edge against a slightly darker card field",
+      "evidence_topology": "complete product plus three capacity/mechanism stages",
+      "information_module_topology": "complete product plus three capacity/mechanism stages",
+      "information_density": "MEDIUM",
+      "applicable_subcategories": [
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF"
+      ],
+      "forbidden_conditions": [
+        "layer count or mechanism is not visible",
+        "sequence would imply a nonexistent feature"
+      ],
+      "difference_from_other_variants": "uses a staged capacity/mechanism sequence; no body-support map"
+    },
+    {
+      "prototype_id": "SCENE_HUMAN_SCALE_CONTEXT",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "SPACE_USE_SCENE",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-5369664e9011-01",
+        "P-a93a4f351e5f-02",
+        "P-reference-07-01"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "HUMAN_SCALE_CONTEXT",
+      "reading_path": "light headline → context → scale/use labels",
+      "product_occupancy_range": [
+        24,
+        40
+      ],
+      "product_anchor": "LOWER_CENTER",
+      "product_view": "FRONT_CONTEXT_WITH_BODY",
+      "composition_axis": "DEPTH",
+      "title_region_pct": [
+        5,
+        5,
+        48,
+        14
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        21,
+        42,
+        10
+      ],
+      "evidence_or_offer_region_pct": [
+        6,
+        78,
+        88,
+        12
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.4,
+        "scene_label": 0.28
+      },
+      "headline_structure": "scene/use benefit + two or three scene labels",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "scene label",
+        "soft divider",
+        "scale silhouette"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "LIFESTYLE_CONTEXT",
+      "background_material": "verified room material and neighboring objects",
+      "background_tone": "airy light",
+      "lighting_structure": "broad window light",
+      "product_separation_method": "local background value contrast around silhouette",
+      "evidence_topology": "wide room photograph with one human-scale cue and two scene labels",
+      "information_module_topology": "wide room photograph with one human-scale cue and two scene labels",
+      "information_density": "LOW",
+      "applicable_subcategories": [
+        "ERGONOMIC_SEATING",
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF",
+        "SOFA_RECLINER"
+      ],
+      "forbidden_conditions": [
+        "person or room use is not verified",
+        "scene introduces unverified accessories"
+      ],
+      "difference_from_other_variants": "uses a human-scale wide scene and minimal copy; no evidence-card stack"
+    },
+    {
+      "prototype_id": "SCENE_SPATIAL_FIT_CONTEXT",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "SPACE_USE_SCENE",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-c12f24f4503b-01",
+        "P-reference-14-02",
+        "P-1ac594f00a80-01"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "SPATIAL_FIT_CONTEXT",
+      "reading_path": "light headline → context → scale/use labels",
+      "product_occupancy_range": [
+        20,
+        36
+      ],
+      "product_anchor": "LOWER_RIGHT",
+      "product_view": "SIDE_OR_FRONT_CONTEXT",
+      "composition_axis": "HORIZONTAL",
+      "title_region_pct": [
+        5,
+        5,
+        48,
+        14
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        21,
+        40,
+        10
+      ],
+      "evidence_or_offer_region_pct": [
+        6,
+        76,
+        88,
+        14
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.39,
+        "fit_label": 0.27
+      },
+      "headline_structure": "scene/use benefit + two or three scene labels",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "scene label",
+        "soft divider",
+        "scale silhouette"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "SPATIAL_CONTEXT",
+      "background_material": "desk, wall, gap, or room envelope",
+      "background_tone": "light neutral",
+      "lighting_structure": "side window light",
+      "product_separation_method": "cast shadow and contrasting wall/floor junction",
+      "evidence_topology": "spatial envelope, neighboring object, and two fit labels",
+      "information_module_topology": "spatial envelope, neighboring object, and two fit labels",
+      "information_density": "LOW",
+      "applicable_subcategories": [
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF"
+      ],
+      "forbidden_conditions": [
+        "fit scene or neighboring object is unverified",
+        "scale cannot be established"
+      ],
+      "difference_from_other_variants": "emphasizes spatial fit and horizontal envelope; not human performance"
+    },
+    {
+      "prototype_id": "PROOF_OVERVIEW_WITH_MACRO",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "STRUCTURE_DETAIL_PROOF",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-4ea0cceb5057-03",
+        "P-71a184a9a607-03",
+        "P-9b9f35bec0a7-03"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "OVERVIEW_WITH_MACRO_PROOF",
+      "reading_path": "technical title → overview → numbered proof",
+      "product_occupancy_range": [
+        32,
+        46
+      ],
+      "product_anchor": "CENTER",
+      "product_view": "BACK_AND_MACRO",
+      "composition_axis": "VERTICAL",
+      "title_region_pct": [
+        5,
+        4,
+        58,
+        15
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        20,
+        42,
+        10
+      ],
+      "evidence_or_offer_region_pct": [
+        54,
+        18,
+        41,
+        72
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.3,
+        "annotation": 0.23
+      },
+      "headline_structure": "part/material noun + proof predicate",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "numbered callout",
+        "dimension line",
+        "detail crop"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "TECHNICAL_FIELD",
+      "background_material": "graphite or cool neutral evidence surface",
+      "background_tone": "high contrast",
+      "lighting_structure": "rim plus local macro lighting",
+      "product_separation_method": "outline rim and separate detail-card values",
+      "evidence_topology": "supported rear/side overview plus three bounded macro callouts",
+      "information_module_topology": "supported rear/side overview plus three bounded macro callouts",
+      "information_density": "HIGH",
+      "applicable_subcategories": [
+        "ERGONOMIC_SEATING"
+      ],
+      "forbidden_conditions": [
+        "back/side reference is missing",
+        "callout lacks component name or target region"
+      ],
+      "difference_from_other_variants": "uses component-bound macro proof; not a body-performance sequence"
+    },
+    {
+      "prototype_id": "PROOF_MATERIAL_JOINT_GRID",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "STRUCTURE_DETAIL_PROOF",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-52365fd6fb0f-01",
+        "P-bef4579d3de4-01",
+        "P-c7ed489fb57e-01"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "MATERIAL_JOINT_TECH_GRID",
+      "reading_path": "technical title → overview → numbered proof",
+      "product_occupancy_range": [
+        28,
+        42
+      ],
+      "product_anchor": "CENTER_LEFT",
+      "product_view": "DETAIL_AND_OPEN",
+      "composition_axis": "MODULAR_GRID",
+      "title_region_pct": [
+        5,
+        4,
+        58,
+        15
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        20,
+        42,
+        10
+      ],
+      "evidence_or_offer_region_pct": [
+        48,
+        18,
+        47,
+        72
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.3,
+        "annotation": 0.24
+      },
+      "headline_structure": "part/material noun + proof predicate",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "numbered callout",
+        "dimension line",
+        "detail crop"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "MATERIAL_PROOF_FIELD",
+      "background_material": "warm technical card and material close-up",
+      "background_tone": "warm neutral",
+      "lighting_structure": "diffuse overhead plus edge highlight",
+      "product_separation_method": "contrasting evidence cards and contact shadow",
+      "evidence_topology": "one structure overview plus asymmetric material/joint proof grid",
+      "information_module_topology": "one structure overview plus asymmetric material/joint proof grid",
+      "information_density": "HIGH",
+      "applicable_subcategories": [
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF",
+        "SOFA_RECLINER"
+      ],
+      "forbidden_conditions": [
+        "material/joint view is missing",
+        "grid would repeat generic icons instead of evidence"
+      ],
+      "difference_from_other_variants": "uses an asymmetric material/joint grid; no chair-only rear macro layout"
+    },
+    {
+      "prototype_id": "SUMMARY_EDITORIAL_CONFIGURATION",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "CONFIGURATION_TRUST_SUMMARY",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-5369664e9011-02",
+        "P-8268415b3d57-02",
+        "P-reference-09-02"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "EDITORIAL_CONFIGURATION_SUMMARY",
+      "reading_path": "identity → verified configuration → trust close",
+      "product_occupancy_range": [
+        30,
+        48
+      ],
+      "product_anchor": "CENTER_LEFT",
+      "product_view": "FRONT_MULTI_VIEW",
+      "composition_axis": "ASYMMETRIC_GRID",
+      "title_region_pct": [
+        5,
+        4,
+        54,
+        16
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        21,
+        42,
+        11
+      ],
+      "evidence_or_offer_region_pct": [
+        54,
+        18,
+        41,
+        70
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.33,
+        "module_label": 0.24
+      },
+      "headline_structure": "verified option/spec/trust phrase",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "option swatch",
+        "spec chip",
+        "summary band"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "EDITORIAL_SUMMARY",
+      "background_material": "cream information surface with warm product stage",
+      "background_tone": "warm neutral",
+      "lighting_structure": "soft diagonal key",
+      "product_separation_method": "floor shadow and darker edge behind light product",
+      "evidence_topology": "clear product identity plus two non-repeating option/trust modules",
+      "information_module_topology": "clear product identity plus two non-repeating option/trust modules",
+      "information_density": "MEDIUM",
+      "applicable_subcategories": [
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF"
+      ],
+      "forbidden_conditions": [
+        "verified options/specs are absent",
+        "non-numeric rights are rendered as numeric offer"
+      ],
+      "difference_from_other_variants": "uses editorial options and trust close; no dense modular specification grid"
+    },
+    {
+      "prototype_id": "SUMMARY_MODULAR_SPEC",
+      "prototype_family": "DURABLE_GOODS_FIVE_PAGE",
+      "page_role": "CONFIGURATION_TRUST_SUMMARY",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "evidence_status": "CASE_SUPPORTED",
+      "source_reference_ids": [
+        "P-48c3c7777073-02",
+        "P-b459dd25424d-02",
+        "P-9984e139a43e-03"
+      ],
+      "supported_panel_count": 3,
+      "layout_archetype": "MODULAR_SPEC_SUMMARY",
+      "reading_path": "identity → verified configuration → trust close",
+      "product_occupancy_range": [
+        28,
+        46
+      ],
+      "product_anchor": "CENTER",
+      "product_view": "MULTI_VIEW",
+      "composition_axis": "MODULAR_GRID",
+      "title_region_pct": [
+        5,
+        4,
+        54,
+        16
+      ],
+      "supporting_copy_region_pct": [
+        5,
+        21,
+        42,
+        11
+      ],
+      "evidence_or_offer_region_pct": [
+        48,
+        18,
+        47,
+        70
+      ],
+      "semantic_line_break_plan": "keep the complete category phrase on one semantic line; break once before the verified benefit; never truncate Chinese",
+      "typography_scale_ratios": {
+        "headline": 1.0,
+        "support": 0.32,
+        "spec_label": 0.23
+      },
+      "headline_structure": "verified option/spec/trust phrase",
+      "keyword_emphasis_method": "weight shift plus one campaign accent device",
+      "graphic_device_family": [
+        "option swatch",
+        "spec chip",
+        "summary band"
+      ],
+      "graphic_device_limit": 3,
+      "background_system": "MODULAR_SUMMARY",
+      "background_material": "neutral technical cards with material cues",
+      "background_tone": "balanced neutral",
+      "lighting_structure": "soft overhead and side key",
+      "product_separation_method": "card value separation plus grounded product shadow",
+      "evidence_topology": "one product identity anchor with asymmetric configuration/spec modules",
+      "information_module_topology": "one product identity anchor with asymmetric configuration/spec modules",
+      "information_density": "MEDIUM_TO_HIGH",
+      "applicable_subcategories": [
+        "TABLE_CABINET_SHELF",
+        "STORAGE_CART_RACK"
+      ],
+      "forbidden_conditions": [
+        "verified dimensions/configurations are absent",
+        "identical rounded strips repeat mechanically"
+      ],
+      "difference_from_other_variants": "uses a modular spec topology; less photographic and denser than editorial summary"
+    }
+  ]
+}

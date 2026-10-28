@@ -1,0 +1,96 @@
+{
+  "skill_id": "aurora-ecommerce-reference-remix",
+  "source_archive_sha256": "f1efd7e6c115e08f49b9ed75187ec8433a1a9b433fe70cf29e806771e27af4f2",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "fd601a7c1544ae7d3155cee1220f634a4e712fea9437ebf19c4777b05f0f9e49",
+      "size_bytes": 19818
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "8aca1981d503f3cfa19cfaca9cf21f47761b5655bd9643b86debeb807b3b3f64",
+      "size_bytes": 685
+    },
+    {
+      "path": "references/ai-visual-audit-protocol.md",
+      "sha256": "71125e42a4c2fd29e2fa3aff1d0c9d02d39fdbd94fc6f65fa4369741e0345ab7",
+      "size_bytes": 2791
+    },
+    {
+      "path": "references/automatic-segmentation.md",
+      "sha256": "494ad026a26857a91caf53021126d80412f8b22bc2246f9845c06bc669b74444",
+      "size_bytes": 2723
+    },
+    {
+      "path": "references/format-routing.md",
+      "sha256": "cafab670c2e6262ac587e9bddb341c6c40290f587b7a0a9c2219b93ba1c3b364",
+      "size_bytes": 3024
+    },
+    {
+      "path": "references/reference-deconstruction.md",
+      "sha256": "fb2bdb3682f6560d9ff51bf7e95f7c87439b4c054156336e813fdfc6fb8589fd",
+      "size_bytes": 1742
+    },
+    {
+      "path": "references/rendering-and-copy.md",
+      "sha256": "d3232efc7a2d951f03fb0c3e0201f8c6335eb603b9be3ddfc50a65b1bccd42df",
+      "size_bytes": 1898
+    },
+    {
+      "path": "schemas/input.schema.json",
+      "sha256": "de7940cf3738d236bed64b3b3b66adedfb35060fba6f083748f51e923c51ebbd",
+      "size_bytes": 1029
+    },
+    {
+      "path": "schemas/judgment.schema.json",
+      "sha256": "4ecf04bc0add6ea6d3526f80e455ba2e56fda779e6f5ac3df6f9b4197a5db0ae",
+      "size_bytes": 1106
+    },
+    {
+      "path": "schemas/plan-audit.schema.json",
+      "sha256": "3d26971a09c5176ba08d6b2aa5890c6a547d025e99ecdd21b1d3837eba73b133",
+      "size_bytes": 1207
+    },
+    {
+      "path": "schemas/reference-segmentation.schema.json",
+      "sha256": "e18599af26d95448adb6669cf03d7a446f5654f2bba3396bfcc0916f0ee85e6a",
+      "size_bytes": 2589
+    },
+    {
+      "path": "schemas/remix-plan.schema.json",
+      "sha256": "00378750ddf13f594277d87c305344e0457f63f17d4ea5006852d38da5980bed",
+      "size_bytes": 3897
+    },
+    {
+      "path": "scripts/__pycache__/harness.cpython-313.pyc",
+      "sha256": "7d39fa0099452dc609a5fd1283cad862e3adb7e2c8327dbf04bfc7df1d09ae79",
+      "size_bytes": 45771
+    },
+    {
+      "path": "scripts/artflow_generate.py",
+      "sha256": "85f7c45518b16d45bfe6cd63ac22702f58f11f9089dd617124cb9eb2885a45c0",
+      "size_bytes": 31543
+    },
+    {
+      "path": "scripts/artflow_generate_batch.py",
+      "sha256": "1aa15ac1076ab0c78c0bf7f200f3fdb8aa2a3ab8f627bfac60075b95db74c7fc",
+      "size_bytes": 21372
+    },
+    {
+      "path": "scripts/crop_reference_units.ps1",
+      "sha256": "4a6a268013563a6880c09f751103aa76271c5b1698129dda6591647482aa4724",
+      "size_bytes": 7282
+    },
+    {
+      "path": "scripts/harness.py",
+      "sha256": "4298edcaaedfa3cd827002bbda525c3a47388f543e6d02477bd77320313b72e0",
+      "size_bytes": 32075
+    },
+    {
+      "path": "scripts/test_v6_screen_runtime.py",
+      "sha256": "b73bcab840f5fc014acf8a21478b1216e70f0b1ea01b52f1a55b14ca4a7a6926",
+      "size_bytes": 8267
+    }
+  ]
+}

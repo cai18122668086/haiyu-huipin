@@ -1,0 +1,234 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  backend:
+    name: Backend shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    services:
+      postgres:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_DB: polaris_ci
+          POSTGRES_USER: polaris
+          POSTGRES_PASSWORD: polaris_ci_only
+        ports:
+          - 5432
+        options: >-
+          --health-cmd "pg_isready -U polaris -d polaris_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure CI database connection
+        run: |
+          db_url="postgresql+psycopg://polaris:polaris_ci_only@localhost:${{ job.services.postgres.ports[5432] }}/polaris_ci"
+          echo "POLARIS_DATABASE_URL=$db_url" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e "./backend[dev]"
+      - run: python -m ruff check backend
+      - run: python -m mypy --config-file backend/pyproject.toml backend/app
+      - run: python -m alembic -c alembic.ini upgrade head
+        working-directory: backend
+      - run: python backend/scripts/ci_pytest_shard.py --shard ${{ matrix.shard }} --shards 4
+      - name: Test PostgreSQL ecommerce concurrency
+        if: matrix.shard == 0
+        env:
+          POLARIS_TEST_DATABASE_URL: postgresql+psycopg://polaris:polaris_ci_only@localhost:${{ job.services.postgres.ports[5432] }}/polaris_ci
+        run: python -m pytest backend/tests/test_ecommerce_concurrency_postgres.py
+      - name: Test recorded stage expansion on isolated PostgreSQL schemas
+        if: matrix.shard == 0
+        env:
+          POLARIS_TEST_DATABASE_URL: postgresql+psycopg://polaris:polaris_ci_only@localhost:${{ job.services.postgres.ports[5432] }}/polaris_ci
+        run: python -m pytest backend/tests/test_stage_length_migration_postgres.py
+      - name: Test replica polling and heartbeat under PostgreSQL row locks
+        if: matrix.shard == 0
+        env:
+          POLARIS_TEST_DATABASE_URL: postgresql+psycopg://polaris:polaris_ci_only@localhost:${{ job.services.postgres.ports[5432] }}/polaris_ci
+        run: python -m pytest backend/tests/test_replica_heartbeat_postgres.py -vv
+      - name: Test isolated local-worker lifecycle
+        if: matrix.shard == 0
+        run: python -m unittest discover -s tools/local_worker_runtime -p test_runtime.py -v
+      - name: Test deployment preflight
+        if: matrix.shard == 0
+        run: python -m unittest discover -s deploy/tests -v
+      - name: Validate deployment sources
+        if: matrix.shard == 0
+        run: python deploy/preflight.py --mode source
+      - name: Validate internal deployment Compose configuration
+        if: matrix.shard == 0
+        env:
+          POLARIS_BACKEND_IMAGE: polaris/backend:ci
+          POLARIS_FRONTEND_IMAGE: polaris/frontend:ci
+          POLARIS_PYTHON_BASE_IMAGE: python:ci@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          POLARIS_NODE_BASE_IMAGE: node:ci@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          POLARIS_POSTGRES_IMAGE: postgres:ci@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+          POLARIS_REDIS_IMAGE: redis:ci@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+          POLARIS_MINIO_IMAGE: minio/minio:ci@sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+          POLARIS_CADDY_IMAGE: caddy:ci@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+          POLARIS_POSTGRES_PASSWORD: ci-not-a-real-postgres-password
+          POLARIS_REDIS_PASSWORD: ci-not-a-real-redis-password
+          POLARIS_MINIO_ROOT_USER: ci-not-a-real-minio-user
+          POLARIS_MINIO_ROOT_PASSWORD: ci-not-a-real-minio-password
+          POLARIS_ACCESS_URL_SECRET: ci-not-a-real-access-url-secret
+          POLARIS_S3_BUCKET: polaris-ci-assets
+          POLARIS_DEVELOPMENT_USER_ID: usr_ci_synthetic
+          POLARIS_DEVELOPMENT_WORKSPACE_ID: ws_ci_synthetic
+          POLARIS_DEVELOPMENT_WORKSPACE_NAME: CI Synthetic Workspace
+          POLARIS_TASK_RUNNER: mock
+          POLARIS_PRODUCT_IMAGE_PROVIDER_ENABLED: "false"
+          POLARIS_REFERENCE_REMIX_PROVIDER_ENABLED: "false"
+          POLARIS_CREATIVE_IMAGE_PROVIDER_ENABLED: "false"
+          POLARIS_AMAZON_VISUAL_SUITE_PROVIDER_ENABLED: "false"
+          POLARIS_CROSSBORDER_DETAIL_PROVIDER_ENABLED: "false"
+          POLARIS_TENGLI_API_KEY: ""
+        run: docker compose -f deploy/compose.internal.yml config --quiet
+      - name: Validate production deployment Compose configuration
+        if: matrix.shard == 0
+        env:
+          POLARIS_BACKEND_IMAGE: polaris/backend:ci
+          POLARIS_CRAWL_WORKER_IMAGE: polaris/crawl-worker:ci
+          POLARIS_FRONTEND_IMAGE: polaris/frontend:ci
+          POLARIS_PYTHON_BASE_IMAGE: python:3.13.14-slim@sha256:bf503bb2243c5aad0aa951544dd60d165f992646441d35dea90893703fc26251
+          POLARIS_NODE_BASE_IMAGE: node:22.22.0-bookworm-slim@sha256:7cc56ef285a8568121537d17b05e72128f01b89c54607b51acf084a50ef483f3
+          POLARIS_POSTGRES_IMAGE: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+          POLARIS_REDIS_IMAGE: redis:8.6.4-alpine@sha256:2cc044fc5a07c9b701f8f1255a309ae9ad7856e694ac03513bf3648c01e40763
+          POLARIS_MINIO_IMAGE: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+          POLARIS_CADDY_IMAGE: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+          POLARIS_SUPERTOKENS_IMAGE: supertokens/supertokens-postgresql:12.0.10@sha256:4516ec7c00b8fb2a773012694d8ebf03b54799d59cfc974160590f16d235ce72
+          POLARIS_POSTGRES_PASSWORD: ci-not-a-real-postgres-password
+          POLARIS_REDIS_PASSWORD: ci-not-a-real-redis-password
+          POLARIS_MINIO_ROOT_USER: ci-not-a-real-minio-user
+          POLARIS_MINIO_ROOT_PASSWORD: ci-not-a-real-minio-password
+          POLARIS_ACCESS_URL_SECRET: ci-not-a-real-access-url-secret
+          POLARIS_SUPERTOKENS_API_KEY: ci-not-a-real-supertokens-key
+          POLARIS_AUTH_SMTP_HOST: smtp.ci.invalid
+          POLARIS_AUTH_SMTP_PORT: "587"
+          POLARIS_AUTH_SMTP_USERNAME: ci-not-a-real-smtp-user
+          POLARIS_AUTH_SMTP_PASSWORD: ci-not-a-real-smtp-password
+          POLARIS_ANNOUNCEMENT_ADMIN_EMAILS: '["admin@example.com"]'
+          POLARIS_ACME_EMAIL: admin@example.com
+          POLARIS_S3_BUCKET: polaris-ci-assets
+          POLARIS_TASK_RUNNER: mock
+          POLARIS_TENGLI_API_KEY: ""
+          POLARIS_PRODUCT_IMAGE_PROVIDER_ENABLED: "false"
+          POLARIS_REFERENCE_REMIX_PROVIDER_ENABLED: "false"
+          POLARIS_MODEL_POSE_TRANSFER_PROVIDER_ENABLED: "false"
+          POLARIS_CREATIVE_IMAGE_PROVIDER_ENABLED: "false"
+          POLARIS_AMAZON_VISUAL_SUITE_PROVIDER_ENABLED: "false"
+          POLARIS_DOMESTIC_MAIN_IMAGE_PROVIDER_ENABLED: "false"
+          POLARIS_CROSSBORDER_DETAIL_PROVIDER_ENABLED: "false"
+        run: docker compose -f deploy/compose.production.yml config --quiet
+
+  backend-gate:
+    name: Backend quality
+    runs-on: ubuntu-latest
+    needs: backend
+    if: ${{ always() }}
+    steps:
+      - name: Require every backend shard
+        env:
+          BACKEND_RESULT: ${{ needs.backend.result }}
+        run: test "$BACKEND_RESULT" = success
+
+  contract:
+    name: API contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: python -m pip install -e "./backend"
+      - run: npm ci
+      - run: npm run api:export
+      - run: npm run api:generate
+      - run: git diff --exit-code -- docs/openapi-v1.json lib/api/generated/openapi.d.ts
+
+  containers:
+    name: Container build (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            dockerfile: deploy/backend.Dockerfile
+            image: polaris/backend:ci
+            build_args: |
+              POLARIS_PYTHON_BASE_IMAGE=python:3.13.14-slim@sha256:bf503bb2243c5aad0aa951544dd60d165f992646441d35dea90893703fc26251
+          - name: crawl-worker
+            dockerfile: backend/Dockerfile.crawl-worker
+            image: polaris/crawl-worker:ci
+            build_args: |
+              POLARIS_PYTHON_BASE_IMAGE=python:3.13.14-slim@sha256:bf503bb2243c5aad0aa951544dd60d165f992646441d35dea90893703fc26251
+          - name: frontend
+            dockerfile: deploy/frontend.Dockerfile
+            image: polaris/frontend:ci
+            build_args: |
+              POLARIS_NODE_BASE_IMAGE=node:22.22.0-bookworm-slim@sha256:7cc56ef285a8568121537d17b05e72128f01b89c54607b51acf084a50ef483f3
+    steps:
+      - uses: actions/checkout@v6
+      # Use the runner's Docker, not a fresh BuildKit container. The container
+      # driver ignores images already on this machine and re-downloads them.
+      - name: Build ${{ matrix.name }} image
+        env:
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          IMAGE: ${{ matrix.image }}
+          BUILD_ARGS: ${{ matrix.build_args }}
+          DOCKER_BUILDKIT: "1"
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r line; do
+            line="${line%%$'\r'}"
+            if [ -n "$line" ]; then
+              args+=(--build-arg "$line")
+            fi
+          done <<< "$BUILD_ARGS"
+          if docker image inspect "$IMAGE" >/dev/null 2>&1; then
+            args+=(--cache-from "$IMAGE")
+          fi
+          docker build -f "$DOCKERFILE" -t "$IMAGE" "${args[@]}" .

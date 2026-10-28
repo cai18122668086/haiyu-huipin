@@ -1,0 +1,6 @@
+interface:
+  display_name: "极光电商对标二创"
+  short_description: "AI逐图观察和审图，画面级一比一复刻对标并按列顺序交付"
+  default_prompt: "使用 $aurora-ecommerce-reference-remix，以 REMIX_STRICT 执行。由AI重新查看每张物理裁图，独立拆解主体比例、布局、载体形态、商业作用、镜头光影、字体结构、人物品牌存在性与跨屏作用；生成后重新并排观察原图和成图并用具体证据判定。程序只负责列优先顺序、单页令牌、比例、修图次数和交付准入。禁止跳页、抽样生成、通用卡片替代和未审核总览。"
+policy:
+  allow_implicit_invocation: true

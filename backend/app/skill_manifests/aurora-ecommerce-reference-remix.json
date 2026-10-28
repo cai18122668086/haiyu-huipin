@@ -1,0 +1,111 @@
+{
+  "schema_version": "skill-runtime-manifest-v1",
+  "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+  "ignored_runtime_artifacts": [
+    "**/__pycache__/**",
+    "**/*.pyc"
+  ],
+  "skill_id": "aurora-ecommerce-reference-remix",
+  "content_hash": "024b6c3ee5957efd0ba711c82475ad4123a60bbb6793bc5a67d3f5addea02c8d",
+  "capability": "reference_remix",
+  "input_contract": {
+    "schema_id": "polaris.skill.aurora-ecommerce-reference-remix.input.v1",
+    "required_fields": [
+      "product_asset_refs",
+      "reference_asset_refs",
+      "instruction",
+      "output_count"
+    ]
+  },
+  "output_contract": {
+    "schema_id": "polaris.skill.aurora-ecommerce-reference-remix.output.v1",
+    "required_fields": [
+      "result_asset_refs",
+      "usage"
+    ]
+  },
+  "policy": {
+    "schema_version": "skill-runtime-policy-v1",
+    "auto_review_regeneration_allowed": false,
+    "successful_page_auto_redraw_allowed": false,
+    "safe_expansion_mode": "disabled",
+    "policy_version": "aurora-ecommerce-reference-remix-20260923-v1",
+    "active_profile_id": null,
+    "profiles": [],
+    "iteration": null,
+    "safe_expansion": null
+  },
+  "provider_type": "mock",
+  "cost_limit_micros": 0,
+  "real_provider_request_limit": 0,
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "fd601a7c1544ae7d3155cee1220f634a4e712fea9437ebf19c4777b05f0f9e49"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "8aca1981d503f3cfa19cfaca9cf21f47761b5655bd9643b86debeb807b3b3f64"
+    },
+    {
+      "path": "references/ai-visual-audit-protocol.md",
+      "sha256": "71125e42a4c2fd29e2fa3aff1d0c9d02d39fdbd94fc6f65fa4369741e0345ab7"
+    },
+    {
+      "path": "references/automatic-segmentation.md",
+      "sha256": "494ad026a26857a91caf53021126d80412f8b22bc2246f9845c06bc669b74444"
+    },
+    {
+      "path": "references/format-routing.md",
+      "sha256": "cafab670c2e6262ac587e9bddb341c6c40290f587b7a0a9c2219b93ba1c3b364"
+    },
+    {
+      "path": "references/reference-deconstruction.md",
+      "sha256": "fb2bdb3682f6560d9ff51bf7e95f7c87439b4c054156336e813fdfc6fb8589fd"
+    },
+    {
+      "path": "references/rendering-and-copy.md",
+      "sha256": "d3232efc7a2d951f03fb0c3e0201f8c6335eb603b9be3ddfc50a65b1bccd42df"
+    },
+    {
+      "path": "schemas/input.schema.json",
+      "sha256": "de7940cf3738d236bed64b3b3b66adedfb35060fba6f083748f51e923c51ebbd"
+    },
+    {
+      "path": "schemas/judgment.schema.json",
+      "sha256": "4ecf04bc0add6ea6d3526f80e455ba2e56fda779e6f5ac3df6f9b4197a5db0ae"
+    },
+    {
+      "path": "schemas/plan-audit.schema.json",
+      "sha256": "3d26971a09c5176ba08d6b2aa5890c6a547d025e99ecdd21b1d3837eba73b133"
+    },
+    {
+      "path": "schemas/reference-segmentation.schema.json",
+      "sha256": "e18599af26d95448adb6669cf03d7a446f5654f2bba3396bfcc0916f0ee85e6a"
+    },
+    {
+      "path": "schemas/remix-plan.schema.json",
+      "sha256": "00378750ddf13f594277d87c305344e0457f63f17d4ea5006852d38da5980bed"
+    },
+    {
+      "path": "scripts/artflow_generate.py",
+      "sha256": "85f7c45518b16d45bfe6cd63ac22702f58f11f9089dd617124cb9eb2885a45c0"
+    },
+    {
+      "path": "scripts/artflow_generate_batch.py",
+      "sha256": "1aa15ac1076ab0c78c0bf7f200f3fdb8aa2a3ab8f627bfac60075b95db74c7fc"
+    },
+    {
+      "path": "scripts/crop_reference_units.ps1",
+      "sha256": "4a6a268013563a6880c09f751103aa76271c5b1698129dda6591647482aa4724"
+    },
+    {
+      "path": "scripts/harness.py",
+      "sha256": "3930c03a6332b7590e7f41fe76a643f1c0df40ae0891161b81471511cdba4826"
+    },
+    {
+      "path": "scripts/test_v6_screen_runtime.py",
+      "sha256": "b73bcab840f5fc014acf8a21478b1216e70f0b1ea01b52f1a55b14ca4a7a6926"
+    }
+  ]
+}

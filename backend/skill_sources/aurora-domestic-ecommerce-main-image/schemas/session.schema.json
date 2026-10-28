@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "session.schema.json",
+  "type": "object",
+  "required": ["schema_version", "request_id", "state", "raw_input", "accepted_page_indexes", "generated_versions", "history", "profile01_semantics_read"],
+  "properties": {
+    "schema_version": {"const": "domestic-ecommerce-image-harness-0.1.17"},
+    "request_id": {"type": "string", "minLength": 1},
+    "state": {
+      "enum": [
+        "AWAITING_IDENTITY",
+        "IDENTITY_LOCKED",
+        "AWAITING_AUTHORIZATION",
+        "AUTHORIZED",
+        "AWAITING_GENERATED_ASSET",
+        "AWAITING_VISUAL_AUDIT",
+        "REPAIR_REQUIRED",
+        "AWAITING_USER_INTERVENTION",
+        "AWAITING_USER_FINAL_REVIEW",
+        "AWAITING_SEARCH_BASELINE_CALIBRATION",
+        "AWAITING_AGENT_STYLE_CALIBRATION",
+        "AWAITING_SET_ROLE_AUDIT",
+        "SIX_PAGES_ACCEPTED",
+        "FINALIZED"
+      ]
+    },
+    "profile01_semantics_read": {"const": false},
+    "raw_input": {"type": "object"},
+    "identity_contract": {"type": ["object", "null"]},
+    "plan": {"type": ["object", "null"]},
+    "compiled_hash": {"type": ["string", "null"]},
+    "authorization": {"type": ["object", "null"]},
+    "accepted_page_indexes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 0, "maximum": 5}
+    },
+    "generated_versions": {"type": "array"},
+    "excluded_generated_assets": {"type": "array"},
+    "history": {"type": "array"}
+  },
+  "additionalProperties": true
+}

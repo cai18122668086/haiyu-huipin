@@ -1,0 +1,8 @@
+.page:global(.auth-status-page) {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.diagnostic { flex-basis: 100%; margin-top: 10px; color: #777281; font-size: 12px; }
+.diagnostic summary { cursor: pointer; }
+.diagnostic p { margin: 10px 0; overflow-wrap: anywhere; }
+.diagnostic button { border: 1px solid #ddd9e4; border-radius: 8px; background: #fff; padding: 7px 12px; cursor: pointer; }

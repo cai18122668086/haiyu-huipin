@@ -1,0 +1,13 @@
+{
+  "status": "ACTIVATED",
+  "backend_image": "huipin-concurrency/backend:20261028",
+  "image_global_concurrency": 3000,
+  "worker_task_slots": 3000,
+  "worker_pool": "threads",
+  "analysis_business_limit": 0,
+  "workspace_default_limits_updated": 2,
+  "billing_configuration_preserved": true,
+  "unrelated_containers_preserved": true,
+  "database_migration": "20261028_0033",
+  "paid_load_tests": false
+}

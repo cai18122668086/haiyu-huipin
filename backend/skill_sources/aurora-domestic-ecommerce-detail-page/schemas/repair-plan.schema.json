@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aurora Repair Plan v4.3",
+  "type": "object",
+  "required": ["module_id", "material_failures", "passed_layers", "root_cause", "unified_strategy", "expected_visible_change"],
+  "properties": {
+    "module_id": {"type": "string", "minLength": 1},
+    "material_failures": {"type": "array", "minItems": 1},
+    "passed_layers": {"type": "array"},
+    "root_cause": {"type": "string", "minLength": 8},
+    "unified_strategy": {"type": "string", "minLength": 8},
+    "expected_visible_change": {"type": "string", "minLength": 8}
+  }
+}

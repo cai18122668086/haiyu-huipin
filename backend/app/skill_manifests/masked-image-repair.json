@@ -1,0 +1,112 @@
+{
+    "schema_version": "skill-runtime-manifest-v1",
+    "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+    "ignored_runtime_artifacts": [
+        "**/__pycache__/**",
+        "**/*.pyc"
+    ],
+    "skill_id": "masked-image-repair",
+    "content_hash": "2578e9266e3d2ac3e7216ef4827939cc13bf66c5b7d58ae2ff9e249e4e7b7c3b",
+    "capability": "masked_image_repair",
+    "input_contract": {
+        "schema_id": "polaris.skill.masked-image-repair.input.v1",
+        "required_fields": [
+            "source_asset_ref",
+            "user_selection_ref",
+            "authority_policy",
+            "instruction"
+        ]
+    },
+    "output_contract": {
+        "schema_id": "polaris.skill.masked-image-repair.output.v1",
+        "required_fields": [
+            "result_asset_ref",
+            "effective_selection_audit",
+            "outside_effective_selection_changed_pixels",
+            "usage"
+        ]
+    },
+    "policy": {
+        "schema_version": "skill-runtime-policy-v1",
+        "auto_review_regeneration_allowed": false,
+        "successful_page_auto_redraw_allowed": false,
+        "safe_expansion_mode": "preauthorized_only",
+        "policy_version": "masked-authority-v1",
+        "active_profile_id": null,
+        "profiles": [],
+        "iteration": null,
+        "safe_expansion": {
+            "halo_pixels": 1,
+            "max_distance_relative": 0.02,
+            "max_distance_absolute_pixels": 24,
+            "max_added_pixels_relative": 0.1,
+            "max_added_pixels_absolute": 25000,
+            "max_relative_expansion": 0.1,
+            "layout_adaptation_allowed": false,
+            "forbidden_layout_adaptations": [
+                "font_compression",
+                "object_distortion",
+                "arbitrary_repositioning",
+                "curvature_change"
+            ],
+            "protected_boundaries": [
+                "container_edge",
+                "rounded_corner",
+                "occlusion",
+                "seam",
+                "identity_feature",
+                "adjacent_text",
+                "logo",
+                "label_outline",
+                "protected_artwork"
+            ],
+            "outside_effective_selection_changed_pixels": 0,
+            "unsafe_outcomes": [
+                "needs_larger_selection",
+                "unsafe_expansion"
+            ],
+            "actual_budget_must_not_exceed_request": true
+        }
+    },
+    "provider_type": "mock",
+    "cost_limit_micros": 0,
+    "real_provider_request_limit": 0,
+    "files": [
+        {
+            "path": "SKILL.md",
+            "sha256": "0d8d77240c18944c890512eb427babb4824c1c87f5bc3f27f6664ee9229b1b34"
+        },
+        {
+            "path": "agents/openai.yaml",
+            "sha256": "4a830cad4fb76b9e6d41845c286d27d8e375448dcfa6b20e6bd8a913f141936f"
+        },
+        {
+            "path": "references/autonomous-deployment.md",
+            "sha256": "255c32240180d2ba61fc45b8e6aa0911a84face1f1938eefea479335f1c7076c"
+        },
+        {
+            "path": "references/performance.md",
+            "sha256": "c19edec0fa8e2a40c094bec62404d59cf090cbd574d7d5e2795286fb1e9571ad"
+        },
+        {
+            "path": "references/prompt-protocol.md",
+            "sha256": "c324248b1818336036a381d9fe3ed500fa113601051dbcb35b78146c7a7edfe3"
+        },
+        {
+            "path": "references/text-replacement.md",
+            "sha256": "52d3d56254daf99d5d047bf5e168a95d01150fafd4ae4d1bf73f8d05e86c6386"
+        },
+        {
+            "path": "scripts/preflight_content_fit.py",
+            "sha256": "6901ac71a054c8717667bdc409acaa164767710627d33cfd2f2ee992606212ef"
+        },
+        {
+            "path": "scripts/strict_composite.py",
+            "sha256": "bf5bcb668ba6dab86c2ed45770bc7bbe20d88b3f09cfa39f5b74fe1a4c059271"
+        },
+        {
+            "path": "scripts/verify_selection_lock.py",
+            "sha256": "efe93b07d69fdda7c0e61f677fd9e98dfcccf6abb9375d5bac2dbe3856fe2046"
+        }
+    ]
+}

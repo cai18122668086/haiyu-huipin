@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compiled-output-v0.1.4.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "compiler_version",
+    "request_id",
+    "status",
+    "product_identity_contract",
+    "campaign_design_contract",
+    "design_prototype_overlay",
+    "pages",
+    "set_gates",
+    "applied_evidence_rule_count",
+    "previous_generated_images_used",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "domestic-ecommerce-compiled-output-0.1.4"},
+    "compiler_version": {"const": "domestic-ecommerce-prompt-compiler-0.1.4"},
+    "request_id": {"type": "string"},
+    "status": {"enum": ["READY_FOR_CONTROLLED_GENERATION", "BLOCKED"]},
+    "product_identity_contract": {"type": "object"},
+    "campaign_design_contract": {"type": "object"},
+    "design_prototype_overlay": {
+      "type": "object",
+      "required": ["schema_version", "request_id", "status", "source_type", "generation_performed"]
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "page_role",
+          "generation_prompt",
+          "view_evidence_binding",
+          "audit_contract",
+          "typography_plan",
+          "design_prototype_overlay"
+        ]
+      }
+    },
+    "set_gates": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "applied_evidence_rule_count": {"type": "integer", "minimum": 1},
+    "previous_generated_images_used": {"const": false},
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  }
+}
+

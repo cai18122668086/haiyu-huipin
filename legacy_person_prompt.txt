@@ -1,0 +1,14 @@
+[Input Roles]
+图一是 product_identity_reference，图二是 visual_strategy_reference。图一是唯一产品身份来源。
+[Product Identity Lock]
+透明矩形玻璃香水瓶、粉色液体、银色蝴蝶结、喷头、透明瓶盖、标签布局和可见产品文字全部以图一为准。放大和手持瓶必须是同一产品的统一缩放，不得发明建筑台座、瓶盖或包装结构。
+[Visual Strategy Lock]
+参考图只提供 4:5 浅蓝高亮棚拍、右侧放大产品、左侧白衣人物、顶部背景文字、人物与产品倚靠/接触关系和底部镜面倒影。
+[Original Remix Prompt]
+Create an original vertical 4:5 ecommerce campaign poster. Put one uniformly enlarged faithful perfume bottle on the dominant right side, and one adult model in a crisp white outfit on the left, visibly leaning against the bottle with a natural support/contact point while holding a smaller faithful duplicate. Keep the bottle front-facing and recognizable, the floor reflection beginning near the bottom, and the large original typography device behind the subjects in the upper third. Preserve the scan path typography -> model/contact -> hero product -> reflection, with pale blue studio light and clean commercial spacing.
+[Copy Boundary]
+Write only original copy or visible user-product facts.
+[Forbidden Transfer]
+不得复制参考图的品牌、Logo、水印、原文案、数字、认证、专有包装或产品身份。
+[Post-Generation Review]
+检查人物与产品接触关系、放大瓶体几何、手持瓶一致性、倒影、文字区和参考品牌泄漏。

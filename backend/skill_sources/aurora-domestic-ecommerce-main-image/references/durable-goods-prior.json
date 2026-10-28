@@ -1,0 +1,22 @@
+{
+  "prior_id": "DURABLE_GOODS_STYLE_GRAMMAR_V0_1_14",
+  "activation": "EXPLICIT_USER_OPT_IN_ONLY",
+  "source_type": "EXPERIMENTAL_PATTERN",
+  "source_context": "NOTE_CONTENT",
+  "evidence_ceiling": "PARTIAL_EVIDENCE",
+  "allowed": [
+    "typography tendency",
+    "palette role tendency",
+    "photography finish",
+    "information-surface grammar",
+    "anti-template grammar"
+  ],
+  "forbidden": [
+    "product identity",
+    "claims or copy",
+    "fixed page sequence",
+    "complete layout",
+    "pose or camera",
+    "sample brand or palette"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "skill_id": "aurora-remix-fast",
+  "source_version": "1.0.0",
+  "source_archive": "对标二创快版API版_v1.0.zip",
+  "archive_sha256": "018f8af83366d5e51aca0401da3158124ee97364bffad5d213ae37e9a514db51",
+  "source_file_count": 10,
+  "source_content_hash": "67c50598adb2a0bc9f1137d29419266f1476541f9d82b79f411e771979eb86a1",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "f31a3e109935bc5d5d3175b3c0ff2704f3c020fdf998472fc7101a9b0095a274"
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "adea7e620b7057b68a193093b2aa00880b71cbefd70fcfb8bf1d299d16487abb"
+    },
+    {
+      "path": "VERSION",
+      "sha256": "4ca8bbd3c595ee306226c6996b32b8d47a900217c55a7ed0cfc868ee444f34f1"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "2fca3cc416b7e6f127802075e2df02d0bfb250b196f9a0eef82b7b3e4d862979"
+    },
+    {
+      "path": "provider-config.example.json",
+      "sha256": "5d4a589483750f118bfcd471c10a21331cc1680f572a36e8525684ad6056c44d"
+    },
+    {
+      "path": "provider-config.json",
+      "sha256": "81e2483db0c2c8fd67b466ba4b3fe769186b46b0f58cefaa77227fa06b30040f"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "72d906fd4563cfe37cc05c3815f7ea8989de5caacd14c2b153fcac0fc3cf634c"
+    },
+    {
+      "path": "scripts/fastprep.py",
+      "sha256": "a644e5e89bd9faefa2cbbc3cfbbcc070e19f60c7c2f356f63b72f610f46296e3"
+    },
+    {
+      "path": "scripts/render_image.py",
+      "sha256": "545fc09dedb9fae4588272b6ab58ad5d051a0bbd0cf8fe28ee843edb0f0214c9"
+    },
+    {
+      "path": "安装与使用.md",
+      "sha256": "4ce7ba838ff9750ee0a1d8199e1d5620a802a35066786fdf11f2c80309f2ac03"
+    }
+  ],
+  "website_integration": "Native fastprep subprocess; full immutable SKILL protocol; existing metered gateway instead of a second provider credential path."
+}

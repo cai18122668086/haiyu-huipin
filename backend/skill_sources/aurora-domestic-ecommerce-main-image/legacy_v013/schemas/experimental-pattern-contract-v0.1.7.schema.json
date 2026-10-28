@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "experimental-pattern-contract-v0.1.7.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "pattern_bundle_id",
+    "status",
+    "source_type",
+    "source_context",
+    "evidence_ceiling",
+    "explicit_opt_in",
+    "category_applicable",
+    "surface_usage_mode",
+    "active_pattern_ids",
+    "compiled_parameters",
+    "gates",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "experimental-pattern-contract-0.1.7"},
+    "request_id": {"type": "string", "minLength": 1},
+    "pattern_bundle_id": {"const": "V3_DURABLE_GOODS_STYLE_GRAMMAR"},
+    "status": {"enum": ["ACTIVE", "INACTIVE", "BLOCKED"]},
+    "source_type": {"const": "EXPERIMENTAL_PATTERN"},
+    "source_context": {"const": "NOTE_CONTENT"},
+    "evidence_ceiling": {"const": "PARTIAL_EVIDENCE"},
+    "explicit_opt_in": {"type": "boolean"},
+    "category_applicable": {"type": "boolean"},
+    "surface_usage_mode": {
+      "enum": [
+        "STYLE_GRAMMAR_ONLY",
+        "DETAIL_LAYOUT_AND_STYLE",
+        "NOT_APPLIED"
+      ]
+    },
+    "active_pattern_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "compiled_parameters": {"type": "object"},
+    "gates": {
+      "type": "object",
+      "minProperties": 6,
+      "additionalProperties": {"type": "boolean"}
+    },
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  }
+}

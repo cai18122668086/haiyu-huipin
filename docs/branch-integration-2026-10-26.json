@@ -1,0 +1,152 @@
+{
+  "baseline_main": "95f764a9781aad7556ea9c12c3c58744df6cc5a0",
+  "remote_branch_heads_checked": 132,
+  "unmerged_heads_reconciled": 15,
+  "records": [
+    {
+      "branch": "codex/aurora-domestic-main-image",
+      "head": "1788a14f047cfa3eebc35e2afd34db7467158ae3",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Current Aurora six-image planner/provider, v2 Harness, workspace resume, error propagation, square normalization and balanced evidence adapter supersede the August workflow. Keep current source and frozen protocols."
+    },
+    {
+      "branch": "codex/aurora-observed-evidence-fix",
+      "head": "4942d1b82a3f97a0e2797ba5d45aea8634f9acb6",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Observed-evidence completeness check and calibration normalization already present in the newer provider; current homepage regression tests cover restored CI."
+    },
+    {
+      "branch": "codex/aurora-v20-release",
+      "head": "b9b22628b77415a373c17b901e953e6f9f1491a8",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "All unique patches already applied (git cherry -). Keep current realtime login/admin implementation."
+    },
+    {
+      "branch": "codex/detail-page-skill-v070-integration",
+      "head": "e5411cd6a3d5d8d3074d7a1cfbee398142e57711",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "The August v0.7.0 detail runtime and duplicate migration 0100 are replaced by current v4.3.1 native detail runtime, durable job records and deployed migration chain. Development auth deferral and browser API URL support already present."
+    },
+    {
+      "branch": "codex/fix-reference-source-upload",
+      "head": "0e1d0746cf827db1976a19da2d498a1b044bba58",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Only patch already applied (git cherry -). Keep current reference-source inference."
+    },
+    {
+      "branch": "codex/inspiration-auth-pool-fix-20261026",
+      "head": "7ad370ab8889494ff8744e492af8f5b357d7662e",
+      "mode": "normal merge",
+      "reason": "PR132 resource isolation: release DB connections before storage/archive I/O; retain source and regression tests."
+    },
+    {
+      "branch": "codex/inspiration-workspace-materialize",
+      "head": "1eff163df0d430dd5896274ed45731b002343673",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Both unique patches already applied (git cherry -). Keep current workspace materialization and automatic aspect ratio."
+    },
+    {
+      "branch": "codex/internal-beta-staging-v11",
+      "head": "a584a61916d7745b5febc3d2e72541c128c644eb",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Same-origin internal proxy and deployment overlay are present in current deploy files. Retain current image pins, credentials policy and runtime layout."
+    },
+    {
+      "branch": "codex/internal-beta-staging-v12",
+      "head": "05776681b5da8f774e4d94c515c1e79b1f887f05",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Controlled real-provider switches and deployment preflight are present in current deployment. Retain current production configuration."
+    },
+    {
+      "branch": "codex/internal-beta-staging-v13",
+      "head": "2986cd6b36ae44c46e6fe833f084cebbd3174e60",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Only patch already applied (git cherry -). Keep newer staging overlay."
+    },
+    {
+      "branch": "codex/internal-staging-v10f",
+      "head": "876cd008f129b9ef43ad543555fd7f4b7f79b09c",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Credit release/idempotency/quota toggle already implemented, with newer row locking and accounting-only mode. Current concurrency parser accepts env strings and supports 1..32. Old mock/SSH staging layout is superseded."
+    },
+    {
+      "branch": "codex/internal-staging-v10h-final3",
+      "head": "68246b51c38d1b5ce093edf960eaf2e188f93688",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Current tokenized npm lifecycle scanner and ignore-scripts installation already include this hardening. Preserve newer deployment preflight and tests."
+    },
+    {
+      "branch": "codex/local-worker-routing-fix",
+      "head": "8e26502d467649f766a310013f76110de5b8d0fb",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Connected-worker routing, repeated availability check and account-session synchronization are already in current code; newer lease fencing remains authoritative."
+    },
+    {
+      "branch": "codex/main-image-skill-v2-integration",
+      "head": "9e60c7c69c6633509af4515dd86a219e89b512e5",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Current AuroraV20HarnessRunner and locked v2 Skill supply the native integration. Retire the obsolete parallel task API/tables/migration 0007 instead of registering a duplicate runtime."
+    },
+    {
+      "branch": "codex/release-20260820-hotfix",
+      "head": "ab3b5bd90d50e84d3e72c7dac420b7af67c915fd",
+      "mode": "audited history reconciliation (current implementation retained)",
+      "reason": "Current style ratio validator, evidence completeness adapter, provider-cost defaults and migration 0010 already contain the hotfix. Keep the newer provider and homepage assets."
+    }
+  ],
+  "evidence": {
+    "backend/app/services.py": [
+      "def release_credits",
+      "CreditReservationStatus.RELEASED",
+      "CREDIT_RESERVATION_EXISTS",
+      "with_for_update=True"
+    ],
+    "backend/app/config.py": [
+      "def parse_xinghe_concurrency",
+      "provider_quota_enabled",
+      "xinghe_concurrency: int"
+    ],
+    "backend/app/ecommerce_crawl_tasks.py": [
+      "def _has_online_local_worker",
+      "_has_online_local_worker(app, task_id)"
+    ],
+    "backend/app/ecommerce_worker_routes.py": [
+      "def update_worker_account_session",
+      "def lease_guard_in_session"
+    ],
+    "backend/app/ecommerce_local_worker.py": [
+      "def update_account_session",
+      ").update_account_session("
+    ],
+    "backend/app/aurora_main_image_provider.py": [
+      "def _is_complete_visual_judgment",
+      "len(checks[name][\"observed_evidence\"].strip()) >= 12",
+      "if \"palette_usage_ratio\" in tokens",
+      "tokens.pop(\"palette_usage_ratio\", None)"
+    ],
+    "backend/app/aurora_main_image_runtime.py": [
+      "class AuroraV20HarnessRunner",
+      "recover-generation"
+    ],
+    "backend/app/aurora_detail_runtime.py": [
+      "Native Aurora domestic detail v4.3",
+      "auto-finalize"
+    ],
+    "deploy/preflight.py": [
+      "def npm_scripts_from_tokens",
+      "NPM_LIFECYCLE_SCRIPTS",
+      "same_origin"
+    ],
+    "components/auth/auth-boundary.tsx": [
+      "if (!developmentAuth) initializeAuthClient();"
+    ],
+    "lib/api/client.ts": [
+      "const runtimeFetch",
+      "VITE_API_BASE_URL"
+    ],
+    "backend/app/models.py": [
+      "default=10_000_000_000_000"
+    ]
+  },
+  "excluded": "Uncommitted frontend refresh in the shared primary checkout remains outside this release; it is being implemented in another chat."
+}

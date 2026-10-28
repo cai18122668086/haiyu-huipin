@@ -1,0 +1,36 @@
+{
+  "ergonomic-chair": {
+    "display_font_character": "condensed geometric sans, high vertical tension",
+    "body_font_character": "neutral compact sans with open counters",
+    "base_palette_roles": {
+      "canvas": "#E9EEF2",
+      "dark_field": "#17212B",
+      "product_placeholder": "#D5DEE5",
+      "body_text": "#27313B"
+    },
+    "accent_color_role": "#4E9FCB technical highlight only",
+    "information_surface_material": "frosted cool-gray technical card",
+    "line_and_icon_family": "1.5px engineering line, open outline icon",
+    "corner_language": "6px chamfered or small-radius corners",
+    "light_direction": "upper-left key, right rear rim",
+    "shadow_language": "tight cool contact shadow, no floating glow",
+    "recurring_motif": "single cyan datum line and small coordinate dot"
+  },
+  "white-storage-cart": {
+    "display_font_character": "rounded modern Chinese display, medium width",
+    "body_font_character": "humanist neutral sans with relaxed spacing",
+    "base_palette_roles": {
+      "canvas": "#F4EEE4",
+      "dark_field": "#6B5A48",
+      "product_placeholder": "#FAFAF7",
+      "body_text": "#4B4036"
+    },
+    "accent_color_role": "#C27B3A warm functional marker only",
+    "information_surface_material": "matte cream paper card with light wood divider",
+    "line_and_icon_family": "1.5px warm-gray line, simple rounded outline icon",
+    "corner_language": "14px soft radius with one square technical module",
+    "light_direction": "upper-left soft window light",
+    "shadow_language": "soft warm contact shadow and slightly darker wall edge",
+    "recurring_motif": "short orange capacity tick and thin vertical wood rule"
+  }
+}

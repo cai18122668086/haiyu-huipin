@@ -1,0 +1,8 @@
+interface:
+  display_name: "星河万能生图3.0"
+  short_description: "全品类电商商品图直出与强保真工作流"
+  default_prompt: "Use $xinghe-wanneng-shengtu-3-0 to directly generate a high-fidelity ecommerce image from uploaded product photos."
+
+policy:
+  allow_implicit_invocation: true
+

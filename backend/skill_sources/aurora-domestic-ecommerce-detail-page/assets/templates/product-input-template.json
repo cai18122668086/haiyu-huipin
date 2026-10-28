@@ -1,0 +1,112 @@
+{
+  "coverage_directive": "MAXIMIZE_USER_SUPPLIED_RELEVANT_FACTS",
+  "question_budget": 0,
+  "conflict_policy": "BLOCK_PLAN_AND_BATCH_ASK",
+  "intake_route": "REPLACE_WITH_USER_SELLING_POINT_LED_OR_PHOTO_TO_PRODUCT_STRATEGY",
+  "user_supplied_selling_points": [],
+  "operating_analysis": {
+    "route_reason": "REPLACE_WITH_WHY_THIS_ROUTE_MATCHES_THE_USER_INPUT",
+    "confirmed_fact_ids": ["F01"],
+    "buyer_hypotheses": [
+      {"id": "B01", "buyer": "REPLACE_WITH_LIKELY_BUYER", "scenario": "REPLACE_WITH_USE_SCENARIO", "reasoning": "REPLACE_WITH_EVIDENCE_OR_CATEGORY_REASONING", "confidence": "MEDIUM"}
+    ],
+    "pain_hypotheses": [
+      {"id": "P01", "pain": "REPLACE_WITH_BUYER_PAIN_OR_DOUBT", "kind": "DECISION", "reasoning": "REPLACE_WITH_WHY_THIS_PAIN_IS_PLAUSIBLE", "claim_boundary": "This may guide buyer questions and scenes but cannot become an unsupported product-effect claim."}
+    ],
+    "value_bridges": [
+      {"id": "VB01", "fact_ids": ["F01"], "pain_id": "P01", "feature": "REPLACE_WITH_EVIDENCE_BACKED_FEATURE", "buyer_benefit": "REPLACE_WITH_PRACTICAL_BUYER_BENEFIT", "purchase_reason": "REPLACE_WITH_PURCHASE_MEANING", "visual_route": "REPLACE_WITH_TRUTHFUL_VISUAL_EXPRESSION", "claim_permission": "VERIFIED_CLAIM"}
+    ],
+    "positioning_candidates": [
+      {"id": "POS01", "thesis": "REPLACE_WITH_RECOMMENDED_POSITIONING", "score_rationale": "REPLACE_WITH_EVIDENCE_DIFFERENTIATION_VISUAL_AND_RISK_REASONING", "decision": "SELECTED"}
+    ],
+    "selected_positioning_id": "POS01",
+    "evidence_gaps": [],
+    "assumption_disclosure": "REPLACE_WITH_WHAT_IS_INFERRED_AND_MAY_GUIDE_SCENES_BUT_NOT_FACTUAL_PROMOTIONAL_COPY"
+  },
+  "product_name": "请填写准确商品名称",
+  "category": "请填写类目",
+  "target_buyer": "请填写主要购买者及购买动机",
+  "primary_scenario": "请填写主要使用场景",
+  "product_images": [
+    {"id": "IMG01", "path": "D:/absolute/path/product-front.png", "role": "front_identity"}
+  ],
+  "verified_facts": [
+    {
+      "id": "F01",
+      "atomic_key": "REPLACE_WITH_ONE_SEMANTIC_KEY",
+      "atomicity": "ONE_INDEPENDENT_PROPOSITION",
+      "text": "只写可核验事实",
+      "source_class": "USER_FACT",
+      "evidence_ref": "用户资料或产品包装",
+      "claim_kind": "PERFORMANCE",
+      "user_prominence": "CORE_SELLING_POINT",
+      "named_elements": [],
+      "conditions": "如有适用条件写在这里",
+      "display_intent": "MUST_SHOW",
+      "claim_risk_contract": {
+        "evidence_level": "REGULATORY_RECORD",
+        "allowed_phrases": ["仅填写证据允许的消费者可见表达"],
+        "forbidden_phrases": ["填写不得出现的强化或暗示性表达"],
+        "evidence_sources": [{"type": "REGULATORY", "ref": "填写备案、包装或检测材料定位"}],
+        "effect_implication_allowed": false,
+        "qualification": "仅当该事实属于高风险化妆品功效断言时保留本合同，否则删除 claim_risk_contract"
+      }
+    }
+  ],
+  "conflict_scan": {
+    "status": "CLEAR",
+    "scanned_topics": ["identity", "specification", "formula", "performance", "audience", "compliance"],
+    "conflict_ids": []
+  },
+  "source_conflicts": [],
+  "reference_materials": [
+    {
+      "id": "REF01",
+      "path": "D:/absolute/path/analyzed-reference.jpg",
+      "category": "参考图类目",
+      "analysis_status": "ANALYZED",
+      "observed_expression_methods": [
+        "主体占画面六成，原料以环绕关系辅助，不用参数卡堆叠",
+        "标题沿主体轮廓偏置，短标签贴近对应物件"
+      ],
+      "analyzed_units": [
+        {
+          "id": "REF01-U01",
+          "source_region": "拼接图左侧第一屏",
+          "page_duty": "首屏价值建立",
+          "visual_carrier": "大比例产品主体与环绕原料",
+          "composition_logic": "主体约占六成，原料沿产品轮廓形成环绕关系",
+          "typography_logic": "短标题偏置于留白区，标签靠近对应原料",
+          "observed_expression_method": "主体占画面六成，原料以环绕关系辅助，不用参数卡堆叠"
+        },
+        {
+          "id": "REF01-U02",
+          "source_region": "拼接图左侧第二屏",
+          "page_duty": "原料卖点解释",
+          "visual_carrier": "可辨识原料与产品局部",
+          "composition_logic": "物件关系构成阅读路径，而非等分卡片",
+          "typography_logic": "标题沿主体轮廓偏置，短标签贴近对应物件",
+          "observed_expression_method": "标题沿主体轮廓偏置，短标签贴近对应物件"
+        }
+      ]
+    }
+  ],
+  "visual_preferences": {"keywords": [], "avoid": []},
+  "platform_profile": {
+    "target_platform": "MULTI_PLATFORM_INTERNAL_REVIEW",
+    "profile_name": "INTERNAL_REVIEW_1440_3_4",
+    "selection_mode": "ADAPTIVE_PLANNED",
+    "selection_rationale": "REPLACE_WITH_PRODUCT_SPECIFIC_MOBILE_READING_COMPOSITION_AND_DELIVERY_REASONING",
+    "source": "INTERNAL_REVIEW_MASTER; FINAL_PLATFORM_BACKEND_RULE_REQUIRES_CONFIRMATION",
+    "aspect_ratio": {"width_units": 3, "height_units": 4, "label": "3:4"},
+    "canvas_width_px": 1440,
+    "module_height_px": 1920,
+    "safe_margin_px": 72,
+    "slice_height_px": 1200,
+    "format": "PNG",
+    "max_file_bytes": null,
+    "verification_status": "BACKEND_CONFIRMATION_REQUIRED"
+  }
+}
+
+

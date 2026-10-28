@@ -1,0 +1,83 @@
+{
+  "schema_version": "skill-runtime-manifest-v1",
+  "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+  "ignored_runtime_artifacts": [
+    "**/__pycache__/**",
+    "**/*.pyc"
+  ],
+  "skill_id": "aurora-remix-fast",
+  "content_hash": "67c50598adb2a0bc9f1137d29419266f1476541f9d82b79f411e771979eb86a1",
+  "capability": "reference_remix",
+  "input_contract": {
+    "schema_id": "polaris.skill.aurora-remix-fast.input.v1",
+    "required_fields": [
+      "product_asset_refs",
+      "reference_asset_refs",
+      "instruction",
+      "output_count"
+    ]
+  },
+  "output_contract": {
+    "schema_id": "polaris.skill.aurora-remix-fast.output.v1",
+    "required_fields": [
+      "result_asset_refs",
+      "usage"
+    ]
+  },
+  "policy": {
+    "schema_version": "skill-runtime-policy-v1",
+    "auto_review_regeneration_allowed": false,
+    "successful_page_auto_redraw_allowed": false,
+    "safe_expansion_mode": "disabled",
+    "policy_version": "aurora-remix-fast-api-v1.0",
+    "active_profile_id": null,
+    "profiles": [],
+    "iteration": null,
+    "safe_expansion": null
+  },
+  "provider_type": "mock",
+  "cost_limit_micros": 0,
+  "real_provider_request_limit": 0,
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "f31a3e109935bc5d5d3175b3c0ff2704f3c020fdf998472fc7101a9b0095a274"
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "adea7e620b7057b68a193093b2aa00880b71cbefd70fcfb8bf1d299d16487abb"
+    },
+    {
+      "path": "VERSION",
+      "sha256": "4ca8bbd3c595ee306226c6996b32b8d47a900217c55a7ed0cfc868ee444f34f1"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "2fca3cc416b7e6f127802075e2df02d0bfb250b196f9a0eef82b7b3e4d862979"
+    },
+    {
+      "path": "provider-config.example.json",
+      "sha256": "5d4a589483750f118bfcd471c10a21331cc1680f572a36e8525684ad6056c44d"
+    },
+    {
+      "path": "provider-config.json",
+      "sha256": "81e2483db0c2c8fd67b466ba4b3fe769186b46b0f58cefaa77227fa06b30040f"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "72d906fd4563cfe37cc05c3815f7ea8989de5caacd14c2b153fcac0fc3cf634c"
+    },
+    {
+      "path": "scripts/fastprep.py",
+      "sha256": "a644e5e89bd9faefa2cbbc3cfbbcc070e19f60c7c2f356f63b72f610f46296e3"
+    },
+    {
+      "path": "scripts/render_image.py",
+      "sha256": "545fc09dedb9fae4588272b6ab58ad5d051a0bbd0cf8fe28ee843edb0f0214c9"
+    },
+    {
+      "path": "安装与使用.md",
+      "sha256": "4ce7ba838ff9750ee0a1d8199e1d5620a802a35066786fdf11f2c80309f2ac03"
+    }
+  ]
+}

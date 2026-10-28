@@ -1,0 +1,6 @@
+interface:
+  display_name: "对标二创·快版 API版 v1.0｜一张对标图+你的产品图，5分钟出一张同版式图"
+  short_description: "一张对标图+你的产品图，5分钟出一张同版式电商图；默认走 api 路由，供网站/服务端调用"
+  default_prompt: "使用 $aurora-remix-fast。用 Read 真看对标图和产品身份图，按 SKILL.md 的提示词模板把产品几何锁（轮廓/比例/结构/部件关系）、身份约束（含反向排除）、9 字段参考观察、归一化坐标与文案白名单写成 prompt.txt；默认走 api 路由出图（scripts/render_image.py + 调用方提供的网关），出图后做四项快检（比例/水印/泄漏/关键特征局部放大），逐字节复制交付并如实写明与对标的差异。"
+policy:
+  allow_implicit_invocation: true

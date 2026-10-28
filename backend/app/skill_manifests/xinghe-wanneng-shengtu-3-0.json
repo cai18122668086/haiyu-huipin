@@ -1,0 +1,72 @@
+{
+    "schema_version": "skill-runtime-manifest-v1",
+    "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+    "ignored_runtime_artifacts": [
+        "**/__pycache__/**",
+        "**/*.pyc"
+    ],
+    "skill_id": "xinghe-wanneng-shengtu-3-0",
+    "content_hash": "ae2401781e7262db3be8d07ab1377de7ebb0eb7827852e8dbd68dac9ae9ac02a",
+    "capability": "product_image",
+    "input_contract": {
+        "schema_id": "polaris.skill.xinghe-wanneng-shengtu-3-0.input.v1",
+        "required_fields": [
+            "product_asset_refs",
+            "preset",
+            "output_count",
+            "platform",
+            "aspect_ratio"
+        ]
+    },
+    "output_contract": {
+        "schema_id": "polaris.skill.xinghe-wanneng-shengtu-3-0.output.v1",
+        "required_fields": [
+            "result_asset_refs",
+            "usage"
+        ]
+    },
+    "policy": {
+        "schema_version": "skill-runtime-policy-v1",
+        "auto_review_regeneration_allowed": false,
+        "successful_page_auto_redraw_allowed": false,
+        "safe_expansion_mode": "disabled",
+        "policy_version": "xinghe-wanneng-shengtu-3-0-source-v1",
+        "active_profile_id": null,
+        "profiles": [],
+        "iteration": null,
+        "safe_expansion": null
+    },
+    "provider_type": "mock",
+    "cost_limit_micros": 0,
+    "real_provider_request_limit": 0,
+    "files": [
+        {
+            "path": "SKILL.md",
+            "sha256": "03dc46f29bed6296596e283a78bdf2fcf088ce1b89cb039c21f240db4e6a0459"
+        },
+        {
+            "path": "agents/openai.yaml",
+            "sha256": "67d7d6079eb1eff8d79d7bc96e72761f8effdf1dcf5f8be34c65aaec43bc634c"
+        },
+        {
+            "path": "references/compliance.md",
+            "sha256": "b6b5070480fcd06d38db3135987a525bc20e542f20ba562559f342a8c3671a87"
+        },
+        {
+            "path": "references/input-roles.md",
+            "sha256": "934bbb847282f8d6d809c1c4e3c6baab320de0a1db873fef148e4e502f0604ee"
+        },
+        {
+            "path": "references/platform-defaults.md",
+            "sha256": "c445cecbc335226440abf2f3d73bf38f34b8d17fe553aeb9cc77be6e8fcaa979"
+        },
+        {
+            "path": "references/qa-retry.md",
+            "sha256": "9bc92163fefc7837f8dab92dc6b6b9c7d700b4fa391a738440f0ab19620eb689"
+        },
+        {
+            "path": "references/task-recipes.md",
+            "sha256": "f1fc7c1e72a06baebf972b589f8b2804ddc4caca231309afa29024efc812680e"
+        }
+    ]
+}

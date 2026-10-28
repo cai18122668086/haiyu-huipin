@@ -1,0 +1,10 @@
+{
+  "patch_id": "polaris-geometry-failure-transition-v1",
+  "source_archive_sha256": "f1efd7e6c115e08f49b9ed75187ec8433a1a9b433fe70cf29e806771e27af4f2",
+  "original_runtime_hash": "7fa696716387c7163302f1653f0f656e97e46f71c8bff119548bc7cac424139c",
+  "patched_runtime_hash": "024b6c3ee5957efd0ba711c82475ad4123a60bbb6793bc5a67d3f5addea02c8d",
+  "file": "scripts/harness.py",
+  "original_file_sha256": "4298edcaaedfa3cd827002bbda525c3a47388f543e6d02477bd77320313b72e0",
+  "patched_file_sha256": "3930c03a6332b7590e7f41fe76a643f1c0df40ae0891161b81471511cdba4826",
+  "reason": "An explicit geometry failure accompanied by material mismatches must record FAIL and consume the native repair slot, rather than fail JSON validation and solicit a contradictory observation."
+}

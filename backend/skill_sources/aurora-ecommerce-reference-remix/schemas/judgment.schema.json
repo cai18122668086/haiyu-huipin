@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fresh AI side-by-side artwork audit",
+  "type": "object",
+  "required": ["method", "reference_path", "artwork_path", "reference_sha256", "artwork_sha256", "fresh_reference_observation", "fresh_artwork_observation", "comparisons", "major_mismatches", "decision"],
+  "properties": {
+    "method": {"const": "AI_FRESH_SIDE_BY_SIDE_PIXEL_AUDIT"},
+    "reference_path": {"type": "string"},
+    "artwork_path": {"type": "string"},
+    "reference_sha256": {"type": "string"},
+    "artwork_sha256": {"type": "string"},
+    "fresh_reference_observation": {"type": "object"},
+    "fresh_artwork_observation": {"type": "object"},
+    "comparisons": {"type": "array", "minItems": 10, "maxItems": 10, "items": {"type": "object", "required": ["dimension", "match", "evidence"], "properties": {"dimension": {"type": "string"}, "match": {"type": "boolean"}, "evidence": {"type": "string", "minLength": 12}}}},
+    "major_mismatches": {"type": "array", "items": {"type": "string", "minLength": 8}},
+    "decision": {"enum": ["PASS", "FAIL"]}
+  }
+}

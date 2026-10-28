@@ -1,0 +1,6 @@
+{
+  "real_runner_startup": true,
+  "concurrency": 3000,
+  "network": "none",
+  "paid_calls": 0
+}

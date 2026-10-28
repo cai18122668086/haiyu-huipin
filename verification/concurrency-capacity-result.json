@@ -1,0 +1,14 @@
+{
+  "image": "huipin-concurrency/backend:20261028",
+  "image_id": "sha256:9ce2f2e5ab9b190f49b18fe9ac17b5b1049b5f61852734dccb2ca5bf508bf8ca",
+  "isolated_regression": true,
+  "celery": {
+    "peak": 3000,
+    "completed": 3000,
+    "active": 0,
+    "celery_tasks": 3000,
+    "elapsed_seconds": 18.01,
+    "paid_requests": 0,
+    "production_database_used": false
+  }
+}

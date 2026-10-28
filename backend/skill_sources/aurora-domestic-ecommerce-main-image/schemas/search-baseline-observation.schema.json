@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "search-baseline-observation.schema.json",
+  "type": "object",
+  "required": ["agent_pixel_reviewed", "review_mode", "axes"],
+  "properties": {
+    "agent_pixel_reviewed": {"const": true},
+    "review_mode": {"const": "DIRECT_PIXEL_VALIDATED_BASELINE_COMPARISON"},
+    "axes": {
+      "type": "object",
+      "required": [
+        "product_dominance",
+        "headline_performance",
+        "physical_evidence",
+        "spatial_depth",
+        "commercial_closure",
+        "thumbnail_competitiveness",
+        "commercial_frame_structure",
+        "type_hierarchy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "product_dominance": {"$ref": "#/$defs/axis"},
+        "headline_performance": {"$ref": "#/$defs/axis"},
+        "physical_evidence": {"$ref": "#/$defs/axis"},
+        "spatial_depth": {"$ref": "#/$defs/axis"},
+        "commercial_closure": {"$ref": "#/$defs/axis"},
+        "thumbnail_competitiveness": {"$ref": "#/$defs/axis"},
+        "commercial_frame_structure": {"$ref": "#/$defs/axis"},
+        "type_hierarchy": {"$ref": "#/$defs/axis"}
+      }
+    }
+  },
+  "$defs": {
+    "axis": {
+      "type": "object",
+      "required": ["score", "observed_evidence"],
+      "properties": {
+        "score": {"type": "number", "minimum": 0, "maximum": 100},
+        "observed_evidence": {"type": "string", "minLength": 12}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

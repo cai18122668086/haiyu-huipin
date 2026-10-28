@@ -1,0 +1,4751 @@
+{
+  "schema_version": "source-layered-rules-0.1.0",
+  "status": "READY_FOR_INDEPENDENT_AUDIT",
+  "compiler_interface": {
+    "rule_source_field": "source_type",
+    "source_type_enum": [
+      "EVIDENCE_DERIVED",
+      "ENGINEERED_DEFAULT",
+      "USER_FACT",
+      "MODEL_FREEDOM"
+    ],
+    "unknown_source_type_policy": "REJECT"
+  },
+  "source_layer_policy": {
+    "allowed_source_types": [
+      "EVIDENCE_DERIVED",
+      "ENGINEERED_DEFAULT",
+      "USER_FACT",
+      "MODEL_FREEDOM"
+    ],
+    "precedence_high_to_low": [
+      "USER_FACT",
+      "EVIDENCE_DERIVED",
+      "ENGINEERED_DEFAULT",
+      "MODEL_FREEDOM"
+    ],
+    "USER_FACT": "Authoritative supplied product facts; may populate factual content.",
+    "EVIDENCE_DERIVED": "Exact promoted rule payload; may guide only within its bound condition and guards.",
+    "ENGINEERED_DEFAULT": "Non-empirical safety/routing default; cannot invent or override facts.",
+    "MODEL_FREEDOM": "Stylistic choice only after higher layers; cannot change product facts, claims, or slot purpose.",
+    "engineered_default_application_mode": "FILL_NULL_OR_MISSING_ONLY",
+    "engineered_default_may_override_evidence_derived": false
+  },
+  "global_invariants": {
+    "product_first_subject": true,
+    "offer_may_not_override_product_identity": true,
+    "background_selection_inputs": [
+      "USER_FACT.category",
+      "USER_FACT.material",
+      "USER_FACT.core_selling_point",
+      "USER_FACT.use_scene",
+      "USER_FACT.promotion",
+      "USER_FACT.campaign_style"
+    ],
+    "five_image_semantic_repetition_forbidden": true,
+    "factual_claims_must_be_source_bound": true,
+    "product_drift_forbidden": true,
+    "unknown_fact_policy": "OMIT_OR_MARK_UNCONFIRMED"
+  },
+  "evidence_derived_rule_count": 59,
+  "engineered_default_rule_count": 14,
+  "evidence_derived_rules": [
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-34b15c854401db67dd5da4e3"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-34b15c854401db67dd5da4e3",
+        "candidate_id": "contextual-candidate-34b15c854401db67dd5da4e3",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "offer_status": "NONE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 14,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 10,
+            "unique_case_count": 9,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "34b15c854401db67dd5da4e35ae1b2606d5e2a763fcade8c883e24d3dba54ef7",
+          "semantic_review_result_sha256": "237c405ee097e082a3864277da52c861ecae07de7f8f97876c66d970cfce072a",
+          "promotion_decision_sha256": "3fed32a5b0c22c4dbc4d92d01262a9ceb81b54071e58162a411b6c565e6ab3db"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-4a0f2cfde55a09042f0b5e88"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-4a0f2cfde55a09042f0b5e88",
+        "candidate_id": "contextual-candidate-4a0f2cfde55a09042f0b5e88",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "offer_status": "NONE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "composition": "FULL_BLEED_SCENE"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 14,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 7,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.8,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "4a0f2cfde55a09042f0b5e88bb235e857c4dfb0d576f2f6695a7f39d815eecda",
+          "semantic_review_result_sha256": "6a4ee93d5c912f804f9e4db17863c10e4542416f98b5615bf6c2c5e33bb99a75",
+          "promotion_decision_sha256": "2113c66686bd80d7db08667f5b7f0d37fe68a270b6598d44579c9f44fc4b14fa"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-60e3df0eb13a586df8667f67"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-60e3df0eb13a586df8667f67",
+        "candidate_id": "contextual-candidate-60e3df0eb13a586df8667f67",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "offer_status": "NONE",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 18,
+            "unique_case_count": 17,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "60e3df0eb13a586df8667f67aa337ff3616ec8e37a53dcf03b5bf1b713cb63d1",
+          "semantic_review_result_sha256": "e0a35bd2e633a5628ec62e66650ca3c95069c12b63d683c12ff15ac9629dff24",
+          "promotion_decision_sha256": "17d357c4f0a609656af7856c7e48c632d4023f164d833e3cf603343b4ac7d8ed"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-c178dacbef53e8df6b0bffa5"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-c178dacbef53e8df6b0bffa5",
+        "candidate_id": "contextual-candidate-c178dacbef53e8df6b0bffa5",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "offer_status": "NONE",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 11,
+            "unique_case_count": 11,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.611111,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "c178dacbef53e8df6b0bffa5e8febcf4d5c6d3c99054a9eb8114c8a85ca94b67",
+          "semantic_review_result_sha256": "b12270bcf76e26b10426d7bd4e85f2f13fc12442edf643d30580366e3a6a25a0",
+          "promotion_decision_sha256": "191fdc3e5e37f64bae0463544977d01eee3bdd1474b33364a6f0a5482bf3bb82"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-fe420b1f1a2413559312b79a"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-fe420b1f1a2413559312b79a",
+        "candidate_id": "contextual-candidate-fe420b1f1a2413559312b79a",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "offer_status": "NONE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.dominance": "IMAGE_LED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 14,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 10,
+            "unique_case_count": 9,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "fe420b1f1a2413559312b79a40d449bc83a16e32d71e5206efa2b5c9ef6ee011",
+          "semantic_review_result_sha256": "cd9e0778e8ee05ec5f13b1419e031df50505e626f2cde4e436ecd9b0aa5b86e5",
+          "promotion_decision_sha256": "7e29faba5af464ed627a96dfa3f2a5ff7a77fca248d07b30322892597f8f094f"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-17bb36d33f5cdb93d2a62838"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-17bb36d33f5cdb93d2a62838",
+        "candidate_id": "contextual-candidate-17bb36d33f5cdb93d2a62838",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "offer_status": "NONE",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "product_representation": "RENDERED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 18,
+            "unique_case_count": 17,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.888889,
+          "TUNE_within_context_prevalence": 0.62069,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "17bb36d33f5cdb93d2a62838068a4f0562bc0f98975f76be06ea03b98e6d99ca",
+          "semantic_review_result_sha256": "577f8d1e4464af7380851007d96023789cd29c3269afc93d0448b7172f304d99",
+          "promotion_decision_sha256": "67ea9284ca3a239db2de239302fd83d7b165704338fd576a35b29db75fdf1474"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-949e78149fab37a2cd9dd1c8"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-949e78149fab37a2cd9dd1c8",
+        "candidate_id": "contextual-candidate-949e78149fab37a2cd9dd1c8",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 1,
+        "match_priority": 1,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "offer_status": "NONE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "scene_relevance": "DIRECT"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 14,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 10,
+            "unique_case_count": 9,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "949e78149fab37a2cd9dd1c88bc194fa840052ba4cebd571502a835ad75afe74",
+          "semantic_review_result_sha256": "99cad7c7c8e18c5b98533ce8d42da0b982e199109f3589fb6f47b8dabe5254bc",
+          "promotion_decision_sha256": "20dd52f4c8fbfc0518fe7ce7c6fa3743e18c13042838f5e383a11d8832f6e98d"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9dbb6d1f31f1f752277aee17"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9dbb6d1f31f1f752277aee17",
+        "candidate_id": "contextual-candidate-9dbb6d1f31f1f752277aee17",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 2,
+        "match_priority": 2,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.dominance": "IMAGE_LED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 14,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 10,
+            "unique_case_count": 9,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "9dbb6d1f31f1f752277aee17a17fc01d75c619ee815731b9dee324f759f3927b",
+          "semantic_review_result_sha256": "a28ad11dbb4a27e08af0f000d4a63ebbfdf45f207173e2cf2ac3ea851bcbb565",
+          "promotion_decision_sha256": "220c395935fb793af5c21f416dd5c149dc9d6c886cb86d5225c78328982d4a18"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-c72cab662352444bc321ac6a"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-c72cab662352444bc321ac6a",
+        "candidate_id": "contextual-candidate-c72cab662352444bc321ac6a",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 2,
+        "match_priority": 2,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 18,
+            "unique_case_count": 17,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "c72cab662352444bc321ac6a0ac362da8bb6c6352206d697837071b84bbf70da",
+          "semantic_review_result_sha256": "321fd4620fb82755684bb0f5966f676d837fd901718f2f4a9bafba103060098f",
+          "promotion_decision_sha256": "aab1f204afdbd3476199eae0dfbaa8c83f30feaa8be4e611927e19561b00e762"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-fb102e295fed1e6a7d63278f"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-fb102e295fed1e6a7d63278f",
+        "candidate_id": "contextual-candidate-fb102e295fed1e6a7d63278f",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 2,
+        "match_priority": 2,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 11,
+            "unique_case_count": 11,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.611111,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "fb102e295fed1e6a7d63278f82b95d72ad989787568a2119246229e2fb90ca75",
+          "semantic_review_result_sha256": "01cd213cb3e6032e859fe8643062d88d3a08d1d0739ad147cc9c12722ebdc326",
+          "promotion_decision_sha256": "1ff691d83a3b5610ec2a49945a57b72bf796c354447ba8f8373ab2d0b50d64ab"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-b8e3321c5f0ddcf03e2b000d"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-b8e3321c5f0ddcf03e2b000d",
+        "candidate_id": "contextual-candidate-b8e3321c5f0ddcf03e2b000d",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 2,
+        "match_priority": 2,
+        "condition": {
+          "category": "HOME_APPLIANCE",
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "product_representation": "RENDERED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 18,
+            "unique_case_count": 17,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.888889,
+          "TUNE_within_context_prevalence": 0.62069,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "b8e3321c5f0ddcf03e2b000d7616102f577824743e664ab85ab2595584aacbcb",
+          "semantic_review_result_sha256": "84f06f72e540cf27c799499b5aa4db6280f1db97bf98af0e5670134e13048eca",
+          "promotion_decision_sha256": "d3c2c31f3aa7b85107d92a7f24871ac31ce513326b02299fdde809bac52c9886"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-04899f96997774cac4bd40cd"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-04899f96997774cac4bd40cd",
+        "candidate_id": "contextual-candidate-04899f96997774cac4bd40cd",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "copy_density": "SPARSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 20,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 19,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "04899f96997774cac4bd40cd27eee44fced67bc89a3d652259696773c51353aa",
+          "semantic_review_result_sha256": "03607b8bcbe5ed6ab154574d68dd039477dc0801ac13b1b91cab4108e45b6da8",
+          "promotion_decision_sha256": "af68e04956d064252b1af909161ee295d8f890216700290a73b7f7f4efd8ceca"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-5d19a637074a39d2c8d9d8ad"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-5d19a637074a39d2c8d9d8ad",
+        "candidate_id": "contextual-candidate-5d19a637074a39d2c8d9d8ad",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "copy_density": "SPARSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 18,
+            "unique_case_count": 16,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 19,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.9,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "5d19a637074a39d2c8d9d8ad3b5d16dab9e7c7bc22473227d8dc0441e66ffb4a",
+          "semantic_review_result_sha256": "8c22277331f9b212f2fdb21f3f9683db580861eeece3bdc53ecf033e7c175d6f",
+          "promotion_decision_sha256": "02cc8e1dc6ec7db89853bcf33d30efc94e8f757ba446f922feda5d7b91bed7e7"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9da8299b076d30f296a919b0"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9da8299b076d30f296a919b0",
+        "candidate_id": "contextual-candidate-9da8299b076d30f296a919b0",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "copy_density": "SPARSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.dominance": "IMAGE_LED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 20,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 19,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "9da8299b076d30f296a919b072702ed33a3fd805ce1903f48060ab91e9312bb9",
+          "semantic_review_result_sha256": "d8b02e026027023d0cfbc45a9bd3971735add09b86056b5a45461a05ed342a40",
+          "promotion_decision_sha256": "30aaaaac34b7194b3324445f1ebe0e669de3e2412774e1e33e2f95fc2c8ef745"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-a91bd14df7a55138a728aed0"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-a91bd14df7a55138a728aed0",
+        "candidate_id": "contextual-candidate-a91bd14df7a55138a728aed0",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.headline_position": "TOP"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 29,
+            "unique_case_count": 23,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 17,
+            "unique_case_count": 17,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.966667,
+          "TUNE_within_context_prevalence": 0.68,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "a91bd14df7a55138a728aed07993fe0a2eab8210317d1d28bb053f0f57cec886",
+          "semantic_review_result_sha256": "d4b5897d1bf105f330dc410975db860648106c17cc9d8e9876633893579c1898",
+          "promotion_decision_sha256": "f4517a760a97103ea05a598a662361198bd5a42cf7b4b52e3b4b6784b1ea6c5a"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-f3e4741b2945f908a18699eb"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-f3e4741b2945f908a18699eb",
+        "candidate_id": "contextual-candidate-f3e4741b2945f908a18699eb",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 29,
+            "unique_case_count": 23,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 25,
+            "unique_case_count": 24,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.966667,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "f3e4741b2945f908a18699ebdcf072dedda05a28edc88677adfd1d2e93e7fca7",
+          "semantic_review_result_sha256": "d7c769eda4f4b6ee18722e23316d293694a976f466effa01256c712fb046c7ac",
+          "promotion_decision_sha256": "7d2ce13fdafa61669b53a7809210baf9148e91c7c800e9b7a373a167e0f951e9"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-fd64275edb768a92337c88ab"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-fd64275edb768a92337c88ab",
+        "candidate_id": "contextual-candidate-fd64275edb768a92337c88ab",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "typography.hierarchy": "THREE_LEVEL"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 27,
+            "unique_case_count": 21,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 19,
+            "unique_case_count": 18,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.9,
+          "TUNE_within_context_prevalence": 0.76,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "fd64275edb768a92337c88ab1129674fc47b4c72d2842c2c4ca9acc0e26b901e",
+          "semantic_review_result_sha256": "39f1ad1762124c15a07b475b87c48625eb77947c6edc3f2c692b8c697e1c50ad",
+          "promotion_decision_sha256": "ad466eb3b25874d367e9c6659306c223abd5dceb093358321fae1c9667e135b9"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-200946605c0512880d1b88e8"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-200946605c0512880d1b88e8",
+        "candidate_id": "contextual-candidate-200946605c0512880d1b88e8",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_USER_BENEFIT",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "BENEFIT_STATEMENT",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "copy_density": "MEDIUM"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 21,
+            "unique_case_count": 19,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 3,
+            "unique_case_count": 3,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "200946605c0512880d1b88e8db40cf9be0d7900a1100160a865e336dcf141ba5",
+          "semantic_review_result_sha256": "4dee9c1f8e9df9dafc59f391fabfa5ba4f2da3d0605a18c9d894d362615347bc",
+          "promotion_decision_sha256": "d06754f14ce76af3de392d865be70548884b6976c62770156a8ba0de645c3527"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-441cea7d3c1631d70bc40757"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-441cea7d3c1631d70bc40757",
+        "candidate_id": "contextual-candidate-441cea7d3c1631d70bc40757",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "scene_relevance": "NO_SCENE"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 64,
+            "unique_case_count": 47,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 12,
+            "unique_case_count": 12,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "441cea7d3c1631d70bc407575a27a6af016130603015e0419cfc60fb2df18196",
+          "semantic_review_result_sha256": "73b23a38562870366636f91af87510a9bc9accd3ed5600de9f2537ad1c570cdb",
+          "promotion_decision_sha256": "fd528e8d4502404c6233e2c050eeb13139b6907caf455a1b86c259b4a0239b02"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-4ad0f42541955f5d1678996d"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-4ad0f42541955f5d1678996d",
+        "candidate_id": "contextual-candidate-4ad0f42541955f5d1678996d",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_USER_BENEFIT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "BENEFIT_STATEMENT",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 11,
+            "unique_case_count": 9,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 6,
+            "unique_case_count": 6,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "4ad0f42541955f5d1678996d8f3bdcf3e0c6b30ddcd8ab270e18414991c09a0b",
+          "semantic_review_result_sha256": "66c00603579c702d55e6805f5f94c4811815edf100802e4c61dd10428298e25b",
+          "promotion_decision_sha256": "d6fad572c2e31582fc1ba852f38f3fe5eed8b928fa23a4b5674a1f77afce16f8"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-7d7b4372f666566e20d59447"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-7d7b4372f666566e20d59447",
+        "candidate_id": "contextual-candidate-7d7b4372f666566e20d59447",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "scene_relevance": "NO_SCENE"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 53,
+            "unique_case_count": 39,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.828125,
+          "TUNE_within_context_prevalence": 0.666667,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "7d7b4372f666566e20d59447eeef406b7a0b107bd301b08683d9d6218aceae4a",
+          "semantic_review_result_sha256": "73d5204ed67030d7f87c4a24d7f24453e9b15e1eeb110ff17e7eff2048cd9c21",
+          "promotion_decision_sha256": "27c0eaa6315b821d5523ef40761d01810aa9b9fd86ba9aaa620578be44b5a028"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-8a68a3c60f0f3c3f06555370"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-8a68a3c60f0f3c3f06555370",
+        "candidate_id": "contextual-candidate-8a68a3c60f0f3c3f06555370",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "copy_density": "SPARSE"
+        },
+        "effect": {
+          "scene_relevance": "DIRECT"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 20,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 19,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.909091,
+          "TUNE_within_context_prevalence": 0.904762,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "8a68a3c60f0f3c3f0655537060112c9e2f4752acfdc82e29eb8668ce20a7b6bf",
+          "semantic_review_result_sha256": "78c8eeb7304c4eeca12ae5a0d827694fc42e806c9f78d3b775cffb02f14266f3",
+          "promotion_decision_sha256": "b3046a99197c11618b83547fbad1117bc37883aa97b04cf8205dfcfbc3714055"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-923c899907569be3604e31a1"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-923c899907569be3604e31a1",
+        "candidate_id": "contextual-candidate-923c899907569be3604e31a1",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_OFFER",
+          "evidence_type": "OFFER_PROOF",
+          "page_role": "OFFER_MODULE",
+          "surface": "ECOM_CAROUSEL",
+          "offer_status": "VISIBLE"
+        },
+        "effect": {
+          "copy.dominance": "BALANCED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 70,
+            "unique_case_count": 58,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 12,
+            "unique_case_count": 8,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.804598,
+          "TUNE_within_context_prevalence": 0.923077,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "923c899907569be3604e31a1d798134d3268e2351ffe8da80e5a34add6beec84",
+          "semantic_review_result_sha256": "7a7fe7ece1a28f6e23bb6d5f292f65815e80fcb5267b8b7a39f928fca7a3c924",
+          "promotion_decision_sha256": "98acd38805d8bc08c4aba9cc82c4e3a9b588edaf5ecbd58781dc10704f87b516"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9e3a26c8e623084b2db64684"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9e3a26c8e623084b2db64684",
+        "candidate_id": "contextual-candidate-9e3a26c8e623084b2db64684",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_USER_BENEFIT",
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "BENEFIT_STATEMENT",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC"
+        },
+        "effect": {
+          "scene_relevance": "DIRECT"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 11,
+            "unique_case_count": 9,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 6,
+            "unique_case_count": 6,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "9e3a26c8e623084b2db64684a287484150af944a692741ba87318d6b556bf458",
+          "semantic_review_result_sha256": "d1a77af0b05af16351cabf6b68475468608e4fcd0a689cc24c5422b475a9e9a6",
+          "promotion_decision_sha256": "f79d5e0a3d40550eb6ff78e840b27ed6f169e0b318950b4ddbfdc68103e9314f"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-afebabb4b97714ef5d00dc10"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-afebabb4b97714ef5d00dc10",
+        "candidate_id": "contextual-candidate-afebabb4b97714ef5d00dc10",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_OFFER",
+          "evidence_type": "OFFER_PROOF",
+          "page_role": "OFFER_MODULE",
+          "surface": "ECOM_CAROUSEL",
+          "offer_status": "VISIBLE"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 82,
+            "unique_case_count": 64,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 6,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.942529,
+          "TUNE_within_context_prevalence": 0.692308,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "afebabb4b97714ef5d00dc10085ad2e00dd595531ce6e85b06bf968af514ef2d",
+          "semantic_review_result_sha256": "eb57bba948a456e74b6236f1a259227621219485381e46e5fc7308d414f20599",
+          "promotion_decision_sha256": "b771b2110af49c55cfe42860e1573a401bb531a6d561f30297e5eb3a16d48678"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-ea1daaf2d07a2ce7fc372246"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-ea1daaf2d07a2ce7fc372246",
+        "candidate_id": "contextual-candidate-ea1daaf2d07a2ce7fc372246",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_OFFER",
+          "evidence_type": "OFFER_PROOF",
+          "page_role": "OFFER_MODULE",
+          "surface": "ECOM_CAROUSEL",
+          "offer_status": "VISIBLE"
+        },
+        "effect": {
+          "typography.hierarchy": "FOUR_PLUS"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 59,
+            "unique_case_count": 52,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 4,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.678161,
+          "TUNE_within_context_prevalence": 0.615385,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "ea1daaf2d07a2ce7fc372246ecfe686761ac43fb730eb38d7ef3d32244394ef9",
+          "semantic_review_result_sha256": "63ee1adad24ae37c7c337caf6838c8f3dd0608feb6901956401c93043998cf75",
+          "promotion_decision_sha256": "9fde708f65b8443e0d49ac9d022cf4b24ebbc8aab8f254045e0adc2cc1d9a119"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-12d5b968fff6df5a7210f698"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-12d5b968fff6df5a7210f698",
+        "candidate_id": "contextual-candidate-12d5b968fff6df5a7210f698",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "BUILD_TRUST",
+          "evidence_type": "TRUST_PROOF",
+          "page_role": "TRUST_MODULE",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 7,
+            "unique_case_count": 7,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.8,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "12d5b968fff6df5a7210f6988f2aab124dd896f80313dd0c3c08eacf28b10b91",
+          "semantic_review_result_sha256": "e9b38f77319b7e03b4e79559ba9d0581a10d9cfd5a56d7d910e7b4b63e4e289a",
+          "promotion_decision_sha256": "215bd5b58353cbc94a175c4819995346c2708152bd7efac6afcfcc5ccdc58e79"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-470b77c68fcbf740f6dea1d0"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-470b77c68fcbf740f6dea1d0",
+        "candidate_id": "contextual-candidate-470b77c68fcbf740f6dea1d0",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "SUPPORT_COMPARISON",
+          "evidence_type": "COMPARATIVE_PROOF",
+          "page_role": "COMPARISON",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 13,
+            "unique_case_count": 13,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.888889,
+          "TUNE_within_context_prevalence": 0.866667,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "470b77c68fcbf740f6dea1d03738e2fd8f3326f0c2c6fff0fe474ca2700c2622",
+          "semantic_review_result_sha256": "adb9478736c7a0d349422d296942f5e1bd3ec78b9c17206938fee8bd8b841fc8",
+          "promotion_decision_sha256": "ed223705dbfee11871ec9e152f21cc17cc9cb74ae4720e7a70dec4e62bbc6fa0"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-a2ddb830cc3039434eb39912"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-a2ddb830cc3039434eb39912",
+        "candidate_id": "contextual-candidate-a2ddb830cc3039434eb39912",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "SUPPORT_COMPARISON",
+          "evidence_type": "COMPARATIVE_PROOF",
+          "page_role": "COMPARISON",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 13,
+            "unique_case_count": 13,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.888889,
+          "TUNE_within_context_prevalence": 0.866667,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "a2ddb830cc3039434eb399123eaabeae559ad9265222a59aeab242c3ef9c2657",
+          "semantic_review_result_sha256": "91183e003b0a38840c9eaf6063331ae24bbb0fc7bfc36b93f82f4cdaa3e95891",
+          "promotion_decision_sha256": "e2c26077020dee0c7948e891e9db554be657326d991ea8d397cf8b0e6ada62d9"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-442cecfc2c3e8662d4fcfd45"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-442cecfc2c3e8662d4fcfd45",
+        "candidate_id": "contextual-candidate-442cecfc2c3e8662d4fcfd45",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 70,
+            "unique_case_count": 51,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "442cecfc2c3e8662d4fcfd45147d41e3826173ea2daa13606bafe2e854ba317e",
+          "semantic_review_result_sha256": "c1cdabdb7fd540d70459854c5c9f515b2750b6acb51d1231e8e7efa25226c891",
+          "promotion_decision_sha256": "174d00b098d4752db2ee74f5ee212620def505499ce09505b1190e4d2e700020"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-5dc76d2b2bb6a3daed161733"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-5dc76d2b2bb6a3daed161733",
+        "candidate_id": "contextual-candidate-5dc76d2b2bb6a3daed161733",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "background.system": "COMPOSITE"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 69,
+            "unique_case_count": 50,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.985714,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "5dc76d2b2bb6a3daed161733929b10e7bc266d8482624a87e1bce4080722cc92",
+          "semantic_review_result_sha256": "8a3be1c4cfef9ac703d220a0139615b3caccd74dc5debd21605bc875b2ee01e6",
+          "promotion_decision_sha256": "befad2a75deb94a38bcbecad9606b0e3a5469761e1433504f16784b0842bee46"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-60517fde224faeb9332a66af"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-60517fde224faeb9332a66af",
+        "candidate_id": "contextual-candidate-60517fde224faeb9332a66af",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "composition": "CONTINUOUS_VERTICAL"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 68,
+            "unique_case_count": 49,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.971429,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "60517fde224faeb9332a66afa5317e02b0fae184d665bc0cbac5a0a9e5bbabb2",
+          "semantic_review_result_sha256": "d257a9a38d10f9128d371978c5fc9dac0a30ecff17b4332b80a05baf9d0c646a",
+          "promotion_decision_sha256": "ac21b2a7974462764c15371b00075b1cf3c8195e8f59c21548fe5e2b7b0225c1"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-c0510bc2aa349808e7b24f9e"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-c0510bc2aa349808e7b24f9e",
+        "candidate_id": "contextual-candidate-c0510bc2aa349808e7b24f9e",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "typography.hierarchy": "FOUR_PLUS"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 65,
+            "unique_case_count": 48,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.928571,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "c0510bc2aa349808e7b24f9e409492a0e4e1bb2e3171e375757afd5e9b248466",
+          "semantic_review_result_sha256": "f9118f1250cb55b0f9007c9260a59ce98bda8ae646792d4857460103198c5e08",
+          "promotion_decision_sha256": "c1bad462fb7fe5c7c4ee7e17b2b44ab8ba6b4ce8208e03871757af26024376ba"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-cc2e3ce0b8081f0883b0668b"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-cc2e3ce0b8081f0883b0668b",
+        "candidate_id": "contextual-candidate-cc2e3ce0b8081f0883b0668b",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.dominance": "BALANCED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 70,
+            "unique_case_count": 51,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "cc2e3ce0b8081f0883b0668bb57619d32215bcab3110c62dd3c50188be0e09a1",
+          "semantic_review_result_sha256": "1d7fe9c38c8e530e696066293f232e15d926d997ca1416d963b93de9a3a88c3b",
+          "promotion_decision_sha256": "3d106dc3545b03195d243abac9c1cff9da77c210960b9b28a71f6324ca680358"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-ec059186fb808bd2fb4701f8"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-ec059186fb808bd2fb4701f8",
+        "candidate_id": "contextual-candidate-ec059186fb808bd2fb4701f8",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.alignment": "MIXED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 64,
+            "unique_case_count": 48,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.888889,
+          "TUNE_within_context_prevalence": 0.914286,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "ec059186fb808bd2fb4701f8b436542993d20f1e07ae961208ed5814122004aa",
+          "semantic_review_result_sha256": "d4151165c1ad9fb82ec7eb722078569ad7aca17d7f2b7d5076e7532c97be8d29",
+          "promotion_decision_sha256": "73f3136da63f7df5817e44d2d9721208ba584f812e3ecd555cd958719c829097"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-2664540a2908dd9ac726b075"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-2664540a2908dd9ac726b075",
+        "candidate_id": "contextual-candidate-2664540a2908dd9ac726b075",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_SLICE",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "typography.hierarchy": "THREE_LEVEL"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 21,
+            "unique_case_count": 16,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 25,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.913043,
+          "TUNE_within_context_prevalence": 0.862069,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "2664540a2908dd9ac726b075aae681eb4afdcdcb383d8d934e1991a7ba850888",
+          "semantic_review_result_sha256": "d44036c10fd371a0482c0515bbab88fc69a7fe6d070c5d63c13166ba29a69716",
+          "promotion_decision_sha256": "cc36ecce35fb26fd5e06d2723b7b0db6dbeea1007246727c4df5c0f1bc14ed45"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-bc302a750a6032ff3f200fad"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-bc302a750a6032ff3f200fad",
+        "candidate_id": "contextual-candidate-bc302a750a6032ff3f200fad",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_SLICE",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 17,
+            "unique_case_count": 14,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 26,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.73913,
+          "TUNE_within_context_prevalence": 0.896552,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "bc302a750a6032ff3f200fad83960f0ceb3aa533fb81fc566dfcf9f3e66c5190",
+          "semantic_review_result_sha256": "8b00a54e34c40a4107a3d0b7517b10baae984e89c7b2bf95ee48aad643280c88",
+          "promotion_decision_sha256": "f5807bb72b3fe79ae36ed4d3039aef50a5cf347be6a4d3b79334f1f992574387"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-d797e1ca1bbaa387fb0f2aae"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-d797e1ca1bbaa387fb0f2aae",
+        "candidate_id": "contextual-candidate-d797e1ca1bbaa387fb0f2aae",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_SLICE",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 23,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 29,
+            "unique_case_count": 21,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "d797e1ca1bbaa387fb0f2aaefeb5b4d5c004317cf745003ba738acfb8350d6ef",
+          "semantic_review_result_sha256": "a35f7c6f3b385ef5578f7c570a9f1c120565363fcd528ee5ef308a5b12ab05b9",
+          "promotion_decision_sha256": "2b130531fab4207efdd24470f0a83f61013260d0a944a9e8a13e7850aac6389b"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-28238d8a3e13e7248b7d7b5a"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-28238d8a3e13e7248b7d7b5a",
+        "candidate_id": "contextual-candidate-28238d8a3e13e7248b7d7b5a",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "EXPLAIN_CORE_FEATURE",
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_SLICE",
+          "copy_density": "MEDIUM"
+        },
+        "effect": {
+          "scene_relevance": "DIRECT"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 23,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 29,
+            "unique_case_count": 21,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.71875,
+          "TUNE_within_context_prevalence": 0.644444,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "28238d8a3e13e7248b7d7b5a7f78701ea76eab172b5363de50d7725c643273cc",
+          "semantic_review_result_sha256": "d3d83e8b86b812aabc6b4869720e5365cd2b76820dc5e4c9bb392dc890ded888",
+          "promotion_decision_sha256": "57602f1a9659bc5b82c7a1174634fe0321f9099f4912af8e2c4825b346515e85"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-fd4cd701729bc39ab894a0c0"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-fd4cd701729bc39ab894a0c0",
+        "candidate_id": "contextual-candidate-fd4cd701729bc39ab894a0c0",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "COMMUNICATE_SPECIFICATION",
+          "evidence_type": "SPEC_PARAMETER",
+          "page_role": "SPECIFICATION",
+          "surface": "ECOM_DETAIL_SLICE"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 5,
+            "unique_case_count": 5,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 5,
+            "unique_case_count": 5,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "fd4cd701729bc39ab894a0c0dae139a0674b40c9e2c8428ab5c51b5e04c923fd",
+          "semantic_review_result_sha256": "55a10ca20920056191babb95d7e04b4b736d90a78ec67206bb2b1e4b5181c995",
+          "promotion_decision_sha256": "cd72215e37dd187da6f4e66bbdcac52875f3d1e504c78847a9968d40df311ec3"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9aee866409fa061f5e713f4e"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9aee866409fa061f5e713f4e",
+        "candidate_id": "contextual-candidate-9aee866409fa061f5e713f4e",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_MAIN_IMAGE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_MAIN_IMAGE",
+          "copy_density": "SPARSE"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 47,
+            "unique_case_count": 18,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 17,
+            "unique_case_count": 11,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "9aee866409fa061f5e713f4e7c16cc391a2c7704ff8eb02677572cfc635a82ca",
+          "semantic_review_result_sha256": "42ea06e8fdca20e9e16a77d73b165b676995b065bfbd6e924e502a61d798c388",
+          "promotion_decision_sha256": "dcf333ecf8ee6251b7482f0d241663035b7ebe6573537672a83c969ef4bb597e"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_MAIN_IMAGE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-a5ac8b6f9114b0ad723f3a1b"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-a5ac8b6f9114b0ad723f3a1b",
+        "candidate_id": "contextual-candidate-a5ac8b6f9114b0ad723f3a1b",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_MAIN_IMAGE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_MAIN_IMAGE",
+          "copy_density": "SPARSE"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 47,
+            "unique_case_count": 18,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 15,
+            "unique_case_count": 10,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.882353,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "a5ac8b6f9114b0ad723f3a1b3cfcd4a9451b6491135a1508e6209febf3c2ab60",
+          "semantic_review_result_sha256": "e646f8da80654edc8ece73d061634f13b9b97a504337ead53a3c1d73fd3d9133",
+          "promotion_decision_sha256": "a9d1c96a83cc30ac20b822a8468a9bcf770f55b9aa228ba8b6d7d7fc9738443c"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_MAIN_IMAGE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-ffa7d17000f957fcc6c0afe0"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-ffa7d17000f957fcc6c0afe0",
+        "candidate_id": "contextual-candidate-ffa7d17000f957fcc6c0afe0",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_MAIN_IMAGE",
+        "fallback_level": 3,
+        "match_priority": 3,
+        "condition": {
+          "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_MAIN_IMAGE",
+          "copy_density": "SPARSE"
+        },
+        "effect": {
+          "copy.dominance": "IMAGE_LED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 47,
+            "unique_case_count": 18,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 17,
+            "unique_case_count": 11,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "ffa7d17000f957fcc6c0afe0eddf39118e38d229d8b4f8307c687aa7bb51fd41",
+          "semantic_review_result_sha256": "45a87a0fa137e6fe8d299d72b97a12541d0846b5f52351f19c2f7165fa2d9dfa",
+          "promotion_decision_sha256": "58644f90e8339bd7dd6d247adb4fcb67e66623a4114b24b1db94224b3c7671d1"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_MAIN_IMAGE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-21deb5b53c24100b991e05d3"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-21deb5b53c24100b991e05d3",
+        "candidate_id": "contextual-candidate-21deb5b53c24100b991e05d3",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "USE_SCENARIO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "copy_density": "SPARSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 20,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 19,
+            "unique_case_count": 19,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "21deb5b53c24100b991e05d3f4d935b2690e929a952d26bb0b1a8a8ce6716125",
+          "semantic_review_result_sha256": "c69e841fba3fa105f8cbd28c8c77a79ddfbdd35ffdf36d302fc5d377565577ba",
+          "promotion_decision_sha256": "164a6c85377debd322eac3567ce77fdecb68c21fb40f6097aeb2fb12774df7a8"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-154b7cd8667344eb8c6ac072"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-154b7cd8667344eb8c6ac072",
+        "candidate_id": "contextual-candidate-154b7cd8667344eb8c6ac072",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "scene_relevance": "NO_SCENE"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 57,
+            "unique_case_count": 39,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 9,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.826087,
+          "TUNE_within_context_prevalence": 0.692308,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "154b7cd8667344eb8c6ac0721e1cee4d328cfd22abbfe380b50d56c2c7db4c42",
+          "semantic_review_result_sha256": "a046c06d2634dc129ed724f2d6c9846b7aa162a140183ef8c5c201921bd6b11d",
+          "promotion_decision_sha256": "b4ae2ce5c0136e19e3b1daf6b8b9afccdc4fa92a1aa0aea606c8832db75c3eba"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-2794f1f5ce4922972c90bdb8"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-2794f1f5ce4922972c90bdb8",
+        "candidate_id": "contextual-candidate-2794f1f5ce4922972c90bdb8",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "SCENARIO_RELEVANCE",
+          "page_role": "BENEFIT_STATEMENT",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "PHOTOGRAPHIC",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 12,
+            "unique_case_count": 10,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 7,
+            "unique_case_count": 7,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "2794f1f5ce4922972c90bdb871bf7b45933cae662551a47f2a4d71336e843362",
+          "semantic_review_result_sha256": "d900b7dc27b205ad7f912649ff3d5512bd199e5e9e0caec3bedd6178f1d6dbfd",
+          "promotion_decision_sha256": "ac7b8b7171674c3d952498fb225fc26615180d4b9d3dc06f97ab63e78619a5b6"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-a63d62b6599416c6037dbc0e"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-a63d62b6599416c6037dbc0e",
+        "candidate_id": "contextual-candidate-a63d62b6599416c6037dbc0e",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "BENEFIT_STATEMENT",
+          "surface": "ECOM_CAROUSEL",
+          "product_representation": "RENDERED",
+          "copy_density": "MEDIUM"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 28,
+            "unique_case_count": 26,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 4,
+            "unique_case_count": 4,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "a63d62b6599416c6037dbc0e4995b2cc2cb577f1272ca2429bf57e37910e6003",
+          "semantic_review_result_sha256": "b1a5920966c4b0b07149f3e638f7b2291c2ec972f0aefe6570aaff5c83590d85",
+          "promotion_decision_sha256": "22b3be7d92e4181b8611ed6dc78b5a842743c4bc97e7007db102528446a757f3"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9e68afaf75fba38820b52156"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9e68afaf75fba38820b52156",
+        "candidate_id": "contextual-candidate-9e68afaf75fba38820b52156",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "PROCESS_DEMONSTRATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_CAROUSEL",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 7,
+            "unique_case_count": 7,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 3,
+            "unique_case_count": 3,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "9e68afaf75fba38820b52156d170ceff29d1368c3c27c07e3b128ad9899cc0b6",
+          "semantic_review_result_sha256": "21bc02c000fb9bb81fb2b1135bb3bc7e61e3055d6151cc7c741e877e069e4a51",
+          "promotion_decision_sha256": "5b31d77e79fe1a5eb3a7ad3871088ebc00d499aeb54d96e3ab088571b1c00ba6"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9db521135227a0ff3d9a8012"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9db521135227a0ff3d9a8012",
+        "candidate_id": "contextual-candidate-9db521135227a0ff3d9a8012",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "COMPARATIVE_PROOF",
+          "page_role": "COMPARISON",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 8,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 13,
+            "unique_case_count": 13,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.888889,
+          "TUNE_within_context_prevalence": 0.8125,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "9db521135227a0ff3d9a8012c212e7a921f67665a360075bacf58595b3a7f54a",
+          "semantic_review_result_sha256": "9aeaca54244790aa75cf059a1943029cad4f9c1ca7a46896465813bb6e8a3dd8",
+          "promotion_decision_sha256": "526130390fea91b98515e25a7cfdee256e69843b3744c5599869232f128280ec"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-beac050fff5086b067b6f14d"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-beac050fff5086b067b6f14d",
+        "candidate_id": "contextual-candidate-beac050fff5086b067b6f14d",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_CAROUSEL",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_CAROUSEL"
+        },
+        "effect": {
+          "product_representation": "RENDERED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 182,
+            "unique_case_count": 119,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 24,
+            "unique_case_count": 24,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.65,
+          "TUNE_within_context_prevalence": 0.631579,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "beac050fff5086b067b6f14dd03d72e485d898343de1f277658d3f16339c4860",
+          "semantic_review_result_sha256": "8e9089ec44a1fc90cd09f0ce16595f4ec54db0fce39a689173d82199969ae004",
+          "promotion_decision_sha256": "1d99a05d891765a200821abcfedd4588bca7640934a07565d80e9dccbea719e5"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_CAROUSEL",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-803d99654536d3e7e7f7f7c9"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-803d99654536d3e7e7f7f7c9",
+        "candidate_id": "contextual-candidate-803d99654536d3e7e7f7f7c9",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "background.material": "MIXED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 64,
+            "unique_case_count": 44,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.771084,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "803d99654536d3e7e7f7f7c984778e71629b067aadcc51ee37f29d21ceb05376",
+          "semantic_review_result_sha256": "8bb2f48e6b40ab63335bba7c532703b7dd119de025ff55fa03dcddd2fe406728",
+          "promotion_decision_sha256": "fdb7613ddc45ccc25b1ddcf98f6afda2c379ffc21ff51757c138281e078fd483"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-b7b47b4dbed9979294b8b887"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-b7b47b4dbed9979294b8b887",
+        "candidate_id": "contextual-candidate-b7b47b4dbed9979294b8b887",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 83,
+            "unique_case_count": 54,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "b7b47b4dbed9979294b8b887cd86d1bf5d03642901fe033435c12d0788fca97f",
+          "semantic_review_result_sha256": "ddad073c7936a8f8d138ecfe9333f4cca7b66ae52719f7a8cab854720aebf0f9",
+          "promotion_decision_sha256": "293c22be51bfdcb3e5ea578dafc7a92b8d6bc258150e3de4564727817d975a21"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-c97290ae604821c8745f9651"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-c97290ae604821c8745f9651",
+        "candidate_id": "contextual-candidate-c97290ae604821c8745f9651",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "background.system": "COMPOSITE"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 8,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 82,
+            "unique_case_count": 53,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.987952,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "c97290ae604821c8745f96512cf194d5b10256e1f56b65d8843082fa71b93e8f",
+          "semantic_review_result_sha256": "db1d930d921efc349ba0a8477e7ad6a6ea4a7f66313a330995dfa788d3108bf6",
+          "promotion_decision_sha256": "790ba11da7e74a4803cb60b05e302d4992c5d531bccd83daf8ec1bf11a71635c"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-3f8fc00ec7b529a00c24aa82"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-3f8fc00ec7b529a00c24aa82",
+        "candidate_id": "contextual-candidate-3f8fc00ec7b529a00c24aa82",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "BENEFIT_STATEMENT",
+          "surface": "ECOM_DETAIL_SLICE",
+          "copy_density": "MEDIUM",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 13,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 6,
+            "unique_case_count": 6,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 1.0,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "3f8fc00ec7b529a00c24aa8274cfbdc0adbc2968dca3bc484a920ee73c8816dd",
+          "semantic_review_result_sha256": "3c69a95d8d5de7c5b908c22d4e4090d62dadc5f27d9ee073f4652784d5a160d6",
+          "promotion_decision_sha256": "59f69627bf4027d7d25a924546d99688f82dffda7fe1d38978b5709a87757fd4"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-9242c04575a95567345e8280"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-9242c04575a95567345e8280",
+        "candidate_id": "contextual-candidate-9242c04575a95567345e8280",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "FEATURE_VISUALIZATION",
+          "page_role": "FEATURE_EXPLANATION",
+          "surface": "ECOM_DETAIL_SLICE",
+          "copy_density": "MEDIUM"
+        },
+        "effect": {
+          "scene_relevance": "DIRECT"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 23,
+            "unique_case_count": 18,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 29,
+            "unique_case_count": 21,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.657143,
+          "TUNE_within_context_prevalence": 0.644444,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "9242c04575a95567345e8280e936565fa39c34b4ec31180cd07a40d8551ba15e",
+          "semantic_review_result_sha256": "9e834ce6a9fe32e1402fd337aa2d06c9f0a8845d02135b0d43f37f99599c9038",
+          "promotion_decision_sha256": "7638fdb9181172c64b70642109d687fc0d00a8e233f1d5c0b413b9ac0cdf3c69"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-eca05c6672f53a129b54326d"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-eca05c6672f53a129b54326d",
+        "candidate_id": "contextual-candidate-eca05c6672f53a129b54326d",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_SLICE",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "TRUST_PROOF",
+          "page_role": "TRUST_MODULE",
+          "surface": "ECOM_DETAIL_SLICE"
+        },
+        "effect": {
+          "typography.treatment": "SOLID"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 9,
+            "unique_case_count": 9,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 3,
+            "unique_case_count": 3,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.75,
+          "tune_same_direction": true
+        },
+        "confidence": "MEDIUM",
+        "source_hashes": {
+          "candidate_identity_sha256": "eca05c6672f53a129b54326d336473d0a510a7c9f0c0fe84b5a42a7180f16600",
+          "semantic_review_result_sha256": "d14c0885e67ae2ccacf32c52a94509b8776656df64dc13a06b326f189e4c0437",
+          "promotion_decision_sha256": "b33f99917681f7a2be56324909473b6a6f765dfba1f67c4a83a4e41454cc7d2f"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_SLICE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-4f369eb12f9a4e7a053ca145"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-4f369eb12f9a4e7a053ca145",
+        "candidate_id": "contextual-candidate-4f369eb12f9a4e7a053ca145",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_MAIN_IMAGE",
+        "fallback_level": 4,
+        "match_priority": 4,
+        "condition": {
+          "evidence_type": "PRODUCT_IDENTITY",
+          "page_role": "IDENTITY_HERO",
+          "surface": "ECOM_MAIN_IMAGE",
+          "scene_relevance": "NO_SCENE"
+        },
+        "effect": {
+          "lighting.product_separation": "CLEAR"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 97,
+            "unique_case_count": 57,
+            "source_profile_count": 3,
+            "source_profile_ids": [
+              "profile-02",
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 15,
+            "unique_case_count": 8,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.882353,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "4f369eb12f9a4e7a053ca14559bb6184ef8d3a90b210734bf8ac402cf16afb05",
+          "semantic_review_result_sha256": "be1fad9197aa4e10aae57cd4b835fb51064183e37d5dc3e37c16ee7d1f646da0",
+          "promotion_decision_sha256": "78cb483ee02049cc3a27fd784b31a67a2e5db010ed6c3bf82c90edbc7296458f"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_MAIN_IMAGE",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-0f7c3f046364eb92589a2881"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-0f7c3f046364eb92589a2881",
+        "candidate_id": "contextual-candidate-0f7c3f046364eb92589a2881",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 5,
+        "match_priority": 5,
+        "condition": {
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "composition": "CONTINUOUS_VERTICAL"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 16,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 84,
+            "unique_case_count": 54,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 1.0,
+          "TUNE_within_context_prevalence": 0.976744,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "0f7c3f046364eb92589a28810cabe8fba415fbd9439d0fd01327f355a4d7cbd6",
+          "semantic_review_result_sha256": "fdcd1f0a0f3bc3fbc8a002b6fd2d77a7e87bbb6765511cdfa0ddf923c3bbfbfa",
+          "promotion_decision_sha256": "e3e85df59dca18ae275c152784f0558d4cb5e061fbaef33b218e5f17fa86c829"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    },
+    {
+      "source_type": "EVIDENCE_DERIVED",
+      "source_ref": {
+        "bundle_path": "work/api-analysis/contextual-independent-review-v1/promotion-v1/contextual-promoted-rule-bundle.json",
+        "bundle_sha256": "2455aebbd299ec075cdf62e7d6f5243821c7d1bb4abe00af983f8ee284c77182",
+        "rule_id": "contextual-rule-f20ed6974e846a02d8e64130"
+      },
+      "rule_payload": {
+        "rule_id": "contextual-rule-f20ed6974e846a02d8e64130",
+        "candidate_id": "contextual-candidate-f20ed6974e846a02d8e64130",
+        "status": "ACTIVE_PROMOTED",
+        "surface": "ECOM_DETAIL_LONG",
+        "fallback_level": 5,
+        "match_priority": 5,
+        "condition": {
+          "surface": "ECOM_DETAIL_LONG",
+          "product_representation": "MIXED",
+          "copy_density": "DENSE",
+          "scene_relevance": "DIRECT"
+        },
+        "effect": {
+          "copy.alignment": "MIXED"
+        },
+        "support": {
+          "DISCOVERY": {
+            "unique_sha256_count": 15,
+            "unique_case_count": 11,
+            "source_profile_count": 2,
+            "source_profile_ids": [
+              "profile-03",
+              "profile-04"
+            ]
+          },
+          "TUNE": {
+            "unique_sha256_count": 79,
+            "unique_case_count": 53,
+            "source_profile_count": 1,
+            "source_profile_ids": [
+              "profile-05"
+            ]
+          },
+          "DISCOVERY_within_context_prevalence": 0.9375,
+          "TUNE_within_context_prevalence": 0.918605,
+          "tune_same_direction": true
+        },
+        "confidence": "HIGH",
+        "source_hashes": {
+          "candidate_identity_sha256": "f20ed6974e846a02d8e641303d641001d25462c7ae79ad9b23c6ffc0bb20c32d",
+          "semantic_review_result_sha256": "d637080d44ad42d162c89ad79eac9f558e38b225c82673a2d75c8a8179ca78e2",
+          "promotion_decision_sha256": "6bc2c2b8cf6317d1cbc9609dbd9ce176aefdd09ec49cea7ba56ddf9e3cccdc84"
+        },
+        "runtime_guards": {
+          "surface_must_equal": "ECOM_DETAIL_LONG",
+          "cross_surface_match_forbidden": true,
+          "unknown_condition_or_effect_forbidden": true,
+          "sequence_basis_allowed": [
+            "VISIBLE_ECOM_ORDER",
+            "HUMAN_CONFIRMED"
+          ],
+          "note_order_only_forbidden": true,
+          "trusted_sequence_unknown_position_policy": "UNCONFIRMED",
+          "product_identity_policy": "PRESERVE",
+          "offer_may_not_override_product_identity": true
+        }
+      }
+    }
+  ],
+  "engineered_default_rules": [
+    {
+      "rule_id": "engineered-default-global-four-surface",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ALL_FOUR_SURFACES",
+      "page_role": "GLOBAL",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "PRODUCT_FIRST_SUBJECT",
+      "product_scale": "IDENTITY_LEGIBLE",
+      "product_representation": "FACT_BOUND_SAME_PRODUCT",
+      "copy_hierarchy": [
+        "PRODUCT_IDENTITY",
+        "FACT_BOUND_MESSAGE",
+        "OPTIONAL_SUBORDINATE_PROMOTION"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "PRODUCT_SEPARATION_WITH_FACT_COMPATIBLE_MATERIAL_RENDERING",
+      "forbidden_conditions": [
+        "product_drift",
+        "unsupported_fact_or_claim",
+        "promotion_overrides_product_identity",
+        "background_or_copy_becomes_first_subject"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-34b15c854401db67dd5da4e3",
+        "contextual-rule-4a0f2cfde55a09042f0b5e88",
+        "contextual-rule-60e3df0eb13a586df8667f67",
+        "contextual-rule-c178dacbef53e8df6b0bffa5",
+        "contextual-rule-fe420b1f1a2413559312b79a",
+        "contextual-rule-17bb36d33f5cdb93d2a62838",
+        "contextual-rule-949e78149fab37a2cd9dd1c8",
+        "contextual-rule-9dbb6d1f31f1f752277aee17",
+        "contextual-rule-c72cab662352444bc321ac6a",
+        "contextual-rule-fb102e295fed1e6a7d63278f",
+        "contextual-rule-b8e3321c5f0ddcf03e2b000d",
+        "contextual-rule-04899f96997774cac4bd40cd",
+        "contextual-rule-5d19a637074a39d2c8d9d8ad",
+        "contextual-rule-9da8299b076d30f296a919b0",
+        "contextual-rule-a91bd14df7a55138a728aed0",
+        "contextual-rule-f3e4741b2945f908a18699eb",
+        "contextual-rule-fd64275edb768a92337c88ab",
+        "contextual-rule-200946605c0512880d1b88e8",
+        "contextual-rule-441cea7d3c1631d70bc40757",
+        "contextual-rule-4ad0f42541955f5d1678996d",
+        "contextual-rule-7d7b4372f666566e20d59447",
+        "contextual-rule-8a68a3c60f0f3c3f06555370",
+        "contextual-rule-923c899907569be3604e31a1",
+        "contextual-rule-9e3a26c8e623084b2db64684",
+        "contextual-rule-afebabb4b97714ef5d00dc10",
+        "contextual-rule-ea1daaf2d07a2ce7fc372246",
+        "contextual-rule-12d5b968fff6df5a7210f698",
+        "contextual-rule-470b77c68fcbf740f6dea1d0",
+        "contextual-rule-a2ddb830cc3039434eb39912",
+        "contextual-rule-442cecfc2c3e8662d4fcfd45",
+        "contextual-rule-5dc76d2b2bb6a3daed161733",
+        "contextual-rule-60517fde224faeb9332a66af",
+        "contextual-rule-c0510bc2aa349808e7b24f9e",
+        "contextual-rule-cc2e3ce0b8081f0883b0668b",
+        "contextual-rule-ec059186fb808bd2fb4701f8",
+        "contextual-rule-2664540a2908dd9ac726b075",
+        "contextual-rule-bc302a750a6032ff3f200fad",
+        "contextual-rule-d797e1ca1bbaa387fb0f2aae",
+        "contextual-rule-28238d8a3e13e7248b7d7b5a",
+        "contextual-rule-fd4cd701729bc39ab894a0c0",
+        "contextual-rule-9aee866409fa061f5e713f4e",
+        "contextual-rule-a5ac8b6f9114b0ad723f3a1b",
+        "contextual-rule-ffa7d17000f957fcc6c0afe0",
+        "contextual-rule-21deb5b53c24100b991e05d3",
+        "contextual-rule-154b7cd8667344eb8c6ac072",
+        "contextual-rule-2794f1f5ce4922972c90bdb8",
+        "contextual-rule-a63d62b6599416c6037dbc0e",
+        "contextual-rule-9e68afaf75fba38820b52156",
+        "contextual-rule-9db521135227a0ff3d9a8012",
+        "contextual-rule-beac050fff5086b067b6f14d",
+        "contextual-rule-803d99654536d3e7e7f7f7c9",
+        "contextual-rule-b7b47b4dbed9979294b8b887",
+        "contextual-rule-c97290ae604821c8745f9651",
+        "contextual-rule-3f8fc00ec7b529a00c24aa82",
+        "contextual-rule-9242c04575a95567345e8280",
+        "contextual-rule-eca05c6672f53a129b54326d",
+        "contextual-rule-4f369eb12f9a4e7a053ca145",
+        "contextual-rule-0f7c3f046364eb92589a2881",
+        "contextual-rule-f20ed6974e846a02d8e64130"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-main-standard-identity",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_MAIN_IMAGE",
+      "page_role": "STANDARD_IDENTITY_MAIN",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "SINGLE_CLEAR_IDENTITY_HERO",
+      "product_scale": "DOMINANT_WITH_SAFE_EDGE_CLEARANCE",
+      "product_representation": "WHOLE_PRODUCT_IDENTITY_VIEW",
+      "copy_hierarchy": [
+        "PRODUCT_IDENTITY",
+        "CORE_FACT_IF_SUPPLIED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "CLEAR_PRODUCT_SEPARATION_AND_MATERIAL_FIDELITY",
+      "forbidden_conditions": [
+        "promotion_primary",
+        "identity_occluded",
+        "unsupported_feature",
+        "product_structure_changed"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-9aee866409fa061f5e713f4e",
+        "contextual-rule-a5ac8b6f9114b0ad723f3a1b",
+        "contextual-rule-ffa7d17000f957fcc6c0afe0",
+        "contextual-rule-4f369eb12f9a4e7a053ca145"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-main-offer-identity",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_MAIN_IMAGE",
+      "page_role": "OFFER_IDENTITY_MAIN",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "IDENTITY_HERO_WITH_SUBORDINATE_OFFER_ZONE",
+      "product_scale": "DOMINANT_WITH_OFFER_CLEARANCE",
+      "product_representation": "WHOLE_PRODUCT_IDENTITY_VIEW",
+      "copy_hierarchy": [
+        "PRODUCT_IDENTITY",
+        "USER_FACT_OFFER",
+        "CORE_FACT_IF_SUPPLIED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "CLEAR_PRODUCT_SEPARATION_AND_MATERIAL_FIDELITY",
+      "forbidden_conditions": [
+        "offer_missing_from_user_fact",
+        "offer_occludes_product",
+        "offer_is_larger_than_identity_message",
+        "offer_changes_product_identity"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-9aee866409fa061f5e713f4e",
+        "contextual-rule-a5ac8b6f9114b0ad723f3a1b",
+        "contextual-rule-ffa7d17000f957fcc6c0afe0",
+        "contextual-rule-4f369eb12f9a4e7a053ca145"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-carousel-slot-1-identity",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_CAROUSEL",
+      "page_role": "CAROUSEL_SLOT_1_IDENTITY",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "IDENTITY_ESTABLISHING_HERO",
+      "product_scale": "DOMINANT",
+      "product_representation": "WHOLE_PRODUCT_OR_IDENTITY_DEFINING_VIEW",
+      "copy_hierarchy": [
+        "PRODUCT_IDENTITY",
+        "CORE_FACT_IF_SUPPLIED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "CLEAR_PRODUCT_SEPARATION",
+      "forbidden_conditions": [
+        "detail_only_view",
+        "scene_becomes_primary",
+        "promotion_primary"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-441cea7d3c1631d70bc40757",
+        "contextual-rule-7d7b4372f666566e20d59447",
+        "contextual-rule-154b7cd8667344eb8c6ac072",
+        "contextual-rule-beac050fff5086b067b6f14d"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-carousel-slot-2-core-selling-point",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_CAROUSEL",
+      "page_role": "CAROUSEL_SLOT_2_CORE_SELLING_POINT",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ONE_CORE_SELLING_POINT_WITH_VISIBLE_PRODUCT",
+      "product_scale": "PRIMARY",
+      "product_representation": "FACT_BOUND_FUNCTION_OR_FEATURE_VIEW",
+      "copy_hierarchy": [
+        "CORE_SELLING_POINT",
+        "SUPPORTING_FACT"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "LIGHTING_REVEALS_CLAIMED_FUNCTION_OR_MATERIAL",
+      "forbidden_conditions": [
+        "invented_function",
+        "multiple_competing_primary_claims",
+        "identity_lost"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-60e3df0eb13a586df8667f67",
+        "contextual-rule-c178dacbef53e8df6b0bffa5",
+        "contextual-rule-17bb36d33f5cdb93d2a62838",
+        "contextual-rule-c72cab662352444bc321ac6a",
+        "contextual-rule-fb102e295fed1e6a7d63278f",
+        "contextual-rule-b8e3321c5f0ddcf03e2b000d",
+        "contextual-rule-a91bd14df7a55138a728aed0",
+        "contextual-rule-f3e4741b2945f908a18699eb",
+        "contextual-rule-fd64275edb768a92337c88ab",
+        "contextual-rule-9e68afaf75fba38820b52156"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-carousel-slot-3-scene-benefit",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_CAROUSEL",
+      "page_role": "CAROUSEL_SLOT_3_SCENE_BENEFIT",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "PRODUCT_IN_COMPATIBLE_USE_SCENE",
+      "product_scale": "PRIMARY",
+      "product_representation": "UNCHANGED_PRODUCT_IN_USE_CONTEXT",
+      "copy_hierarchy": [
+        "SCENE_BENEFIT",
+        "FACT_BOUND_SUPPORT"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "SCENE_LIGHTING_PRESERVES_PRODUCT_SEPARATION",
+      "forbidden_conditions": [
+        "incompatible_scene",
+        "scene_obscures_product",
+        "unsupported_benefit"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-34b15c854401db67dd5da4e3",
+        "contextual-rule-4a0f2cfde55a09042f0b5e88",
+        "contextual-rule-fe420b1f1a2413559312b79a",
+        "contextual-rule-949e78149fab37a2cd9dd1c8",
+        "contextual-rule-9dbb6d1f31f1f752277aee17",
+        "contextual-rule-04899f96997774cac4bd40cd",
+        "contextual-rule-5d19a637074a39d2c8d9d8ad",
+        "contextual-rule-9da8299b076d30f296a919b0",
+        "contextual-rule-200946605c0512880d1b88e8",
+        "contextual-rule-4ad0f42541955f5d1678996d",
+        "contextual-rule-8a68a3c60f0f3c3f06555370",
+        "contextual-rule-9e3a26c8e623084b2db64684",
+        "contextual-rule-21deb5b53c24100b991e05d3",
+        "contextual-rule-2794f1f5ce4922972c90bdb8",
+        "contextual-rule-a63d62b6599416c6037dbc0e"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-carousel-slot-4-detail-proof",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_CAROUSEL",
+      "page_role": "CAROUSEL_SLOT_4_DETAIL_PROOF",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ONE_RELEVANT_DETAIL_WITH_PRODUCT_CONTEXT",
+      "product_scale": "DETAIL_WITH_IDENTITY_CONTEXT",
+      "product_representation": "FACT_BOUND_DETAIL_PROOF_VIEW",
+      "copy_hierarchy": [
+        "PROVEN_FEATURE",
+        "EVIDENCE_CAPTION_IF_NEEDED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "DIRECTIONAL_LIGHTING_REVEALS_VERIFIABLE_DETAIL",
+      "forbidden_conditions": [
+        "fabricated_micro_detail",
+        "decorative_detail_without_proof",
+        "identity_ambiguous"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-60e3df0eb13a586df8667f67",
+        "contextual-rule-c178dacbef53e8df6b0bffa5",
+        "contextual-rule-17bb36d33f5cdb93d2a62838",
+        "contextual-rule-c72cab662352444bc321ac6a",
+        "contextual-rule-fb102e295fed1e6a7d63278f",
+        "contextual-rule-b8e3321c5f0ddcf03e2b000d",
+        "contextual-rule-a91bd14df7a55138a728aed0",
+        "contextual-rule-f3e4741b2945f908a18699eb",
+        "contextual-rule-fd64275edb768a92337c88ab",
+        "contextual-rule-9e68afaf75fba38820b52156"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-carousel-slot-5-promotion-trust-summary",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_CAROUSEL",
+      "page_role": "CAROUSEL_SLOT_5_PROMOTION_TRUST_SUMMARY",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "PRODUCT_ANCHORED_SUMMARY_WITH_SUBORDINATE_MODULES",
+      "product_scale": "PRIMARY",
+      "product_representation": "CONSISTENT_PRODUCT_IDENTITY_WITH_FACT_SUMMARY",
+      "copy_hierarchy": [
+        "PRODUCT_IDENTITY",
+        "SPEC_OR_TRUST_FACT",
+        "USER_FACT_OFFER_IF_PRESENT"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "CONSISTENT_TRUSTWORTHY_PRODUCT_SEPARATION",
+      "forbidden_conditions": [
+        "invented_specification",
+        "unsupported_certification",
+        "offer_primary",
+        "absolute_claim_without_user_fact"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-923c899907569be3604e31a1",
+        "contextual-rule-afebabb4b97714ef5d00dc10",
+        "contextual-rule-ea1daaf2d07a2ce7fc372246",
+        "contextual-rule-12d5b968fff6df5a7210f698",
+        "contextual-rule-470b77c68fcbf740f6dea1d0",
+        "contextual-rule-a2ddb830cc3039434eb39912",
+        "contextual-rule-9db521135227a0ff3d9a8012"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-carousel-difference-gate",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_CAROUSEL",
+      "page_role": "CAROUSEL_FIVE_IMAGE_DIFFERENCE_GATE",
+      "coverage_mode": "EXPLICIT_BLOCK",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "BLOCK_DUPLICATE_PRIMARY_COMPOSITION_OR_MESSAGE",
+      "product_scale": "INHERIT_SLOT_DEFAULT",
+      "product_representation": "INHERIT_SLOT_DEFAULT",
+      "copy_hierarchy": [
+        "ONE_UNIQUE_PRIMARY_PURPOSE_PER_SLOT"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "INHERIT_SLOT_DEFAULT",
+      "forbidden_conditions": [
+        "duplicate_primary_claim_across_slots",
+        "duplicate_primary_composition_across_slots",
+        "slot_purpose_not_distinguishable"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-34b15c854401db67dd5da4e3",
+        "contextual-rule-4a0f2cfde55a09042f0b5e88",
+        "contextual-rule-60e3df0eb13a586df8667f67",
+        "contextual-rule-c178dacbef53e8df6b0bffa5",
+        "contextual-rule-fe420b1f1a2413559312b79a",
+        "contextual-rule-17bb36d33f5cdb93d2a62838",
+        "contextual-rule-949e78149fab37a2cd9dd1c8",
+        "contextual-rule-9dbb6d1f31f1f752277aee17",
+        "contextual-rule-c72cab662352444bc321ac6a",
+        "contextual-rule-fb102e295fed1e6a7d63278f",
+        "contextual-rule-b8e3321c5f0ddcf03e2b000d",
+        "contextual-rule-04899f96997774cac4bd40cd",
+        "contextual-rule-5d19a637074a39d2c8d9d8ad",
+        "contextual-rule-9da8299b076d30f296a919b0",
+        "contextual-rule-a91bd14df7a55138a728aed0",
+        "contextual-rule-f3e4741b2945f908a18699eb",
+        "contextual-rule-fd64275edb768a92337c88ab",
+        "contextual-rule-200946605c0512880d1b88e8",
+        "contextual-rule-441cea7d3c1631d70bc40757",
+        "contextual-rule-4ad0f42541955f5d1678996d",
+        "contextual-rule-7d7b4372f666566e20d59447",
+        "contextual-rule-8a68a3c60f0f3c3f06555370",
+        "contextual-rule-923c899907569be3604e31a1",
+        "contextual-rule-9e3a26c8e623084b2db64684",
+        "contextual-rule-afebabb4b97714ef5d00dc10",
+        "contextual-rule-ea1daaf2d07a2ce7fc372246",
+        "contextual-rule-12d5b968fff6df5a7210f698",
+        "contextual-rule-470b77c68fcbf740f6dea1d0",
+        "contextual-rule-a2ddb830cc3039434eb39912",
+        "contextual-rule-21deb5b53c24100b991e05d3",
+        "contextual-rule-154b7cd8667344eb8c6ac072",
+        "contextual-rule-2794f1f5ce4922972c90bdb8",
+        "contextual-rule-a63d62b6599416c6037dbc0e",
+        "contextual-rule-9e68afaf75fba38820b52156",
+        "contextual-rule-9db521135227a0ff3d9a8012",
+        "contextual-rule-beac050fff5086b067b6f14d"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-detail-long-continuity",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_DETAIL_LONG",
+      "page_role": "DETAIL_LONG_PARAGRAPH_RHYTHM_CONTINUITY",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ORDERED_PARAGRAPHS_WITH_VISUAL_AND_FACTUAL_CONTINUITY",
+      "product_scale": "CONTINUITY_APPROPRIATE_BY_PARAGRAPH",
+      "product_representation": "SAME_PRODUCT_ACROSS_WIDE_DETAIL_NARRATIVE",
+      "copy_hierarchy": [
+        "SECTION_PURPOSE",
+        "FACT_BOUND_EXPLANATION",
+        "TRANSITION_TO_NEXT_SECTION"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "CONTINUOUS_LIGHTING_FAMILY_WITH_SECTION_SPECIFIC_SEPARATION",
+      "forbidden_conditions": [
+        "disconnected_paragraph_order",
+        "abrupt_product_identity_change",
+        "repeated_section_without_new_evidence",
+        "unsupported_narrative_claim"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-442cecfc2c3e8662d4fcfd45",
+        "contextual-rule-5dc76d2b2bb6a3daed161733",
+        "contextual-rule-60517fde224faeb9332a66af",
+        "contextual-rule-c0510bc2aa349808e7b24f9e",
+        "contextual-rule-cc2e3ce0b8081f0883b0668b",
+        "contextual-rule-ec059186fb808bd2fb4701f8",
+        "contextual-rule-803d99654536d3e7e7f7f7c9",
+        "contextual-rule-b7b47b4dbed9979294b8b887",
+        "contextual-rule-c97290ae604821c8745f9651",
+        "contextual-rule-0f7c3f046364eb92589a2881",
+        "contextual-rule-f20ed6974e846a02d8e64130"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-detail-slice-feature",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_DETAIL_SLICE",
+      "page_role": "FEATURE",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ONE_FEATURE_ONE_SLICE",
+      "product_scale": "FEATURE_LEGIBLE",
+      "product_representation": "FACT_BOUND_FEATURE_VIEW",
+      "copy_hierarchy": [
+        "FEATURE",
+        "SUPPORTING_FACT"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "LIGHTING_REVEALS_FEATURE",
+      "forbidden_conditions": [
+        "multiple_primary_features",
+        "invented_feature",
+        "product_drift"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-2664540a2908dd9ac726b075",
+        "contextual-rule-bc302a750a6032ff3f200fad",
+        "contextual-rule-d797e1ca1bbaa387fb0f2aae",
+        "contextual-rule-28238d8a3e13e7248b7d7b5a",
+        "contextual-rule-9242c04575a95567345e8280"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-detail-slice-benefit",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_DETAIL_SLICE",
+      "page_role": "BENEFIT",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ONE_BENEFIT_ONE_SLICE",
+      "product_scale": "PRODUCT_REMAINS_PRIMARY",
+      "product_representation": "FACT_BOUND_BENEFIT_CONTEXT",
+      "copy_hierarchy": [
+        "BENEFIT",
+        "FEATURE_CAUSE_IF_SUPPLIED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "BENEFIT_CONTEXT_WITH_CLEAR_PRODUCT_SEPARATION",
+      "forbidden_conditions": [
+        "unsupported_benefit",
+        "scene_primary",
+        "product_drift"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-3f8fc00ec7b529a00c24aa82"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-detail-slice-specification",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_DETAIL_SLICE",
+      "page_role": "SPECIFICATION",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ONE_SPEC_GROUP_ONE_SLICE",
+      "product_scale": "PRODUCT_OR_MEASUREMENT_CONTEXT_VISIBLE",
+      "product_representation": "FACT_BOUND_SPECIFICATION_VIEW",
+      "copy_hierarchy": [
+        "SPEC_NAME",
+        "USER_FACT_SPEC_VALUE",
+        "UNIT_IF_SUPPLIED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "NEUTRAL_LEGIBLE_SPEC_LIGHTING",
+      "forbidden_conditions": [
+        "invented_specification",
+        "invented_unit",
+        "ambiguous_product_identity"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-fd4cd701729bc39ab894a0c0"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    },
+    {
+      "rule_id": "engineered-default-detail-slice-trust",
+      "source_type": "ENGINEERED_DEFAULT",
+      "surface": "ECOM_DETAIL_SLICE",
+      "page_role": "TRUST",
+      "coverage_mode": "EXPLICIT_DEFAULT",
+      "application_mode": "FILL_NULL_OR_MISSING_ONLY",
+      "composition": "ONE_TRUST_REASON_ONE_SLICE",
+      "product_scale": "PRODUCT_REMAINS_PRIMARY",
+      "product_representation": "FACT_BOUND_TRUST_VIEW",
+      "copy_hierarchy": [
+        "TRUST_FACT",
+        "QUALIFIER_IF_REQUIRED"
+      ],
+      "background_selection_logic": {
+        "selection_mode": "JOINT_FACT_BOUND_SELECTION",
+        "required_inputs": [
+          "USER_FACT.category",
+          "USER_FACT.material",
+          "USER_FACT.core_selling_point",
+          "USER_FACT.use_scene",
+          "USER_FACT.promotion",
+          "USER_FACT.campaign_style"
+        ],
+        "missing_input_policy": "USE_REMAINING_KNOWN_INPUTS_WITHOUT_INFERENCE",
+        "conflict_policy": "PRODUCT_IDENTITY_AND_FACTUAL_FIT_WIN"
+      },
+      "lighting_logic": "CONSISTENT_NEUTRAL_TRUST_LIGHTING",
+      "forbidden_conditions": [
+        "unsupported_certification",
+        "absolute_guarantee",
+        "product_drift"
+      ],
+      "evidence_derived_override_rule_ids": [
+        "contextual-rule-eca05c6672f53a129b54326d"
+      ],
+      "override_semantics": "Applicable EVIDENCE_DERIVED values win field-by-field; this ENGINEERED_DEFAULT may only fill fields that remain null or missing."
+    }
+  ],
+  "profile01_semantics_read": false,
+  "api_calls": 0,
+  "generation_performed": false
+}

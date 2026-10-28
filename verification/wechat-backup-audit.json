@@ -1,0 +1,116 @@
+{
+  "configuration_files_scanned": 400,
+  "archived_configuration_files_scanned": 20,
+  "valid_length_entries": [
+    {
+      "file": "configs/env.development",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 32,
+      "ascii_alphanumeric": true,
+      "same_as_running_key": false,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    }
+  ],
+  "archived_entries": [
+    {
+      "file": "backups/pre-release-20261015-140744/configuration.tar.gz:.env",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 41,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": true,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/pre-release-20261015-140744/configuration.tar.gz:docker-compose.yml",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 26,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/pre-release-20261015-140744/configuration.tar.gz:configs/platform.production.yaml",
+      "field": "mch_apiv3_key",
+      "bytes": 0,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": true,
+      "current_certificate_serial_present": true
+    },
+    {
+      "file": "backups/customer-discounts-20261015-163922/configuration.tar.gz:.env",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 41,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": true,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/customer-discounts-20261015-163922/configuration.tar.gz:docker-compose.yml",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 26,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/customer-discounts-20261015-163922/configuration.tar.gz:configs/platform.development.yaml",
+      "field": "mch_apiv3_key",
+      "bytes": 0,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/customer-discounts-20261015-163922/configuration.tar.gz:configs/platform.production.yaml",
+      "field": "mch_apiv3_key",
+      "bytes": 0,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": true,
+      "current_certificate_serial_present": true
+    },
+    {
+      "file": "backups/customer-model-discounts-20261015-v2/configuration.tar.gz:.env",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 41,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": true,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/customer-model-discounts-20261015-v2/configuration.tar.gz:docker-compose.yml",
+      "field": "PAYMENT_WX_API_V3_KEY",
+      "bytes": 26,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/customer-model-discounts-20261015-v2/configuration.tar.gz:configs/platform.development.yaml",
+      "field": "mch_apiv3_key",
+      "bytes": 0,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": false,
+      "current_certificate_serial_present": false
+    },
+    {
+      "file": "backups/customer-model-discounts-20261015-v2/configuration.tar.gz:configs/platform.production.yaml",
+      "field": "mch_apiv3_key",
+      "bytes": 0,
+      "ascii_alphanumeric": false,
+      "same_as_running_key": false,
+      "current_merchant_present": true,
+      "current_certificate_serial_present": true
+    }
+  ]
+}

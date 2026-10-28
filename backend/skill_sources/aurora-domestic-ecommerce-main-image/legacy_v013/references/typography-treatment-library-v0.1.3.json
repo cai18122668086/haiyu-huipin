@@ -1,0 +1,126 @@
+{
+  "schema_version": "typography-treatment-library-0.1.3",
+  "source_type": "ENGINEERED_DEFAULT",
+  "treatments": {
+    "EDITORIAL_SPLIT_HEADLINE": {
+      "roles": ["IDENTITY", "SUMMARY"],
+      "headline_structure": "small identity line plus staggered two-part hero",
+      "emphasis_target": "category or primary benefit keyword",
+      "weight_mix": ["MEDIUM", "BOLD"],
+      "size_relation": [0.28, 1.0, 1.15, 0.42],
+      "color_assignment": "graphite base with one accent token",
+      "alignment": "asymmetric left lockup",
+      "graphic_devices": ["offset rule", "small identity tab"],
+      "forbidden_combinations": ["full-title all-bold", "three equal headline blocks"],
+      "max_text_density": "MEDIUM"
+    },
+    "KEYWORD_COLOR_EMPHASIS": {
+      "roles": ["FEATURE", "BENEFIT"],
+      "headline_structure": "oversized keyword plus lower-rank explanation",
+      "emphasis_target": "one verified feature or benefit token",
+      "weight_mix": ["BOLD", "REGULAR"],
+      "size_relation": [1.2, 0.48, 0.26],
+      "color_assignment": "single accent keyword; supporting copy remains neutral",
+      "alignment": "evidence-directed asymmetric",
+      "graphic_devices": ["evidence leader", "local highlight"],
+      "forbidden_combinations": ["all-copy accent color", "multiple competing keywords"],
+      "max_text_density": "LOW"
+    },
+    "LARGE_NUMERIC_HERO": {
+      "roles": ["OFFER", "SPECIFICATION"],
+      "headline_structure": "numeric hero with separately scaled unit and offer explanation",
+      "emphasis_target": "verified number only",
+      "weight_mix": ["EXTRA_BOLD", "MEDIUM", "REGULAR"],
+      "size_relation": [1.35, 0.55, 0.34, 0.2],
+      "color_assignment": "offer color on number; neutral explanation; inverse unit when needed",
+      "alignment": "asymmetric numeric anchor",
+      "graphic_devices": ["ticket cut", "benefit badge cluster"],
+      "forbidden_combinations": ["equal-size offer rows", "unverified price anchor"],
+      "max_text_density": "MEDIUM"
+    },
+    "LABEL_AND_CALLOUT": {
+      "roles": ["FEATURE", "PROOF", "TRUST"],
+      "headline_structure": "compact heading plus short labeled callouts",
+      "emphasis_target": "evidence labels",
+      "weight_mix": ["SEMI_BOLD", "MEDIUM", "REGULAR"],
+      "size_relation": [0.72, 0.3, 0.24],
+      "color_assignment": "neutral heading with accent callout markers",
+      "alignment": "evidence grid",
+      "graphic_devices": ["numbered marker", "leader line"],
+      "forbidden_combinations": ["long paragraph labels", "callout over product"],
+      "max_text_density": "MEDIUM"
+    },
+    "TECHNICAL_GRID": {
+      "roles": ["PROOF", "SPECIFICATION"],
+      "headline_structure": "technical heading plus numbered modular evidence cells",
+      "emphasis_target": "evidence index and verified component name",
+      "weight_mix": ["SEMI_BOLD", "MEDIUM", "REGULAR"],
+      "size_relation": [0.7, 0.32, 0.24],
+      "color_assignment": "deep neutral title, cool accent numbers, muted dividers",
+      "alignment": "modular grid",
+      "graphic_devices": ["numbered grid", "macro inset", "fine divider"],
+      "forbidden_combinations": ["decorative data", "same-size black list"],
+      "max_text_density": "MEDIUM_HIGH"
+    },
+    "SCENE_LIGHTWEIGHT_CAPTIONS": {
+      "roles": ["SCENE", "BENEFIT"],
+      "headline_structure": "lightweight headline with spacious supporting line and short scene labels",
+      "emphasis_target": "scene labels",
+      "weight_mix": ["MEDIUM", "REGULAR"],
+      "size_relation": [0.78, 0.38, 0.24],
+      "color_assignment": "soft graphite with low-saturation accent labels",
+      "alignment": "open horizontal rhythm",
+      "graphic_devices": ["light icon label", "spaced caption rail"],
+      "forbidden_combinations": ["giant double-line heavy headline", "dense evidence grid"],
+      "max_text_density": "LOW"
+    },
+    "BADGE_CLUSTER": {
+      "roles": ["TRUST", "OFFER", "SUMMARY"],
+      "headline_structure": "compact headline with differentiated badge group",
+      "emphasis_target": "verified rights or trust facts",
+      "weight_mix": ["BOLD", "MEDIUM"],
+      "size_relation": [0.72, 0.3, 0.24],
+      "color_assignment": "neutral title with controlled accent badge family",
+      "alignment": "clustered modular alignment",
+      "graphic_devices": ["badge cluster", "icon token"],
+      "forbidden_combinations": ["identical full-width pill stack", "more than five badges"],
+      "max_text_density": "MEDIUM"
+    },
+    "COLOR_BLOCK_HEADLINE": {
+      "roles": ["IDENTITY", "FEATURE", "OFFER"],
+      "headline_structure": "short headline paired with a localized color block",
+      "emphasis_target": "one short verified phrase",
+      "weight_mix": ["BOLD", "MEDIUM"],
+      "size_relation": [1.0, 0.46, 0.26],
+      "color_assignment": "inverse text on one accent block; remaining text neutral",
+      "alignment": "offset block alignment",
+      "graphic_devices": ["localized color block", "thin baseline"],
+      "forbidden_combinations": ["full-page accent field", "block behind product"],
+      "max_text_density": "LOW"
+    },
+    "OUTLINE_ACCENT_WORD": {
+      "roles": ["IDENTITY", "FEATURE", "SUMMARY"],
+      "headline_structure": "solid headline with one outlined accent word",
+      "emphasis_target": "one category or feature token",
+      "weight_mix": ["BOLD", "OUTLINE"],
+      "size_relation": [1.0, 1.08, 0.4],
+      "color_assignment": "graphite solid text plus accent outline",
+      "alignment": "staggered word group",
+      "graphic_devices": ["outline word", "short accent rule"],
+      "forbidden_combinations": ["multiple outlined words", "weak contrast outline"],
+      "max_text_density": "LOW"
+    },
+    "ASYMMETRIC_TYPE_LOCKUP": {
+      "roles": ["IDENTITY", "FEATURE", "SUMMARY"],
+      "headline_structure": "unequal text modules around a clear visual axis",
+      "emphasis_target": "one verified keyword and one supporting phrase",
+      "weight_mix": ["BOLD", "MEDIUM", "REGULAR"],
+      "size_relation": [1.0, 0.52, 0.28],
+      "color_assignment": "neutral hierarchy with one intentional accent",
+      "alignment": "asymmetric axis",
+      "graphic_devices": ["offset label", "anchoring rule"],
+      "forbidden_combinations": ["centered repeated template", "equal module sizes"],
+      "max_text_density": "MEDIUM"
+    }
+  }
+}

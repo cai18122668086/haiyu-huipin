@@ -1,0 +1,4 @@
+interface:
+  display_name: "严格局部图片修复"
+  short_description: "严格锁定授权区域，完整保留文字轮廓并验证所有未授权像素"
+  default_prompt: "Use $masked-image-repair to edit only the authorized image region, preserve complete content geometry and typography, and verify every unauthorized pixel remains identical."

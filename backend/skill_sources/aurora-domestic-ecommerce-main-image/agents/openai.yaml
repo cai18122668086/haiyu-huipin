@@ -1,0 +1,4 @@
+interface:
+  display_name: "极光国内电商主图"
+  short_description: "极光六图策略，锁事实身份，释放商业画面表现力"
+  default_prompt: "使用 $aurora-domestic-ecommerce-main-image 规划并生成淘宝六图；先分析每页最值得放大的卖点，只展示简洁六行策略。一张图可组合相关卖点，但不为覆盖资料而堆信息。我确认后锁定商品身份、事实和统一美术方向，由你自主选择最有冲击力的镜头、构图、光线和视觉叙事，连续完成整套并最后统一验收。"

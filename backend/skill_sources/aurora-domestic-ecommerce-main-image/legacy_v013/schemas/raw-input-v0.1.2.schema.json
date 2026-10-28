@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "raw-input-v0.1.2.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request_id", "product", "output"],
+  "properties": {
+    "schema_version": {"const": "domestic-ecommerce-raw-input-0.1.2"},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "category",
+        "same_product_reference_images",
+        "verified_attributes",
+        "verified_selling_points",
+        "verified_scenes",
+        "verified_offers",
+        "forbidden_content"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "same_product_reference_images": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "verified_attributes": {"type": "object"},
+        "verified_selling_points": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+        "verified_scenes": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+        "verified_offers": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+        "forbidden_content": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "image_count"],
+      "properties": {
+        "type": {
+          "enum": [
+            "STANDARD_IDENTITY_MAIN",
+            "OFFER_IDENTITY_MAIN",
+            "FIVE_IMAGE_CAROUSEL",
+            "DETAIL_LONG",
+            "DETAIL_SLICE"
+          ]
+        },
+        "image_count": {"type": "integer", "minimum": 1, "maximum": 8},
+        "detail_slice_roles": {
+          "type": "array",
+          "items": {"enum": ["FEATURE", "BENEFIT", "SPECIFICATION", "TRUST"]}
+        }
+      }
+    },
+    "campaign_preference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tone": {"type": "string", "minLength": 1},
+        "palette": {"type": "string", "minLength": 1},
+        "materials": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "style_notes": {"type": "string", "minLength": 1},
+        "experimental_patterns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["V3_DURABLE_GOODS_STYLE_GRAMMAR"]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+        "text": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"output": {"properties": {"type": {"const": "FIVE_IMAGE_CAROUSEL"}}}}},
+      "then": {"properties": {"output": {"properties": {"image_count": {"const": 5}}}}}
+    },
+    {
+      "if": {"properties": {"output": {"properties": {"type": {"enum": ["STANDARD_IDENTITY_MAIN", "OFFER_IDENTITY_MAIN"]}}}}},
+      "then": {"properties": {"output": {"properties": {"image_count": {"const": 1}}}}}
+    }
+  ]
+}

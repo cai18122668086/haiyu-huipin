@@ -1,0 +1,43 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	encode zstd gzip
+
+	request_body {
+		max_size 25MB
+	}
+
+	header {
+		-Server
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:8765/v1/enrollment http://127.0.0.1:8765/v1/enrollment; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	}
+
+	@api {
+		path /api/* /health/*
+		not path /api/v1/workspaces/*/assets/*/content
+	}
+	header @api Cache-Control "no-store"
+
+	@immutable path /_polaris-static/* /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	@private_asset path /api/v1/workspaces/*/assets/*/content
+	handle @private_asset {
+		reverse_proxy api:8000
+	}
+
+	handle @api {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

@@ -1,0 +1,8 @@
+{
+  "canonical_preview_running": true,
+  "frontend_status": 200,
+  "admin_status": 200,
+  "synthetic_admin_access": true,
+  "product_count": 9,
+  "real_payments_enabled": false
+}

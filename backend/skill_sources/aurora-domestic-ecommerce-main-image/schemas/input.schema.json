@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "input.schema.json",
+  "type": "object",
+  "required": ["request_id", "product"],
+  "properties": {
+    "request_id": {"type": "string", "minLength": 1},
+    "profile01_semantics_read": {"const": false},
+    "product": {
+      "type": "object",
+      "required": ["name", "category", "original_references"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "original_references": {"type": "array", "minItems": 1},
+        "verified_attributes": {},
+        "verified_selling_points": {},
+        "verified_scenes": {},
+        "verified_offers": {},
+        "verified_service_or_trust_facts": {}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

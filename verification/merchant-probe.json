@@ -1,0 +1,1 @@
+{"operation": "query_nonexistent_order", "real_order_created": false, "response_signature_valid": true, "code": "40004", "sub_code": "ACQ.TRADE_NOT_EXIST", "configured_channels": ["alipay"]}

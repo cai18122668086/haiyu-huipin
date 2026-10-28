@@ -1,0 +1,31 @@
+{
+  "schema_version": "skill-runtime-manifest-v1",
+  "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+  "ignored_runtime_artifacts": ["**/__pycache__/**", "**/*.pyc"],
+  "skill_id": "reference-visual-reverse-remix",
+  "content_hash": "c17306e0a6dec17b291736f110b641a80865011ea67d7de82a94456409620600",
+  "capability": "reference_remix",
+  "input_contract": {
+    "schema_id": "polaris.skill.reference-visual-reverse-remix.input.v1",
+    "required_fields": ["product_asset_refs", "reference_asset_refs", "instruction", "output_count"]
+  },
+  "output_contract": {
+    "schema_id": "polaris.skill.reference-visual-reverse-remix.output.v1",
+    "required_fields": ["result_asset_refs", "usage"]
+  },
+  "policy": {
+    "schema_version": "skill-runtime-policy-v1",
+    "auto_review_regeneration_allowed": false,
+    "successful_page_auto_redraw_allowed": false,
+    "safe_expansion_mode": "disabled",
+    "policy_version": "reference-visual-reverse-remix-source-v1",
+    "active_profile_id": null,
+    "profiles": [],
+    "iteration": null,
+    "safe_expansion": null
+  },
+  "provider_type": "mock",
+  "cost_limit_micros": 0,
+  "real_provider_request_limit": 0,
+  "files": [{"path": "SKILL.md", "sha256": "f6dc1f5dace363efa16bcb7dc5b9341c4ececb6e416fd90702271927c72b4a95"}]
+}

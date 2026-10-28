@@ -1,0 +1,138 @@
+{
+  "schema_version": "research-role-map-0.1.1",
+  "mapping": {
+    "STANDARD_IDENTITY_MAIN": [
+      {
+        "page_role": "IDENTITY_HERO",
+        "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+        "evidence_type": "PRODUCT_IDENTITY",
+        "scene_relevance": "NO_SCENE"
+      }
+    ],
+    "OFFER_IDENTITY_MAIN": [
+      {
+        "page_role": "IDENTITY_HERO",
+        "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+        "evidence_type": "PRODUCT_IDENTITY",
+        "scene_relevance": "NO_SCENE"
+      },
+      {
+        "page_role": "OFFER_MODULE",
+        "communication_goal": "COMMUNICATE_OFFER",
+        "evidence_type": "OFFER_PROOF",
+        "offer_status": "VISIBLE"
+      }
+    ],
+    "CAROUSEL_SLOT_1_IDENTITY": [
+      {
+        "page_role": "IDENTITY_HERO",
+        "communication_goal": "ESTABLISH_PRODUCT_IDENTITY",
+        "evidence_type": "PRODUCT_IDENTITY",
+        "scene_relevance": "NO_SCENE"
+      }
+    ],
+    "CAROUSEL_SLOT_2_CORE_SELLING_POINT": [
+      {
+        "page_role": "FEATURE_EXPLANATION",
+        "communication_goal": "EXPLAIN_CORE_FEATURE",
+        "evidence_type": "FEATURE_VISUALIZATION"
+      }
+    ],
+    "CAROUSEL_SLOT_3_SCENE_BENEFIT": [
+      {
+        "page_role": "USE_SCENARIO",
+        "communication_goal": "DEMONSTRATE_USE_CONTEXT",
+        "evidence_type": "SCENARIO_RELEVANCE",
+        "scene_relevance": "DIRECT"
+      },
+      {
+        "page_role": "BENEFIT_STATEMENT",
+        "communication_goal": "COMMUNICATE_USER_BENEFIT",
+        "evidence_type": "SCENARIO_RELEVANCE",
+        "scene_relevance": "DIRECT"
+      }
+    ],
+    "CAROUSEL_SLOT_4_DETAIL_PROOF": [
+      {
+        "page_role": "DETAIL_EVIDENCE",
+        "communication_goal": "EXPLAIN_CORE_FEATURE",
+        "evidence_type": "MATERIAL_CLOSEUP",
+        "scene_relevance": "DIRECT"
+      },
+      {
+        "page_role": "FEATURE_EXPLANATION",
+        "communication_goal": "EXPLAIN_CORE_FEATURE",
+        "evidence_type": "FEATURE_VISUALIZATION",
+        "scene_relevance": "DIRECT"
+      },
+      {
+        "page_role": "FEATURE_EXPLANATION",
+        "communication_goal": "EXPLAIN_CORE_FEATURE",
+        "evidence_type": "MATERIAL_CLOSEUP"
+      }
+    ],
+    "CAROUSEL_SLOT_5_PROMOTION_TRUST_SUMMARY": [
+      {
+        "page_role": "OFFER_MODULE",
+        "communication_goal": "COMMUNICATE_OFFER",
+        "evidence_type": "OFFER_PROOF",
+        "offer_status": "VISIBLE"
+      },
+      {
+        "page_role": "TRUST_MODULE",
+        "communication_goal": "BUILD_TRUST",
+        "evidence_type": "TRUST_PROOF"
+      },
+      {
+        "page_role": "SPECIFICATION",
+        "communication_goal": "COMMUNICATE_SPECIFICATION",
+        "evidence_type": "SPEC_PARAMETER"
+      },
+      {
+        "page_role": "SUMMARY_CLOSE",
+        "communication_goal": "BUILD_TRUST",
+        "evidence_type": "TRUST_PROOF"
+      }
+    ],
+    "DETAIL_LONG_FEATURE_SECTION": [
+      {
+        "page_role": "FEATURE_EXPLANATION",
+        "communication_goal": "EXPLAIN_CORE_FEATURE",
+        "evidence_type": "FEATURE_VISUALIZATION",
+        "scene_relevance": "DIRECT"
+      }
+    ],
+    "FEATURE": [
+      {
+        "page_role": "FEATURE_EXPLANATION",
+        "communication_goal": "EXPLAIN_CORE_FEATURE",
+        "evidence_type": "FEATURE_VISUALIZATION",
+        "scene_relevance": "DIRECT"
+      }
+    ],
+    "BENEFIT": [
+      {
+        "page_role": "BENEFIT_STATEMENT",
+        "communication_goal": "COMMUNICATE_USER_BENEFIT",
+        "evidence_type": "FEATURE_VISUALIZATION",
+        "scene_relevance": "DIRECT"
+      }
+    ],
+    "SPECIFICATION": [
+      {
+        "page_role": "SPECIFICATION",
+        "communication_goal": "COMMUNICATE_SPECIFICATION",
+        "evidence_type": "SPEC_PARAMETER"
+      }
+    ],
+    "TRUST": [
+      {
+        "page_role": "TRUST_MODULE",
+        "communication_goal": "BUILD_TRUST",
+        "evidence_type": "TRUST_PROOF"
+      }
+    ]
+  },
+  "profile01_semantics_read": false,
+  "generation_performed": false
+}

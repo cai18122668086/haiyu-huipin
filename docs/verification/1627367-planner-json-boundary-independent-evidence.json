@@ -1,0 +1,231 @@
+{
+  "schema": "polaris.offline-planner-json-boundary-independent.v2",
+  "status": "passed",
+  "decision": "离线候选通过；真实链路仍未通过/未复测",
+  "severity": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0
+  },
+  "candidate": {
+    "exact": "16273677fce36371e14b003b0f2cf11609b5f491",
+    "parents": [
+      "fba5313e9b901c05373fd8fa0c726c336c69575f"
+    ],
+    "parent_count": 1,
+    "changed_files": [
+      "backend/app/xinghe_agent.py",
+      "backend/tests/test_xinghe_agent.py"
+    ],
+    "detached_head_verified": true,
+    "clean_before_verification": true
+  },
+  "implementation_audit": {
+    "whole_json_object_uses_complete_json_load": true,
+    "fence_uses_fullmatch": true,
+    "fence_pattern": "\\A```(?:json)?[ \\t]*\\r?\\n(?P<body>.*?)\\r?\\n```[ \\t]*\\Z",
+    "outer_content_after_strip_must_be_one_complete_fence": true,
+    "outside_fence_non_whitespace_allowed": false,
+    "multiple_fences_allowed": false,
+    "first_object_extraction_present": false,
+    "fallback_present": false,
+    "json_tag_case_insensitive": true,
+    "untagged_fence_allowed": true,
+    "opening_horizontal_whitespace_allowed": true,
+    "lf_allowed": true,
+    "crlf_allowed": true,
+    "wrong_page_count_error_code": "PLANNER_SCHEMA_INVALID"
+  },
+  "environment": {
+    "python": {
+      "executable": "C:\\Users\\Administrator\\Documents\\初步网站建立\\.venv\\Scripts\\python.exe",
+      "version": "3.13.14"
+    },
+    "tool_versions": {
+      "pytest": "9.1.1",
+      "ruff": "0.16.0",
+      "mypy": "1.20.2"
+    },
+    "dependency_basis": "backend/pyproject.toml and the existing main-project isolated .venv",
+    "dependency_download_performed": false,
+    "dependency_install_command": null,
+    "bytecode_writes_disabled": true
+  },
+  "isolation": {
+    "settings_env_file": null,
+    "env_file_read": false,
+    "secret_read": false,
+    "real_provider_requests": 0,
+    "external_network_requests": 0,
+    "real_smoke_executed": false,
+    "transport": "in-process offline transport",
+    "external_socket_connections_blocked": true,
+    "loopback_socketpair_allowed_for_testclient": true,
+    "database": "per-case temporary SQLite",
+    "storage": "per-case temporary local storage",
+    "plan_confirmation_executed": false,
+    "image_generation_requests": 0
+  },
+  "tests": {
+    "independent_boundary": {
+      "path": "docs/verification/tools/test_1627367_planner_json_boundary.py",
+      "passed": 22,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "valid_cases": 4,
+      "rejection_cases": 18,
+      "valid_case_names": [
+        "whole object with outer whitespace",
+        "json fence with LF",
+        "mixed-case json fence with CRLF and horizontal whitespace",
+        "untagged fence with LF, horizontal whitespace, and outer whitespace"
+      ],
+      "rejection_case_names": [
+        "plain text",
+        "whole JSON scalar",
+        "whole JSON array",
+        "multiple whole JSON objects",
+        "valid object fence followed by a scalar fence",
+        "non-empty prose before a valid fence",
+        "non-empty prose after a valid fence",
+        "two valid object fences",
+        "unclosed fence",
+        "malformed closing fence",
+        "missing required fields",
+        "screens count other than six",
+        "fenced JSON scalar",
+        "fenced JSON array",
+        "unsupported fence language tag",
+        "opening fence with body on the same line",
+        "whole object followed by a scalar",
+        "whole object preceded by a scalar"
+      ]
+    },
+    "v5_exact_regressions": {
+      "passed": 3,
+      "failed": 0,
+      "cases": [
+        "valid object fence followed by a second scalar fence",
+        "non-empty text before a valid object fence",
+        "non-empty text after a valid object fence"
+      ],
+      "common_result": {
+        "status": "failed",
+        "error_code": "PLANNER_SCHEMA_INVALID",
+        "requested_page_count": 6,
+        "expected_item_count": 6,
+        "planned_page_count": 0,
+        "planner_request_count": 1,
+        "image_request_count": 0,
+        "reported_usage": true,
+        "total_tokens": 150,
+        "planner_actual_cost_micros": null,
+        "job_actual_cost": null,
+        "configured_budget_limit_micros": 200000000,
+        "job_api_request_count": 1,
+        "job_usage_completeness": "complete"
+      }
+    },
+    "candidate_targeted": {
+      "scope": "strict_planner_content_reaches_confirmation_gate or unsafe_planner_content_fails_closed_before_image",
+      "passed": 14,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "full_backend_test_xinghe_agent": {
+      "passed": 42,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 2,
+      "skip_reason": "Existing PostgreSQL-conditional tests require POLARIS_TEST_DATABASE_URL; no environment file or database URL was read."
+    },
+    "ruff": {
+      "passed": true,
+      "scope": [
+        "backend/app/xinghe_agent.py",
+        "backend/tests/test_xinghe_agent.py",
+        "docs/verification/tools/test_1627367_planner_json_boundary.py"
+      ]
+    },
+    "mypy": {
+      "passed": true,
+      "scope": "backend/app",
+      "source_files": 21
+    },
+    "candidate_diff_check": {
+      "passed": true
+    },
+    "worktree_diff_check_before_evidence": {
+      "passed": true
+    },
+    "existing_independent_106_item_suite_rerun": false
+  },
+  "accounting": {
+    "valid_confirmation_gate": {
+      "status": "awaiting_confirmation",
+      "requested_page_count": 6,
+      "planned_page_count": 6,
+      "planner_request_count": 1,
+      "image_request_count": 0,
+      "reported_usage": true,
+      "total_tokens": 150,
+      "planner_actual_cost_micros": null,
+      "job_actual_cost": null,
+      "budget_limit_micros": 200000000,
+      "estimated_pending_micros": 270000,
+      "job_api_request_count_before_confirmation": 0,
+      "job_usage_completeness_before_confirmation": "none"
+    },
+    "rejected_planner_content": {
+      "status": "failed",
+      "error_code": "PLANNER_SCHEMA_INVALID",
+      "requested_page_count": 6,
+      "planned_page_count": 0,
+      "planner_request_count": 1,
+      "image_request_count": 0,
+      "reported_usage": true,
+      "total_tokens": 150,
+      "planner_actual_cost_micros": null,
+      "job_actual_cost": null,
+      "configured_budget_limit_micros": 200000000,
+      "job_api_request_count": 1,
+      "job_usage_completeness": "complete"
+    }
+  },
+  "harness_calibration": {
+    "candidate_failures_observed": 0,
+    "pre_result_harness_failures": [
+      "The first run blocked asyncio's loopback socketpair before application execution.",
+      "A later run exposed incorrect verifier expectations for pre-confirmation top-level API accounting.",
+      "One expectation-edit attempt temporarily changed both accounting blocks and was corrected before the final run."
+    ],
+    "final_independent_run_is_authoritative": true
+  },
+  "verifier_changes": {
+    "product_code_modified": false,
+    "configuration_modified": false,
+    "migration_modified": false,
+    "frontend_modified": false,
+    "files_for_evidence_commit": [
+      "docs/verification/tools/test_1627367_planner_json_boundary.py",
+      "docs/verification/1627367-planner-json-boundary-independent-evidence.json"
+    ]
+  },
+  "historical_v5_evidence": {
+    "report": "C:\\Users\\Administrator\\.codex\\worktrees\\6d13\\初步网站建立\\docs\\verification\\fba5313-planner-json-boundary-independent-report.md",
+    "machine_evidence": "C:\\Users\\Administrator\\.codex\\worktrees\\6d13\\初步网站建立\\docs\\verification\\fba5313-planner-json-boundary-independent-evidence.json",
+    "independent_test": "C:\\Users\\Administrator\\.codex\\worktrees\\6d13\\初步网站建立\\docs\\verification\\tools\\test_fba5313_planner_json_boundary.py",
+    "modified": false
+  },
+  "release": {
+    "offline_candidate_passed": true,
+    "real_chain_passed": false,
+    "real_chain_retested": false,
+    "real_tengli_retest_authorized": false,
+    "pushed": false,
+    "merged": false,
+    "deployed": false
+  }
+}

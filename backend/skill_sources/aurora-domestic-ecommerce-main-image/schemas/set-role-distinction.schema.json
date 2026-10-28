@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "set-role-distinction.schema.json",
+  "type": "object",
+  "required": ["agent_pixel_reviewed", "review_mode", "reviewed_page_indexes", "image_sha256_by_page", "identified_search_page_index", "search_role_is_unique", "confusable_page_indexes", "search_identification_evidence", "carousel_distinctions"],
+  "properties": {
+    "agent_pixel_reviewed": {"const": true},
+    "review_mode": {"const": "BLIND_SIX_PAGE_ROLE_COMPARISON"},
+    "reviewed_page_indexes": {"const": [0, 1, 2, 3, 4, 5]},
+    "image_sha256_by_page": {"type": "object"},
+    "identified_search_page_index": {"type": "integer", "minimum": 0, "maximum": 5},
+    "search_role_is_unique": {"type": "boolean"},
+    "confusable_page_indexes": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 5}, "uniqueItems": true},
+    "search_identification_evidence": {"type": "string", "minLength": 20},
+    "carousel_distinctions": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["page_index", "why_not_search_cover"],
+        "properties": {
+          "page_index": {"type": "integer", "minimum": 1, "maximum": 5},
+          "why_not_search_cover": {"type": "string", "minLength": 12}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

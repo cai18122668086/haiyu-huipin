@@ -1,0 +1,23 @@
+{
+  "patch_id": "polaris-explicit-count-and-plan-repair-v2",
+  "source_archive_sha256": "6b716986f6bfb87c70c26ff46e761c5280f645d5213796d9875f426b45b89b66",
+  "original_runtime_hash": "b2200e73008bf19c25c042d0ee5ef694035878a4706a7bdf0a24670e05e2b18c",
+  "patched_runtime_hash": "4089f2c7bb0bb8d59780818c1cbbe6cd87bcf9a684fb9c84cc478c33543f811b",
+  "file": "scripts/route_contracts.py",
+  "original_file_sha256": "3f92fe953f919785b331327db8b8f76ca44b0a9a662ac9d27bfa413d184fa80e",
+  "patched_file_sha256": "b723b1711a8cfcf33b71d65f24669ccc426d6541cb21b8fccd661f356422b9ba",
+  "reason": "Honor the Skill documented explicit-count override for user-selected 1/2-unit carousel sets; retain default three and marketing-set minimum three. Avoid inventing an extra output that makes source-reference order impossible.",
+  "patches": [
+    {
+      "file": "scripts/route_contracts.py",
+      "original_sha256": "3f92fe953f919785b331327db8b8f76ca44b0a9a662ac9d27bfa413d184fa80e",
+      "patched_sha256": "b723b1711a8cfcf33b71d65f24669ccc426d6541cb21b8fccd661f356422b9ba"
+    },
+    {
+      "file": "scripts/workflow.py",
+      "original_sha256": "2fd925e66b0e51868b1a73eea7e4bd0207486abd3526633463f36e9a185fc3c7",
+      "patched_sha256": "a6c1f43092067b0068e2f2cfa9972c3d378e4b8c720deeed1c9dd70a10db2fd5"
+    }
+  ],
+  "plan_repair_reason": "Allow native pre-generation replanning after an actual failed plan audit; forbid it once any token or artwork exists. A failed visual audit must remain failed until the plan is corrected."
+}

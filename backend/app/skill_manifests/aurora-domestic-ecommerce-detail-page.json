@@ -1,0 +1,403 @@
+{
+  "schema_version": "skill-runtime-manifest-v1",
+  "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+  "ignored_runtime_artifacts": [
+    "**/__pycache__/**",
+    "**/*.pyc"
+  ],
+  "skill_id": "aurora-domestic-ecommerce-detail-page",
+  "content_hash": "2c66e1990c2f8759bb14329008a9983e8339ed513cc1b232b868ee2d47eacf4f",
+  "capability": "ecommerce_detail_pack",
+  "input_contract": {
+    "schema_id": "polaris.skill.aurora-domestic-ecommerce-detail-page.input.v4.3",
+    "required_fields": [
+      "product_name",
+      "category",
+      "target_buyer",
+      "product_images",
+      "verified_facts",
+      "conflict_scan",
+      "source_conflicts",
+      "reference_materials",
+      "platform_profile"
+    ]
+  },
+  "output_contract": {
+    "schema_id": "polaris.skill.aurora-domestic-ecommerce-detail-page.output.v4.3",
+    "required_fields": [
+      "validated_plan",
+      "pair_canvas_asset_refs",
+      "page_asset_refs",
+      "pair_audits",
+      "delivery"
+    ]
+  },
+  "policy": {
+    "schema_version": "skill-runtime-policy-v1",
+    "auto_review_regeneration_allowed": false,
+    "successful_page_auto_redraw_allowed": false,
+    "safe_expansion_mode": "disabled",
+    "policy_version": "aurora-domestic-ecommerce-detail-page-v4.3.1",
+    "active_profile_id": null,
+    "profiles": [],
+    "iteration": null,
+    "safe_expansion": null
+  },
+  "provider_type": "mock",
+  "cost_limit_micros": 0,
+  "real_provider_request_limit": 0,
+  "files": [
+    {
+      "path": "PORTABLE_INSTALL.md",
+      "sha256": "efab56947c309be805e071b204af69adabe618620ce852fe57cb5c3210e1110f"
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "145b7a3a9b8aef894d8589abfc4ad827ca28775c877421b5ec083a677d908ee3"
+    },
+    {
+      "path": "VERSION",
+      "sha256": "c825ec6584abdae3e0d372aace8f2dc61b6040c98f7290bce9d2fcdae175ae88"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "4d8357f0d220f6d40397fc109ec4a99516617c6ecb7184bb5ebf32d2f8105a7a"
+    },
+    {
+      "path": "assets/templates/conflict-resolution-template.json",
+      "sha256": "9820160c26ed8a1d2e58095dd1d1843fbe27924cf585929b310f4f715b3c1a50"
+    },
+    {
+      "path": "assets/templates/information-contract-template.json",
+      "sha256": "e8e463fc65c7580724f45bb97702191923ee87ab7cb9091f3e5676bab3bf3688"
+    },
+    {
+      "path": "assets/templates/product-input-template.json",
+      "sha256": "70f6517bcbf4345e1ed02eaf60edb0dc836069b5ccd4f2adff3deb006ba764db"
+    },
+    {
+      "path": "references/adaptive-typography.md",
+      "sha256": "45da405448b14841c899987dbdec4e688966784097774546e3372d4cf950d192"
+    },
+    {
+      "path": "references/advanced-page-archetypes.md",
+      "sha256": "ca66f98523f8f9f7e992b7d36d332dd7061a90872ec02f52464143f7251ca1df"
+    },
+    {
+      "path": "references/category-routing-v2.md",
+      "sha256": "5173d0fcfc4396d3b5b62417a0d923b8a1aad7dc3cb4a13976f3c1e2699bf7ac"
+    },
+    {
+      "path": "references/commercial-aversion-control.md",
+      "sha256": "51569a24a4347d422b99e3e3f831453e95df5da612c4a981b2f33379ece7b390"
+    },
+    {
+      "path": "references/compliance-and-platform.md",
+      "sha256": "2b1b923e34e32442f8e6271c5c1a38f437a0795029ad6a6a747cd10d6dfe546e"
+    },
+    {
+      "path": "references/continuity-and-rhythm.md",
+      "sha256": "dfed410b21fb260746d5844b83778e374ed865f302008363c1f0ee85c3b6438e"
+    },
+    {
+      "path": "references/continuity-and-variation-audit.md",
+      "sha256": "d030c038144f0d11a42ec66d57582d39135653dd7ee33ba889de2c31cb71c185"
+    },
+    {
+      "path": "references/core-policy.md",
+      "sha256": "ff455cd16826659cae4fae311bc65ce227a0695496ecfa71e3dbc962b82c44b3"
+    },
+    {
+      "path": "references/cross-module-continuity.md",
+      "sha256": "957123126c48400d85d29716ed0b9c6df81d036cfbea5d22c1b56739d5356ac4"
+    },
+    {
+      "path": "references/detail-story-grammar.md",
+      "sha256": "12b346fb5db898b8e04356c91a7024e0e666f8bf46aceac8c7de93b8d0bcf50f"
+    },
+    {
+      "path": "references/generation-and-audit-integrity.md",
+      "sha256": "e8d5722c8ae5933f120b10249416a6f6a6f35e3dfa472503f8a606899510d313"
+    },
+    {
+      "path": "references/high-risk-cosmetic-claims.md",
+      "sha256": "a80f6c312e9b1f1a0d3a17cb5260ec24447c2185439223f1d7d1dbed19dba966"
+    },
+    {
+      "path": "references/high-risk-proof-conditions.md",
+      "sha256": "c46dc04e80d0568fb9fa9f1b567a357390a80caa668fae4ca3954214cff7f014"
+    },
+    {
+      "path": "references/intake-and-evidence.md",
+      "sha256": "e8ed43378550b5cd7a227e83bf317083d3e4e30c655b10ac7b9e8490cc6c7d58"
+    },
+    {
+      "path": "references/pain-expression-routing.md",
+      "sha256": "c7d0f45155ae9c827142c716644aa0e60e8e59c3e36a25a2f533a71168d204db"
+    },
+    {
+      "path": "references/pain-solution-visual-story.md",
+      "sha256": "284691aeb121fc6527617d9726df3f7cb058d365302e5147a8daebd7af52174c"
+    },
+    {
+      "path": "references/product-operation-routing.md",
+      "sha256": "752adc1e07e9444fb6b3bf144e09f51f1faf21574288b8609e912fd55f4d2867"
+    },
+    {
+      "path": "references/product-presence-rhythm.md",
+      "sha256": "261c50bac7155dba538234d48956aa3571cc99635177c0e323cf7b11320f7d15"
+    },
+    {
+      "path": "references/proportional-audit.md",
+      "sha256": "edfaec2d8c5dc01460bbbbd282af69be38f0a504b05ff553c0cf3164c7a7d8b8"
+    },
+    {
+      "path": "references/reference-intelligence.md",
+      "sha256": "58b3fd62f92b06e9dede5a23ca82391e31b21e2f5fef0f504025c6bc86ccedf1"
+    },
+    {
+      "path": "references/retry-and-feedback-control.md",
+      "sha256": "6c2dfc257a0dbb71e066e9bccd1103100bdf63263a212a66103c7f537732fab7"
+    },
+    {
+      "path": "references/selling-point-depth-and-count.md",
+      "sha256": "2906eea245dc30d4a25b5f9910f1a5eced6f5afbc4ac124344e7d365ddf8336a"
+    },
+    {
+      "path": "references/series-visual-dna.md",
+      "sha256": "47745a75ffa691726e2ad19437891e9ce7e4dfa9739dbe2fa22186fe19217f31"
+    },
+    {
+      "path": "references/spatial-structure-contract.md",
+      "sha256": "66f7da5c300886e9e8bfa49e32e68b2e15798ae2850855c0ba483d3d3c8d3e34"
+    },
+    {
+      "path": "references/storyboard-matrix.md",
+      "sha256": "833355059a6110846092a17f6bad941486c60b029f3d5841b9106a56e180df7f"
+    },
+    {
+      "path": "references/v4.2-migration.md",
+      "sha256": "58ce00f147bac1e2c8d97d10c1c3014db57666c3128ed0c30e68b90a55b9f8af"
+    },
+    {
+      "path": "references/v4.3-migration.md",
+      "sha256": "c9b25ea2d62ebb41cd623efbf6f7c403ffd94736da313d89672a9607d6ba6981"
+    },
+    {
+      "path": "references/visual-expression-routing.md",
+      "sha256": "d06cd643cf301787f669aa44599609e504239824707e3e74b161e301a3e32e3f"
+    },
+    {
+      "path": "references/visual-performance-contract.md",
+      "sha256": "81ffe826262f0ab3a94d16c354ec193a6e00c0dc66a5c36aaa4873c40f7073cb"
+    },
+    {
+      "path": "references/visual-proof.md",
+      "sha256": "349e833f4bee8ab3173e38c42fa4d36b746a78a69b519f587fed9d524829a2b5"
+    },
+    {
+      "path": "references/website-lean-v1.md",
+      "sha256": "fa8e8008275c938b853ae87ac64aa3a05dbac41deaf03e51e7dd4454e9896f46"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "224862e4c801ecc44d78f3c7de3ab7c1f0951ecc92186583a14d2fb8f23ad695"
+    },
+    {
+      "path": "schemas/compact-detail-plan.schema.json",
+      "sha256": "a542e9635862ad9e7e85037195e105c7f5aefd47b797bafa2e20ed2158dd442f"
+    },
+    {
+      "path": "schemas/conflict-resolution.schema.json",
+      "sha256": "56ed29f545ad961a09755548fc69f3b78817820c9cba7644a8ab55ccbd02f120"
+    },
+    {
+      "path": "schemas/continuous-pair-render.schema.json",
+      "sha256": "d2e3a6a7d839fd44fa7c25039d28fb617a8a6b0c7c4b767212f67d6ed61d984d"
+    },
+    {
+      "path": "schemas/detail-plan.schema.json",
+      "sha256": "4ba746ec0576e364eb7c2486ba8f49638d142e3500ad427d27edabf5178eb7a0"
+    },
+    {
+      "path": "schemas/generation-import.schema.json",
+      "sha256": "cd750da82f44b24ca53a5116e87f16cca5d0cace2cb28bdcc6ee00b8c1de164c"
+    },
+    {
+      "path": "schemas/identity-observation.schema.json",
+      "sha256": "e4c733b6a579344aeab69829966dad691edae4266e02d0e57f61dfa9ab043122"
+    },
+    {
+      "path": "schemas/identity.schema.json",
+      "sha256": "b8a9ceba811d77b44c67bc4f141809f5b440495de7f90837f9245b47c068d878"
+    },
+    {
+      "path": "schemas/input.schema.json",
+      "sha256": "9db442cd951ceab45bdd25b796ab950727ecdf5250f2283a5fb71e2b2be823cc"
+    },
+    {
+      "path": "schemas/local-revision-observation.schema.json",
+      "sha256": "7485cec7e315fc457aeae0748e51990e7dfb41bf28da92dca79dffa48a645115"
+    },
+    {
+      "path": "schemas/local-typography-overrides.schema.json",
+      "sha256": "38a65bad857c5a19cfa4da68c0353bfcb4e601d68ba76da6a3b750e42b80646f"
+    },
+    {
+      "path": "schemas/long-page-judgment.schema.json",
+      "sha256": "c5e703823af271fa217f276ef02f256c6ba211a968784acce2ce09f9e13dd896"
+    },
+    {
+      "path": "schemas/module-judgment.schema.json",
+      "sha256": "bf2f3d59e5b119b7b02c7b2cdac14e5cd513f42e93d5fee5553267c2f400f3be"
+    },
+    {
+      "path": "schemas/pair-judgment-website-v1.schema.json",
+      "sha256": "c22152b85bf560165226764e71082f41f55c7a2de479e43e8257d36a92b77b18"
+    },
+    {
+      "path": "schemas/pair-judgment.schema.json",
+      "sha256": "8795b15a368770d5ff4911a44dfcfaca01731a12cce2697174c5fe8c30c12ce4"
+    },
+    {
+      "path": "schemas/repair-plan.schema.json",
+      "sha256": "80906e19a5fd372425b9c4a35f050dd24f6ffb5b781202660e2e1f84551cc927"
+    },
+    {
+      "path": "schemas/user-adjustment.schema.json",
+      "sha256": "af1f7b6b7293955daf1e56596159f047d7ab68d1e53a734ad1accdbeda5879d4"
+    },
+    {
+      "path": "scripts/artflow_generate.py",
+      "sha256": "85f7c45518b16d45bfe6cd63ac22702f58f11f9089dd617124cb9eb2885a45c0"
+    },
+    {
+      "path": "scripts/artflow_generate_batch.py",
+      "sha256": "1aa15ac1076ab0c78c0bf7f200f3fdb8aa2a3ab8f627bfac60075b95db74c7fc"
+    },
+    {
+      "path": "scripts/artflow_provider.py",
+      "sha256": "a22a579ea5b3ae49a256846c2ce9a25aef066c20f64c6983dda8b9b87343874f"
+    },
+    {
+      "path": "scripts/generation_adapter.py",
+      "sha256": "7c4833eaf93d0b80edcbaa07d7571891fa1a6dd0d3275a8a2478c420d7be59e8"
+    },
+    {
+      "path": "scripts/harness.py",
+      "sha256": "fc9429df69ca82a98c1b8af673d7f5d3605589361ce40b59f4abcf1aff24bab8"
+    },
+    {
+      "path": "scripts/runtime/__init__.py",
+      "sha256": "b6b854e60e83004428fabb9031d4e7450910f67f21ba169374d80bb564b3e737"
+    },
+    {
+      "path": "scripts/runtime/artifact_binding.py",
+      "sha256": "cd3e0d11c9f322ba687f5af21536b933f96bb804fd841d8c7e5aa9ab92eb7e9a"
+    },
+    {
+      "path": "scripts/runtime/assembly.py",
+      "sha256": "d2ffef1c9f0e95b45f39ab5cc90b9a3038717d9830610e3df61217925752a68c"
+    },
+    {
+      "path": "scripts/runtime/atomic_review.py",
+      "sha256": "d7070c6719de079299e771f58db20f52c45fb096f896fcc5e9fe52607ed32d88"
+    },
+    {
+      "path": "scripts/runtime/audit_evidence.py",
+      "sha256": "67c733660a4acdac4684645b4a60d055fbba68aeebefdde50282137ccffe07a2"
+    },
+    {
+      "path": "scripts/runtime/compliance_contract.py",
+      "sha256": "9fa22846646ede99df2bc855d4d6dc6d7a6c393f967279472857c748f3848237"
+    },
+    {
+      "path": "scripts/runtime/delivery_manifest.py",
+      "sha256": "2354ab8b5d97ef037195e93a8847439d85d6aa87c780f899c0f7926b950cb179"
+    },
+    {
+      "path": "scripts/runtime/identity_scope.py",
+      "sha256": "6e3242bffffa3b32e0b43d2af329ccb0f03b4f48b773d754271c4ef186450758"
+    },
+    {
+      "path": "scripts/runtime/image_format.py",
+      "sha256": "d0fca8548a0b6eebfd5e91ba0dd353678f8b23b199f454819732369147f28dda"
+    },
+    {
+      "path": "scripts/runtime/information_contract.py",
+      "sha256": "f6a61e97c5580127018cde860e2f65ce16ce5874804d2ef782566b0eb4ab8568"
+    },
+    {
+      "path": "scripts/runtime/local_contracts.py",
+      "sha256": "72ccb402cb4e777a382591c387de481f6579ae74459ff8508fc493b9a7a47dad"
+    },
+    {
+      "path": "scripts/runtime/local_revision_review.py",
+      "sha256": "22f9b8afa35ed6301430dfb83b12c31b2984e1e315a3b1098eef9ff74beebe61"
+    },
+    {
+      "path": "scripts/runtime/performance_contract.py",
+      "sha256": "faf4115ff3934fcf21441f87d01fcc810c331f0b6dea0ae5bed66cb93a1165a0"
+    },
+    {
+      "path": "scripts/runtime/pixel_lineage.py",
+      "sha256": "a82b0b2c59667716908adb51f3dca4348451a5c731127e4278fe29a570a981c5"
+    },
+    {
+      "path": "scripts/runtime/plan_normalizer.py",
+      "sha256": "f3f11caa4337c3896945b3afd959b5262d70ade1a7e6faaec529e22be82b69b8"
+    },
+    {
+      "path": "scripts/runtime/prompt_compiler.py",
+      "sha256": "267d3ae4204449d1f8cc8e89b68c2b7b529958541be044df2fd38629f9d3ef3a"
+    },
+    {
+      "path": "scripts/runtime/sales_architecture.py",
+      "sha256": "ab716fd1230f56f4d82a73c564855333a811a84a45fb8605fc27feb75ada1cc0"
+    },
+    {
+      "path": "scripts/runtime/sales_depth_contract.py",
+      "sha256": "6d84c29fb88017ed86a9927b3650b5e0466692b380a76c00ea6a4a2e0ffb519b"
+    },
+    {
+      "path": "scripts/runtime/schema_validation.py",
+      "sha256": "ba4317dc4e45add6878614ac7f0d69bb9744412a305858eb2a6c92197c5ac5cb"
+    },
+    {
+      "path": "scripts/runtime/spatial_contract.py",
+      "sha256": "e2a60111ae423673976c17cb4c163aa43a191fdfc095a9d500b5a1a6db2150c0"
+    },
+    {
+      "path": "scripts/runtime/state.py",
+      "sha256": "6144e50c69f651d81d9ab3a6c64c7bf12979d1a962a06361acf8f91158c42049"
+    },
+    {
+      "path": "scripts/runtime/story_contract.py",
+      "sha256": "95422a7b1b0bd317f46cb9278d2b2cc7c5956178f0e0d5d35e6c20dd9fff007e"
+    },
+    {
+      "path": "scripts/runtime/visual_diversity_contract.py",
+      "sha256": "015e81b37ab4de327ab19bb42e2f19263867edd41d09ffc84e2430f8bade198a"
+    },
+    {
+      "path": "scripts/runtime/visual_gate.py",
+      "sha256": "1ee01456ed5f2ccc0b0291bf3ed25050d161f378cb268ea38fcecd2bbef35ae8"
+    },
+    {
+      "path": "scripts/runtime/website_plan.py",
+      "sha256": "8743641a1a47df3208ec8f802096f1297ce5e7ddf3136cbb92948409c1b075a5"
+    },
+    {
+      "path": "scripts/runtime/website_review.py",
+      "sha256": "32d0d84d2abea97092de368d6d9d0439cb13eaba4d63f82b69de4246df4a0c9c"
+    },
+    {
+      "path": "tests/test_regressions.py",
+      "sha256": "60de6eab928192a90250310e386dda72c6d9a575a99a2a9282fdddccc91289d1"
+    }
+  ],
+  "rename_only": false,
+  "source_zip_sha256": null,
+  "source_root": "aurora-domestic-ecommerce-detail-page",
+  "controlled_differences": []
+}

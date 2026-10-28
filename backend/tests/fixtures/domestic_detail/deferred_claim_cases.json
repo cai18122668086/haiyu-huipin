@@ -1,0 +1,25 @@
+{
+  "source": "source-redacted minimal claim projections; full provenance remains private",
+  "cases": [
+    {
+      "case": "initial-plan",
+      "claim": {
+        "claim_id": "UNSUPPLIED_PERFORMANCE",
+        "disposition": "DEFERRED",
+        "module_ids": [],
+        "defer_reason_code": "UNSUPPORTED_INVENTION",
+        "rationale": "No confirmed product evidence supports this claim."
+      }
+    },
+    {
+      "case": "merged-plan-repair",
+      "claim": {
+        "claim_id": "UNSUPPLIED_PERFORMANCE",
+        "disposition": "DEFERRED",
+        "module_ids": [],
+        "defer_reason_code": "HIGH_RISK_UNDOCUMENTED",
+        "rationale": "No confirmed product evidence supports this claim."
+      }
+    }
+  ]
+}

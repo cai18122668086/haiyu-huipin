@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aurora Batched Conflict Resolution",
+  "type": "object",
+  "required": ["confirmation_text", "resolutions"],
+  "properties": {
+    "confirmation_text": {"type": "string", "minLength": 1},
+    "resolutions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["conflict_id", "retained_fact_ids", "rejected_fact_ids"],
+        "properties": {
+          "conflict_id": {"type": "string", "minLength": 1},
+          "retained_fact_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "rejected_fact_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    }
+  }
+}
+
+

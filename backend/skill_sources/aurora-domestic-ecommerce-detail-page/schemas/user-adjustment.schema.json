@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User Delta Adjustment v4.1",
+  "type": "object",
+  "required": ["module_id", "verbatim_instruction", "change_scope", "change_kind", "change_only", "preserve", "must_not_regress"],
+  "properties": {
+    "module_id": {"type": "string"},
+    "verbatim_instruction": {"type": "string"},
+    "change_scope": {"enum": ["local", "global"]},
+    "change_kind": {"enum": ["TYPOGRAPHY_LAYOUT", "COPY_CONTENT", "VISUAL_DETAIL", "OTHER_LOCAL"]},
+    "change_only": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "preserve": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "must_not_regress": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "changes_identity": {"type": "boolean"},
+    "changes_facts": {"type": "boolean"},
+    "changes_target_buyer": {"type": "boolean"},
+    "changes_campaign_style": {"type": "boolean"},
+    "changes_module_sequence": {"type": "boolean"}
+  }
+}
+
+

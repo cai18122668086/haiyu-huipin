@@ -1,0 +1,7 @@
+
+.shell { min-height: 100%; }
+.navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 1280px; margin: 0 auto; padding: 20px 38px 0; }
+.link, .back { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 8px 12px; border: 1px solid #e5e7ef; border-radius: 10px; color: #6d7284; background: #fff; font-size: 13px; text-decoration: none; transition: border-color .2s ease, color .2s ease, background .2s ease; }
+.link:hover, .back:hover, .active { border-color: #b9bdfd; color: #4f46e5; background: #f5f5ff; }
+.back { margin-left: auto; color: #4f46e5; }
+@media (max-width: 900px) { .navigation { padding: 16px 18px 0; } .back { margin-left: 0; } }

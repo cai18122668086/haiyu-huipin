@@ -1,0 +1,697 @@
+{
+  "objective": "详情图 Skill 完整接入并修复；必要时安全清理 C/D 盘",
+  "branch": "codex/domestic-detail-contract-repair-20261017",
+  "baseline_main": "785ff55",
+  "native_patch_version": "4.3.1",
+  "requirements": [
+    {
+      "id": "G01",
+      "requirement": "Conflict scan before identity/full planning; batch only material SKU conflicts",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "Actual coordinator, native compiler and API/UI paths covered; see domestic-detail-intake-integration-2026-10-17.md. Real supplier/pixel acceptance remains unproven."
+    },
+    {
+      "id": "G02",
+      "requirement": "Derive one fact-grounded 8/10/12 screen count without alternatives",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G03",
+      "requirement": "Visual proof plus useful concise copy, no slogan-only screens",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G04",
+      "requirement": "Analyze every style reference; adopt/reject and schedule with provenance",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "Actual coordinator, native compiler and API/UI paths covered; see domestic-detail-intake-integration-2026-10-17.md. Real supplier/pixel acceptance remains unproven."
+    },
+    {
+      "id": "G05",
+      "requirement": "Approved atomic module is the exact rendering contract",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "Exact native compiler approval-v4 binding plus visible identity, brand and original/active/deferred/excluded fact ledger verified offline; see domestic-detail-native-approval-2026-10-17.md. Actual pixel fidelity remains unproven."
+    },
+    {
+      "id": "G06",
+      "requirement": "At most initial render plus one repair; preserve residuals, no hidden third render",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "Canonical native negative-observation transition and three complete eight-screen synthetic campaigns prove one repair and preserved second-attempt residuals. See domestic-detail-native-review-2026-10-17.md. Raw audit integrity, all per-screen gates and actual pixels remain unproven."
+    },
+    {
+      "id": "G07",
+      "requirement": "Readable authentic brand or explicitly confirmed brandless mode; logo gates",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "Intake and native compiler approval expose actual product logo/source or explicit brandless user confirmation. Actual generated pixel logo/identity gates remain unproven."
+    },
+    {
+      "id": "G08",
+      "requirement": "Approved per-screen typography and campaign rhythm",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G09",
+      "requirement": "Visible pain-to-solution obligation based on verified value bridges",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G10",
+      "requirement": "Meaningful visual carriers; no generic packshot/icon substitutions",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G11",
+      "requirement": "Atomic primary claims receive proof depth, distinct buyer jobs and recall",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G12",
+      "requirement": "Respect authored spatial blueprints and reject repetition/collapse",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G13",
+      "requirement": "Immutable user-point ledger; hypotheses stay separate from verified facts",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G14",
+      "requirement": "Depth-based screen-count formula and justified shared-proof savings",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G15",
+      "requirement": "Internal evidence/risk/approval language does not become sales copy",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G16",
+      "requirement": "Raw per-screen/pair/page observations describe actual pixels, OCR and relations",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G17",
+      "requirement": "Category-neutral pain expression routed by information structure",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G18",
+      "requirement": "Commercial comfort avoids aversion dominating the image",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G19",
+      "requirement": "Product presence is intentional campaign rhythm; no concealed extra packshots",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G20",
+      "requirement": "Planned and observed v4.3 subject/form diversity and dominance budgets",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G21",
+      "requirement": "Content-unit counts are meaningful, nonrepeating, fact/copy/anchor bound",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "G22",
+      "requirement": "Named ingredient/formula/component facts evaluated deterministically",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "I01",
+      "requirement": "At least three concrete geometry invariants and post-render source comparison",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "I02",
+      "requirement": "One authoritative input/plan; root/nested/views consistent; approval invalidates on change",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "I03",
+      "requirement": "Pair order/coverage/seams stay inside adjacent approved windows; deterministic slices",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "C2 exact original/native-normalized/fixed-crop byte and pixel lineage, candidate output equality, immutable signed requests and zero-new-call recovery verified with synthetic jobs; see domestic-detail-native-pixels-2026-10-17.md. Actual semantic coverage/seam/quality acceptance remains unproven."
+    },
+    {
+      "id": "I04",
+      "requirement": "Generation binds source/Skill/approval/assets/request/candidate hashes; stale recovery rejected",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "I05",
+      "requirement": "Unknown supplier outcome stops automatic resubmission and duplicate charge",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "I06",
+      "requirement": "Raw audit evidence preserved; missing/unknown observations never count as pass",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "C3A requires two exact-slice reports through all44 canonical native gates and preserves raw observations;288 distinct offline cases pass. C3B role-aware identity for product absence/tokens and real visual evidence remain unproven; see domestic-detail-atomic-gates-2026-10-17.md."
+    },
+    {
+      "id": "I07",
+      "requirement": "Technical completion, residuals, human review and quality pass remain separate",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "I08",
+      "requirement": "Old approved tasks/assets use compatible frozen pipeline; no silent migration",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "V01",
+      "requirement": "Independent persistent PostgreSQL/user/volume, Redis/queue, MinIO/account/bucket",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "V02",
+      "requirement": "Environment whitelist rejects production DB/broker/assets and live local Worker consumer",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "V03",
+      "requirement": "New isolated real supplier tasks with bounded cost/usage evidence",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "V04",
+      "requirement": "Actual screen/pair/full-campaign visual acceptance with immutable artifact hashes",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "V05",
+      "requirement": "Domestic main image and affected shared paths regression, unchanged production behavior",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient",
+      "local_candidate_evidence": "Current review candidate: four main-image Harness paths plus full execution reliability and task runner selection 86/86 pass offline. Production has not been modified by this task."
+    },
+    {
+      "id": "R01",
+      "requirement": "Concrete candidate/source locks/images/dependencies/migration/compatibility/rollback proposal",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    },
+    {
+      "id": "R02",
+      "requirement": "User confirmation remains required separately for formal main merge and server deployment",
+      "completion": "unproven",
+      "evidence_required": "current implementation plus relevant technical/real/visual evidence; green narrow tests alone are insufficient"
+    }
+  ],
+  "progress": {
+    "confirmed_commits": {
+      "5e268a9": "whole identity/photography tokens, 65 checks",
+      "d79f5f7": "input/plan/view/Skill approval binding, 62 checks and 80-file mypy",
+      "269a990": "authored screen geometry/roles, all 8/10/12 compile; 78 checks",
+      "f22a1ed": "native lower-screen seam patch; 9 API/compiler checks and native 49 pass/56 historical skip",
+      "afcff06": "restore original vendored newline styles; source hash 177ee87d891d83b1e5b0b5e7b2c58f596b752c384c34486a2758dd10913d4478",
+      "2f8aae0": "native reference adopt/reject and screen schedule semantics; both new native regressions execute in active suite",
+      "ce63237": "native compiler visible identity/brand/fact dispositions, exact CLI bytes;92 pass/56 historical skip",
+      "697c179": "native known negative observation transitions; canonical bounded repair and residuals; application seam bridge removed"
+    },
+    "not_complete": [
+      "C3B role-aware identity: authorized/observed absent product and identity-only tokens must not invent a complete silhouette pass; explicit not-applicable is distinct from unknown",
+      "real supplier intake/identity/fact/reference provenance and visual acceptance",
+      "all per-screen semantic gates and actual supplier/visual lineage acceptance",
+      "accepted recovery validates raw review provenance; old-task version routing",
+      "cross-pair/full-campaign quality gates; delivery/native finalization/residual quality states",
+      "persistent independent integration stack and actual supplier generation",
+      "actual visual acceptance and release/rollback readiness",
+      "single network dispatch and actual route/model provenance for native paid review/intake; outer saved receipts alone do not cover internal gateway failover"
+    ],
+    "intake_candidate": {
+      "status": "local_technical_paths_verified_real_visual_unproven",
+      "approval_binding": "domestic-detail-approval-v3",
+      "report": "domestic-detail-intake-integration-2026-10-17.md",
+      "regression": {
+        "intake-wired-full-domestic-v3": {
+          "tests": 290,
+          "passed": 232,
+          "failures": 0,
+          "skipped": 58
+        },
+        "intake-protected-main-and-shared-v3": {
+          "tests": 86,
+          "passed": 86,
+          "failures": 0,
+          "skipped": 0
+        },
+        "intake-native-reference-active-v4": {
+          "tests": 126,
+          "passed": 70,
+          "skipped": 56,
+          "failures": 0,
+          "new_reference_tests_executed": [
+            "test_explicitly_rejected_references_need_no_adopted_pattern",
+            "test_reference_patterns_apply_only_to_their_scheduled_screens"
+          ]
+        },
+        "intake-cross-conflict-guards-v1": {
+          "tests": 150,
+          "passed": 94,
+          "skipped": 56,
+          "failures": 0
+        }
+      },
+      "skill_content_hash": "b322f65b001cccf0b7243c18d705a3f194878e8499bc3161548f5303e2c65f18"
+    },
+    "native_approval_candidate": {
+      "status": "wired_with_visible_identity_brand_and_fact_dispositions_local_technical_verified_real_visual_unproven",
+      "approval_binding": "domestic-detail-approval-v4",
+      "native_protocol": "domestic-native-approval-v1",
+      "report": "domestic-detail-native-approval-2026-10-17.md",
+      "regression": {
+        "native-approval-protocol-final-v5": {
+          "tests": 108,
+          "passed": 108,
+          "skipped": 0,
+          "failures": 0
+        },
+        "native-approval-protected-main-v5": {
+          "tests": 86,
+          "passed": 86,
+          "skipped": 0,
+          "failures": 0
+        },
+        "native-approval-edit-final-v6": {
+          "tests": 35,
+          "passed": 35,
+          "skipped": 0,
+          "failures": 0
+        },
+        "native-approval-snapshot-tamper-v4": {
+          "tests": 8,
+          "passed": 8,
+          "skipped": 0,
+          "failures": 0
+        }
+      }
+    },
+    "native_review_candidate": {
+      "status": "C1_approved_native_fact_identity_authority_and_raw_observations_verified_offline_actual_pixels_pending",
+      "report": "domestic-detail-native-review-2026-10-17.md",
+      "regression": {
+        "native-review-integrated-v3": {
+          "tests": 184,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 184
+        },
+        "native-review-protected-main-v3": {
+          "tests": 86,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 86
+        },
+        "native-review-integrity-v2": {
+          "tests": 45,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 45
+        },
+        "native-review-authority-final-v3": {
+          "tests": 72,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 72
+        }
+      },
+      "skill_content_hash": "7766eff69a8b5501eb7b186707f01a080b92260c65c7a0b7fd6516f60793f42b",
+      "review_protocol": "native-pixel-review-v2"
+    },
+    "native_pixels_candidate": {
+      "status": "C2_mechanical_lineage_and_candidate_bytes_verified_offline_real_visual_unproven",
+      "report": "domestic-detail-native-pixels-2026-10-17.md",
+      "regression": {
+        "native-pixels-acceptance-v1": {
+          "tests": 65,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 65
+        },
+        "native-pixels-contract-regression-v1": {
+          "tests": 121,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 121
+        }
+      },
+      "skill_content_hash": "0851223049da6d0c49a92ce0d83c3ecccc4ead076e6ed714920e65c031328309",
+      "lineage_protocol": "native-pixel-lineage-v1",
+      "real_supplier_calls": 0
+    },
+    "native_atomic_candidate": {
+      "status": "C3A_all44_gates_and_raw_transport_verified_offline_C3B_role_aware_identity_pending",
+      "report": "domestic-detail-atomic-gates-2026-10-17.md",
+      "regression": {
+        "atomic-gates-native-v1": {
+          "tests": 116,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 116
+        },
+        "atomic-gates-raw-review-v1": {
+          "tests": 69,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 69
+        },
+        "atomic-gates-coordinator-v1": {
+          "tests": 9,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 9
+        },
+        "atomic-gates-authoring-final-v2": {
+          "tests": 94,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 94
+        },
+        "atomic-gates-final-authoring-v4": {
+          "tests": 3,
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "passed": 3
+        }
+      },
+      "distinct_tests": 290,
+      "skill_content_hash": "0007e952773352f7286b788b3254be191a773b2bddb833bab9f7b391adf6b567",
+      "real_supplier_calls": 0,
+      "role_absence_characterization": "Required truthful not-applicable identity comparison is still rejected; atomic-absence-characterization-v1, not counted as success. C3 is incomplete."
+    }
+  },
+  "commands_to_cover": [
+    "start",
+    "resolve-conflicts",
+    "lock-identity",
+    "compile-plan",
+    "authorize",
+    "generate-next",
+    "record-generation",
+    "audit-pair",
+    "prepare-repair",
+    "assemble (optional preview)",
+    "audit-long-page (optional preview, full campaign still reviewed)",
+    "finalize",
+    "auto-finalize (only separately authorized delivery mode)",
+    "inspect",
+    "inspect-pair-artifacts",
+    "inspect-pair-review-contracts",
+    "preflight-plan",
+    "fork-local-revision (new owned workspace only)",
+    "apply-user-adjustment (internal owned revision only; original task immutable)"
+  ],
+  "protected": {
+    "production_queue": true,
+    "original_user_jobs_and_assets": true,
+    "live_local_worker": true,
+    "domestic_main_image": true,
+    "formal_main_merge_and_deploy_need_confirmation": true
+  },
+  "local_identity_scope_candidate": {
+    "status": "technical offline only; overall unproven",
+    "documentation": "domestic-detail-identity-scope-2026-10-17.md",
+    "native_content_hash": "53064035537c1286b8b608e05c77e0002d65b8d4be2c0e7addd09570205ea48e",
+    "unique_offline_cases": 459,
+    "actual_supplier_calls": 0
+  },
+  "local_accepted_review_candidate": {
+    "status": "offline technical only; overall unproven",
+    "documentation": "domestic-detail-accepted-review-provenance-2026-10-18.md",
+    "native_content_hash": "7e6632c13e9499f1d76c5ffa4b211b6032d1d7268b49c7309bfde6c08c26868b",
+    "unique_offline_cases": 355,
+    "actual_supplier_calls": 0,
+    "pending_network_dispatch_red_cases": 8
+  },
+  "local_native_delivery_review_candidate": {
+    "overall_completion": "unproven",
+    "core_commit": "c6bb44bd3b968a3faef337ac9f4b1d3603dc3f5e",
+    "phase2_parent": "c6bb44bd3b968a3faef337ac9f4b1d3603dc3f5e",
+    "report": "domestic-detail-final-review-2026-10-18.md",
+    "current_backend_green": 38,
+    "frontend_green": 8,
+    "native_source_unchanged": "79 files / d18eb110d7b9bd69e986556f8409e21848618f464b44b6d6b6c43a5d6f59267b",
+    "scope": "Native human finalization, material residuals, exact review fingerprint, accepted screen/pair-master storage and ZIP bytes, immutable interruption recovery; synthetic technical validation only",
+    "actual_supplier_calls": 0,
+    "remaining": [
+      "optional full-campaign actual observation and original evidence",
+      "explicit auto-delivery and user correction command coverage",
+      "historical frozen version compatibility/rollback",
+      "persistent independent PG/Redis/MinIO and API/Worker shared absolute harness root",
+      "real supplier/cost and actual visual acceptance"
+    ]
+  },
+  "local_optional_campaign_review_candidate": {
+    "overall_completion": "unproven",
+    "parent": "b614e6246f92d3eb6aa4c57f382dfbfca48b23ec",
+    "report": "domestic-detail-campaign-queue-2026-10-18.md",
+    "scope": "Independent explicitly authorized model-only review job, exact native fork/preview/model inputs, raw observation preservation, source unchanged, lease/unknown/reuse/accounting boundaries. UI selection/delivery adoption not implemented.",
+    "distinct_offline_cases": 207,
+    "final_source_review_cases": 59,
+    "main_shared_cases": 86,
+    "actual_supplier_calls": 0,
+    "persistent_stack_verified": false,
+    "actual_visual_acceptance": false,
+    "remaining_design": "native-campaign-selection-design.json in local evidence; pre-call metadata/missing-original-binding checks and interrupted-write reconciliation remain to audit before UI/release"
+  },
+  "local_optional_campaign_source_guard_candidate": {
+    "overall_completion": "unproven",
+    "parent": "fb69d5334a8078e173f37a15b863bf558aeda258",
+    "report": "domestic-detail-campaign-source-guard-2026-10-18.md",
+    "current_source_cases": 4,
+    "prior_C8_cases": 207,
+    "prior_C8_full_set_rerun_after_narrow_patch": false,
+    "source_variants_explicit": true,
+    "actual_supplier_calls": 0,
+    "missing_native_binding_already_rejects_without_recreation": true,
+    "native_sources_unchanged": true
+  },
+  "local_optional_campaign_recovery_candidate": {
+    "overall_completion": "unproven",
+    "parent": "7cfac1209d1e740aac4e1f22c3f2344a242a906e",
+    "report": "domestic-detail-campaign-recovery-2026-10-18.md",
+    "scope": "Durable original model result journal, immutable raw bytes, local interruption classification and separate zero-model queued recovery. Original source, paid task and accounting unchanged.",
+    "current_source_error_cases": 4,
+    "final_source_recovery_cases": 7,
+    "mypy_sources": 100,
+    "detail_content_hash": "46f3b72741bd4f62c0838bc70f8032caffd258866002f67501cbf12de4f984f9",
+    "native_gate_rules_unchanged": true,
+    "actual_supplier_calls": 0,
+    "persistent_stack_verified": false,
+    "actual_visual_acceptance": false,
+    "UI_selection_and_final_binding": "pending",
+    "distinct_final_source_cases": 11
+  },
+  "local_optional_campaign_selection_candidate": {
+    "overall_completion": "unproven",
+    "parent": "08c389e168fef6b13810e3491337d1ca6e6d5655",
+    "report": "domestic-detail-campaign-selection-2026-10-18.md",
+    "scope": "Source-scoped history, unticked exact quote authorization, raw/preview/recovery UI, explicit report+SHA selection into immutable human packet, own frozen original evidence, completed receipt anchor and ZIP bytes. Original native scope remains truthful.",
+    "final_source_backend_cases": 5,
+    "frontend_green": 12,
+    "native_detail_files_unchanged": 79,
+    "all12_source_locks_unchanged": true,
+    "actual_supplier_calls": 0,
+    "browser_full_flow_verified": false,
+    "persistent_stack_verified": false,
+    "actual_visual_acceptance": false,
+    "mypy_sources": 101
+  },
+  "local_explicit_automatic_delivery_candidate": {
+    "overall_completion": "unproven",
+    "parent": "53461fd8b9d2382ee4dda56411ccddd95259fb4d",
+    "report": "domestic-detail-automatic-delivery-2026-10-18.md",
+    "scope": "Default manual unchanged; separate exact plan-stage authorization bound to source/user/plan/Skill/adapter; native auto-finalize after original usage settlement; truthful residual packet and zero-model/image original-delivery recovery.",
+    "final_source_backend_green": 100,
+    "final_frontend_green": 29,
+    "mypy_sources": 103,
+    "whole_frontend_eslint_files": 165,
+    "native79_and_all12_sources_unchanged": true,
+    "actual_supplier_calls": 0,
+    "persistent_stack_verified": false,
+    "browser_full_flow_verified": false,
+    "actual_visual_acceptance": false,
+    "remaining": [
+      "Independent owned local user correction revisions; no source accepted-cycle mutation",
+      "Historical frozen runtime routing, approval compatibility and rollback",
+      "Persistent independent PostgreSQL/Redis/MinIO/API/Worker",
+      "Browser complete business flow, actual supplier cost and actual pixel acceptance"
+    ]
+  },
+  "local_native_adjustment_order_candidate": {
+    "overall_completion": "unproven",
+    "parent": "086eafaabd20a7da47b947adbd28139d4a00ac8b",
+    "report": "domestic-detail-local-adjustment-order-2026-10-18.md",
+    "scope": "Native local adjustment pair-upper cursor and both-cycle history; website source-mutating command stays blocked. Independent owned revision job/API/provider/UI not implemented.",
+    "final_native_regression_green": 75,
+    "new_native_cases": 15,
+    "valid_pre_fix_baseline": {
+      "failed": 8,
+      "passed": 7
+    },
+    "native_content_hash": "93c3d630bef607d01bcbf82c7354dcd937ed36fca40e4e7245a89e49b5297f38",
+    "other_native_files_raw_unchanged": 78,
+    "website_app_python_files_unchanged": 103,
+    "actual_supplier_calls": 0,
+    "actual_visual_acceptance": false,
+    "persistent_stack_verified": false
+  },
+  "local_owned_revision_and_edit_canvas_candidate": {
+    "overall_completion": "unproven",
+    "parent": "fbf503adb2ea6a5cf138687ba8e751e303612045",
+    "report": "domestic-detail-owned-revision-2026-10-18.md",
+    "scope": "Atomic owned native local revision; no inheritedAUTO; separate sibling preservation scope; exact first-draft edit canvas reaches actual gateway; signed requests survive history rollback and reserve at most2 potential calls. Website revision task/API/quota/UI not implemented.",
+    "final_native_green": 109,
+    "final_full_chain_green": 5,
+    "main_shared_green_same_adapter_python": 86,
+    "mypy_sources": 104,
+    "native_content_hash": "4c65f700372e08f30020ca4a8961bd85c4ebb44fc3ff09c3b7cc039966d5b68d",
+    "other_native_files_raw_unchanged": 78,
+    "other_website_app_python_unchanged": 101,
+    "actual_supplier_calls": 0,
+    "actual_visual_acceptance": false,
+    "persistent_stack_verified": false,
+    "browser_full_flow_verified": false
+  },
+  "local_revision_quote_and_authority_candidate": {
+    "overall_completion": "unproven",
+    "parent": "e2afbc73837a53e1052309e3a2b9171522fb1543",
+    "report": "domestic-detail-revision-authorization-2026-10-18.md",
+    "scope": "Read-only current-source/current-actor pair quote and exact server-recomputed authority; schema policy hash and actual routes/prices. No child creation/execution or UI yet.",
+    "final_source_boundary_green": 24,
+    "final_source_actual_API_green": 2,
+    "mypy_sources": 105,
+    "typescript_noEmit": true,
+    "protected_existing_routes_and_schema_AST": true,
+    "other_existing_app_python_raw_unchanged": 102,
+    "native79_and_all12_source_locks_unchanged": true,
+    "actual_supplier_calls": 0,
+    "actual_visual_acceptance": false,
+    "persistent_stack_verified": false,
+    "browser_full_flow_verified": false,
+    "remaining": [
+      "Independent child creation/quota/outbox and source-root conflict guards",
+      "Bounded semantic scope preflight requires explicit additional quoted reserve",
+      "Owned runtime/per-pair lineage and actual before-after delta audit",
+      "Revision UI/zero-model recovery and historical frozen runtime compatibility",
+      "Persistent isolated stack, browser, actual supplier/cost and visual acceptance"
+    ]
+  },
+  "local_revision_child_creation_candidate": {
+    "overall_completion": "unproven",
+    "parent": "7d01c5d46d5cb9fa2c7f32dd2a4b03cfc795bc93",
+    "report": "domestic-detail-revision-jobs-2026-10-18.md",
+    "scope": "Separate owned DETAIL_PACK child with fresh source/actor authority, target pair pending and6/8/10screens reused; new7request quota, unit model reserve, source-root active/unknown blockers and generic retry/clone refusal. No execution HTTP endpoint yet.",
+    "distinct_backend_cases_across_matrix": 40,
+    "final_source_child_green": 14,
+    "prior_full_same_AST_green": 40,
+    "mypy_sources": 106,
+    "typescript_noEmit": true,
+    "protected_original_routes_schema_and_API": true,
+    "native79_and_all12_locks_unchanged": true,
+    "other_existing_app_python_raw_unchanged": 102,
+    "actual_supplier_calls": 0,
+    "persistent_stack_verified": false,
+    "browser_full_flow_verified": false,
+    "actual_visual_acceptance": false,
+    "remaining": [
+      "One quoted semantic scope call under public lease with original paid response journal and no hidden retry",
+      "Owned native fork before generation and per-pair original/new provenance",
+      "Actual before-after local change and sibling preservation observations",
+      "Public idempotent submission/UI and zero-model recovery",
+      "Frozen historical runtimes, persistent isolated stack, browser and real supplier/visual acceptance"
+    ]
+  },
+  "local_revision_scope_and_owned_preparation_candidate": {
+    "overall_completion": "unproven",
+    "parent": "bdf813acffdeebd3cfc472fe0d8c8b53c9e9e647",
+    "report": "domestic-detail-revision-scope-2026-10-18.md",
+    "scope": "Bounded semantic scope model; original-result journal/zero-model derived replay; original actor/public attempt/quota/source guards; standalone owned native preparation and original edit-base proof. Image provider/public execute endpoint not wired.",
+    "final_source_backend_green": 112,
+    "mypy_sources": 109,
+    "scope_protocol_gateway_cases": 107,
+    "runtime_source_and_billing_cases": 5,
+    "same_original_request_deduplicated": true,
+    "not_sent_zero_requests_and_charge_verified": true,
+    "unknown_original_unit_reserve_preserved": true,
+    "source_generation_binding_derived_from_quote": true,
+    "actual_edit_base_proved_for_manual_and_AUTO_source": true,
+    "native79_and_all12_locks_unchanged": true,
+    "other_existing_app_python_raw_unchanged": 103,
+    "actual_supplier_calls": 0,
+    "image_provider_hook_added": false,
+    "public_execute_endpoint_added": false,
+    "persistent_stack_verified": false,
+    "browser_full_flow_verified": false,
+    "actual_visual_acceptance": false,
+    "remaining": [
+      "Wire image provider after actual account availability and current scope guards",
+      "Observed local delta/sibling before-after evidence within existing four review calls",
+      "Per-pair original/new lineage including repeated local revisions",
+      "Idempotent HTTP/UI and independent zero-model original image recovery",
+      "Historical frozen routing/rollback; persistent isolated stack and actual supplier/browser/visual acceptance"
+    ]
+  },
+  "current_public_local_revision": {
+    "http_submit_and_idempotent_replay": true,
+    "owned_execute_preparation": true,
+    "web_scope_and_cost_approval": true,
+    "offline_first_revision_finalization_and_second_different_pair_revision": true,
+    "original_source_unchanged": true,
+    "current_required_regression_tests": 128,
+    "mypy_app_sources": 112,
+    "frontend_typecheck_and_eslint": true,
+    "actual_supplier_and_visual_acceptance": false,
+    "full_37_requirement_scope_proven": false,
+    "release_authorized_after_required_validation": true
+  }
+}

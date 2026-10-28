@@ -1,0 +1,246 @@
+{
+  "skill_id": "all-category-style-benchmark-still",
+  "source_archive_sha256": "6b716986f6bfb87c70c26ff46e761c5280f645d5213796d9875f426b45b89b66",
+  "files": [
+    {
+      "path": ".pytest_cache/.gitignore",
+      "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd",
+      "size_bytes": 37
+    },
+    {
+      "path": ".pytest_cache/CACHEDIR.TAG",
+      "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4",
+      "size_bytes": 191
+    },
+    {
+      "path": ".pytest_cache/README.md",
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
+      "size_bytes": 302
+    },
+    {
+      "path": ".pytest_cache/v/cache/lastfailed",
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "size_bytes": 2
+    },
+    {
+      "path": ".pytest_cache/v/cache/nodeids",
+      "sha256": "11189b896ca53e60f4475880578a0aaea80887db1912bf083787fe28611bd72b",
+      "size_bytes": 13409
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "dd37de68e9999ffa6f244f49d58866381cf4fa7599f5a139fd0b7f1ca2806fcb",
+      "size_bytes": 15367
+    },
+    {
+      "path": "FINAL_REPORT.md",
+      "sha256": "d22be04bb0c8d23e4baf05b795b8cc0417c6beb151b3bf61e3f76dd0920666d4",
+      "size_bytes": 14885
+    },
+    {
+      "path": "PROJECT_STATUS.md",
+      "sha256": "53a7e07a3685d4fe2bfcb0062ee9482fda5ef341472d970c0f990f292a5eda95",
+      "size_bytes": 14990
+    },
+    {
+      "path": "README.md",
+      "sha256": "354f90df06b093b0c5b452ef5e3b5b999c9d8b9dadfc335758d42b2b9f4d0472",
+      "size_bytes": 7224
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "918c03dfce5b9b872bf033eb32267ecd02f1f1ed95513d450564ec71dbdff22f",
+      "size_bytes": 27643
+    },
+    {
+      "path": "VERSION",
+      "sha256": "cd6321af37482f49efc326524a9fcd7fc86902a48da8d4bbd3dc718d290c3fea",
+      "size_bytes": 6
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "9180a5490a85765e10397511cda407b5bb56e37938dd32161d37bc4a37c78449",
+      "size_bytes": 391
+    },
+    {
+      "path": "fixtures/detail-default-10-screen.json",
+      "sha256": "82ddf5813e7b8fd30ca6a238ccaac1df37cf2071c5ac6191097032032262b112",
+      "size_bytes": 281
+    },
+    {
+      "path": "references/audit-protocol.md",
+      "sha256": "f69deef0ff6440dd11945d08987ee23b728f58897d64c87c986cce007072a4ba",
+      "size_bytes": 3154
+    },
+    {
+      "path": "references/detail-pair-execution.md",
+      "sha256": "d31a2edf1c7a39e7c61d65ed8fc45a666c0281d7e7bd89f7e97519fc211cac46",
+      "size_bytes": 7017
+    },
+    {
+      "path": "references/execution-workflow.md",
+      "sha256": "53a59be2cf50d44671f2a49df0ab73d99b23b0a289638bc289ebd55989e8f768",
+      "size_bytes": 6937
+    },
+    {
+      "path": "references/reference-analysis.md",
+      "sha256": "ed73c90bb7e1e1d8e8680c84bdff5be76ce3586aeb8fb191f54b06b7b59ead9c",
+      "size_bytes": 8168
+    },
+    {
+      "path": "references/semantic-translation.md",
+      "sha256": "861d21616026d0b6c78c7f3cbaacc5d1346ba482d6171181be34b4c4e710c2dd",
+      "size_bytes": 917
+    },
+    {
+      "path": "references/workflow-state.md",
+      "sha256": "d3547c7ad4f8f56b2db7d185b7b9a10432939d140c4b4d8a2ef55ca2e20d8127",
+      "size_bytes": 2407
+    },
+    {
+      "path": "schemas/audit.schema.json",
+      "sha256": "4ce2e7f19b5c2c5c2f207479a0b0f3357710c8c8bc4bae5679674919f6d61044",
+      "size_bytes": 2358
+    },
+    {
+      "path": "schemas/generation-request.schema.json",
+      "sha256": "8634164b2d66666d6768fc5fe47faa1f0cbc6bec5bf61e83b9b6711ff0c88ad1",
+      "size_bytes": 11837
+    },
+    {
+      "path": "schemas/input-role-review.schema.json",
+      "sha256": "7a4a2138b27d9a881d0dbbf1e98ba332a1727fbbd611c60dd232fbb0ed7e55fd",
+      "size_bytes": 669
+    },
+    {
+      "path": "schemas/reference-analysis.schema.json",
+      "sha256": "4e7e89545dca0095a1a1dd29a595862d36cac07516aa4ebf54f683f3ce92c8f5",
+      "size_bytes": 17867
+    },
+    {
+      "path": "schemas/reference-crops.schema.json",
+      "sha256": "9418172be6ec40326a27839c1a94a5039e5e7165a8ed8d40422c13fb4a3fcc1f",
+      "size_bytes": 2518
+    },
+    {
+      "path": "schemas/render-receipt.schema.json",
+      "sha256": "dbc433df5949498b051355d44f15715044c3b56e49f3be841295dd963b938ab8",
+      "size_bytes": 1016
+    },
+    {
+      "path": "schemas/semantic-translation.schema.json",
+      "sha256": "97bbdcf01a846ea65c0f8effd5f17682a8f936344193f1d0f32789401e28e9d7",
+      "size_bytes": 592
+    },
+    {
+      "path": "schemas/workflow.schema.json",
+      "sha256": "b667f44baecaf13bd0a0e82e9dd6340f411bbf943efc492f8f681f26000333d4",
+      "size_bytes": 1227
+    },
+    {
+      "path": "scripts/__pycache__/workflow.cpython-313.pyc",
+      "sha256": "202fa81eafaf02e3036e1dbe25203749fe15747114439951e4d097b544ee034f",
+      "size_bytes": 98890
+    },
+    {
+      "path": "scripts/artflow_generate.py",
+      "sha256": "85f7c45518b16d45bfe6cd63ac22702f58f11f9089dd617124cb9eb2885a45c0",
+      "size_bytes": 31543
+    },
+    {
+      "path": "scripts/artflow_generate_batch.py",
+      "sha256": "1aa15ac1076ab0c78c0bf7f200f3fdb8aa2a3ab8f627bfac60075b95db74c7fc",
+      "size_bytes": 21372
+    },
+    {
+      "path": "scripts/artflow_render.py",
+      "sha256": "7d1339768b7aba5141df46873a17dd2225c43aeacc8dbc1a9c775113b8636b6d",
+      "size_bytes": 6251
+    },
+    {
+      "path": "scripts/entrypoint.py",
+      "sha256": "471dec53e97be452c9d6373a9ad5a7aaf6fb730c0f7363f9f85085306d8509a3",
+      "size_bytes": 8372
+    },
+    {
+      "path": "scripts/generation_handoff.py",
+      "sha256": "8c3f9bf622786cae222bbcb0b9e91b0654ee26b5a752e8509b543f616a179f5d",
+      "size_bytes": 26946
+    },
+    {
+      "path": "scripts/imagegen_adapter.py",
+      "sha256": "5f6d4c120706db4b57bed7dcee1fcd9a88cecca21383784e464dd607afa03713",
+      "size_bytes": 1594
+    },
+    {
+      "path": "scripts/package_skill.py",
+      "sha256": "6ed953ae6b68f3f267768a9ad4cbcfcb4a17856b7197675edad6dc1136cb9b73",
+      "size_bytes": 602
+    },
+    {
+      "path": "scripts/reference_analysis.py",
+      "sha256": "5338260f562eaa80938d1a5e58d99e2a17a119629c65e794c51fd42c592c8203",
+      "size_bytes": 11316
+    },
+    {
+      "path": "scripts/reference_rhythm.py",
+      "sha256": "9384bb15f0313c89835a6b2132050b13a249fb5dd38c8325ea41987500f73397",
+      "size_bytes": 11299
+    },
+    {
+      "path": "scripts/render_provenance.py",
+      "sha256": "3ada21d5c7abe0591799e4ae07bd6f5a84effab25212c3543dc71d3ea33d65f5",
+      "size_bytes": 3153
+    },
+    {
+      "path": "scripts/route_contracts.py",
+      "sha256": "3f92fe953f919785b331327db8b8f76ca44b0a9a662ac9d27bfa413d184fa80e",
+      "size_bytes": 4428
+    },
+    {
+      "path": "scripts/state_machine.py",
+      "sha256": "70c76096bfe95744c0b43e2baef19facb32c64c4eec2b99e470968fbd9022d56",
+      "size_bytes": 1292
+    },
+    {
+      "path": "scripts/style_harness.py",
+      "sha256": "f841ff5edf299d76ff226dfff0ef936ac80defbe6e5ada0b9f9bead230ee9c43",
+      "size_bytes": 7124
+    },
+    {
+      "path": "scripts/workflow.py",
+      "sha256": "2fd925e66b0e51868b1a73eea7e4bd0207486abd3526633463f36e9a185fc3c7",
+      "size_bytes": 61942
+    },
+    {
+      "path": "tests/analysis_support.py",
+      "sha256": "85e01b0bdbf4043e5524e00e0ac14f603e7995c52af16961e67450db95be89df",
+      "size_bytes": 1510
+    },
+    {
+      "path": "tests/test_cli_e2e.py",
+      "sha256": "6c8bf60a24494a98910f79e1dbe139945ba2d6702f4d811093a58decb5e1b5ba",
+      "size_bytes": 6179
+    },
+    {
+      "path": "tests/test_contract_consistency.py",
+      "sha256": "8a190f91f82f4738f0b67a39fc74adcd245a4135ef2049a67bc9e9ed6ea94ccd",
+      "size_bytes": 4871
+    },
+    {
+      "path": "tests/test_reference_pair_recovery.py",
+      "sha256": "7787e1726c58033a91de18642a176282cf06cb23fc6126898cd83aa125a811d1",
+      "size_bytes": 33087
+    },
+    {
+      "path": "tests/test_reference_rhythm.py",
+      "sha256": "58463fd9dc287e86db7834c18f5892476af377550e698c8ed7f73989b162e9d0",
+      "size_bytes": 5898
+    },
+    {
+      "path": "tests/test_workflow.py",
+      "sha256": "0e01043c973f1195470844fbc1b7e233d766147868c7f35c656aae730b991b15",
+      "size_bytes": 31276
+    }
+  ]
+}

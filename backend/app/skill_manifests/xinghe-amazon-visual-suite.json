@@ -1,0 +1,78 @@
+{
+    "schema_version": "skill-runtime-manifest-v1",
+    "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+    "ignored_runtime_artifacts": [
+        "**/__pycache__/**",
+        "**/*.pyc"
+    ],
+    "skill_id": "xinghe-amazon-visual-suite",
+    "content_hash": "c5ca76eafa184736478e1e9988e38cf9f9765e699947f2d62a3274fff02dbfae",
+    "capability": "amazon_visual_suite",
+    "input_contract": {
+        "schema_id": "polaris.skill.xinghe-amazon-visual-suite.input.v1",
+        "required_fields": [
+            "product_asset_refs",
+            "listing_information"
+        ]
+    },
+    "output_contract": {
+        "schema_id": "polaris.skill.xinghe-amazon-visual-suite.output.v1",
+        "required_fields": [
+            "item_asset_refs",
+            "archive_asset_ref",
+            "usage"
+        ]
+    },
+    "policy": {
+        "schema_version": "skill-runtime-policy-v1",
+        "auto_review_regeneration_allowed": false,
+        "successful_page_auto_redraw_allowed": false,
+        "safe_expansion_mode": "disabled",
+        "policy_version": "xinghe-amazon-visual-suite-source-v1",
+        "active_profile_id": null,
+        "profiles": [],
+        "iteration": null,
+        "safe_expansion": null
+    },
+    "provider_type": "mock",
+    "cost_limit_micros": 0,
+    "real_provider_request_limit": 0,
+    "files": [
+        {
+            "path": "SKILL.md",
+            "sha256": "f7836d703915bf199c07287088e850d3ecbb6c2e2337243279df7af6e43fb188"
+        },
+        {
+            "path": "agents/openai.yaml",
+            "sha256": "22f17039507dfb52f2cebba77f6c0cd24f89d376859f1a892823cfd798fc6bae"
+        },
+        {
+            "path": "references/generation-backend.md",
+            "sha256": "58a7e35ee6bde4e05bdb4071bb63c3ababe756b5fc78835756975cb1617f82ed"
+        },
+        {
+            "path": "references/image-specs.md",
+            "sha256": "627077137d02b6943d2cb41d744c13ea0479352cf154c2a6728fdc58c2cc292a"
+        },
+        {
+            "path": "references/page-task-table.md",
+            "sha256": "00fcbbdb78196754616e4ef91bfb701902f6ceed2cda385e2011df5f6de18770"
+        },
+        {
+            "path": "references/quality-rules.md",
+            "sha256": "b9171722ad307bf01ac5aa2a89a5df923e91db409db9c931f5df3a152b119cd5"
+        },
+        {
+            "path": "references/workflow.md",
+            "sha256": "a653d761bb3a58d11e5856a48c03c4b9d9eeb466da91e35bf1ab375c85f35266"
+        },
+        {
+            "path": "scripts/make_contact_sheet.py",
+            "sha256": "b92c5f76a733b4db6395ea07d928461d77f09c071c175370ebbec8ac72904854"
+        },
+        {
+            "path": "scripts/visual_size_helper.py",
+            "sha256": "ebbb310cb29a516c3e38f12ce4a85b3afc1d378842388cb39ab20cfb71931e37"
+        }
+    ]
+}

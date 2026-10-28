@@ -1,0 +1,18 @@
+{
+  "services_updated": [
+    "api",
+    "worker",
+    "dispatcher",
+    "frontend"
+  ],
+  "backend_image": "huipin-membership/backend:20261028-refunds",
+  "frontend_image": "huipin-membership/frontend:20261028-refunds",
+  "database_backup": "/srv/huipin-refunds-20261028/huipin-before-refunds.dump",
+  "migration_target": "20261028_0033",
+  "original_platform_unchanged": true,
+  "merchant_configuration_unchanged": true,
+  "real_refunds_executed": 0,
+  "verification_pending": false,
+  "public_checks_passed": true,
+  "services_healthy": true
+}

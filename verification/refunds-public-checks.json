@@ -1,0 +1,47 @@
+{
+  "/account": {
+    "status": 200
+  },
+  "/admin/billing": {
+    "status": 200
+  },
+  "/legal/terms": {
+    "status": 200
+  },
+  "/api/v1/admin/billing/overview": {
+    "status": 401
+  },
+  "/api/v1/admin/billing/refunds": {
+    "status": 401
+  },
+  "/api/v1/payments/wechat/refund-notify": {
+    "invalid_callback_status": 400
+  },
+  "/api/v1/payments/alipay/notify": {
+    "invalid_callback_status": 415
+  },
+  "services": {
+    "api": {
+      "image": "huipin-membership/backend:20261028-refunds",
+      "health": "healthy",
+      "running": true
+    },
+    "worker": {
+      "image": "huipin-membership/backend:20261028-refunds",
+      "health": "healthy",
+      "running": true
+    },
+    "dispatcher": {
+      "image": "huipin-membership/backend:20261028-refunds",
+      "health": "healthy",
+      "running": true
+    },
+    "frontend": {
+      "image": "huipin-membership/frontend:20261028-refunds",
+      "health": "healthy",
+      "running": true
+    }
+  },
+  "real_payments_or_refunds_executed": 0,
+  "final_admin_export_regression_tests_passed": 15
+}

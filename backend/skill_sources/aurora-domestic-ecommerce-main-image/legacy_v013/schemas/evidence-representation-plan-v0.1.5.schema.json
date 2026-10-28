@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence-representation-plan-v0.1.5.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "status",
+    "category_route",
+    "governance",
+    "pages",
+    "set_gates",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "evidence-representation-plan-0.1.5"},
+    "request_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["READY", "BLOCKED"]},
+    "category_route": {"type": "string", "minLength": 1},
+    "governance": {"type": "object"},
+    "pages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "page_index",
+          "page_role_family",
+          "category",
+          "representation_mode",
+          "visual_execution",
+          "fact_bound_visual_subjects",
+          "layout_archetype_binding",
+          "card_topology",
+          "icon_policy",
+          "hard_constraints",
+          "field_sources"
+        ]
+      }
+    },
+    "set_gates": {"type": "object", "additionalProperties": {"const": true}},
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  }
+}

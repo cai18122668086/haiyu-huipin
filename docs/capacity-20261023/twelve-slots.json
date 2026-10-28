@@ -1,0 +1,34 @@
+{
+  "scope": "isolated ASGI HTTP + real PostgreSQL + real Redis + durable coordinator + deterministic no-network image gateway",
+  "limits": "Not production Celery, remote network latency, real image quality, or supplier capacity.",
+  "provider_delay_seconds": 1,
+  "results": [
+    {
+      "worker_slots": 12,
+      "page_concurrency": 12,
+      "http_clients": 64,
+      "reads": 640,
+      "read_statuses": {
+        "200": 640
+      },
+      "read_requests_per_second": 142.13,
+      "read_ms": {
+        "p50": 401.56,
+        "p95": 712.59,
+        "p99": 844.36
+      },
+      "submission_p95_ms": 2184.55,
+      "jobs": 72,
+      "completed": 72,
+      "usage_events": 72,
+      "generation_seconds": 10.792,
+      "jobs_per_second": 6.672,
+      "queue_wait_p95_ms": 9927.49,
+      "execution_p95_ms": 1657.89,
+      "max_active_image_requests": 12,
+      "image_calls": 72,
+      "duplicate_deliveries": 4,
+      "paid_provider_requests": 0
+    }
+  ]
+}

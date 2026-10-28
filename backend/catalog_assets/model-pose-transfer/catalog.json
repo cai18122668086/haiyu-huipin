@@ -1,0 +1,2247 @@
+{
+  "schemaVersion": "model-pose-catalog-v1",
+  "catalogId": "ecommerce-model-pose-transfer",
+  "itemCount": 60,
+  "derivativePolicy": {
+    "crop": false,
+    "upscale": false,
+    "format": "image/webp",
+    "method": 6,
+    "thumbnails": [
+      {
+        "width": 320,
+        "quality": 82
+      },
+      {
+        "width": 640,
+        "quality": 84
+      }
+    ],
+    "preview": {
+      "maxEdge": 960,
+      "quality": 86
+    }
+  },
+  "items": [
+    {
+      "slug": "male-001",
+      "genderGroup": "male",
+      "sourceNumber": 1,
+      "sortOrder": 1,
+      "enabled": true,
+      "label": "男姿势 1",
+      "referenceSha256": "39f4f89ee784f02141ba081291299b58aa50be55f69032d7276292332700554f",
+      "originalKey": "originals/male-001.png",
+      "original": {
+        "filename": "male-001.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1826706,
+        "sha256": "39f4f89ee784f02141ba081291299b58aa50be55f69032d7276292332700554f"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-001-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5738,
+        "sha256320": "60be7607a8f82ce176292a7034654e528f1220916f10621046a596cb50fa96f3",
+        "src640": "/images/model-pose-transfer/thumbs/male-001-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 17264,
+        "sha256640": "1c85d92548a8c04af6d100075f23ebda0c23108f28bb754622654e3473577395"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-001-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 22662,
+        "sha256": "669d2056df1bc2fba1a8403b6c9f5fd39aefbbbd1175be20036bb570f6f8f44f"
+      }
+    },
+    {
+      "slug": "male-002",
+      "genderGroup": "male",
+      "sourceNumber": 2,
+      "sortOrder": 2,
+      "enabled": true,
+      "label": "男姿势 2",
+      "referenceSha256": "b9158080bed51302652625fe68a4e1ee37a885ff1bc42d4f4ba10e6c85be7930",
+      "originalKey": "originals/male-002.png",
+      "original": {
+        "filename": "male-002.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1786636,
+        "sha256": "b9158080bed51302652625fe68a4e1ee37a885ff1bc42d4f4ba10e6c85be7930"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-002-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5940,
+        "sha256320": "62c07cef681a2ee6c738075ff2904aa5f3ef53224c76e149bc3bcabdfaef4a58",
+        "src640": "/images/model-pose-transfer/thumbs/male-002-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16302,
+        "sha256640": "6bec7d58a4c8b1f789014177b2b04afce2cfe268375c2919244f42c7b57babf1"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-002-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 20772,
+        "sha256": "2dce51ed351c582ab0b83a468740f61ac4a043e9938d5a7beab145e509e17ea6"
+      }
+    },
+    {
+      "slug": "male-003",
+      "genderGroup": "male",
+      "sourceNumber": 3,
+      "sortOrder": 3,
+      "enabled": true,
+      "label": "男姿势 3",
+      "referenceSha256": "9dc50a389e632c871e987736d5cd391cfeef7d55f2cc953f07d6a7fe60c5fa5e",
+      "originalKey": "originals/male-003.png",
+      "original": {
+        "filename": "male-003.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1530960,
+        "sha256": "9dc50a389e632c871e987736d5cd391cfeef7d55f2cc953f07d6a7fe60c5fa5e"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-003-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 6152,
+        "sha256320": "9f54e91198d66e0f7452488e023ac9b08671da792693d314f5665679b1a3d07f",
+        "src640": "/images/model-pose-transfer/thumbs/male-003-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 17304,
+        "sha256640": "3c9d5fe82f3a72bed0e83c79c5aae186570508291e93c485cc844585cea53a2e"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-003-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 23094,
+        "sha256": "d93b926f54ffaf6d4a8c6f452aaca8647e2b6ee62854234433d96677c5093831"
+      }
+    },
+    {
+      "slug": "male-004",
+      "genderGroup": "male",
+      "sourceNumber": 4,
+      "sortOrder": 4,
+      "enabled": true,
+      "label": "男姿势 4",
+      "referenceSha256": "5910a2038493ffced972b60694de7fd76486be6259886b4155bd9b32b462eb5c",
+      "originalKey": "originals/male-004.png",
+      "original": {
+        "filename": "male-004.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1711655,
+        "sha256": "5910a2038493ffced972b60694de7fd76486be6259886b4155bd9b32b462eb5c"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-004-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 6274,
+        "sha256320": "8f357deb1cf203f13c1e240304960fc7ccb5eb755a57131631901a2d4ff92447",
+        "src640": "/images/model-pose-transfer/thumbs/male-004-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 18680,
+        "sha256640": "16f4f606cae7e5177e707d55beb1665a64562c2417bf4d2888d894cd89f211aa"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-004-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 25256,
+        "sha256": "d95213c953e813b7169c8ce7ebc81d4fdfcbd34a5bdae55731ade26cf77903fc"
+      }
+    },
+    {
+      "slug": "male-005",
+      "genderGroup": "male",
+      "sourceNumber": 5,
+      "sortOrder": 5,
+      "enabled": true,
+      "label": "男姿势 5",
+      "referenceSha256": "67ea448038e63d6df02b9a9636d130a921a9b6b13974b860c3f020cda8bfc93c",
+      "originalKey": "originals/male-005.png",
+      "original": {
+        "filename": "male-005.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1635412,
+        "sha256": "67ea448038e63d6df02b9a9636d130a921a9b6b13974b860c3f020cda8bfc93c"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-005-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5382,
+        "sha256320": "3ad23b026738b9a532b9261aec5f1877f3c6a5941f559943f3480080ed3384c1",
+        "src640": "/images/model-pose-transfer/thumbs/male-005-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16176,
+        "sha256640": "446617ef53482efe51d1d8e96a161ddfdd6be8533263256d0dfe78fa1039c30b"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-005-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 22040,
+        "sha256": "cf858193a5f4ea168f342e43a288c2e9294b59ee969817d54f9b7b411144aee9"
+      }
+    },
+    {
+      "slug": "male-006",
+      "genderGroup": "male",
+      "sourceNumber": 6,
+      "sortOrder": 6,
+      "enabled": true,
+      "label": "男姿势 6",
+      "referenceSha256": "e4029bb88cba100db579c9523e11cb92ea84bf86dc96c38e1305ccc65131fe60",
+      "originalKey": "originals/male-006.png",
+      "original": {
+        "filename": "male-006.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1650847,
+        "sha256": "e4029bb88cba100db579c9523e11cb92ea84bf86dc96c38e1305ccc65131fe60"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-006-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5430,
+        "sha256320": "a1bc97f3d0324fda51ff4872ef51470abb2354085868b745302d579ccc6e8dc7",
+        "src640": "/images/model-pose-transfer/thumbs/male-006-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 15408,
+        "sha256640": "079d017f8a043dd59930fd2bcdc71cf5934bf8a4d77ef43273ffc18ae3c52234"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-006-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 19652,
+        "sha256": "0dcee3b59bc568046383689bb1c5d5caa679b6e9d3bc9462a596e7d48b50d145"
+      }
+    },
+    {
+      "slug": "male-007",
+      "genderGroup": "male",
+      "sourceNumber": 7,
+      "sortOrder": 7,
+      "enabled": true,
+      "label": "男姿势 7",
+      "referenceSha256": "4d17b6d02a6c8bc8ec5034835bf25fe779d26cff6d68c2f2c9167f54c6fba762",
+      "originalKey": "originals/male-007.png",
+      "original": {
+        "filename": "male-007.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1213825,
+        "sha256": "4d17b6d02a6c8bc8ec5034835bf25fe779d26cff6d68c2f2c9167f54c6fba762"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-007-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 4022,
+        "sha256320": "1e4be01bfc22e49bdbb6c8c3adc6ee828926bf83c56e40124c0e26d41f1c1ff6",
+        "src640": "/images/model-pose-transfer/thumbs/male-007-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 11052,
+        "sha256640": "85fbc952360c8135168b6bff9f86d9732c92f12b82e1e21a95a2db9c6d6bca1f"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-007-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 14284,
+        "sha256": "bf6b8b26fc1993c3657498b93b00d2ea263f20a0843a055f367dea700ea0df6d"
+      }
+    },
+    {
+      "slug": "male-008",
+      "genderGroup": "male",
+      "sourceNumber": 8,
+      "sortOrder": 8,
+      "enabled": true,
+      "label": "男姿势 8",
+      "referenceSha256": "5ec7add3e4ac03edd1583ace05511f70382a5f257890f52ea4b6d98eec612f84",
+      "originalKey": "originals/male-008.png",
+      "original": {
+        "filename": "male-008.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1473871,
+        "sha256": "5ec7add3e4ac03edd1583ace05511f70382a5f257890f52ea4b6d98eec612f84"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-008-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5810,
+        "sha256320": "ec383f02500557a4577d49577b2060195b5c3a5759c94160be34e663f8b8453a",
+        "src640": "/images/model-pose-transfer/thumbs/male-008-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16928,
+        "sha256640": "582b69d171beeaeded002344feaf75ff6d7096f239e23cfee4c275a35cba5343"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-008-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 22128,
+        "sha256": "51aceec1c3f2d4c63498eaa1ceb5f0a8210b12070d39fa2a7cf3ade053aa63d3"
+      }
+    },
+    {
+      "slug": "male-009",
+      "genderGroup": "male",
+      "sourceNumber": 9,
+      "sortOrder": 9,
+      "enabled": true,
+      "label": "男姿势 9",
+      "referenceSha256": "65631fe462a273c76497c427367f63462f4dac6864bf42f628cb00357da071b9",
+      "originalKey": "originals/male-009.png",
+      "original": {
+        "filename": "male-009.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1589479,
+        "sha256": "65631fe462a273c76497c427367f63462f4dac6864bf42f628cb00357da071b9"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-009-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5778,
+        "sha256320": "e8c626d9b2a77d4a593eb0d96cdc0b135d9d2154e3ce737e923f1908a43f5568",
+        "src640": "/images/model-pose-transfer/thumbs/male-009-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16702,
+        "sha256640": "ad9407d211e6c3c3f5fb0a82d84870e2881d5de363a5f15880e85ddb98e10d4a"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-009-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 21826,
+        "sha256": "871995429247be817c56a827989dd04857df8b1f74ede2ada792d9274ba3026a"
+      }
+    },
+    {
+      "slug": "male-010",
+      "genderGroup": "male",
+      "sourceNumber": 10,
+      "sortOrder": 10,
+      "enabled": true,
+      "label": "男姿势 10",
+      "referenceSha256": "e2141932d3b090ee8a75c266c2b7653498f2260c3910fbd79435af0c4be598d4",
+      "originalKey": "originals/male-010.png",
+      "original": {
+        "filename": "male-010.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1651747,
+        "sha256": "e2141932d3b090ee8a75c266c2b7653498f2260c3910fbd79435af0c4be598d4"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-010-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5830,
+        "sha256320": "541aef71476073c8bd0c5110cf967f92ec76bcf0c3f113bfc52d221f610ec634",
+        "src640": "/images/model-pose-transfer/thumbs/male-010-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 15808,
+        "sha256640": "b185508ffa79133bda45da802580d34fc92ea12de4eeb35106a902d8e6054ffa"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-010-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 20804,
+        "sha256": "6fdf69f296f086116d440b9dec494f8bc6947b5840039b0a7934553042805c4b"
+      }
+    },
+    {
+      "slug": "male-011",
+      "genderGroup": "male",
+      "sourceNumber": 11,
+      "sortOrder": 11,
+      "enabled": true,
+      "label": "男姿势 11",
+      "referenceSha256": "ca8bbe8379cbed21ea6a50d1293a94532050aac3a6ef9b921a9f1b4e160bc9bf",
+      "originalKey": "originals/male-011.png",
+      "original": {
+        "filename": "male-011.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1717711,
+        "sha256": "ca8bbe8379cbed21ea6a50d1293a94532050aac3a6ef9b921a9f1b4e160bc9bf"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-011-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 6212,
+        "sha256320": "dced10af787dea2e6a9a09b8986eb68ce811244ffd10088147a9b84806ee3550",
+        "src640": "/images/model-pose-transfer/thumbs/male-011-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16860,
+        "sha256640": "cd633a626fc93baa757f7ad74be3da83ab81e1c97f709c28fd67c9822d23ed4a"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-011-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 21832,
+        "sha256": "4993e245e321ce12cb120e0ce8e893f44d30f07450077287f410886ce72364dd"
+      }
+    },
+    {
+      "slug": "male-012",
+      "genderGroup": "male",
+      "sourceNumber": 12,
+      "sortOrder": 12,
+      "enabled": true,
+      "label": "男姿势 12",
+      "referenceSha256": "c9684de194381d0ec4e784b9eb9adb1e834a796d7e1f1f64d1063f521663a39b",
+      "originalKey": "originals/male-012.png",
+      "original": {
+        "filename": "male-012.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1567795,
+        "sha256": "c9684de194381d0ec4e784b9eb9adb1e834a796d7e1f1f64d1063f521663a39b"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-012-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 4580,
+        "sha256320": "299ba3e357d9087cc912d53828b1ca1351495678dddf530fa21ffad438d7d7e5",
+        "src640": "/images/model-pose-transfer/thumbs/male-012-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 12934,
+        "sha256640": "ca0970b7a84a6903b1661560980d2a2e473d14c384318ab9b122ef523988ffe2"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-012-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 17082,
+        "sha256": "f54494aecd803a4db8b3d014079dff054a03b83e1497671fe6232e1b30110192"
+      }
+    },
+    {
+      "slug": "male-013",
+      "genderGroup": "male",
+      "sourceNumber": 13,
+      "sortOrder": 13,
+      "enabled": true,
+      "label": "男姿势 13",
+      "referenceSha256": "f898a8befc54a04dcbff00945c8bce43ad50b14e5e8f2c3378beec7778679fdc",
+      "originalKey": "originals/male-013.png",
+      "original": {
+        "filename": "male-013.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1701022,
+        "sha256": "f898a8befc54a04dcbff00945c8bce43ad50b14e5e8f2c3378beec7778679fdc"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-013-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5126,
+        "sha256320": "868eb5ae7623a42c03abc326096f98960b406ab2a3ff9d864dceddb0076d654e",
+        "src640": "/images/model-pose-transfer/thumbs/male-013-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 14244,
+        "sha256640": "a53dfbf08db04082edcfdd8c8efadc62047e76981cef4e00706ae16f6ce57924"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-013-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 18210,
+        "sha256": "c20e0583a561e5acc9c17d1b4b533fac0070f7ca633a545946e876291055e297"
+      }
+    },
+    {
+      "slug": "male-014",
+      "genderGroup": "male",
+      "sourceNumber": 14,
+      "sortOrder": 14,
+      "enabled": true,
+      "label": "男姿势 14",
+      "referenceSha256": "366b6e9abb6f71f399c9e7bded6ddfdc7211d6648225b85730c30a7304424ad2",
+      "originalKey": "originals/male-014.png",
+      "original": {
+        "filename": "male-014.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1562734,
+        "sha256": "366b6e9abb6f71f399c9e7bded6ddfdc7211d6648225b85730c30a7304424ad2"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-014-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 4914,
+        "sha256320": "d23091082b8ead8e5548696a8cceda1035a3aebc3dd89eb388d7d7ab253bbb60",
+        "src640": "/images/model-pose-transfer/thumbs/male-014-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 14330,
+        "sha256640": "be5362933adf4fb6e90de1d975e505db4a0bbec676cbef423514c03b779699dc"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-014-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 18560,
+        "sha256": "1965062c35517d21bd4ceb42291798ba1c1290fb745ff6aaaab04f5562ead6fa"
+      }
+    },
+    {
+      "slug": "male-015",
+      "genderGroup": "male",
+      "sourceNumber": 15,
+      "sortOrder": 15,
+      "enabled": true,
+      "label": "男姿势 15",
+      "referenceSha256": "3b3fcd2aeccb1ead7e6cdfa54ca6e015a26998353dbb0fc6fc64b215e1af8c0f",
+      "originalKey": "originals/male-015.png",
+      "original": {
+        "filename": "male-015.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1568001,
+        "sha256": "3b3fcd2aeccb1ead7e6cdfa54ca6e015a26998353dbb0fc6fc64b215e1af8c0f"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-015-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5164,
+        "sha256320": "f67fe15956ac168cb0ed459dcf3c9fa236a431a0dc8502960ae8b6a35b11562a",
+        "src640": "/images/model-pose-transfer/thumbs/male-015-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 15210,
+        "sha256640": "e32b667c68d88154276c0dcbbcc0ea9ec8ba3079ed2d5cb7bc1d250f1178ced9"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-015-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 19964,
+        "sha256": "80fb857aafbdb788e80a2e785fd0fc6528e789dd0f4a4a36f87c07416bee098f"
+      }
+    },
+    {
+      "slug": "male-016",
+      "genderGroup": "male",
+      "sourceNumber": 16,
+      "sortOrder": 16,
+      "enabled": true,
+      "label": "男姿势 16",
+      "referenceSha256": "1f79f81896c3d727a2c003df536d9ed01e43fd9d91efee9a2d475e0d139ab352",
+      "originalKey": "originals/male-016.png",
+      "original": {
+        "filename": "male-016.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1864254,
+        "sha256": "1f79f81896c3d727a2c003df536d9ed01e43fd9d91efee9a2d475e0d139ab352"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-016-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 6868,
+        "sha256320": "287c342b3b2d91215466630da2c22142061e289d3cc63d983e27ff65a4e33007",
+        "src640": "/images/model-pose-transfer/thumbs/male-016-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 18720,
+        "sha256640": "c985100895277f0c318636858a4cf85f357d7a3dc92b54e8d8ccc323d5a255da"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-016-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 23974,
+        "sha256": "e39e83e3418924c5cf86b9a40bacc9790310360354bf7787c5327faa93f6e4ad"
+      }
+    },
+    {
+      "slug": "male-017",
+      "genderGroup": "male",
+      "sourceNumber": 17,
+      "sortOrder": 17,
+      "enabled": true,
+      "label": "男姿势 17",
+      "referenceSha256": "b1200c46ddb430d770980553a8069a26c08b93b49e12b365ea737c287943f27a",
+      "originalKey": "originals/male-017.png",
+      "original": {
+        "filename": "male-017.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1745762,
+        "sha256": "b1200c46ddb430d770980553a8069a26c08b93b49e12b365ea737c287943f27a"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-017-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5584,
+        "sha256320": "5ba1a9da1b271b5647160d82d4f383d922360235ed839729f9a219bec9185fbb",
+        "src640": "/images/model-pose-transfer/thumbs/male-017-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16170,
+        "sha256640": "922b0555351500012f1eecc50d544e25b8fa0155133f68efd7cd99eed5e93df6"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-017-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 21036,
+        "sha256": "953503336d0468ce635951a9bb0279ac9e58677b7d8e95f90519ea2b75ccba15"
+      }
+    },
+    {
+      "slug": "male-018",
+      "genderGroup": "male",
+      "sourceNumber": 18,
+      "sortOrder": 18,
+      "enabled": true,
+      "label": "男姿势 18",
+      "referenceSha256": "8bc38d734f16c5e2732e23f83c47096bcff172166be4905ca23f8b1e2f8f0e2a",
+      "originalKey": "originals/male-018.png",
+      "original": {
+        "filename": "male-018.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 2125243,
+        "sha256": "8bc38d734f16c5e2732e23f83c47096bcff172166be4905ca23f8b1e2f8f0e2a"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-018-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 9000,
+        "sha256320": "1b8f1b8f5be8604c818693e7e74b40100043700da8e03877b6a635f6259c1667",
+        "src640": "/images/model-pose-transfer/thumbs/male-018-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 28900,
+        "sha256640": "40c58349e0b39084a1e1d3b9b7a07f8a5df84dc5fe2e521844aa1523173f7573"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-018-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 41704,
+        "sha256": "79ce10ec1de1eb15f581198941f210c65013641323fa7121d0935987c1806f38"
+      }
+    },
+    {
+      "slug": "male-019",
+      "genderGroup": "male",
+      "sourceNumber": 19,
+      "sortOrder": 19,
+      "enabled": true,
+      "label": "男姿势 19",
+      "referenceSha256": "fee031ad1f358fb117d51392401fc39c238396edb8ae20bcea21d8bd7a66c0b5",
+      "originalKey": "originals/male-019.png",
+      "original": {
+        "filename": "male-019.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1873855,
+        "sha256": "fee031ad1f358fb117d51392401fc39c238396edb8ae20bcea21d8bd7a66c0b5"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-019-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 6612,
+        "sha256320": "5a0965102bea119da68fc097898d703819795596fc331adb75baf0edd21e4b09",
+        "src640": "/images/model-pose-transfer/thumbs/male-019-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 18048,
+        "sha256640": "791f76fb36f7f47c8fb955925b1e6760a21cea2d48cd5240ce9023639dc59ad2"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-019-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 23058,
+        "sha256": "1f5a6d4116a0071f502916ee0ba55cdbcc2a3f1e04b42275b5c918776538cfda"
+      }
+    },
+    {
+      "slug": "male-020",
+      "genderGroup": "male",
+      "sourceNumber": 20,
+      "sortOrder": 20,
+      "enabled": true,
+      "label": "男姿势 20",
+      "referenceSha256": "f4a3f88f9688847ea0157e59b65e7200d4c0cc86a7d518a4412677546f263ac8",
+      "originalKey": "originals/male-020.png",
+      "original": {
+        "filename": "male-020.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1773992,
+        "sha256": "f4a3f88f9688847ea0157e59b65e7200d4c0cc86a7d518a4412677546f263ac8"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-020-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 6446,
+        "sha256320": "b6d7f500a80a1aaf791ca474c3bfc4a072b05c76dc7b440dfd413ceb98611e44",
+        "src640": "/images/model-pose-transfer/thumbs/male-020-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 17374,
+        "sha256640": "8d41621b75c09ae49bf4c9e245b71ed21112ac6e8cb526f6094e74c47b95c732"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-020-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 22570,
+        "sha256": "f1c9607e7ad5d11120503998e331d381d7ef1c156526e69970cf3ee8d8bf8392"
+      }
+    },
+    {
+      "slug": "male-021",
+      "genderGroup": "male",
+      "sourceNumber": 21,
+      "sortOrder": 21,
+      "enabled": true,
+      "label": "男姿势 21",
+      "referenceSha256": "cd61f155f79f0ffc26c96ac013a6f55a7d858f89453a88b6cb9d2dbd5442d20f",
+      "originalKey": "originals/male-021.png",
+      "original": {
+        "filename": "male-021.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 1706,
+        "byteSize": 1412377,
+        "sha256": "cd61f155f79f0ffc26c96ac013a6f55a7d858f89453a88b6cb9d2dbd5442d20f"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/male-021-320.webp",
+        "width320": 320,
+        "height320": 426,
+        "byteSize320": 5512,
+        "sha256320": "a4a543e537ed8ca87ae59dc95d54527e193372e60f807f048167331ee02a78c9",
+        "src640": "/images/model-pose-transfer/thumbs/male-021-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 15752,
+        "sha256640": "63a4eaa8988b11fd2c24caa9d61c757493be5ba2ce232ebe442bc62597e971a1"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/male-021-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 20188,
+        "sha256": "b3f460d4f816037b2ccfd0f1431a4d7c3c2bb239cb124847a9ce94d3ff6e606d"
+      }
+    },
+    {
+      "slug": "female-001",
+      "genderGroup": "female",
+      "sourceNumber": 1,
+      "sortOrder": 1,
+      "enabled": true,
+      "label": "女姿势 1",
+      "referenceSha256": "7671a682fc999cf044baf055dd4e17ac82b6160c82fc663102dab3868429d727",
+      "originalKey": "originals/female-001.png",
+      "original": {
+        "filename": "female-001.png",
+        "mimeType": "image/png",
+        "width": 887,
+        "height": 1773,
+        "byteSize": 1606417,
+        "sha256": "7671a682fc999cf044baf055dd4e17ac82b6160c82fc663102dab3868429d727"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-001-320.webp",
+        "width320": 320,
+        "height320": 640,
+        "byteSize320": 8812,
+        "sha256320": "dc51039aa9712e6cc7f8ae8c103dfa66b82d7e1f1736c8feff40ef45764b097c",
+        "src640": "/images/model-pose-transfer/thumbs/female-001-640.webp",
+        "width640": 640,
+        "height640": 1279,
+        "byteSize640": 29242,
+        "sha256640": "e65837d4f5750f6657b2626412f5a8289eba01a21c8655efd980e45c6b7523f7"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-001-960.webp",
+        "width": 480,
+        "height": 960,
+        "byteSize": 20306,
+        "sha256": "846f62a50f6ef65b4e7a2f680e01470e3075edd8f82216c8da7e0302d84e522e"
+      }
+    },
+    {
+      "slug": "female-002",
+      "genderGroup": "female",
+      "sourceNumber": 2,
+      "sortOrder": 2,
+      "enabled": true,
+      "label": "女姿势 2",
+      "referenceSha256": "eeaa6697e65cc0530b27f1316e85f8fa86799c946e314eedff6af4123fc9784f",
+      "originalKey": "originals/female-002.png",
+      "original": {
+        "filename": "female-002.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1472128,
+        "sha256": "eeaa6697e65cc0530b27f1316e85f8fa86799c946e314eedff6af4123fc9784f"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-002-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5166,
+        "sha256320": "32a6db5ca41b0b3cdbc7f14ea435f2620061efec30d9a1efdb5f7637af26c4d3",
+        "src640": "/images/model-pose-transfer/thumbs/female-002-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16202,
+        "sha256640": "e7f57c36c3809d8d68bd0d5bf1e19dc93ba5ea2ea076817c1228e57dfba513de"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-002-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 22052,
+        "sha256": "25d89fc6ff4a2975db60acec0850982faa8b14a88f7d981b74257493ff1dd342"
+      }
+    },
+    {
+      "slug": "female-003",
+      "genderGroup": "female",
+      "sourceNumber": 3,
+      "sortOrder": 3,
+      "enabled": true,
+      "label": "女姿势 3",
+      "referenceSha256": "6b020461f189883d44112a1fe3fe33d784bb89a609c421e5b28fd405ba1190a3",
+      "originalKey": "originals/female-003.png",
+      "original": {
+        "filename": "female-003.png",
+        "mimeType": "image/png",
+        "width": 864,
+        "height": 1821,
+        "byteSize": 1501124,
+        "sha256": "6b020461f189883d44112a1fe3fe33d784bb89a609c421e5b28fd405ba1190a3"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-003-320.webp",
+        "width320": 320,
+        "height320": 674,
+        "byteSize320": 9782,
+        "sha256320": "6c325b761d511bb8816ff9ac745132cb1e6a5c92733d1e20733ebee50e12bdf3",
+        "src640": "/images/model-pose-transfer/thumbs/female-003-640.webp",
+        "width640": 640,
+        "height640": 1349,
+        "byteSize640": 30884,
+        "sha256640": "f01d0fe16b24aa128cf6d9cb6ca75736938bd1c7603fd2339b48908693071ead"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-003-960.webp",
+        "width": 455,
+        "height": 960,
+        "byteSize": 19970,
+        "sha256": "87651ff85bd9ac85286c388c1da0452b0aa7764a62836da7e4392b759beb1fa0"
+      }
+    },
+    {
+      "slug": "female-004",
+      "genderGroup": "female",
+      "sourceNumber": 4,
+      "sortOrder": 4,
+      "enabled": true,
+      "label": "女姿势 4",
+      "referenceSha256": "aa6e18f5133d64da718b9af1e6f092bf7df2c54dc41c9b64c86e8bfd3e13b185",
+      "originalKey": "originals/female-004.png",
+      "original": {
+        "filename": "female-004.png",
+        "mimeType": "image/png",
+        "width": 941,
+        "height": 1672,
+        "byteSize": 1320352,
+        "sha256": "aa6e18f5133d64da718b9af1e6f092bf7df2c54dc41c9b64c86e8bfd3e13b185"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-004-320.webp",
+        "width320": 320,
+        "height320": 569,
+        "byteSize320": 5322,
+        "sha256320": "e356adb7f0c61924e2dd3ae102127013f0ddb585d65d15270f82305951ff45e3",
+        "src640": "/images/model-pose-transfer/thumbs/female-004-640.webp",
+        "width640": 640,
+        "height640": 1137,
+        "byteSize640": 15120,
+        "sha256640": "de513634012df8817f6b938b0058f67163f28a99d354f0c0629b3d4ba8526da6"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-004-960.webp",
+        "width": 540,
+        "height": 960,
+        "byteSize": 12950,
+        "sha256": "69ccdbed303023f4b06a4e8b8982ce63ccbd672e7331e81ff08d88b81e9ee273"
+      }
+    },
+    {
+      "slug": "female-005",
+      "genderGroup": "female",
+      "sourceNumber": 5,
+      "sortOrder": 5,
+      "enabled": true,
+      "label": "女姿势 5",
+      "referenceSha256": "8a12e578c96ebfd2c3f12decb49d56393f661dc97cb36b5f212711657d8041ce",
+      "originalKey": "originals/female-005.png",
+      "original": {
+        "filename": "female-005.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1441001,
+        "sha256": "8a12e578c96ebfd2c3f12decb49d56393f661dc97cb36b5f212711657d8041ce"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-005-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5508,
+        "sha256320": "5eb7fe1f60d25a9e1dbaffca9c69941b8879cb88188d62de088fdfcb1be3b72d",
+        "src640": "/images/model-pose-transfer/thumbs/female-005-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 14964,
+        "sha256640": "a46916f03a992b6194c637cb57a481db404ae69589010a0cb605f498e9fbbe89"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-005-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 19060,
+        "sha256": "26ee3d7238bcc34d66c70198269df3c10282b500328b5e68ed4932393e047447"
+      }
+    },
+    {
+      "slug": "female-006",
+      "genderGroup": "female",
+      "sourceNumber": 6,
+      "sortOrder": 6,
+      "enabled": true,
+      "label": "女姿势 6",
+      "referenceSha256": "42213ec4ebdfd8af654a18910976378ba49d50616253503d6211efd317cc745c",
+      "originalKey": "originals/female-006.png",
+      "original": {
+        "filename": "female-006.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1384954,
+        "sha256": "42213ec4ebdfd8af654a18910976378ba49d50616253503d6211efd317cc745c"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-006-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 4868,
+        "sha256320": "ce61a53c41771fefb7994260df15de282b4da729fa98156f15b61f0804cdae53",
+        "src640": "/images/model-pose-transfer/thumbs/female-006-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 13334,
+        "sha256640": "f45bb788b3290247d7a6212cb097a80bbc1820e598e394de0d27bfb1b01f8c12"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-006-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 17208,
+        "sha256": "8a86aef4a043a6319cccfde21a66cd99b564a291e6e96c09ef98ab012f0af0ce"
+      }
+    },
+    {
+      "slug": "female-007",
+      "genderGroup": "female",
+      "sourceNumber": 7,
+      "sortOrder": 7,
+      "enabled": true,
+      "label": "女姿势 7",
+      "referenceSha256": "5bc7d605d595db7ea87ea175f922e71aaa6f4023cef361e94482fd89a82943dd",
+      "originalKey": "originals/female-007.png",
+      "original": {
+        "filename": "female-007.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1377645,
+        "sha256": "5bc7d605d595db7ea87ea175f922e71aaa6f4023cef361e94482fd89a82943dd"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-007-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 4480,
+        "sha256320": "eca46f7d1a170bbf5dc387d5311f6c7d69fa592e960e10a9738d3d546ebca49a",
+        "src640": "/images/model-pose-transfer/thumbs/female-007-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 13236,
+        "sha256640": "60ac6dc72c8e4b3198a855803634703cd645d765b5c3ce75770703a6cde326eb"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-007-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 17286,
+        "sha256": "31d14298845f655799ef552c017ed793e30f4d80ecd9edcece223a5043c180e6"
+      }
+    },
+    {
+      "slug": "female-008",
+      "genderGroup": "female",
+      "sourceNumber": 8,
+      "sortOrder": 8,
+      "enabled": true,
+      "label": "女姿势 8",
+      "referenceSha256": "b2ee2fc96b30e9c17832e39d820652d6bc217677062db07f209f8daa2dbd4a5a",
+      "originalKey": "originals/female-008.png",
+      "original": {
+        "filename": "female-008.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1431884,
+        "sha256": "b2ee2fc96b30e9c17832e39d820652d6bc217677062db07f209f8daa2dbd4a5a"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-008-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5486,
+        "sha256320": "340ec8fc480d79abc8fb83f987d39f49f66b47e87794fa8bb735ace73c089343",
+        "src640": "/images/model-pose-transfer/thumbs/female-008-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 14738,
+        "sha256640": "30765ca963c66a037d3de9f9614a2e1289daa8efc844595330bdf1541daf4438"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-008-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 18672,
+        "sha256": "4dd6d4cad28ad2e411b85f76ae91c632ea9d29be205a623210e5410bdc4aad85"
+      }
+    },
+    {
+      "slug": "female-009",
+      "genderGroup": "female",
+      "sourceNumber": 9,
+      "sortOrder": 9,
+      "enabled": true,
+      "label": "女姿势 9",
+      "referenceSha256": "31c70457517ce4b6fabf99e4095397a1abe4150bf5f451c8fc2b4a420ae26eb5",
+      "originalKey": "originals/female-009.png",
+      "original": {
+        "filename": "female-009.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1537371,
+        "sha256": "31c70457517ce4b6fabf99e4095397a1abe4150bf5f451c8fc2b4a420ae26eb5"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-009-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 6906,
+        "sha256320": "10b3c3ba5931e876850598a06b55a957df0eeffc218540828d2f43cfd274b070",
+        "src640": "/images/model-pose-transfer/thumbs/female-009-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 20912,
+        "sha256640": "05a8c72053d4affe38968bacd659b32094a59275f01247de7b0271294de5967c"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-009-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 27896,
+        "sha256": "4e82239fa64d3e077460fba751b2f63e7db927f1f3ba1445ffba66cfca713328"
+      }
+    },
+    {
+      "slug": "female-010",
+      "genderGroup": "female",
+      "sourceNumber": 10,
+      "sortOrder": 10,
+      "enabled": true,
+      "label": "女姿势 10",
+      "referenceSha256": "e30d92751c717b9528dead1e84900391d3aab85e754d53952448d911055f66de",
+      "originalKey": "originals/female-010.png",
+      "original": {
+        "filename": "female-010.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1408792,
+        "sha256": "e30d92751c717b9528dead1e84900391d3aab85e754d53952448d911055f66de"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-010-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5310,
+        "sha256320": "2b77528f039ee8e78aac6fdadeb58e7bc5cfc738cb83d2e2a580bfcf5b31acd0",
+        "src640": "/images/model-pose-transfer/thumbs/female-010-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 13592,
+        "sha256640": "171eb7d28f3d06a1b27704219870c419164f6f81859fb97dcb5911cdb807841a"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-010-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 17798,
+        "sha256": "1aac44ce976796d3f36c19ee4ae61359959a7e8c4c7cb768066246798220cce8"
+      }
+    },
+    {
+      "slug": "female-011",
+      "genderGroup": "female",
+      "sourceNumber": 11,
+      "sortOrder": 11,
+      "enabled": true,
+      "label": "女姿势 11",
+      "referenceSha256": "a91f8a7420f95777799a93e53c62b523072ada98f21aa063b802a630106ca55e",
+      "originalKey": "originals/female-011.png",
+      "original": {
+        "filename": "female-011.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1211793,
+        "sha256": "a91f8a7420f95777799a93e53c62b523072ada98f21aa063b802a630106ca55e"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-011-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5108,
+        "sha256320": "1bdea4b245768ac18fc43ed2bd583196ab2a165fad1eb52c2d4683bbf5c16073",
+        "src640": "/images/model-pose-transfer/thumbs/female-011-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 14292,
+        "sha256640": "3d966cc3da44914fa2c1b6373f41e2e97a1ff15d442c7c8667781da715a214d0"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-011-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 18326,
+        "sha256": "f64d593dcdb899b75970f0e3344b9f1482e6136d0c965deb384c71f031129b36"
+      }
+    },
+    {
+      "slug": "female-012",
+      "genderGroup": "female",
+      "sourceNumber": 12,
+      "sortOrder": 12,
+      "enabled": true,
+      "label": "女姿势 12",
+      "referenceSha256": "275287a8fcbc3f00810d3b22c0d467af3823014239ac89e2d403956309bd52a3",
+      "originalKey": "originals/female-012.png",
+      "original": {
+        "filename": "female-012.png",
+        "mimeType": "image/png",
+        "width": 941,
+        "height": 1672,
+        "byteSize": 1381688,
+        "sha256": "275287a8fcbc3f00810d3b22c0d467af3823014239ac89e2d403956309bd52a3"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-012-320.webp",
+        "width320": 320,
+        "height320": 569,
+        "byteSize320": 6544,
+        "sha256320": "c4a8385a167f167c5471af0f7be3562a3064d9ebb2c589556b99dcdf0f93b096",
+        "src640": "/images/model-pose-transfer/thumbs/female-012-640.webp",
+        "width640": 640,
+        "height640": 1137,
+        "byteSize640": 17972,
+        "sha256640": "e4587983e9b4a283dd2b640a8bed651df953a43a9db3208d536eb003dfc1e91a"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-012-960.webp",
+        "width": 540,
+        "height": 960,
+        "byteSize": 15578,
+        "sha256": "8bc1314cf7af4c3371f2889b56ce26f8a2fd4d13e6e2b072c984b723d38fd89d"
+      }
+    },
+    {
+      "slug": "female-013",
+      "genderGroup": "female",
+      "sourceNumber": 13,
+      "sortOrder": 13,
+      "enabled": true,
+      "label": "女姿势 13",
+      "referenceSha256": "b7d709c4fe57898d1b1d3d66ae43e9bf533b5722ee6dffb2c86ca8f343b3ec3b",
+      "originalKey": "originals/female-013.png",
+      "original": {
+        "filename": "female-013.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1483950,
+        "sha256": "b7d709c4fe57898d1b1d3d66ae43e9bf533b5722ee6dffb2c86ca8f343b3ec3b"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-013-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5956,
+        "sha256320": "406b6d944f3d763db21c4ea237285bb6592e1507b6f8fe1def0a8ec055d69c80",
+        "src640": "/images/model-pose-transfer/thumbs/female-013-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16562,
+        "sha256640": "13f245a52eea7f08ae323b41663623cc6554727f564cdec726797c182a757c0a"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-013-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 21714,
+        "sha256": "2baef17e34c807c96ad4fe1dd0dc2ed56bfe80ab9d697e1dc6c590c181728674"
+      }
+    },
+    {
+      "slug": "female-014",
+      "genderGroup": "female",
+      "sourceNumber": 14,
+      "sortOrder": 14,
+      "enabled": true,
+      "label": "女姿势 14",
+      "referenceSha256": "72323c69da49dba3c2c260345e83970c63d54d3f0b9172899cfcb8e6d59a978a",
+      "originalKey": "originals/female-014.png",
+      "original": {
+        "filename": "female-014.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1570857,
+        "sha256": "72323c69da49dba3c2c260345e83970c63d54d3f0b9172899cfcb8e6d59a978a"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-014-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 6656,
+        "sha256320": "3f7fd2a7a2640939cee646b399d9022736fe94b6f9a749c500e736b4ae556b61",
+        "src640": "/images/model-pose-transfer/thumbs/female-014-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 18530,
+        "sha256640": "c9b4bbb6151cbad10cdc847a902c4574dd6a74927167a04da1fa2e393e12db86"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-014-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 24158,
+        "sha256": "cbda1cc8ac8d334800fd7a2f28fbd5bfcabb63c4a078dedc6c69805239ef7d4c"
+      }
+    },
+    {
+      "slug": "female-015",
+      "genderGroup": "female",
+      "sourceNumber": 15,
+      "sortOrder": 15,
+      "enabled": true,
+      "label": "女姿势 15",
+      "referenceSha256": "70268c5d02080509dc85d12e1afb86ed2f53b3eaba8c1f8611eaa5f1d20ce929",
+      "originalKey": "originals/female-015.png",
+      "original": {
+        "filename": "female-015.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1410149,
+        "sha256": "70268c5d02080509dc85d12e1afb86ed2f53b3eaba8c1f8611eaa5f1d20ce929"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-015-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5522,
+        "sha256320": "75c2f8e503ac3e1fcb4f8faf7dc8240df5f8819a4c6f5874fcfd30d7df7cea23",
+        "src640": "/images/model-pose-transfer/thumbs/female-015-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 14794,
+        "sha256640": "0b6af8194841bc8ac80701c5559b8f4d89b1022e39dd829f4f92fb5b6fbefabe"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-015-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 19030,
+        "sha256": "5dfd0af3e70d4938ed402236196ca6a2a612593fece4be7b882eb1f73632bace"
+      }
+    },
+    {
+      "slug": "female-016",
+      "genderGroup": "female",
+      "sourceNumber": 16,
+      "sortOrder": 16,
+      "enabled": true,
+      "label": "女姿势 16",
+      "referenceSha256": "8559aa5da02ff3074804dce5554cdfacd81a8e237c50f7e0a999324e289da897",
+      "originalKey": "originals/female-016.png",
+      "original": {
+        "filename": "female-016.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1495168,
+        "sha256": "8559aa5da02ff3074804dce5554cdfacd81a8e237c50f7e0a999324e289da897"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-016-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5338,
+        "sha256320": "cd645b57abe77727bf62305fdd75820c6ada6d2f4a1a04fb122b42b745f513a7",
+        "src640": "/images/model-pose-transfer/thumbs/female-016-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 15184,
+        "sha256640": "8c8447423b5dd1095ccf00495bc97735f0348937d953b50e16a71f40e7277806"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-016-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 19812,
+        "sha256": "c455a868a749ccadfefcbbb655f7ac11e61eb80b92226303e6d8e55024f86f8e"
+      }
+    },
+    {
+      "slug": "female-017",
+      "genderGroup": "female",
+      "sourceNumber": 17,
+      "sortOrder": 17,
+      "enabled": true,
+      "label": "女姿势 17",
+      "referenceSha256": "ed5b4bcf7913a555d04dc85e49f5d3dbcf34bf44645e8841ea20792b8414b68b",
+      "originalKey": "originals/female-017.png",
+      "original": {
+        "filename": "female-017.png",
+        "mimeType": "image/png",
+        "width": 868,
+        "height": 1812,
+        "byteSize": 1534093,
+        "sha256": "ed5b4bcf7913a555d04dc85e49f5d3dbcf34bf44645e8841ea20792b8414b68b"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-017-320.webp",
+        "width320": 320,
+        "height320": 668,
+        "byteSize320": 10276,
+        "sha256320": "b2317a5603614eaf8b46f72264de388c72cea52107f0831b2778c4df1308b540",
+        "src640": "/images/model-pose-transfer/thumbs/female-017-640.webp",
+        "width640": 640,
+        "height640": 1336,
+        "byteSize640": 30852,
+        "sha256640": "2d8aff226a686076e023f0afb27c1db299f8daf355fdabbf45d529a457bea647"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-017-960.webp",
+        "width": 460,
+        "height": 960,
+        "byteSize": 20664,
+        "sha256": "ab0c815ca699c7c15b350839f9cee5adf7ad254cc94ba6ec30494de0c5f2d1e4"
+      }
+    },
+    {
+      "slug": "female-018",
+      "genderGroup": "female",
+      "sourceNumber": 18,
+      "sortOrder": 18,
+      "enabled": true,
+      "label": "女姿势 18",
+      "referenceSha256": "f6686e65bdada8b1c262feaf46ea2dfb65c80aac7a070ca7696127e8fcb01620",
+      "originalKey": "originals/female-018.png",
+      "original": {
+        "filename": "female-018.png",
+        "mimeType": "image/png",
+        "width": 928,
+        "height": 1694,
+        "byteSize": 1442916,
+        "sha256": "f6686e65bdada8b1c262feaf46ea2dfb65c80aac7a070ca7696127e8fcb01620"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-018-320.webp",
+        "width320": 320,
+        "height320": 584,
+        "byteSize320": 7876,
+        "sha256320": "d34d0f75152d38ca3cb9619e1688955723bc9667efac2c29fb607ad0071bb2e8",
+        "src640": "/images/model-pose-transfer/thumbs/female-018-640.webp",
+        "width640": 640,
+        "height640": 1168,
+        "byteSize640": 24268,
+        "sha256640": "e41360a8a152000cf6a5c416bf2f324db9fdc6c7f05eec02d2d07e0ad5f2b018"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-018-960.webp",
+        "width": 526,
+        "height": 960,
+        "byteSize": 19662,
+        "sha256": "063b5286b9ff89650f5f76aa78266f6a11cbc76bcc0677c9b09efe603fcf9161"
+      }
+    },
+    {
+      "slug": "female-019",
+      "genderGroup": "female",
+      "sourceNumber": 19,
+      "sortOrder": 19,
+      "enabled": true,
+      "label": "女姿势 19",
+      "referenceSha256": "6241edcccb3862fdabe6ea71e1b2aa17b02f3829f24c556189609d0e4cd2190a",
+      "originalKey": "originals/female-019.png",
+      "original": {
+        "filename": "female-019.png",
+        "mimeType": "image/png",
+        "width": 972,
+        "height": 1619,
+        "byteSize": 1447332,
+        "sha256": "6241edcccb3862fdabe6ea71e1b2aa17b02f3829f24c556189609d0e4cd2190a"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-019-320.webp",
+        "width320": 320,
+        "height320": 533,
+        "byteSize320": 6930,
+        "sha256320": "fee0609ebb9ec974e80d73cb68e03aceba40e25d3f928b8493013ae2014d5953",
+        "src640": "/images/model-pose-transfer/thumbs/female-019-640.webp",
+        "width640": 640,
+        "height640": 1066,
+        "byteSize640": 21124,
+        "sha256640": "65f17b51c8b27170f9962a66ffdb42f7e7b5f04bccc45f3c3c4824555925f72d"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-019-960.webp",
+        "width": 576,
+        "height": 960,
+        "byteSize": 19866,
+        "sha256": "e208cf55a188595596e547d6062222ec6a1e26f4e1e63594e3d91d41c8974bf8"
+      }
+    },
+    {
+      "slug": "female-020",
+      "genderGroup": "female",
+      "sourceNumber": 20,
+      "sortOrder": 20,
+      "enabled": true,
+      "label": "女姿势 20",
+      "referenceSha256": "d0dee86fd8acb9d155ba299790f9c5f90ccdfa1c4e1f6780108f42ed1b2d03af",
+      "originalKey": "originals/female-020.png",
+      "original": {
+        "filename": "female-020.png",
+        "mimeType": "image/png",
+        "width": 887,
+        "height": 1774,
+        "byteSize": 1584848,
+        "sha256": "d0dee86fd8acb9d155ba299790f9c5f90ccdfa1c4e1f6780108f42ed1b2d03af"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-020-320.webp",
+        "width320": 320,
+        "height320": 640,
+        "byteSize320": 10200,
+        "sha256320": "64d2e15e2c2f04c1d25baf173c15f2ad0bc37f7fd9f10e2b0fff1c9b4f14cbba",
+        "src640": "/images/model-pose-transfer/thumbs/female-020-640.webp",
+        "width640": 640,
+        "height640": 1280,
+        "byteSize640": 34004,
+        "sha256640": "5b8241d0e2eeb64eb3783e77600692f2929c349dfd8929592d41ba1829aad3d4"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-020-960.webp",
+        "width": 480,
+        "height": 960,
+        "byteSize": 24320,
+        "sha256": "a7f396f37738dbd898b30fd071d7f65007878802f8372734d519389efa3e2a01"
+      }
+    },
+    {
+      "slug": "female-021",
+      "genderGroup": "female",
+      "sourceNumber": 21,
+      "sortOrder": 21,
+      "enabled": true,
+      "label": "女姿势 21",
+      "referenceSha256": "f19a0e2e35ba4e9b3501eccf813e18ab273e737d86fbf254b88dbb530013b6ce",
+      "originalKey": "originals/female-021.png",
+      "original": {
+        "filename": "female-021.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1345777,
+        "sha256": "f19a0e2e35ba4e9b3501eccf813e18ab273e737d86fbf254b88dbb530013b6ce"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-021-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 4806,
+        "sha256320": "0e8a394ffeb01b65b77a4974be21109328ba6dc161af1256c93fe406f4cea15d",
+        "src640": "/images/model-pose-transfer/thumbs/female-021-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 13088,
+        "sha256640": "214d55f74c06aac87d2e6d658e69b683cc6e15255bf8fe70ba68add767567364"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-021-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 17016,
+        "sha256": "5299a82c7d76a84ee150408fa3fae82c5dd6038556b6e45d72988d9aaad423b5"
+      }
+    },
+    {
+      "slug": "female-022",
+      "genderGroup": "female",
+      "sourceNumber": 22,
+      "sortOrder": 22,
+      "enabled": true,
+      "label": "女姿势 22",
+      "referenceSha256": "be6284163c7aef01828e62f8ed6e7f140f0ba7dc438b06fbdbfae05b657cba26",
+      "originalKey": "originals/female-022.png",
+      "original": {
+        "filename": "female-022.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1503378,
+        "sha256": "be6284163c7aef01828e62f8ed6e7f140f0ba7dc438b06fbdbfae05b657cba26"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-022-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 6214,
+        "sha256320": "273e27b80d8c742c023ca75f85c28b11d21f40142b082baccb0856fb05ba672e",
+        "src640": "/images/model-pose-transfer/thumbs/female-022-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 17802,
+        "sha256640": "0ef7fc44d47830159ecfa8af8b71c17ddf64a8bab6d99c5051d3b143ebc6c5ce"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-022-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 23636,
+        "sha256": "21987268575cc469aee60bce677dad29191e71dcc51f803c27bdbd9f06dc05d2"
+      }
+    },
+    {
+      "slug": "female-023",
+      "genderGroup": "female",
+      "sourceNumber": 23,
+      "sortOrder": 23,
+      "enabled": true,
+      "label": "女姿势 23",
+      "referenceSha256": "4974bbc7a71cbe6a71ce04936dd4de93f9a9ef9b88908c5231a73c778c906cc6",
+      "originalKey": "originals/female-023.png",
+      "original": {
+        "filename": "female-023.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1372091,
+        "sha256": "4974bbc7a71cbe6a71ce04936dd4de93f9a9ef9b88908c5231a73c778c906cc6"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-023-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 4226,
+        "sha256320": "98c103e5fb1a17aa7dcec0f94754ef51d3fedd8ed86d8e62c948a49e5d6ebe7e",
+        "src640": "/images/model-pose-transfer/thumbs/female-023-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 12194,
+        "sha256640": "c0071daa8ac0920905043ae3a5377512030cce7bd17134b06414df18e6676294"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-023-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 15674,
+        "sha256": "4106e6c4cff835391543f4b1cbd126b479782013a8ff606ac8602e7ae199dfc2"
+      }
+    },
+    {
+      "slug": "female-024",
+      "genderGroup": "female",
+      "sourceNumber": 24,
+      "sortOrder": 24,
+      "enabled": true,
+      "label": "女姿势 24",
+      "referenceSha256": "011ac7c87c9f90cfb3368ced937066c428b1fc502982c0df806bebc104eb9044",
+      "originalKey": "originals/female-024.png",
+      "original": {
+        "filename": "female-024.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1317663,
+        "sha256": "011ac7c87c9f90cfb3368ced937066c428b1fc502982c0df806bebc104eb9044"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-024-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 3728,
+        "sha256320": "90e54ff8cccdb413117f0d2141dcafb2795d473e63e9567494e2d08ba00fd1c4",
+        "src640": "/images/model-pose-transfer/thumbs/female-024-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 11366,
+        "sha256640": "040b18e896eae51abba4da32a6948d891ede76cf3b0cabcc3ed0afd5ecdd4550"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-024-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 14938,
+        "sha256": "24612ccbd2cf62370a813a8d8694f9114d8fcb2bb0efeac11a44c5078f307774"
+      }
+    },
+    {
+      "slug": "female-025",
+      "genderGroup": "female",
+      "sourceNumber": 25,
+      "sortOrder": 25,
+      "enabled": true,
+      "label": "女姿势 25",
+      "referenceSha256": "615005a74ff78324be83f16292e02dabf309eb5541cadf57eae9a2355eefdd53",
+      "originalKey": "originals/female-025.png",
+      "original": {
+        "filename": "female-025.png",
+        "mimeType": "image/png",
+        "width": 928,
+        "height": 1695,
+        "byteSize": 1231560,
+        "sha256": "615005a74ff78324be83f16292e02dabf309eb5541cadf57eae9a2355eefdd53"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-025-320.webp",
+        "width320": 320,
+        "height320": 584,
+        "byteSize320": 6366,
+        "sha256320": "450b870d4fc81af19c4753a8d1a3ac424946225d325a09d4f57f5afce17ef1d9",
+        "src640": "/images/model-pose-transfer/thumbs/female-025-640.webp",
+        "width640": 640,
+        "height640": 1169,
+        "byteSize640": 18074,
+        "sha256640": "090fa6063cd9454559588ed1e2fb0c841ebe8abf513ddc8aab0914cf9e861a02"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-025-960.webp",
+        "width": 526,
+        "height": 960,
+        "byteSize": 15052,
+        "sha256": "580ea159aaf3548395278b5e965edd2ea7ced5a997ffdfb00f4e77cef5ca25ba"
+      }
+    },
+    {
+      "slug": "female-026",
+      "genderGroup": "female",
+      "sourceNumber": 26,
+      "sortOrder": 26,
+      "enabled": true,
+      "label": "女姿势 26",
+      "referenceSha256": "3d6d2f074dffb06f6be4856a972e20eebcb83832abc7a5df787695aa4c0ccfaf",
+      "originalKey": "originals/female-026.png",
+      "original": {
+        "filename": "female-026.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1319283,
+        "sha256": "3d6d2f074dffb06f6be4856a972e20eebcb83832abc7a5df787695aa4c0ccfaf"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-026-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5712,
+        "sha256320": "689eb66a75f0bb2bad9e96a2c5ecd4d962a18a47e9408bd8f3ae99c44604f8e3",
+        "src640": "/images/model-pose-transfer/thumbs/female-026-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16432,
+        "sha256640": "d3c57f8a9e7e745abfe61c15a7da7a643a86964c2c5efa405ec7804ec5bea7aa"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-026-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 21830,
+        "sha256": "d863a66627482cbf8cc84eb78808d8ea64b8a7d7a78320f577a18e06b501ff47"
+      }
+    },
+    {
+      "slug": "female-027",
+      "genderGroup": "female",
+      "sourceNumber": 27,
+      "sortOrder": 27,
+      "enabled": true,
+      "label": "女姿势 27",
+      "referenceSha256": "da21c8ee007e60208ebce81e9781279373213ac29db2ad12c4ba304cf33b438b",
+      "originalKey": "originals/female-027.png",
+      "original": {
+        "filename": "female-027.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1453048,
+        "sha256": "da21c8ee007e60208ebce81e9781279373213ac29db2ad12c4ba304cf33b438b"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-027-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5926,
+        "sha256320": "07613a81a7042e78c2ef27cc7c830f9af3b117064b7010a094dbe742cbdb1a19",
+        "src640": "/images/model-pose-transfer/thumbs/female-027-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 16424,
+        "sha256640": "13f40e257cafabb3e9a86bb3c230c07462d219ec65810f87ff69b08242f8c807"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-027-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 21552,
+        "sha256": "ece4b3ffe14f796fbf2344f3162759eca0ef40bb84657e75c4e561b586838598"
+      }
+    },
+    {
+      "slug": "female-028",
+      "genderGroup": "female",
+      "sourceNumber": 28,
+      "sortOrder": 28,
+      "enabled": true,
+      "label": "女姿势 28",
+      "referenceSha256": "acaca93426548c29ce052781730c8088a2c02437da32eb0a7a867c9a3cd2b72d",
+      "originalKey": "originals/female-028.png",
+      "original": {
+        "filename": "female-028.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1311081,
+        "sha256": "acaca93426548c29ce052781730c8088a2c02437da32eb0a7a867c9a3cd2b72d"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-028-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5504,
+        "sha256320": "4ce8882826dd7b81e2e6a0a11c68b3805c3a685e9aad28165b46818a5e154bea",
+        "src640": "/images/model-pose-transfer/thumbs/female-028-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 15640,
+        "sha256640": "2576155e2426c5fd16e6c9abc565708ef83f3f353f51683ae1ab89a8b6c7cdfb"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-028-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 20130,
+        "sha256": "29e4181218b93600ed4374ee9062670991df538d58e9641ca5dff08b1f004556"
+      }
+    },
+    {
+      "slug": "female-029",
+      "genderGroup": "female",
+      "sourceNumber": 29,
+      "sortOrder": 29,
+      "enabled": true,
+      "label": "女姿势 29",
+      "referenceSha256": "c5c8d6529cc1189d16e37d523cd8b10acb400aa7c224e303784cba65e7621379",
+      "originalKey": "originals/female-029.png",
+      "original": {
+        "filename": "female-029.png",
+        "mimeType": "image/png",
+        "width": 868,
+        "height": 1812,
+        "byteSize": 1359072,
+        "sha256": "c5c8d6529cc1189d16e37d523cd8b10acb400aa7c224e303784cba65e7621379"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-029-320.webp",
+        "width320": 320,
+        "height320": 668,
+        "byteSize320": 6762,
+        "sha256320": "3622ab58c2511a146cab8c75a2ca1444ec34294a1a385400d2c2488b5eff9842",
+        "src640": "/images/model-pose-transfer/thumbs/female-029-640.webp",
+        "width640": 640,
+        "height640": 1336,
+        "byteSize640": 19738,
+        "sha256640": "2c4414d2664561f5a95a9cfc0d06374787467d2d74702ef495fd6e528e7e9d4a"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-029-960.webp",
+        "width": 460,
+        "height": 960,
+        "byteSize": 13722,
+        "sha256": "5e070c779bd7b523a692f55d317513d7def46734b18529de7ccba88e45e2848b"
+      }
+    },
+    {
+      "slug": "female-030",
+      "genderGroup": "female",
+      "sourceNumber": 30,
+      "sortOrder": 30,
+      "enabled": true,
+      "label": "女姿势 30",
+      "referenceSha256": "8a59bb0d1069ff5b2c2d6781352489d0af5835c5b3d28d1c15663c980d1b9717",
+      "originalKey": "originals/female-030.png",
+      "original": {
+        "filename": "female-030.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1755362,
+        "sha256": "8a59bb0d1069ff5b2c2d6781352489d0af5835c5b3d28d1c15663c980d1b9717"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-030-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 14754,
+        "sha256320": "7468353094f6f2076180655e725c0e25980e66acfeb6e545b1435fe82d5121ac",
+        "src640": "/images/model-pose-transfer/thumbs/female-030-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 45474,
+        "sha256640": "76f7102903387864381caa1e1f0f042876d58c4f383a5a02343764cb54550cf6"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-030-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 57584,
+        "sha256": "a991896ace1742d2cb436bbe213ce5518e1b42c6fc76409308309b3d3af2287d"
+      }
+    },
+    {
+      "slug": "female-031",
+      "genderGroup": "female",
+      "sourceNumber": 31,
+      "sortOrder": 31,
+      "enabled": true,
+      "label": "女姿势 31",
+      "referenceSha256": "f706b5e3a4188af72e844b23fa318f7bcfc87490411097c6c78a4aa04c6cabe2",
+      "originalKey": "originals/female-031.png",
+      "original": {
+        "filename": "female-031.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1449,
+        "byteSize": 1596634,
+        "sha256": "f706b5e3a4188af72e844b23fa318f7bcfc87490411097c6c78a4aa04c6cabe2"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-031-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 7020,
+        "sha256320": "5a54cdabf32e636261ba2d05af187d20d389b62b7a70324e7e1e40233e25fbd8",
+        "src640": "/images/model-pose-transfer/thumbs/female-031-640.webp",
+        "width640": 640,
+        "height640": 854,
+        "byteSize640": 19352,
+        "sha256640": "88e640ecf5a465382ae538eaed74f633cbf37933d148c036c41f2c34fd0f1fcb"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-031-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 25456,
+        "sha256": "218bc4dd890a3d37806c68c79cd952297be000cb162419b6b12c49024d84ca68"
+      }
+    },
+    {
+      "slug": "female-032",
+      "genderGroup": "female",
+      "sourceNumber": 32,
+      "sortOrder": 32,
+      "enabled": true,
+      "label": "女姿势 32",
+      "referenceSha256": "067bd342cc1ce71b96496378ef036526243dedc66d6bbe1d474cd93090e16bb2",
+      "originalKey": "originals/female-032.png",
+      "original": {
+        "filename": "female-032.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1512422,
+        "sha256": "067bd342cc1ce71b96496378ef036526243dedc66d6bbe1d474cd93090e16bb2"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-032-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 5762,
+        "sha256320": "4c1527e69dda3ac2fe9449178bf0a73286fed7de39f4277b5d90b018fdef0929",
+        "src640": "/images/model-pose-transfer/thumbs/female-032-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 18188,
+        "sha256640": "2c732b431c2769d1f6245027e88fb9116f9b3c7a605d6443e9bd59dc9dea3aab"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-032-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 24890,
+        "sha256": "86aba1580e0d65be91ca4607d2ff7358d08101293b251047f53936bcf4a2d7dd"
+      }
+    },
+    {
+      "slug": "female-033",
+      "genderGroup": "female",
+      "sourceNumber": 33,
+      "sortOrder": 33,
+      "enabled": true,
+      "label": "女姿势 33",
+      "referenceSha256": "9fbe91580ff2cc0617b850fe5a5d3486cc57f72b98f0ed9ef892738e27658053",
+      "originalKey": "originals/female-033.png",
+      "original": {
+        "filename": "female-033.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1796595,
+        "sha256": "9fbe91580ff2cc0617b850fe5a5d3486cc57f72b98f0ed9ef892738e27658053"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-033-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 9226,
+        "sha256320": "f82e5a013c325807c61b18708da8075536232e75f0a510d6a55ad0c8629184eb",
+        "src640": "/images/model-pose-transfer/thumbs/female-033-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 31432,
+        "sha256640": "f41d998de26d317c09b85774a4bd072fe968e751c1bf2fb3138365bfbf964f03"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-033-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 42846,
+        "sha256": "bfcd9aba26a7969f40e63a3ae113450ffa3f8bebfdc145ce73277027887fca3e"
+      }
+    },
+    {
+      "slug": "female-035",
+      "genderGroup": "female",
+      "sourceNumber": 35,
+      "sortOrder": 35,
+      "enabled": true,
+      "label": "女姿势 35",
+      "referenceSha256": "8858bca31ac49417cd37d6d8a099fdb5a50d1ee270cacff67b0bcbcb9772ca29",
+      "originalKey": "originals/female-035.png",
+      "original": {
+        "filename": "female-035.png",
+        "mimeType": "image/png",
+        "width": 937,
+        "height": 1679,
+        "byteSize": 1558882,
+        "sha256": "8858bca31ac49417cd37d6d8a099fdb5a50d1ee270cacff67b0bcbcb9772ca29"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-035-320.webp",
+        "width320": 320,
+        "height320": 573,
+        "byteSize320": 8536,
+        "sha256320": "fde2aabbc6c16b0377f11d23f04e8aef8f2eecccc9c4ba5ce14dbfb7f65d0e86",
+        "src640": "/images/model-pose-transfer/thumbs/female-035-640.webp",
+        "width640": 640,
+        "height640": 1147,
+        "byteSize640": 25404,
+        "sha256640": "930eafe209a83d1faab1a3b4f157d8a97409f6e72687b8950096b7dd31f777a4"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-035-960.webp",
+        "width": 536,
+        "height": 960,
+        "byteSize": 20978,
+        "sha256": "61d5f737c244eb693e916e551b99b2047c90daa2c9ee7bc6f2632c4f63921aeb"
+      }
+    },
+    {
+      "slug": "female-036",
+      "genderGroup": "female",
+      "sourceNumber": 36,
+      "sortOrder": 36,
+      "enabled": true,
+      "label": "女姿势 36",
+      "referenceSha256": "b3db3d66c4c52ddbf86df77afd14be2b15324dfc51093bfbf86fce0f7570c169",
+      "originalKey": "originals/female-036.png",
+      "original": {
+        "filename": "female-036.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1696018,
+        "sha256": "b3db3d66c4c52ddbf86df77afd14be2b15324dfc51093bfbf86fce0f7570c169"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-036-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 8184,
+        "sha256320": "4022ea1ec5f61ed01723f07fcef228ded4acbbee0364462cea309466651ea615",
+        "src640": "/images/model-pose-transfer/thumbs/female-036-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 27282,
+        "sha256640": "bd3024f9ad1e11b534859a0e570bdeff3f0b6510dc5308f9fb48256eae891824"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-036-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 37136,
+        "sha256": "08347ec28939d65f8021571422b0085ea98190ef361a143dfe406348d0a29cd6"
+      }
+    },
+    {
+      "slug": "female-038",
+      "genderGroup": "female",
+      "sourceNumber": 38,
+      "sortOrder": 38,
+      "enabled": true,
+      "label": "女姿势 38",
+      "referenceSha256": "858310c3d45d8479d4208f0e4cd9bf7c7f63054b52480006cee42050988d7740",
+      "originalKey": "originals/female-038.png",
+      "original": {
+        "filename": "female-038.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1509179,
+        "sha256": "858310c3d45d8479d4208f0e4cd9bf7c7f63054b52480006cee42050988d7740"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-038-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 6050,
+        "sha256320": "a45d6ed5982a86e3cd6a5dfe869363a4836d11516851e0ed10df264a1b4be5a0",
+        "src640": "/images/model-pose-transfer/thumbs/female-038-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 17836,
+        "sha256640": "f5657863119a8f1a43e8df38970b93c9c11f57e51441f67a451eba6be4c433a4"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-038-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 22988,
+        "sha256": "0f0b1f662b15e324038a0f5484afe257fbb5f1585bddecbfbbf256f8ceb64b3a"
+      }
+    },
+    {
+      "slug": "female-039",
+      "genderGroup": "female",
+      "sourceNumber": 39,
+      "sortOrder": 39,
+      "enabled": true,
+      "label": "女姿势 39",
+      "referenceSha256": "f7e4af308b2baa74f948cc4d9f7706ed7def5a4df8af8a34004f35e2875e4584",
+      "originalKey": "originals/female-039.png",
+      "original": {
+        "filename": "female-039.png",
+        "mimeType": "image/png",
+        "width": 887,
+        "height": 1773,
+        "byteSize": 1706334,
+        "sha256": "f7e4af308b2baa74f948cc4d9f7706ed7def5a4df8af8a34004f35e2875e4584"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-039-320.webp",
+        "width320": 320,
+        "height320": 640,
+        "byteSize320": 11496,
+        "sha256320": "04e6f7642bb24f14fa46c5c3741905cdd1313e2d090887ff2c7c19e24a034c2f",
+        "src640": "/images/model-pose-transfer/thumbs/female-039-640.webp",
+        "width640": 640,
+        "height640": 1279,
+        "byteSize640": 40468,
+        "sha256640": "60fbb146feb108a8044ac12065825f0363e919283cdab05ee38eef06e7d78bb0"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-039-960.webp",
+        "width": 480,
+        "height": 960,
+        "byteSize": 28076,
+        "sha256": "b9b7294b42bca78ba12c1fd91f4c9ebe1ebe67875b40843252c686f9ccde2f1c"
+      }
+    },
+    {
+      "slug": "female-040",
+      "genderGroup": "female",
+      "sourceNumber": 40,
+      "sortOrder": 40,
+      "enabled": true,
+      "label": "女姿势 40",
+      "referenceSha256": "fe80c8584ab700b6d87ba1812ffef3ef0b1c3fbc85bcd1b642ec4e762afcaa24",
+      "originalKey": "originals/female-040.png",
+      "original": {
+        "filename": "female-040.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1579508,
+        "sha256": "fe80c8584ab700b6d87ba1812ffef3ef0b1c3fbc85bcd1b642ec4e762afcaa24"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-040-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 6996,
+        "sha256320": "7ad18ec483b843d2dd9015c56520b7f831bf416732f03c034bede68853c38a9b",
+        "src640": "/images/model-pose-transfer/thumbs/female-040-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 18696,
+        "sha256640": "5844876093b84f04879a82b3952de026816b63e859a110d3b0e8b62b7d1b8423"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-040-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 24106,
+        "sha256": "c390144fc4649af89d5e3a4978d2cd27a216903cf0a11c67e4a407dc9024173e"
+      }
+    },
+    {
+      "slug": "female-041",
+      "genderGroup": "female",
+      "sourceNumber": 41,
+      "sortOrder": 41,
+      "enabled": true,
+      "label": "女姿势 41",
+      "referenceSha256": "077d8681181d6e617b4d99dacd421c606059874f62e8b793b470acd15f54ed8b",
+      "originalKey": "originals/female-041.png",
+      "original": {
+        "filename": "female-041.png",
+        "mimeType": "image/png",
+        "width": 1086,
+        "height": 1448,
+        "byteSize": 1758268,
+        "sha256": "077d8681181d6e617b4d99dacd421c606059874f62e8b793b470acd15f54ed8b"
+      },
+      "thumbnail": {
+        "src320": "/images/model-pose-transfer/thumbs/female-041-320.webp",
+        "width320": 320,
+        "height320": 427,
+        "byteSize320": 9590,
+        "sha256320": "bb0363ec9fe7908d99945ceb3d7192b13d0fba0c98367c14839955fa894dc924",
+        "src640": "/images/model-pose-transfer/thumbs/female-041-640.webp",
+        "width640": 640,
+        "height640": 853,
+        "byteSize640": 28534,
+        "sha256640": "9b68fba08fd87bf98c6087d1002388419dfb44c4c104e815e54672e95e41d685"
+      },
+      "preview": {
+        "src": "/images/model-pose-transfer/previews/female-041-960.webp",
+        "width": 720,
+        "height": 960,
+        "byteSize": 37092,
+        "sha256": "b77d4a8921352257f952a80d90e0c927e732d5c6338b6f29bfff47f8a718d278"
+      }
+    }
+  ]
+}

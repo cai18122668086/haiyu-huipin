@@ -1,0 +1,30 @@
+.page { max-width: 1280px; margin: 0 auto; padding: 42px 38px 64px; color: #202236; }
+.header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 30px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 7px; color: #655ee8; font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+.header h1 { margin: 8px 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -.04em; }
+.header p, .sectionHeader p, .center p { margin: 0; color: #7c8193; line-height: 1.7; }
+.card { padding: 24px; border: 1px solid #e7e8ef; border-radius: 18px; background: #fff; box-shadow: 0 12px 40px rgb(33 37 65 / 5%); }
+.sectionHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+.sectionHeader h2 { margin: 0 0 6px; }
+.primary, .secondary, .action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 9px; padding: 9px 13px; cursor: pointer; font: inherit; }
+.primary { color: white; background: #5a55e8; }
+.secondary, .action { color: #4f46e5; border: 1px solid #dfe1f1; background: #fff; }
+.primary:disabled, .secondary:disabled, .action:disabled { cursor: wait; opacity: .55; }
+.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; padding: 16px; border-radius: 12px; background: #f7f7fc; }
+.form label { display: grid; gap: 6px; color: #656b7b; font-size: 13px; }
+.form input, .form select { min-height: 38px; padding: 8px 10px; border: 1px solid #dfe1ea; border-radius: 8px; background: white; font: inherit; }
+.tableWrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 14px 10px; border-bottom: 1px solid #eff0f5; text-align: left; vertical-align: top; }
+th { color: #85899a; font-size: 12px; font-weight: 600; }
+td strong, td small { display: block; }
+td small { margin-top: 5px; color: #85899a; }
+.actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.action { padding: 7px 9px; font-size: 12px; }
+.success, .error { margin: 0 0 18px; padding: 11px 13px; border-radius: 9px; }
+.success { color: #18794e; background: #ecfdf3; }
+.error { color: #b42318; background: #fff1f0; }
+.empty { padding: 30px 12px; color: #85899a; text-align: center; }
+.center { display: grid; justify-items: center; gap: 12px; min-height: 50vh; padding: 80px 20px; text-align: center; color: #666b7c; }
+.center h1 { margin: 0; color: #202236; }
+@media (max-width: 720px) { .page { padding: 28px 18px 50px; } .header, .sectionHeader { flex-direction: column; } .form { grid-template-columns: 1fr; } }

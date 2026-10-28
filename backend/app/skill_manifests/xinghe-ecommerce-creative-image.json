@@ -1,0 +1,74 @@
+{
+    "schema_version": "skill-runtime-manifest-v1",
+    "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+    "ignored_runtime_artifacts": [
+        "**/__pycache__/**",
+        "**/*.pyc"
+    ],
+    "skill_id": "xinghe-ecommerce-creative-image",
+    "content_hash": "fbbe3486f1fc94d655c7e043705c68e7759cd8cb8011bd0c540cd9988541d67f",
+    "capability": "creative_image",
+    "input_contract": {
+        "schema_id": "polaris.skill.xinghe-ecommerce-creative-image.input.v1",
+        "required_fields": [
+            "product_asset_refs",
+            "brief",
+            "output_count"
+        ]
+    },
+    "output_contract": {
+        "schema_id": "polaris.skill.xinghe-ecommerce-creative-image.output.v1",
+        "required_fields": [
+            "result_asset_refs",
+            "usage"
+        ]
+    },
+    "policy": {
+        "schema_version": "skill-runtime-policy-v1",
+        "auto_review_regeneration_allowed": false,
+        "successful_page_auto_redraw_allowed": false,
+        "safe_expansion_mode": "disabled",
+        "policy_version": "xinghe-ecommerce-creative-image-source-v1",
+        "active_profile_id": null,
+        "profiles": [],
+        "iteration": null,
+        "safe_expansion": null
+    },
+    "provider_type": "mock",
+    "cost_limit_micros": 0,
+    "real_provider_request_limit": 0,
+    "files": [
+        {
+            "path": "SKILL.md",
+            "sha256": "daebf94e2ca756860496fb88a357b7a1080214683c28d26c0d43bdb5f6714912"
+        },
+        {
+            "path": "agents/openai.yaml",
+            "sha256": "c40f0267b057fb770af940f4c3c53f34a9289d737c8616ac988a57b4d0bcb792"
+        },
+        {
+            "path": "references/competitor-analysis.md",
+            "sha256": "2b2f64cc0b553014c85d6c9da6c40e6e5afa6b9a6103cb12228d18d1d35c3a7d"
+        },
+        {
+            "path": "references/compliance-qc.md",
+            "sha256": "1dcf3932a7ee2803d8f7031071a27b5838d20983242716bb1d922d3b50a378d4"
+        },
+        {
+            "path": "references/generation-output.md",
+            "sha256": "2be5a7303f6bf350689d71e69185d556d440d11d6a63a22cdd8ad82a257cf27b"
+        },
+        {
+            "path": "references/input-routing.md",
+            "sha256": "871b0253d88b57cf1e304ab98f43e95110edecc53ad8501097adcf3d51229549"
+        },
+        {
+            "path": "references/platform-strategies.md",
+            "sha256": "877866ba1409bae68b7f951bc1971233821d932837b24169dffc38d65b680242"
+        },
+        {
+            "path": "references/title-formulas.md",
+            "sha256": "0e5f444c2a0ebde23c8c18bea3a527fe5d5e2d2d559e1e9f2600adc8512f9321"
+        }
+    ]
+}

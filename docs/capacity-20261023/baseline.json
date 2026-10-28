@@ -1,0 +1,115 @@
+{
+  "scope": "isolated ASGI HTTP + real PostgreSQL + real Redis + durable coordinator + deterministic no-network image gateway",
+  "limits": "Not production Celery, remote network latency, real image quality, or supplier capacity.",
+  "provider_delay_seconds": 1,
+  "results": [
+    {
+      "worker_slots": 2,
+      "page_concurrency": 6,
+      "http_clients": 32,
+      "reads": 320,
+      "read_statuses": {
+        "200": 320
+      },
+      "read_requests_per_second": 169.98,
+      "read_ms": {
+        "p50": 183.43,
+        "p95": 254.87,
+        "p99": 296.24
+      },
+      "submission_p95_ms": 733.26,
+      "jobs": 36,
+      "completed": 36,
+      "usage_events": 36,
+      "generation_seconds": 22.616,
+      "jobs_per_second": 1.592,
+      "queue_wait_p95_ms": 22610.88,
+      "execution_p95_ms": 1246.7,
+      "max_active_image_requests": 2,
+      "image_calls": 36,
+      "duplicate_deliveries": 4,
+      "paid_provider_requests": 0
+    },
+    {
+      "worker_slots": 4,
+      "page_concurrency": 6,
+      "http_clients": 32,
+      "reads": 320,
+      "read_statuses": {
+        "200": 320
+      },
+      "read_requests_per_second": 177.71,
+      "read_ms": {
+        "p50": 174.04,
+        "p95": 237.06,
+        "p99": 268.55
+      },
+      "submission_p95_ms": 774.48,
+      "jobs": 36,
+      "completed": 36,
+      "usage_events": 36,
+      "generation_seconds": 12.514,
+      "jobs_per_second": 2.877,
+      "queue_wait_p95_ms": 11400.65,
+      "execution_p95_ms": 1364.94,
+      "max_active_image_requests": 4,
+      "image_calls": 36,
+      "duplicate_deliveries": 4,
+      "paid_provider_requests": 0
+    },
+    {
+      "worker_slots": 6,
+      "page_concurrency": 6,
+      "http_clients": 32,
+      "reads": 320,
+      "read_statuses": {
+        "200": 320
+      },
+      "read_requests_per_second": 168.17,
+      "read_ms": {
+        "p50": 175.03,
+        "p95": 301.5,
+        "p99": 374.5
+      },
+      "submission_p95_ms": 731.43,
+      "jobs": 36,
+      "completed": 36,
+      "usage_events": 36,
+      "generation_seconds": 8.641,
+      "jobs_per_second": 4.166,
+      "queue_wait_p95_ms": 7636.08,
+      "execution_p95_ms": 1469.31,
+      "max_active_image_requests": 6,
+      "image_calls": 36,
+      "duplicate_deliveries": 4,
+      "paid_provider_requests": 0
+    },
+    {
+      "worker_slots": 12,
+      "page_concurrency": 6,
+      "http_clients": 32,
+      "reads": 320,
+      "read_statuses": {
+        "200": 320
+      },
+      "read_requests_per_second": 158.27,
+      "read_ms": {
+        "p50": 188.79,
+        "p95": 293.89,
+        "p99": 366.3
+      },
+      "submission_p95_ms": 928.42,
+      "jobs": 36,
+      "completed": 36,
+      "usage_events": 36,
+      "generation_seconds": 7.097,
+      "jobs_per_second": 5.073,
+      "queue_wait_p95_ms": 5393.08,
+      "execution_p95_ms": 2173.91,
+      "max_active_image_requests": 6,
+      "image_calls": 36,
+      "duplicate_deliveries": 4,
+      "paid_provider_requests": 0
+    }
+  ]
+}

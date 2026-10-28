@@ -1,0 +1,101 @@
+{
+  "schema_version": "source-faithful-analysis-manifest-0.1.9",
+  "status": "READY_FOR_SOURCE_BOUND_REVIEW",
+  "rule": "Only fields physically present in the listed source files may be integrated. No inferred, paraphrased, expanded, or newly designed field may be presented as a case-analysis finding.",
+  "sources": [
+    {
+      "path": "source-analysis/durable-goods-five-prototype-bundle.json",
+      "sha256": "56876D9139FE657FBE063607FBA9DC3D6A19AC1C8C6D68D5722FC394E7A05639",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "allowed_top_level_content": [
+        "prototype_count",
+        "items"
+      ],
+      "allowed_item_fields": [
+        "prototype_id",
+        "prototype_family",
+        "page_role",
+        "source_authority",
+        "evidence_status",
+        "source_reference_ids",
+        "supported_panel_count",
+        "layout_archetype",
+        "reading_path",
+        "product_occupancy_range",
+        "product_anchor",
+        "product_view",
+        "composition_axis",
+        "title_region_pct",
+        "supporting_copy_region_pct",
+        "evidence_or_offer_region_pct",
+        "semantic_line_break_plan",
+        "typography_scale_ratios",
+        "headline_structure",
+        "keyword_emphasis_method",
+        "graphic_device_family",
+        "graphic_device_limit",
+        "background_system",
+        "background_material",
+        "background_tone",
+        "lighting_structure",
+        "product_separation_method",
+        "evidence_topology",
+        "information_module_topology",
+        "information_density",
+        "applicable_subcategories",
+        "forbidden_conditions",
+        "difference_from_other_variants"
+      ]
+    },
+    {
+      "path": "source-analysis/durable-campaign-visual-dna.json",
+      "sha256": "0F9988AE3CB671532E05E3C269EEE4A10D2355AD3BD76625C440BD5A7A72D592",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "case_scope_only": [
+        "ergonomic-chair",
+        "white-storage-cart"
+      ],
+      "allowed_fields": [
+        "display_font_character",
+        "body_font_character",
+        "base_palette_roles",
+        "accent_color_role",
+        "information_surface_material",
+        "line_and_icon_family",
+        "corner_language",
+        "light_direction",
+        "shadow_language",
+        "recurring_motif"
+      ],
+      "restriction": "These are two case-specific Campaign DNA records. They are not universal durable-goods defaults and may not be attributed to table, cabinet, shelf, sofa, or recliner analysis."
+    },
+    {
+      "path": "source-analysis/durable-subcategory-overlays.json",
+      "sha256": "A75C8704BFDD1EB2868F42C511A4CFA316545E121CF6E18AC79C7029CE137276",
+      "source_authority": "EXPERIMENTAL_PATTERN",
+      "allowed_subcategories": [
+        "ERGONOMIC_SEATING",
+        "STORAGE_CART_RACK",
+        "TABLE_CABINET_SHELF",
+        "SOFA_RECLINER"
+      ],
+      "allowed_fields": [
+        "required_visual_grammar",
+        "forbidden_inference",
+        "role_evidence"
+      ]
+    }
+  ],
+  "not_present_in_analysis_and_therefore_forbidden_to_claim": [
+    "specific font file or font family name",
+    "absolute font size",
+    "absolute line height",
+    "absolute tracking or letter spacing",
+    "font selection rules for TABLE_CABINET_SHELF",
+    "font selection rules for SOFA_RECLINER",
+    "universal durable-goods palette",
+    "automatic Campaign DNA compatibility scoring",
+    "final background arbitration logic",
+    "final lighting arbitration logic"
+  ]
+}

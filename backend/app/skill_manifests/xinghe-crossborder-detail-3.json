@@ -1,0 +1,146 @@
+{
+    "schema_version": "skill-runtime-manifest-v1",
+    "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+    "ignored_runtime_artifacts": [
+        "**/__pycache__/**",
+        "**/*.pyc"
+    ],
+    "skill_id": "xinghe-crossborder-detail-3",
+    "content_hash": "9677eb36f58eb8479c99b57d67baef551e3b90cb100c75f59adf2fc3b5dc0a7a",
+    "capability": "ecommerce_detail_pack",
+    "input_contract": {
+        "schema_id": "polaris.skill.xinghe-crossborder-detail-3.input.v1",
+        "required_fields": [
+            "product_groups",
+            "market_profile",
+            "language",
+            "page_count",
+            "product_information"
+        ]
+    },
+    "output_contract": {
+        "schema_id": "polaris.skill.xinghe-crossborder-detail-3.output.v1",
+        "required_fields": [
+            "validated_plan",
+            "requested_page_count",
+            "page_asset_refs",
+            "usage"
+        ]
+    },
+    "policy": {
+        "schema_version": "skill-runtime-policy-v1",
+        "auto_review_regeneration_allowed": false,
+        "successful_page_auto_redraw_allowed": false,
+        "safe_expansion_mode": "disabled",
+        "policy_version": "xinghe-crossborder-detail-3-source-v1",
+        "active_profile_id": null,
+        "profiles": [],
+        "iteration": null,
+        "safe_expansion": null
+    },
+    "provider_type": "mock",
+    "cost_limit_micros": 0,
+    "real_provider_request_limit": 0,
+    "files": [
+        {
+            "path": ".env.example",
+            "sha256": "4eb503ea4706f3ffd4d8817e7655edb7365b4029be60f6863f9c34f7af5144a5"
+        },
+        {
+            "path": "SKILL.md",
+            "sha256": "16016ee84fdff828552f0764afd743269c1dbe37f96dfc393c4998638138d651"
+        },
+        {
+            "path": "agents/openai.yaml",
+            "sha256": "7844566719e07f4b7dd7441462a9926203b0b7804116dc355eb60aff535e59b8"
+        },
+        {
+            "path": "references/anti-template-check.md",
+            "sha256": "29c9025576752a6d1d784c2dcc7c03eb03357fd38f60fa9b398c31d2bc93bc83"
+        },
+        {
+            "path": "references/buyer-demand-strategy.md",
+            "sha256": "f69c82f915a530cf0bead057e92e3aeee404df5e7b9a69109232b12a0c8641eb"
+        },
+        {
+            "path": "references/category-playbooks.md",
+            "sha256": "08d01d4baae010753041742a89a7d44e196e8913193753918b8004a0c4e0831a"
+        },
+        {
+            "path": "references/delivery-format.md",
+            "sha256": "954fd3f631faa5727634f9e57ac5aa65292c96c0146fbb90e46b308762382496"
+        },
+        {
+            "path": "references/design-archetypes.md",
+            "sha256": "ed71552e623b179b10ff6f161e460c9223b884048e2dea2de3c3048aeafe0728"
+        },
+        {
+            "path": "references/design-strength-system.md",
+            "sha256": "d614c9a1a4d3ca4f76917da3970dce23caf80393e3762e0237240be4169f20d8"
+        },
+        {
+            "path": "references/failure-retry.md",
+            "sha256": "c86132c353a9242caa351010802bb6bf36109d55b804277027f2f95073858245"
+        },
+        {
+            "path": "references/fallback-generation.md",
+            "sha256": "3e7c37eae945f3dd9d4e7e6b338d2603e0f7ba7b4f280a89d15a7795fbdfd2d7"
+        },
+        {
+            "path": "references/page-planning-strategy.md",
+            "sha256": "8c7a7d12dd33a96af31ee9c2be22c7bb983efc22fa3b72c7655c5eee2a63fb9c"
+        },
+        {
+            "path": "references/page-task-table.md",
+            "sha256": "1694175c9af2bca4377ad1caba12ed02e1790a22410d65f89c099ffe0099867e"
+        },
+        {
+            "path": "references/platform-profiles.md",
+            "sha256": "c7f5c1ee20c42625c4e9a9c43730bef9fc550f45c6fde84185abb5e2ae1a893d"
+        },
+        {
+            "path": "references/product-consistency-physics.md",
+            "sha256": "6f1c8953703c7c03ff111cbda28d6f3f053f132404574d11cc6d384f98b84a7f"
+        },
+        {
+            "path": "references/prompt-contract.md",
+            "sha256": "5ec264f9abc33b700b1a61b7ba25e4beddd1819068d43073b21d0248e47d1f80"
+        },
+        {
+            "path": "references/prompt-templates.md",
+            "sha256": "b4fcd8d5d8c9d959e463cc4601364ace21977d9ae53722cedc4ee63f45793b0d"
+        },
+        {
+            "path": "references/qa-checklist.md",
+            "sha256": "38a1fb36c4c505a051281cc2a2ed124cda317a87d694ba17d30923ffb54006e7"
+        },
+        {
+            "path": "references/reference-page-analysis.md",
+            "sha256": "45bfa48f7931420635d419622b0d11f7872a4ccdf7d92b5b0086acfd8327becf"
+        },
+        {
+            "path": "references/scene-layout-standard.md",
+            "sha256": "75fd7304f3d75a89e2565aafd44738aab395046abc434791a7b0b2f4b895348d"
+        },
+        {
+            "path": "references/style-locks.md",
+            "sha256": "90ae176a61950283a159187885faf4a2a5baa4c5cd8ebf08af6e405640a070af"
+        },
+        {
+            "path": "references/style-system-standard.md",
+            "sha256": "7d6750b715e9d02bcd30faf7d7d3ce81cd448e87658aa3328b497a6443058c39"
+        },
+        {
+            "path": "references/visual-quality-rules.md",
+            "sha256": "57c6af6eca6916bebd2375b134e9a4af78fe7368d22b1c71deda592a9bb58792"
+        },
+        {
+            "path": "scripts/generate_batch.py",
+            "sha256": "e0b8a3be1f528ef15ad29e093490266dd30d59df14a45339f6e01700055be501"
+        },
+        {
+            "path": "scripts/generate_image.py",
+            "sha256": "015d2bd18020cd4653ce29ea079d745c3b394adde3195baa59cc8cdc58866ee4"
+        }
+    ]
+}

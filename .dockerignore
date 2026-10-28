@@ -1,0 +1,58 @@
+# Source control and local worktrees
+.git
+.git/**
+**/.git
+work
+work/**
+.codex
+.codex/**
+
+# Secrets: ignore every real env file, then opt examples back in
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Installed dependencies and build caches
+node_modules
+**/node_modules
+.npm-cache
+.pnp
+.pnp.*
+.yarn/cache
+.next
+.vinext
+dist
+out
+.wrangler
+coverage
+*.tsbuildinfo
+
+# Python caches, virtual environments, tests, and local runtime data
+.venv
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+tests
+backend/tests
+backend/.data
+**/*.sqlite
+**/*.sqlite3
+**/*smoke*.db
+**/*smoke*.db-*
+**/storage
+
+# Verification and local outputs are never application build inputs
+docs/verification
+outputs
+*.log

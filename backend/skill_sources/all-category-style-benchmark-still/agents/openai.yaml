@@ -1,0 +1,4 @@
+interface:
+  display_name: 全品类风格对标，still
+  short_description: Rebuild original ecommerce visuals from reference mechanisms and current-product facts
+  default_prompt: Start the executable workflow first, then adapt the supplied benchmark visual mechanisms to the current product and route; do not call any image tool before a passing audit-plan and adapter handoff exist.

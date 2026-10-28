@@ -1,0 +1,27 @@
+.trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:40px;padding:10px 13px;border:1px solid #e6e8ec;border-radius:10px;background:#f7f8fa;color:#343b4a;font:inherit;font-size:12px;line-height:1.5;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trigger svg{flex-shrink:0;color:#9297a1;transition:transform .15s}.trigger:hover{border-color:#cdd1d8}.trigger:focus-visible,.open{outline:none;border-color:#262a32;box-shadow:0 0 0 1px #262a32}.open svg{transform:rotate(180deg)}
+.menu{position:fixed;z-index:1600;overflow-y:auto;overscroll-behavior:contain;padding:6px;border:1px solid #eceef1;border-radius:12px;background:#fff;box-shadow:0 10px 32px #20253516,0 2px 6px #20253508;scrollbar-width:thin;scrollbar-color:#dcdfe4 transparent;animation:appear .12s ease-out}
+.menu button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:38px;padding:9px 12px;border:0;border-radius:7px;background:transparent;color:#454c59;text-align:left;font:inherit;font-size:12px;line-height:1.5;cursor:pointer}.menu button:hover,.menu button:focus-visible{outline:none;background:#f4f5f7}.menu .selected{background:#f3f4f6;color:#272e3b}.selected svg{color:var(--violet-600,#89769f)}
+@keyframes appear{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.menu{animation:none}.trigger,.trigger svg{transition:none}}
+
+.trigger:disabled{cursor:default}
+
+.trigger{min-height:44px;border-color:#e5e2eb;border-radius:10px;background:#fcfbfe;color:#38343f;font-size:13px;transition:border-color .18s,box-shadow .18s,background .18s}
+.trigger:hover:not(:disabled){border-color:#c8bfd8;background:#faf8ff}
+.trigger:focus-visible,.open{border-color:#9f8cbd;box-shadow:0 0 0 3px #eee7f8}
+.trigger:disabled{opacity:1;color:var(--haiyu-control-disabled-text);background:var(--haiyu-control-disabled-bg)}
+.menu{display:flex;flex-direction:column;overflow:hidden;border-color:#e7e1f0;box-shadow:0 15px 40px #30223d20}
+.options{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px}
+.menu button{min-height:40px;font-size:13px;transition:background .15s,color .15s}
+.menu button:hover,.menu button:focus-visible{background:#f2edf9}
+.menu .selected{color:#242424;background:#eaff8b;font-weight:650}
+.selected svg{color:#2a2a2a}
+.search{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:3px 3px 6px;padding:9px 10px;border:1px solid #e9e4f1;border-radius:7px;color:#9a8caa;background:#f8f5fc}
+.search input{width:100%;min-width:0;padding:0;border:0;outline:0;box-shadow:none;color:#343039;background:transparent;font:inherit;font-size:12px}
+.search input:focus-visible{outline:0}
+.empty{margin:0;padding:20px 10px;text-align:center;font-size:11px;line-height:1.7;color:#92899b}
+.menu[data-layout="grid"] .options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.menu[data-layout="grid"] button{position:relative;justify-content:center;min-height:43px;padding:10px 6px;background:#faf8fd}
+.menu[data-layout="grid"] button.selected{background:#eaff8b}
+.menu[data-layout="grid"] button>svg{position:absolute;right:4px;top:4px;width:10px;height:10px}
+@media(prefers-reduced-motion:reduce){.menu button{transition:none}}

@@ -1,0 +1,633 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source-bound local typography, copy and zone replacements; approved source immutable",
+  "type": "array",
+  "maxItems": 14,
+  "items": {
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/primary_mode"
+          },
+          "replacement_value": {
+            "enum": [
+              "centered_hero_headline",
+              "offset_editorial_headline",
+              "object_label",
+              "directional_annotation",
+              "comparison_caption",
+              "step_sequence",
+              "data_hierarchy",
+              "scene_caption",
+              "body_explainer",
+              "minimal_label",
+              "closing_summary"
+            ]
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/supporting_mode"
+          },
+          "replacement_value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/anchor_target"
+          },
+          "replacement_value": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/anchor_zone"
+          },
+          "replacement_value": {
+            "enum": [
+              "top_left",
+              "top_right",
+              "center",
+              "lower_left",
+              "lower_right",
+              "edge_left",
+              "edge_right",
+              "object_local",
+              "path_following",
+              "split_zones",
+              "evidence_zone",
+              "scene_negative_space"
+            ]
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/reading_direction"
+          },
+          "replacement_value": {
+            "enum": [
+              "top_to_bottom",
+              "left_to_right",
+              "diagonal",
+              "radial",
+              "object_to_result",
+              "comparison_scan",
+              "step_flow",
+              "scene_to_caption"
+            ]
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/placement_logic"
+          },
+          "replacement_value": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/hierarchy"
+          },
+          "replacement_value": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/max_lines"
+          },
+          "replacement_value": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/container_style"
+          },
+          "replacement_value": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/negative_space_reservation"
+          },
+          "replacement_value": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/image_text_relationship"
+          },
+          "replacement_value": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "const": "/text_system/composition_flexibility"
+          },
+          "replacement_value": {
+            "enum": [
+              "LOCKED",
+              "NEGATIVE_SPACE_ONLY",
+              "CONTROLLED_REFLOW"
+            ]
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": [
+                "text",
+                "role",
+                "anchor"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "anchor": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "path": {
+            "const": "/visible_copy"
+          },
+          "replacement_value": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": [
+                "text",
+                "role",
+                "anchor"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "anchor": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "minItems": 1
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "change_index",
+          "original_value",
+          "path",
+          "replacement_value"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "original_value": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "geometry",
+                "content",
+                "visual_weight_percent"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "geometry": {
+                  "type": "string",
+                  "minLength": 5
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 5
+                },
+                "visual_weight_percent": {
+                  "type": "number",
+                  "minimum": 5,
+                  "maximum": 100
+                }
+              }
+            }
+          },
+          "path": {
+            "const": "/module_spatial_structure_contract/zones"
+          },
+          "replacement_value": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "geometry",
+                "content",
+                "visual_weight_percent"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "geometry": {
+                  "type": "string",
+                  "minLength": 5
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 5
+                },
+                "visual_weight_percent": {
+                  "type": "number",
+                  "minimum": 5,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

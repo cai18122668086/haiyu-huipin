@@ -1,0 +1,22 @@
+# Independently inventory physical screens before planning
+
+Observe the original references and attached column crops afresh. You have not
+been given proposed cuts or counts. Confirm whether the supplied columns cover
+every visible reference column exactly once. Return all_columns_covered=false
+when a column is missing, duplicated or materially cropped.
+
+For each column list every physical commercial screen, in reading order. State
+its dominant visible headline (or concrete scene label) and distinct buyer question.
+A new dominant headline plus a new hero, question, demonstration or proof is a
+new screen even when colors or gradients continue. Do not merge adjacent screens
+into a broad topic. Do not split small labels within one continuous proof carrier.
+Do not assume a standard count or equal heights. The server will independently
+compare this inventory with the physical cuts; you do not issue a PASS verdict.
+
+Independently report boundary_ys: each internal horizontal cut as an increasing
+integer y coordinate in that attached COLUMN image. Return one screen per
+interval between 0, your boundary_ys and column height. Equal counts with different
+physical intervals are a disagreement. Distinguish a self-contained panel from
+small text labels within it; never add boundaries merely to reach an expected count.
+For coverage_scope=requested_columns_only, inspect only the supplied columns;
+original reference images provide context and do not request additional columns.

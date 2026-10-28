@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "campaign-style-token-contract-v0.1.6.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "status",
+    "mode",
+    "source_type",
+    "style_reference_policy",
+    "tokens",
+    "page_role_variations",
+    "set_gates",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "campaign-style-token-contract-0.1.6"},
+    "request_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["READY", "BLOCKED"]},
+    "mode": {"enum": ["PLANNED", "CALIBRATED_FROM_USER_APPROVED_PAGES"]},
+    "source_type": {
+      "enum": ["ENGINEERED_DEFAULT", "USER_APPROVED_STYLE_REFERENCE"]
+    },
+    "style_reference_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approved_generated_style_references",
+        "user_approved",
+        "scope",
+        "product_identity_authority",
+        "allowed_controls",
+        "forbidden_controls"
+      ],
+      "properties": {
+        "approved_generated_style_references": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "user_approved": {"type": "boolean"},
+        "scope": {"const": "STYLE_REFERENCE_ONLY"},
+        "product_identity_authority": {
+          "const": "ORIGINAL_CURRENT_PRODUCT_REFERENCES_ONLY"
+        },
+        "allowed_controls": {
+          "type": "array",
+          "minItems": 5,
+          "items": {"type": "string"}
+        },
+        "forbidden_controls": {
+          "type": "array",
+          "minItems": 5,
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "typography",
+        "palette",
+        "graphic_language",
+        "information_surfaces",
+        "photography_finish"
+      ],
+      "properties": {
+        "typography": {"type": "object"},
+        "palette": {"type": "object"},
+        "graphic_language": {"type": "object"},
+        "information_surfaces": {"type": "object"},
+        "photography_finish": {"type": "object"}
+      }
+    },
+    "page_role_variations": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "page_index",
+          "page_role",
+          "headline_treatment",
+          "keyword_emphasis",
+          "allowed_graphic_devices",
+          "layout_must_remain_independent"
+        ]
+      }
+    },
+    "set_gates": {
+      "type": "object",
+      "additionalProperties": {"type": "boolean"}
+    },
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "canonical_source": "D:\\Desktop\\cyh\\电商生图\\polaris-commerce-next",
+  "integration_reference_commit": "d7ef63a166a8438cd37acb971ee54f48fd9fcea0",
+  "canonical_integration_commit": "d9d8f354555f266a181e93bb1c6ab09b4dee9580",
+  "business_files_compared": 2014,
+  "different": [],
+  "website_local_commit": "84788c9",
+  "remote_push_performed": false,
+  "refund_feature_present": false
+}

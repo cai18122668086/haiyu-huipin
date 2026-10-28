@@ -1,0 +1,4 @@
+# Runtime manifests hash these vendored sources byte-for-byte.
+backend/skill_sources/** -text
+backend/skill_sources/** whitespace=-trailing-space
+.githooks/* text eol=lf

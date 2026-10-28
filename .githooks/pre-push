@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+case "$2" in
+  https://github.com/cai18122668086/haiyu-huipin.git|https://github.com/cai18122668086/haiyu-huipin|git@github.com:cai18122668086/haiyu-huipin.git)
+    ;;
+  *)
+    echo "Push blocked: this project may only write to cai18122668086/haiyu-huipin." >&2
+    exit 1
+    ;;
+esac
+
+root=$(git rev-list --max-parents=0 main)
+test -n "$root" || { echo "Push blocked: independent main is missing." >&2; exit 1; }
+while read -r local_ref local_oid remote_ref remote_oid; do
+  case "$remote_ref" in
+    refs/heads/archive/*|refs/heads/local/*|refs/heads/trim/*|refs/backup/*)
+      echo "Push blocked: historical backup references stay local." >&2
+      exit 1
+      ;;
+  esac
+  case "$local_oid" in
+    0000000000000000000000000000000000000000) continue ;;
+  esac
+  if ! git merge-base --is-ancestor "$root" "$local_oid"; then
+    echo "Push blocked: pushed history must descend from this project's independent main." >&2
+    exit 1
+  fi
+done

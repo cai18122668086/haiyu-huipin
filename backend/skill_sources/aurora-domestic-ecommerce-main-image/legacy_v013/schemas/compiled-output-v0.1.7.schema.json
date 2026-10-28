@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compiled-output-v0.1.7.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "compiler_version",
+    "request_id",
+    "status",
+    "product_identity_contract",
+    "campaign_design_contract",
+    "design_prototype_overlay",
+    "evidence_representation_plan",
+    "style_layout_separation_contract",
+    "campaign_style_token_contract",
+    "experimental_pattern_contract",
+    "pages",
+    "set_gates",
+    "applied_evidence_rule_count",
+    "previous_generated_images_used",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domestic-ecommerce-compiled-output-0.1.7"
+    },
+    "compiler_version": {
+      "const": "domestic-ecommerce-prompt-compiler-0.1.7"
+    },
+    "request_id": {"type": "string"},
+    "status": {
+      "enum": ["READY_FOR_CONTROLLED_GENERATION", "BLOCKED"]
+    },
+    "product_identity_contract": {"type": "object"},
+    "campaign_design_contract": {"type": "object"},
+    "design_prototype_overlay": {"type": "object"},
+    "evidence_representation_plan": {"type": "object"},
+    "style_layout_separation_contract": {"type": "object"},
+    "campaign_style_token_contract": {"type": "object"},
+    "experimental_pattern_contract": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "request_id",
+        "status",
+        "pattern_bundle_id",
+        "source_type",
+        "source_context",
+        "evidence_ceiling",
+        "surface_usage_mode",
+        "active_pattern_ids",
+        "generation_performed"
+      ]
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "page_role",
+          "generation_prompt",
+          "view_evidence_binding",
+          "audit_contract",
+          "typography_plan",
+          "design_prototype_overlay",
+          "evidence_representation",
+          "style_layout_separation",
+          "campaign_style_tokens",
+          "experimental_pattern"
+        ]
+      }
+    },
+    "set_gates": {
+      "type": "object",
+      "additionalProperties": {"type": "boolean"}
+    },
+    "applied_evidence_rule_count": {"type": "integer", "minimum": 1},
+    "previous_generated_images_used": {"const": false},
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  }
+}

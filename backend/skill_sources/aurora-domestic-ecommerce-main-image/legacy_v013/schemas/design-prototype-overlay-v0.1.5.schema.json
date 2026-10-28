@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "design-prototype-overlay-v0.1.5.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "status",
+    "source_precedence",
+    "governance",
+    "identity_contract_binding",
+    "campaign_style_lock",
+    "pages",
+    "set_gates",
+    "generation_performed",
+    "profile01_semantics_read"
+  ],
+  "properties": {
+    "schema_version": {"const": "design-prototype-overlay-0.1.5"},
+    "request_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["READY", "BLOCKED"]},
+    "source_precedence": {
+      "const": [
+        "USER_FACT",
+        "EVIDENCE_DERIVED",
+        "EXPERIMENTAL_PATTERN",
+        "ENGINEERED_DEFAULT",
+        "MODEL_FREEDOM"
+      ]
+    },
+    "governance": {
+      "type": "object",
+      "required": [
+        "overlay_scope",
+        "v1_usage",
+        "v2_1_furniture_and_carousel_status",
+        "blocked_research_capabilities",
+        "experimental_patterns_enabled",
+        "category_color_copy_fact_carryover",
+        "previous_generated_images_as_visual_target",
+        "profile01_semantics_read"
+      ]
+    },
+    "identity_contract_binding": {
+      "type": "object",
+      "required": ["contract_id", "priority", "overlay_may_change_product_identity"],
+      "properties": {
+        "contract_id": {"type": "string"},
+        "priority": {"const": "HARD_LOCK_BEFORE_OVERLAY"},
+        "overlay_may_change_product_identity": {"const": false}
+      }
+    },
+    "campaign_style_lock": {
+      "type": "object",
+      "required": [
+        "lock_id",
+        "typography_base",
+        "primary_text",
+        "common_accent",
+        "background_base",
+        "information_surface",
+        "card_corner_system",
+        "border_system",
+        "icon_system",
+        "shadow_system",
+        "shared_device_motif",
+        "page_difference_policy",
+        "source_type"
+      ]
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "page_index",
+          "page_role",
+          "layout_archetype",
+          "reading_path",
+          "product_occupancy",
+          "product_anchor",
+          "composition_axis",
+          "title_region_pct",
+          "supporting_copy_region_pct",
+          "evidence_or_offer_region_pct",
+          "semantic_line_break_plan",
+          "typography_scale_ratios",
+          "keyword_emphasis_method",
+          "graphic_device_family",
+          "graphic_device_limit",
+          "background_material",
+          "background_luminance",
+          "information_density",
+          "lighting_structure",
+          "difference_from_previous_page",
+          "campaign_style_lock_id",
+          "evidence_pointer_policy",
+          "product_identity_priority",
+          "non_factual_visual_fields_only",
+          "field_sources"
+        ],
+        "properties": {
+          "page_index": {"type": "integer", "minimum": 1, "maximum": 5},
+          "page_role": {"type": "string"},
+          "layout_archetype": {
+            "enum": [
+              "IDENTITY_EDITORIAL",
+              "FEATURE_MACRO",
+              "SCENE_AIRY",
+              "DETAIL_TECH_GRID",
+              "OFFER_NUMERIC_HERO",
+              "SPEC_TRUST_SUMMARY",
+              "CENTER_STAGE_IDENTITY_POSTER",
+              "PANORAMIC_STEP_FILMSTRIP",
+              "TOP_DOWN_INGREDIENT_ORBIT",
+              "LEFT_PRODUCT_RIGHT_NUMERIC_OFFER",
+              "LEFT_PRODUCT_RIGHT_NUMERIC_SPEC"
+            ]
+          },
+          "reading_path": {"type": "array", "minItems": 3, "items": {"type": "string"}},
+          "product_occupancy": {
+            "type": "array",
+            "prefixItems": [
+              {"type": "integer", "minimum": 1, "maximum": 100},
+              {"type": "integer", "minimum": 1, "maximum": 100}
+            ],
+            "items": false
+          },
+          "product_anchor": {"type": "string"},
+          "composition_axis": {"type": "string"},
+          "title_region_pct": {"$ref": "#/$defs/region"},
+          "supporting_copy_region_pct": {"$ref": "#/$defs/region"},
+          "evidence_or_offer_region_pct": {"$ref": "#/$defs/region"},
+          "semantic_line_break_plan": {"type": "object"},
+          "typography_scale_ratios": {
+            "type": "object",
+            "required": [
+              "body_text",
+              "main_title_to_body",
+              "subtitle_to_main_title",
+              "label_to_main_title",
+              "disclaimer_to_main_title",
+              "promotion_number_to_main_title",
+              "promotion_percent_or_unit_to_number"
+            ],
+            "properties": {
+              "main_title_to_body": {"type": "number", "minimum": 2.5, "maximum": 4.5},
+              "subtitle_to_main_title": {"type": "number", "minimum": 0.28, "maximum": 0.48},
+              "label_to_main_title": {"type": "number", "minimum": 0.18, "maximum": 0.32},
+              "disclaimer_to_main_title": {"type": "number", "minimum": 0.12, "maximum": 0.20},
+              "promotion_number_to_main_title": {"type": "number", "minimum": 1.30, "maximum": 1.80}
+            }
+          },
+          "keyword_emphasis_method": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": {
+              "type": "string",
+              "not": {"const": "UNDERLINE_ONLY"}
+            }
+          },
+          "graphic_device_family": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"type": "string"}},
+          "graphic_device_limit": {"type": "integer", "minimum": 1, "maximum": 3},
+          "background_material": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"type": "string"}},
+          "background_luminance": {"type": "string"},
+          "information_density": {"type": "string"},
+          "lighting_structure": {"type": "string"},
+          "difference_from_previous_page": {"type": "string"},
+          "campaign_style_lock_id": {"type": "string", "minLength": 1},
+          "evidence_pointer_policy": {"type": "string"},
+          "evidence_bindings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["label", "required_visual_target"]
+            }
+          },
+          "product_identity_priority": {"const": "HARD_LOCK_BEFORE_OVERLAY"},
+          "non_factual_visual_fields_only": {"const": true},
+          "field_sources": {"type": "object"}
+        }
+      }
+    },
+    "set_gates": {
+      "type": "object",
+      "minProperties": 10,
+      "additionalProperties": {"const": true}
+    },
+    "generation_performed": {"const": false},
+    "profile01_semantics_read": {"const": false}
+  },
+  "$defs": {
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "integer", "minimum": 0, "maximum": 100},
+        "y": {"type": "integer", "minimum": 0, "maximum": 100},
+        "width": {"type": "integer", "minimum": 1, "maximum": 100},
+        "height": {"type": "integer", "minimum": 1, "maximum": 100}
+      }
+    }
+  }
+}

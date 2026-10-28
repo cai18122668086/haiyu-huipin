@@ -1,0 +1,98 @@
+services:
+  api:
+    image: polaris/backend:ci
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    env_file:
+      - ./backend/.env
+    environment:
+      POLARIS_ENVIRONMENT: development
+      POLARIS_AUTH_MODE: development
+      POLARIS_DEVELOPMENT_USER_ID: usr_development
+      POLARIS_DEVELOPMENT_WORKSPACE_ID: ws_development
+      POLARIS_DATABASE_URL: postgresql+psycopg://polaris:polaris_dev_only@postgres:5432/polaris
+      POLARIS_STORAGE_BACKEND: s3
+      POLARIS_S3_ENDPOINT_URL: http://minio:9000
+      POLARIS_S3_ACCESS_KEY: polaris_minio
+      POLARIS_S3_SECRET_KEY: polaris_minio_dev_only
+      POLARIS_S3_BUCKET: polaris-assets
+      POLARIS_S3_AUTO_CREATE_BUCKET: "true"
+      POLARIS_ACCESS_URL_SECRET: development-access-url-secret-change-me
+      POLARIS_ASSET_ACCESS_URL_MODE: same_origin
+      POLARIS_CELERY_BROKER_URL: redis://redis:6379/0
+      POLARIS_CELERY_RESULT_BACKEND: redis://redis:6379/1
+      POLARIS_TASK_DISPATCHER: celery
+      POLARIS_AUTO_PROCESS_JOBS: "true"
+      POLARIS_PROVIDER_QUOTA_ENABLED: "true"
+      POLARIS_WORKSPACE_CREDIT_ENFORCEMENT_ENABLED: "false"
+      POLARIS_AURORA_EXECUTION_MODE: sequential_v20
+      POLARIS_AURORA_WORK_ROOT: /app/.data/aurora-main-image
+    volumes:
+      - ./backend:/app
+      - polaris_aurora_work_data:/app/.data/aurora-main-image
+    ports:
+      - 127.0.0.1:8000:8000
+    networks: [polaris-commerce-studio_default]
+
+  worker:
+    image: polaris/backend:ci
+    command: ["python", "-m", "celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=INFO", "--queues=default", "--concurrency=6"]
+    env_file:
+      - ./backend/.env
+    environment:
+      POLARIS_ENVIRONMENT: development
+      POLARIS_AUTH_MODE: development
+      POLARIS_DEVELOPMENT_USER_ID: usr_development
+      POLARIS_DEVELOPMENT_WORKSPACE_ID: ws_development
+      POLARIS_DATABASE_URL: postgresql+psycopg://polaris:polaris_dev_only@postgres:5432/polaris
+      POLARIS_STORAGE_BACKEND: s3
+      POLARIS_S3_ENDPOINT_URL: http://minio:9000
+      POLARIS_S3_ACCESS_KEY: polaris_minio
+      POLARIS_S3_SECRET_KEY: polaris_minio_dev_only
+      POLARIS_S3_BUCKET: polaris-assets
+      POLARIS_S3_AUTO_CREATE_BUCKET: "true"
+      POLARIS_ACCESS_URL_SECRET: development-access-url-secret-change-me
+      POLARIS_CELERY_BROKER_URL: redis://redis:6379/0
+      POLARIS_CELERY_RESULT_BACKEND: redis://redis:6379/1
+      POLARIS_TASK_DISPATCHER: celery
+      POLARIS_AUTO_PROCESS_JOBS: "true"
+      POLARIS_PROVIDER_QUOTA_ENABLED: "true"
+      POLARIS_WORKSPACE_CREDIT_ENFORCEMENT_ENABLED: "false"
+      POLARIS_AURORA_EXECUTION_MODE: sequential_v20
+      POLARIS_AURORA_WORK_ROOT: /app/.data/aurora-main-image
+    volumes:
+      - ./backend:/app
+      - polaris_aurora_work_data:/app/.data/aurora-main-image
+    networks: [polaris-commerce-studio_default]
+
+  dispatcher:
+    image: polaris/backend:ci
+    command: ["python", "-m", "app.outbox_worker"]
+    env_file:
+      - ./backend/.env
+    environment:
+      POLARIS_ENVIRONMENT: development
+      POLARIS_AUTH_MODE: development
+      POLARIS_DATABASE_URL: postgresql+psycopg://polaris:polaris_dev_only@postgres:5432/polaris
+      POLARIS_STORAGE_BACKEND: s3
+      POLARIS_S3_ENDPOINT_URL: http://minio:9000
+      POLARIS_S3_ACCESS_KEY: polaris_minio
+      POLARIS_S3_SECRET_KEY: polaris_minio_dev_only
+      POLARIS_S3_BUCKET: polaris-assets
+      POLARIS_S3_AUTO_CREATE_BUCKET: "true"
+      POLARIS_CELERY_BROKER_URL: redis://redis:6379/0
+      POLARIS_CELERY_RESULT_BACKEND: redis://redis:6379/1
+      POLARIS_TASK_DISPATCHER: celery
+      POLARIS_AUTO_PROCESS_JOBS: "true"
+      POLARIS_AURORA_WORK_ROOT: /app/.data/aurora-main-image
+    volumes:
+      - ./backend:/app
+      - polaris_aurora_work_data:/app/.data/aurora-main-image
+    networks: [polaris-commerce-studio_default]
+
+volumes:
+  polaris_aurora_work_data:
+    external: true
+
+networks:
+  polaris-commerce-studio_default:
+    external: true

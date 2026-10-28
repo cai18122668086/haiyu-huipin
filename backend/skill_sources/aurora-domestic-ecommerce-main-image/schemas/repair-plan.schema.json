@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "repair-plan.schema.json",
+  "type": "object",
+  "required": ["scope", "instruction", "preserve", "expected_visible_change", "failed_check_names", "all_failed_findings", "root_cause_reflection", "single_second_attempt_strategy"],
+  "properties": {
+    "scope": {"type": "string"},
+    "instruction": {"type": "string", "minLength": 1},
+    "preserve": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "expected_visible_change": {"type": "string", "minLength": 12},
+    "failed_check_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "all_failed_findings": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "object", "required": ["check", "visible_problem", "root_cause", "required_change"], "properties": {"check": {"type": "string"}, "visible_problem": {"type": "string", "minLength": 8}, "root_cause": {"type": "string", "minLength": 8}, "required_change": {"type": "string", "minLength": 8}}, "additionalProperties": false}
+    },
+    "root_cause_reflection": {"type": "string", "minLength": 20},
+    "single_second_attempt_strategy": {"type": "string", "minLength": 20}
+  },
+  "additionalProperties": false
+}

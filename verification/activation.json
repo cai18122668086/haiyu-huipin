@@ -1,0 +1,52 @@
+{
+  "services_updated": [
+    "api",
+    "worker",
+    "dispatcher",
+    "frontend"
+  ],
+  "payment_channels_enabled": [
+    "alipay"
+  ],
+  "wechat_enabled": false,
+  "original_platform_changed": false,
+  "gateway_configuration_changed": false,
+  "other_chat_sources_changed": false,
+  "worker_concurrency": 6,
+  "override": "/srv/huipin-membership-20261028/billing.override.yml",
+  "backup": "/srv/huipin-membership-20261028/huipin-database-before.dump",
+  "verification_pending": false,
+  "public_http": {
+    "/account": 200,
+    "/admin/billing": 200,
+    "/legal/terms": 200,
+    "/api/v1/payments/alipay/notify": {
+      "invalid_callback_rejected": true,
+      "status": 400
+    },
+    "/api/v1/payments/wechat/notify": {
+      "invalid_callback_rejected": true,
+      "status": 400
+    },
+    "api": {
+      "health": "healthy",
+      "image": "huipin-membership/backend:20261028"
+    },
+    "worker": {
+      "health": "healthy",
+      "image": "huipin-membership/backend:20261028"
+    },
+    "dispatcher": {
+      "health": "healthy",
+      "image": "huipin-membership/backend:20261028"
+    },
+    "frontend": {
+      "health": "healthy",
+      "image": "huipin-membership/frontend:20261028-operator"
+    }
+  },
+  "legal_payment_information_updated": true,
+  "operator_identity_changed": true,
+  "operator": "海宇数科（广东横琴）科技有限公司",
+  "contact_email": "main@haiyushuke.cn"
+}

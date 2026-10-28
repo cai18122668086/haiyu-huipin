@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Truthful identity observation scope v1",
+  "type": "object",
+  "required": [
+    "shape_consistent",
+    "colorway_consistent",
+    "texture_consistent",
+    "comparison_scope",
+    "visible_features",
+    "visible_evidence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "shape_consistent": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "const": "NOT_APPLICABLE"
+        }
+      ]
+    },
+    "colorway_consistent": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "const": "NOT_APPLICABLE"
+        }
+      ]
+    },
+    "texture_consistent": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "const": "NOT_APPLICABLE"
+        }
+      ]
+    },
+    "comparison_scope": {
+      "enum": [
+        "VISIBLE_COMPLETE_PRODUCT",
+        "VISIBLE_IDENTITY_TOKEN",
+        "NO_VISIBLE_PRODUCT"
+      ]
+    },
+    "visible_features": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 8
+      }
+    },
+    "visible_evidence": {
+      "type": "string",
+      "minLength": 8
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "comparison_scope": {
+            "const": "VISIBLE_COMPLETE_PRODUCT"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "shape_consistent": {
+            "type": "boolean"
+          },
+          "colorway_consistent": {
+            "type": "boolean"
+          },
+          "texture_consistent": {
+            "type": "boolean"
+          },
+          "visible_features": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "comparison_scope": {
+            "const": "VISIBLE_IDENTITY_TOKEN"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "visible_features": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "comparison_scope": {
+            "const": "NO_VISIBLE_PRODUCT"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "shape_consistent": {
+            "const": "NOT_APPLICABLE"
+          },
+          "colorway_consistent": {
+            "const": "NOT_APPLICABLE"
+          },
+          "texture_consistent": {
+            "const": "NOT_APPLICABLE"
+          },
+          "visible_features": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "x-presence-to-scope": {
+    "DOMINANT": "VISIBLE_COMPLETE_PRODUCT",
+    "SUPPORTING": "VISIBLE_COMPLETE_PRODUCT",
+    "IDENTITY_TOKEN_ONLY": "VISIBLE_IDENTITY_TOKEN",
+    "ABSENT": "NO_VISIBLE_PRODUCT"
+  },
+  "x-scope-priority": [
+    "NO_VISIBLE_PRODUCT",
+    "VISIBLE_IDENTITY_TOKEN",
+    "VISIBLE_COMPLETE_PRODUCT"
+  ]
+}

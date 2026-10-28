@@ -1,0 +1,12 @@
+.link { position: relative; }
+.tooltip {
+  position: absolute; z-index: 100; top: calc(100% + 10px); left: 50%;
+  transform: translate(-50%, -3px); padding: 9px 12px; border-radius: 10px;
+  color: #fff; background: #302c32; box-shadow: 0 8px 24px rgb(30 20 20 / 15%);
+  font-size: 12px; line-height: 1.5; font-weight: 500; white-space: nowrap;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 150ms, transform 150ms, visibility 150ms;
+}
+.tooltip::before { content: ""; position: absolute; bottom: 100%; left: calc(50% - 5px); border: 5px solid transparent; border-bottom-color: #302c32; }
+.link:hover .tooltip, .link:focus-visible .tooltip { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .tooltip { transition: none; } }

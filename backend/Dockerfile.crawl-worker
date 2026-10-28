@@ -1,0 +1,34 @@
+ARG POLARIS_PYTHON_BASE_IMAGE
+FROM ${POLARIS_PYTHON_BASE_IMAGE}
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_REQUIRE_HASHES=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+WORKDIR /app
+
+COPY backend/requirements.browser.lock ./requirements.browser.lock
+RUN python -m pip install --require-hashes --only-binary=:all: -r requirements.browser.lock \
+    && python -m playwright install --with-deps chromium \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backend/alembic.ini ./
+COPY backend/app ./app
+COPY backend/catalog_assets ./catalog_assets
+COPY backend/skill_sources ./skill_sources
+COPY backend/source_manifests ./source_manifests
+COPY backend/migrations ./migrations
+COPY backend/scripts/assign_workspace_owner.py ./scripts/assign_workspace_owner.py
+
+RUN python -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); b=p.chromium.launch(headless=True); b.close(); p.stop()"
+
+RUN mkdir -p /app/.data/ecommerce-session \
+    && groupadd --system --gid 10001 polaris \
+    && useradd --system --uid 10001 --gid polaris --home-dir /app polaris \
+    && chown -R polaris:polaris /app /ms-playwright
+
+USER 10001:10001
+
+CMD ["python", "-m", "celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=INFO", "--queues=crawl", "--concurrency=1"]

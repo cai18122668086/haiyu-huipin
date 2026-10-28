@@ -1,0 +1,7 @@
+interface:
+  display_name: "星河参考图二创3.0"
+  short_description: "锁定参考图排版、构图、字体、景别和光影的全品类电商主图二创技能"
+  default_prompt: "Use $xinghe-reference-image-remix-3 to turn my reference image and product photo into one locked-layout ecommerce main image."
+policy:
+  allow_implicit_invocation: true
+

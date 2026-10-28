@@ -1,0 +1,137 @@
+{
+  "schema_version": "durable-goods-experimental-patterns-0.1.7",
+  "pattern_bundle_id": "V3_DURABLE_GOODS_STYLE_GRAMMAR",
+  "status": "EXPERIMENTAL_PATTERN",
+  "source_context": "NOTE_CONTENT",
+  "evidence_ceiling": "PARTIAL_EVIDENCE",
+  "promotion_to_evidence_derived_allowed": false,
+  "source_summary": {
+    "source_images": 14,
+    "cases": 5,
+    "embedded_panels": 86,
+    "weighted_usable_panels": 59,
+    "direct_ecommerce_surfaces": 0,
+    "categories": ["家具", "家居日用"],
+    "limitations": [
+      "缺少原始笔记ID、公开URL和原始详情页顺序绑定",
+      "全部外层来源为NOTE_CONTENT作品展示拼版",
+      "多尺寸、多层数和多颜色产品族不得视为单一SKU",
+      "不得迁移案例中的品牌、作者、水印、尺寸、材料、承重或性能事实"
+    ]
+  },
+  "source_hashes": {
+    "visual-grammar.md": "13863f15d03de485e2b1b7abfa7ec0163ac1218b8268403d0080aba4c5024069",
+    "experimental-visual-prototypes.json": "61e0cf9485716a9ab5df1830a70210f6a2a17542a56d830bd8f45788775436ca",
+    "validation-report.json": "769d682e3954e8958583311c1ffe0cb7100a5e2dc0e83048315b0b54fef1a4dd",
+    "independent-validation-report.json": "475016909c4dfdb3e978cfd58b9fbd031dcd4a261e6731a50b0864c5060d2ad3",
+    "prototype-panel-evidence-map.json": "2f314e41f9672da5aaafeec68d8cc1df8c15ebf5d7400148be5475a0aa4239fb"
+  },
+  "applicability": {
+    "category_terms": [
+      "家具",
+      "收纳",
+      "置物",
+      "推车",
+      "文件架",
+      "书桌",
+      "桌",
+      "柜",
+      "架"
+    ],
+    "surfaces": {
+      "ECOM_MAIN_IMAGE": "STYLE_GRAMMAR_ONLY",
+      "ECOM_CAROUSEL": "STYLE_GRAMMAR_ONLY",
+      "ECOM_DETAIL_LONG": "DETAIL_LAYOUT_AND_STYLE",
+      "ECOM_DETAIL_SLICE": "DETAIL_LAYOUT_AND_STYLE"
+    }
+  },
+  "patterns": [
+    {
+      "pattern_id": "V3-EXP-01-WARM-HOME-DETAIL",
+      "name": "暖中性家居详情模块",
+      "supported_by_case_count": 5,
+      "controls": {
+        "typography": {
+          "headline": "深棕、深石墨或反白粗体，最多两行",
+          "subtitle_ratio": [0.26, 0.32],
+          "eyebrow_ratio": [0.18, 0.24],
+          "emphasis_limit": 2,
+          "semantic_line_break_required": true
+        },
+        "background": [
+          "奶油白或浅米墙面",
+          "浅木地板或桌面",
+          "侧窗光影"
+        ],
+        "photography": {
+          "full_product_occupancy": [45, 72],
+          "significant_prop_limit": 5,
+          "light_product_separation": "接触阴影与内容物色差",
+          "dark_product_separation": "窗光轮廓与墙面明度"
+        }
+      }
+    },
+    {
+      "pattern_id": "V3-EXP-02-MODULAR-COMBINATION",
+      "name": "模块组合与配置节奏",
+      "supported_by_case_count": 4,
+      "controls": {
+        "composition": "同一暖中性空间中轮换完整商品、组合场景和配置说明",
+        "graphic_devices_max": 3,
+        "allowed_devices": [
+          "CONFIGURATION_PILL",
+          "SIZE_LINE",
+          "VARIANT_CARD"
+        ],
+        "fact_gate": "只有USER_FACT明确提供真实SKU组合、尺寸或层数时才可显示配置"
+      }
+    },
+    {
+      "pattern_id": "V3-EXP-03-STRUCTURE-PROOF",
+      "name": "结构近景与证据卡",
+      "supported_by_case_count": 4,
+      "controls": {
+        "composition": "两个不重复的同商品结构近景或证据区域",
+        "detail_occupancy": [65, 90],
+        "graphic_devices_max": 3,
+        "allowed_devices": [
+          "MAGNIFIER",
+          "LEADER_LINE",
+          "COMPARE_CARD",
+          "PARAMETER_GRID"
+        ],
+        "evidence_gate": "必须绑定当前商品原始近景；指向不确定时删除引线"
+      }
+    }
+  ],
+  "cross_surface_style_grammar": {
+    "allowed_controls": [
+      "TYPOGRAPHY_HIERARCHY",
+      "COLOR_ROLES",
+      "PHOTOGRAPHY_FINISH",
+      "BACKGROUND_MATERIAL_FAMILY",
+      "INFORMATION_SURFACE_LANGUAGE",
+      "GRAPHIC_DEVICE_LIMIT"
+    ],
+    "forbidden_controls": [
+      "PRODUCT_IDENTITY",
+      "VISIBLE_COPY",
+      "USER_FACT",
+      "OFFER",
+      "LAYOUT_ARCHETYPE",
+      "PRODUCT_ANCHOR",
+      "PRODUCT_SCALE",
+      "CARD_TOPOLOGY",
+      "REFERENCE_PRODUCT_FACTS"
+    ],
+    "anti_template_rules": [
+      "禁止把画面切成大型白色PPT文字面板加商品",
+      "禁止三个及以上完全相同的圆角卡片机械堆叠",
+      "禁止用细下划线代替关键词设计",
+      "禁止为了结构绑定把商品层数机械翻译成同数量卡片或横线",
+      "主图与轮播图不得复制作品集顶栏、三联长页或教程总览骨架",
+      "场景页优先让标题融入真实负空间，不在商品旁附加独立说明板",
+      "结构证明优先使用当前商品实体近景，不用通用图标替代证据"
+    ]
+  }
+}
