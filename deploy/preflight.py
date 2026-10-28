@@ -642,9 +642,8 @@ def validate_source(repo_root: Path) -> tuple[list[str], tuple[int, float]]:
             errors.append(f"backend runtime image is missing: {required_copy}")
 
     frontend_dockerfile = read_text(deploy / "frontend.Dockerfile")
-    hosting_copy = "COPY .openai/hosting.json .openai/hosting.json"
-    if hosting_copy not in frontend_dockerfile:
-        errors.append("frontend build image is missing tracked hosting metadata")
+    if ".openai/hosting.json" in frontend_dockerfile:
+        errors.append("frontend build image must not include external hosting metadata")
     npm_install_lines = [
         line.strip()
         for line in frontend_dockerfile.splitlines()

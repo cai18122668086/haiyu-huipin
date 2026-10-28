@@ -409,13 +409,10 @@ class SourcePreflightTests(unittest.TestCase):
         )
         self.assertTrue(any("project/VCS/URL" in item for item in errors))
 
-    def test_frontend_hosting_metadata_copy_is_required(self) -> None:
+    def test_frontend_external_hosting_metadata_is_rejected(self) -> None:
         errors = self.validate_mutation(
             "frontend.Dockerfile",
-            lambda text: text.replace(
-                "COPY .openai/hosting.json .openai/hosting.json",
-                "# hosting metadata omitted",
-            ),
+            lambda text: text + "\nCOPY .openai/hosting.json .openai/hosting.json\n",
         )
         self.assertTrue(any("hosting metadata" in item for item in errors))
 
