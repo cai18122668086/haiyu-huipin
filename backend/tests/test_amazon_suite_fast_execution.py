@@ -24,9 +24,11 @@ from app.execution import ExecutionCoordinator
 from app.models import (
     CreditReservationRecord,
     JobItemRecord,
+    JobPlanRecord,
     WorkspaceCreditAccountRecord,
 )
 from app.schemas_v1 import AmazonVisualSuiteConfiguration
+from app.services import canonical_hash
 from tests.test_api import WORKSPACE_ID, idem, upload_asset
 from tests.test_p0_amazon_fail_closed import _CountingGateway, _install_counting_runner
 
@@ -50,6 +52,8 @@ def create(client, *, speed="fast", headers=None, auto_start=True):
         "product_name": "Visible red product",
         "marketplace": "amazon-us",
         "product_facts": ["Visible red product"],
+        "forbidden_claims": ["Never add unsupported performance percentages"],
+        "instruction": "Use only supplied identity facts; never invent accessories.",
         "auto_start_after_plan": auto_start,
         **({"amazon_speed": speed} if speed is not None else {}),
     }
@@ -501,3 +505,95 @@ def test_native_canvas_policy_keeps_ratio_clarity_and_desktop_minimum(
     index, size, valid
 ):
     assert native_canvas_valid(*size, AMAZON_ITEM_SPECS[index]) is valid
+
+
+@pytest.mark.parametrize("tamper_binding", [False, True])
+def test_legacy_v1_receipt_recovers_only_the_exact_original_prompt_binding(
+    client, monkeypatch, tamper_binding
+):
+    gateway = install(client)
+    job, _ = create(client)
+    current_artifact = AmazonFastProvider.artifact
+
+    def old_gate(data, spec):
+        if spec.item_key == "MAIN-01":
+            raise ApiError(502, "AMAZON_FAST_CANVAS_INVALID", "synthetic obsolete gate")
+        return current_artifact(data, spec)
+
+    monkeypatch.setattr(AmazonFastProvider, "artifact", staticmethod(old_gate))
+    assert run(client, job["id"]) == "partial"
+    main_request = next(
+        request for request in gateway.image_calls if request.page_number == 1
+    )
+    prefix, remainder = main_request.prompt.split(
+        "\nUSER_AUTHORIZED_FACTS_AND_HARD_CONSTRAINTS=", 1
+    )
+    legacy_prompt = prefix + "\nITEM_DESIGN=" + remainder.split("\nITEM_DESIGN=", 1)[1]
+    with client.app.state.session_factory() as session:
+        main_item = session.get(JobItemRecord, main_request.job_item_id)
+        plan = session.scalar(
+            select(JobPlanRecord).where(JobPlanRecord.job_id == job["id"])
+        )
+        context = main_item.configuration[AMAZON_PLAN_CONFIGURATION_KEY]
+        receipt = dict(main_item.configuration["amazon_fast_receipt"])
+        receipt.pop("prompt")
+        receipt["binding"] = (
+            "0" * 64
+            if tamper_binding
+            else canonical_hash(
+                {
+                    "plan": context["resume_signature"],
+                    "skill": plan.payload["skill_content_hash"],
+                    "sources": [
+                        (source.asset_id, source.source_role, source.sha256)
+                        for source in main_request.sources
+                        if source.source_role != "format_canvas"
+                    ],
+                    "prompt": legacy_prompt,
+                }
+            )
+        )
+        main_item.configuration = {
+            **main_item.configuration,
+            "amazon_fast_receipt": receipt,
+        }
+        session.commit()
+    monkeypatch.setattr(AmazonFastProvider, "artifact", staticmethod(current_artifact))
+    replacement = retry(client, job["id"])
+    assert run(client, replacement) == ("partial" if tamper_binding else "completed"), (
+        detail(client, replacement)
+    )
+    assert len(gateway.image_calls) == 21 and len(gateway.planner_calls) == 1
+    if tamper_binding:
+        assert (
+            detail(client, replacement)["items"][0]["error_code"]
+            == "AMAZON_FAST_PLAN_CHANGED"
+        )
+
+
+def test_complete_user_constraints_and_prompt_are_durable_before_any_paid_submission(
+    client,
+):
+    class PreDispatchGateway(Gateway):
+        async def edit(self, request):
+            with client.app.state.session_factory() as session:
+                item = session.get(JobItemRecord, request.job_item_id)
+                receipt = item.configuration["amazon_fast_receipt"]
+                assert receipt["state"] == "invoked"
+                assert receipt["prompt"] == request.prompt
+                assert (
+                    "USER_AUTHORIZED_FACTS_AND_HARD_CONSTRAINTS=" in receipt["prompt"]
+                )
+                assert (
+                    "Never add unsupported performance percentages" in receipt["prompt"]
+                )
+                assert (
+                    "Use only supplied identity facts; never invent accessories."
+                    in receipt["prompt"]
+                )
+            return await super().edit(request)
+
+    gateway = install(client, PreDispatchGateway)
+    job, _ = create(client)
+    assert run(client, job["id"]) == "completed", detail(client, job["id"])
+    assert len(gateway.image_calls) == 21

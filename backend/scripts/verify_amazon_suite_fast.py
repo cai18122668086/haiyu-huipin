@@ -13,6 +13,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import mimetypes
 import time
 from io import BytesIO
 from pathlib import Path
@@ -550,6 +551,8 @@ def main() -> None:
         if args.collect_only:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             summary = collect(client, app, root, manifest["job_id"], trace)
+            summary["new_calls"] = trace.calls
+            assert trace.calls == {"planning": 0, "image": 0, "review": 0}
             save(root / "collection-summary.json", summary)
             print(json.dumps(summary, ensure_ascii=False))
             return
@@ -557,7 +560,14 @@ def main() -> None:
         response = client.post(
             base + "/assets",
             headers={"Idempotency-Key": upload_key},
-            files={"file": (args.source.name, args.source.read_bytes(), "image/png")},
+            files={
+                "file": (
+                    args.source.name,
+                    args.source.read_bytes(),
+                    mimetypes.guess_type(args.source.name)[0]
+                    or "application/octet-stream",
+                )
+            },
         )
         response.raise_for_status()
         source = response.json()

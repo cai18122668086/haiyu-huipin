@@ -215,6 +215,12 @@ class AmazonFastProvider:
                             "forbidden_claims",
                             "instruction",
                         )
+                    }
+                    | {
+                        "rendered_copy_policy": (
+                            "Render the ITEM_DESIGN headline and subcopy exactly and legibly; "
+                            "do not omit planned copy or add new factual copy. MAIN-01 adds no copy."
+                        )
                     },
                     ensure_ascii=False,
                     sort_keys=True,
