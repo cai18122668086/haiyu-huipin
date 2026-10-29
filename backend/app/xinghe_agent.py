@@ -2539,6 +2539,8 @@ class TengliOpenAICompatibleGateway:
         }
         format_feedback = None
         correction_prompt = None
+        if request.planning_profile == "replica_fast_suite":
+            payload["max_completion_tokens"] = 16000
         if request.planning_profile == "replica_exact_compact":
             from .replica_format_feedback import ReplicaFormatFeedback
 
@@ -2588,12 +2590,16 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES:
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile == "replica_fast_suite":
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
                 route_payload = {**payload, "model": route.planner_model}
                 planner_key = request.idempotency_key
+                if (request.planning_profile == "replica_fast_suite"
+                    and route.planner_model.casefold().startswith("deepseek")):
+                    route_payload["max_completion_tokens"] = 32768
+                    route_payload["reasoning_effort"] = "low"
                 if (
                     request.planning_profile
                     in {"replica_native_contract", "replica_exact_compact"}
@@ -11187,6 +11193,8 @@ def _planner_prompt(request: PlannerRequest) -> str:
 
 
 def _planner_prompt_body(request: PlannerRequest) -> str:
+    if request.planning_profile == "replica_fast_suite":
+        return "Plan the entire fast replica suite in ONE pass. Return only the supplied JSON contract.\n" + "\n".join(request.product_information)
     if request.planning_profile == "replica_exact_compact":
         return "Perform only this visual task. Server metadata is managed separately. Return the requested JSON.\n" + "\n".join(request.product_information)
     if request.planning_profile in {"aurora_remix_fast_prepare", "aurora_remix_fast_review"}:

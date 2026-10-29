@@ -222,11 +222,13 @@ class ReferenceRemixRouterProvider(ReferenceRemixProvider):
         exact: Provider,
         native: Provider | None = None,
         fast: Provider | None = None,
+        suite_fast: Provider | None = None,
     ) -> None:
         self.legacy = legacy
         self.exact = exact
         self.native = native
         self.fast = fast
+        self.suite_fast = suite_fast
         self.delegate = getattr(legacy, "delegate", legacy)
         self.name = legacy.name
         self.model = legacy.model
@@ -237,6 +239,15 @@ class ReferenceRemixRouterProvider(ReferenceRemixProvider):
             _, settings, _ = configuration_sections(request.configuration)
         except Exception:
             return await self.legacy.execute(request)
+        if settings.get("reference_skill") in {
+            "aurora-ecommerce-reference-remix-fast",
+            "all-category-style-benchmark-still-fast",
+        }:
+            if self.suite_fast is None:
+                from .provider_registry import UnavailableProvider
+
+                return await UnavailableProvider().execute(request)
+            return await self.suite_fast.execute(request)
         if settings.get("reference_skill") == "aurora-remix-fast":
             if self.fast is None:
                 from .provider_registry import UnavailableProvider

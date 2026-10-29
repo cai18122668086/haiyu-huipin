@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-led reference remix plan",
+  "type": "object",
+  "required": ["plan_contract_version", "fidelity_mode", "reference_units", "sequence_contract", "modules"],
+  "properties": {
+    "plan_contract_version": {"const": "6"},
+    "fidelity_mode": {"enum": ["REMIX_STRICT", "REMIX_BALANCED", "STYLE_INSPIRED"]},
+    "reference_units": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "crop_path", "crop_sha256", "pixel_width", "pixel_height", "column_index", "screen_index", "screen_count_in_column", "screen_boundary_reason", "ai_reference_observation"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "crop_path": {"type": "string", "minLength": 1},
+          "crop_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "pixel_width": {"type": "integer", "minimum": 32},
+          "pixel_height": {"type": "integer", "minimum": 32},
+          "column_index": {"type": "integer", "minimum": 0},
+          "screen_index": {"type": "integer", "minimum": 0},
+          "screen_count_in_column": {"type": "integer", "minimum": 1},
+          "screen_boundary_reason": {"type": "string", "minLength": 12},
+          "ai_reference_observation": {"$ref": "#/$defs/observation"}
+        }
+      }
+    },
+    "sequence_contract": {
+      "type": "object",
+      "required": ["segmentation_basis", "reading_order", "declared_screen_count", "source_unit_order"],
+      "properties": {
+        "segmentation_basis": {"const": "SCREEN_NOT_COLUMN"},
+        "reading_order": {"const": "COLUMN_MAJOR_SCREEN_TOP_TO_BOTTOM"},
+        "declared_screen_count": {"type": "integer", "minimum": 1},
+        "source_unit_order": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "modules": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "reference_unit_id", "reference_path", "output_canvas", "visual_contract", "page_duty", "buyer_conclusion", "generation_brief", "copy_units"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "reference_unit_id": {"type": "string", "minLength": 1},
+          "reference_path": {"type": "string", "minLength": 1},
+          "output_canvas": {
+            "type": "object", "required": ["width", "height"],
+            "properties": {"width": {"type": "integer", "minimum": 512}, "height": {"type": "integer", "minimum": 512}}
+          },
+          "visual_contract": {"$ref": "#/$defs/observation"},
+          "page_duty": {"type": "string", "minLength": 8},
+          "buyer_conclusion": {"type": "string", "minLength": 8},
+          "generation_brief": {"type": "string", "minLength": 8},
+          "copy_units": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "observation": {
+      "type": "object",
+      "required": ["subject_and_scale", "layout_and_reading_path", "carrier_morphology", "commercial_function", "camera_light_depth", "typography_structure", "brand_and_human_presence", "meaningful_absences", "cross_screen_role"],
+      "properties": {
+        "subject_and_scale": {"type": "string", "minLength": 8},
+        "layout_and_reading_path": {"type": "string", "minLength": 8},
+        "carrier_morphology": {"type": "string", "minLength": 8},
+        "commercial_function": {"type": "string", "minLength": 8},
+        "camera_light_depth": {"type": "string", "minLength": 8},
+        "typography_structure": {"type": "string", "minLength": 8},
+        "brand_and_human_presence": {"type": "string", "minLength": 8},
+        "meaningful_absences": {"type": "string", "minLength": 8},
+        "cross_screen_role": {"type": "string", "minLength": 8}
+      }
+    }
+  }
+}

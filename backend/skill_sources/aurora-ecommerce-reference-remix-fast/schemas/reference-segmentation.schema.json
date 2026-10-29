@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-led benchmark segmentation manifest",
+  "type": "object",
+  "required": ["references"],
+  "properties": {
+    "references": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["source_image", "classification", "segmentation_basis", "column_screen_counts", "units"],
+        "properties": {
+          "source_image": {"type": "string", "minLength": 1},
+          "classification": {"enum": ["SINGLE_PAGE", "LONG_PAGE", "MULTI_COLUMN_MONTAGE", "BEFORE_AFTER_BOARD", "MIXED_BOARD"]},
+          "segmentation_basis": {"const": "SCREEN"},
+          "column_screen_counts": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["column_index", "screen_count", "count_evidence"],
+              "properties": {
+                "column_index": {"type": "integer", "minimum": 0},
+                "screen_count": {"type": "integer", "minimum": 1},
+                "count_evidence": {"type": "string", "minLength": 12}
+              }
+            }
+          },
+          "units": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "rect", "column_index", "screen_index", "screen_count_in_column", "screen_boundary_reason", "preliminary_duty", "ai_reference_observation"],
+              "properties": {
+                "id": {"type": "string", "minLength": 1},
+                "rect": {
+                  "type": "object", "required": ["x", "y", "w", "h"],
+                  "properties": {
+                    "x": {"type": "number", "minimum": 0, "maximum": 1},
+                    "y": {"type": "number", "minimum": 0, "maximum": 1},
+                    "w": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+                    "h": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+                  }
+                },
+                "column_index": {"type": "integer", "minimum": 0},
+                "screen_index": {"type": "integer", "minimum": 0},
+                "screen_count_in_column": {"type": "integer", "minimum": 1},
+                "screen_boundary_reason": {"type": "string", "minLength": 12},
+                "preliminary_duty": {"type": "string", "minLength": 1},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "ai_reference_observation": {"type": "object"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

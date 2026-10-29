@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fresh AI reference-plan audit",
+  "type": "object",
+  "required": ["method", "unit_audits"],
+  "properties": {
+    "method": {"const": "AI_FRESH_REFERENCE_AUDIT"},
+    "unit_audits": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["unit_id", "reference_path", "reference_sha256", "fresh_pixel_observation", "comparisons", "material_mismatches", "decision"],
+        "properties": {
+          "unit_id": {"type": "string"},
+          "reference_path": {"type": "string"},
+          "reference_sha256": {"type": "string"},
+          "fresh_pixel_observation": {"type": "object"},
+          "comparisons": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/comparison"}},
+          "material_mismatches": {"type": "array", "items": {"type": "string"}},
+          "decision": {"enum": ["PASS", "FAIL"]}
+        }
+      }
+    }
+  },
+  "$defs": {"comparison": {"type": "object", "required": ["dimension", "match", "evidence"], "properties": {"dimension": {"type": "string"}, "match": {"type": "boolean"}, "evidence": {"type": "string", "minLength": 12}}}}
+}

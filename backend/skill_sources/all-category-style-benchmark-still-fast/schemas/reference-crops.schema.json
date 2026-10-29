@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "route",
+    "style_only",
+    "source_full_image_forbidden",
+    "source_environment_forbidden",
+    "units",
+    "record_count",
+    "overview_detection"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "aurora-reference-crops-3"
+    },
+    "route": {
+      "type": "string"
+    },
+    "style_only": {
+      "const": true
+    },
+    "source_full_image_forbidden": {
+      "const": true
+    },
+    "source_environment_forbidden": {
+      "const": true
+    },
+    "record_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "allOf": [
+          {
+            "$ref": "urn:aurora:reference-analysis:4#/$defs/unit"
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "source_crop_path",
+              "source_role",
+              "source_semantics",
+              "review_status",
+              "sha256",
+              "sanitized"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "source_crop_path": {
+                "type": "string"
+              },
+              "source_role": {
+                "enum": [
+                  "style_mechanism_only",
+                  "layout_only",
+                  "color_only",
+                  "human_action_only"
+                ]
+              },
+              "source_semantics": {
+                "type": "array"
+              },
+              "review_status": {
+                "enum": [
+                  "fixture",
+                  "manual",
+                  "visual_model"
+                ]
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "sanitized": {
+                "const": true
+              },
+              "source_product_presence": {
+                "const": false
+              },
+              "source_content_step_ids": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "overview_detection": {
+      "$ref": "urn:aurora:reference-analysis:4#/$defs/overview"
+    }
+  }
+}

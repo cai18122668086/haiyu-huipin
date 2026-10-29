@@ -1448,7 +1448,12 @@ def create_job(
     if (
         isinstance(payload, ReferenceRemixJobCreate)
         and payload.configuration.reference_skill
-        in {"aurora-ecommerce-reference-remix", "all-category-style-benchmark-still"}
+        in {
+            "aurora-ecommerce-reference-remix",
+            "all-category-style-benchmark-still",
+            "aurora-ecommerce-reference-remix-fast",
+            "all-category-style-benchmark-still-fast",
+        }
         and not getattr(request.state, "replica_session_id", None)
     ):
         raise ApiError(

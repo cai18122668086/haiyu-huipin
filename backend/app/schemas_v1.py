@@ -266,6 +266,8 @@ class ReferenceRemixConfiguration(BaseModel):
             "reference-visual-reverse-remix",
             "aurora-ecommerce-reference-remix",
             "all-category-style-benchmark-still",
+              "aurora-ecommerce-reference-remix-fast",
+              "all-category-style-benchmark-still-fast",
         ]
         | None
     ) = None
@@ -298,6 +300,8 @@ class ReferenceRemixConfiguration(BaseModel):
             not in {
                 "aurora-ecommerce-reference-remix",
                 "all-category-style-benchmark-still",
+                "aurora-ecommerce-reference-remix-fast",
+                "all-category-style-benchmark-still-fast",
             }
             and self.image_count > 12
         ):

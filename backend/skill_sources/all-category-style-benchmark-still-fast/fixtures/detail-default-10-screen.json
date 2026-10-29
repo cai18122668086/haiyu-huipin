@@ -1,0 +1,1 @@
+{"route":"DETAIL_PAGE","screen_count":10,"groups":[{"id":"G01","unit_ids":["S01","S02"]},{"id":"G02","unit_ids":["S03","S04"]},{"id":"G03","unit_ids":["S05","S06"]},{"id":"G04","unit_ids":["S07","S08"]},{"id":"G05","unit_ids":["S09","S10"]}],"provenance":"fixture_structure_only"}

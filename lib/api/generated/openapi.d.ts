@@ -2788,6 +2788,12 @@ export interface components {
             product_asset_ids: string[];
             /** References */
             references: components["schemas"]["ReferenceChoice"][];
+            /**
+             * Replica Speed
+             * @default standard
+             * @enum {string}
+             */
+            replica_speed: "standard" | "fast";
             /** Replication Method */
             replication_method?: ("exact" | "style") | null;
             /** Request Id */
@@ -4962,7 +4968,7 @@ export interface components {
              */
             quality: "low" | "medium" | "high";
             /** Reference Skill */
-            reference_skill?: ("aurora-remix-fast" | "reference-visual-reverse-remix" | "aurora-ecommerce-reference-remix" | "all-category-style-benchmark-still") | null;
+            reference_skill?: ("aurora-remix-fast" | "reference-visual-reverse-remix" | "aurora-ecommerce-reference-remix" | "all-category-style-benchmark-still" | "aurora-ecommerce-reference-remix-fast" | "all-category-style-benchmark-still-fast") | null;
             /**
              * Reference Visual Analysis
              * @default

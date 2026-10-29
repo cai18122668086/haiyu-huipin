@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "review_kind",
+    "pass",
+    "product_identity",
+    "fact_safety",
+    "dimensions"
+  ],
+  "properties": {
+    "review_kind": {
+      "enum": [
+        "fixture",
+        "manual",
+        "visual_model",
+        "real_imagegen"
+      ]
+    },
+    "pass": {
+      "type": "boolean"
+    },
+    "product_identity": {
+      "type": "boolean"
+    },
+    "fact_safety": {
+      "type": "boolean"
+    },
+    "unconfirmed_product_mark": {
+      "type": "boolean",
+      "description": "True when the target product visibly contains an unconfirmed name, logo, watermark or wordmark."
+    },
+    "forbidden_typography_form": {
+      "type": "boolean",
+      "description": "True when visible copy uses handwritten, brush, calligraphic, marker or cursive lettering instead of a readable non-handwritten type form."
+    },
+    "artwork_sha256": {
+      "type": "string"
+    },
+    "style_fidelity_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "product_adaptation_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "mechanism_scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "dimensions": {
+      "type": "object"
+    },
+    "density_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "unit_id",
+          "source_step_id",
+          "observed",
+          "pass",
+          "evidence"
+        ]
+      }
+    },
+    "transition_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from_unit_id",
+          "to_unit_id",
+          "observed_kind",
+          "pass",
+          "evidence"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "review_kind": {
+            "enum": [
+              "manual",
+              "visual_model",
+              "real_imagegen"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "density_checks",
+          "transition_checks"
+        ]
+      }
+    }
+  ]
+}

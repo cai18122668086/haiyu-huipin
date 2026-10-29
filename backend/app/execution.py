@@ -647,6 +647,10 @@ class ExecutionCoordinator:
             else self.max_concurrency
         )
         is_amazon = self._is_amazon_job(job_id)
+        with self.session_factory() as session:
+            fast_job = session.get(JobRecord, job_id)
+            if fast_job is not None and self._fast_replica_record(fast_job):
+                claim_width = min(claim_width, 3)
         while True:
             leases: list[AttemptLease] = []
             for _ in range(claim_width):
@@ -1577,7 +1581,12 @@ class ExecutionCoordinator:
                     JobAttemptRecord.lease_expires_at > utc_now(),
                 )
             )
-            if int(active or 0) >= self.max_concurrency:
+            limit = (
+                min(self.max_concurrency, 3)
+                if self._fast_replica_record(job)
+                else self.max_concurrency
+            )
+            if int(active or 0) >= limit:
                 return None
 
             item_query = select(JobItemRecord).where(
@@ -1825,6 +1834,17 @@ class ExecutionCoordinator:
             and isinstance(settings, Mapping)
             and settings.get("market_region") == "domestic"
             and not refined_detail.is_refined(job.configuration)
+        )
+
+    @staticmethod
+    def _fast_replica_record(job: JobRecord) -> bool:
+        return bool(
+            job.type == JobType.REFERENCE_REMIX.value
+            and job.configuration.get("settings", {}).get("reference_skill")
+            in {
+                "aurora-ecommerce-reference-remix-fast",
+                "all-category-style-benchmark-still-fast",
+            }
         )
 
     @staticmethod
@@ -3163,6 +3183,7 @@ def build_fake_coordinator(
         ReferenceRemixRouterProvider,
         ReferenceVisualReverseRemixProvider,
     )
+    from .replica_fast_provider import FastReplicaProvider
     from .replica_style_delivery import ReplicaDeliveryProvider
     from .xinghe_agent import (
         FakeXingheGateway,
@@ -3396,6 +3417,9 @@ def build_fake_coordinator(
                     manifest_validator=manifest_validator.validate,
                 ),
                 ReplicaDeliveryProvider(session_factory, gateway, storage),
+                suite_fast=FastReplicaProvider(
+                    session_factory, gateway, storage
+                ) if reference_remix_provider_enabled else UnavailableProvider(),
                 fast=AuroraRemixFastAdapter(
                     RemixFastProvider(
                         session_factory, gateway, storage=storage,

@@ -321,9 +321,11 @@ def test_bundled_manifests_load_with_frozen_policies() -> None:
     registry = SkillManifestRegistry.bundled()
     assert registry.skill_ids == (
         "all-category-style-benchmark-still",
+        "all-category-style-benchmark-still-fast",
         "aurora-domestic-ecommerce-detail-page",
         "aurora-domestic-ecommerce-main-image",
         "aurora-ecommerce-reference-remix",
+        "aurora-ecommerce-reference-remix-fast",
         "aurora-remix-fast",
         "ecommerce-model-pose-transfer",
         "masked-image-repair",

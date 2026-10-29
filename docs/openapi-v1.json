@@ -441,6 +441,15 @@
             "title": "References",
             "type": "array"
           },
+          "replica_speed": {
+            "default": "standard",
+            "enum": [
+              "standard",
+              "fast"
+            ],
+            "title": "Replica Speed",
+            "type": "string"
+          },
           "replication_method": {
             "anyOf": [
               {
@@ -6394,7 +6403,9 @@
                   "aurora-remix-fast",
                   "reference-visual-reverse-remix",
                   "aurora-ecommerce-reference-remix",
-                  "all-category-style-benchmark-still"
+                  "all-category-style-benchmark-still",
+                  "aurora-ecommerce-reference-remix-fast",
+                  "all-category-style-benchmark-still-fast"
                 ],
                 "type": "string"
               },
