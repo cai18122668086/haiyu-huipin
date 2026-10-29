@@ -211,6 +211,7 @@ class Settings(BaseSettings):
     workspace_credit_enforcement_enabled: bool = Field(default=False)
     workspace_credit_pilot_ids: list[str] = Field(default_factory=list)
     credit_payments_enabled: bool = False
+    credit_payment_reconciliation_enabled: bool = False
     credit_payment_public_base_url: str = "https://huipin.haiyushuke.com"
     credit_alipay_mode: Literal["key", "cert"] = "key"
     credit_alipay_app_id: str = ""
@@ -225,6 +226,7 @@ class Settings(BaseSettings):
     credit_wechat_private_key_path: str = ""
     credit_wechat_public_keys: dict[str, str] = Field(default_factory=dict)
     credit_wechat_api_v3_key: SecretStr = SecretStr("")
+    credit_wechat_confirmation_mode: Literal["callback", "query"] = "callback"
 
     @field_validator("credit_payment_public_base_url")
     @classmethod

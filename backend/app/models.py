@@ -1540,9 +1540,10 @@ class CreditPurchaseRecord(TimestampMixin, Base):
             "amount_fen > 0 AND credits > 0", name="ck_credit_purchase_positive"
         ),
         CheckConstraint(
-            "status IN ('pending', 'paid', 'partially_refunded', 'refunded')",
+            "status IN ('pending', 'paid', 'partially_refunded', 'refunded', 'closed')",
             name="ck_credit_purchase_status",
         ),
+        Index("ix_credit_purchase_reconcile_due", "status", "reconcile_next_at"),
     )
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
@@ -1563,15 +1564,38 @@ class CreditPurchaseRecord(TimestampMixin, Base):
     merchant_pid: Mapped[str] = mapped_column(String(32), nullable=False)
     signing_key_id: Mapped[str] = mapped_column(String(64), nullable=False)
     checkout_url: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False)
+    status: Mapped[str] = mapped_column(String(24), default="pending", nullable=False)
     gateway_trade_no: Mapped[str | None] = mapped_column(String(64))
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reconcile_next_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    reconcile_lease_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    reconcile_lease_token: Mapped[str | None] = mapped_column(String(32))
+    reconcile_attempts: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    reconcile_last_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reconcile_last_status: Mapped[str | None] = mapped_column(String(40))
+    reconcile_last_error: Mapped[str | None] = mapped_column(String(80))
     refunded_amount_fen: Mapped[int] = mapped_column(
         BigInteger, default=0, server_default=text("0"), nullable=False
     )
     ledger_entry_id: Mapped[int | None] = mapped_column(
         ForeignKey("credit_ledger_entries.id", ondelete="RESTRICT"), unique=True
     )
+
+
+class CreditPaymentReconciliationRecord(Base):
+    __tablename__ = "credit_payment_reconciliation"
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)
+    last_completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    checked_count: Mapped[int] = mapped_column(Integer, default=0)
+    confirmed_count: Mapped[int] = mapped_column(Integer, default=0)
+    error_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(80))
 
 
 class CreditMembershipRecord(TimestampMixin, Base):

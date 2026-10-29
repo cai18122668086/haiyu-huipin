@@ -1939,6 +1939,10 @@
             ],
             "title": "Code Url"
           },
+          "confirmation_mode": {
+            "title": "Confirmation Mode",
+            "type": "string"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
@@ -2014,6 +2018,7 @@
           "checkout_url",
           "code_url",
           "channel",
+          "confirmation_mode",
           "refunded_amount_fen",
           "created_at",
           "paid_at",
@@ -11091,6 +11096,16 @@
           },
           {
             "in": "query",
+            "name": "needs_review",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Needs Review",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
             "name": "status",
             "required": false,
             "schema": {
@@ -11100,7 +11115,8 @@
                     "pending",
                     "paid",
                     "partially_refunded",
-                    "refunded"
+                    "refunded",
+                    "closed"
                   ],
                   "type": "string"
                 },
@@ -11432,6 +11448,34 @@
           }
         ],
         "summary": "Overview",
+        "tags": [
+          "customer support"
+        ]
+      }
+    },
+    "/api/v1/admin/billing/reconciliation": {
+      "get": {
+        "operationId": "reconciliation_status_api_v1_admin_billing_reconciliation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reconciliation Status Api V1 Admin Billing Reconciliation Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Reconciliation Status",
         "tags": [
           "customer support"
         ]
@@ -14637,7 +14681,8 @@
                     "pending",
                     "paid",
                     "partially_refunded",
-                    "refunded"
+                    "refunded",
+                    "closed"
                   ],
                   "type": "string"
                 },

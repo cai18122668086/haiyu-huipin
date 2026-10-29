@@ -168,10 +168,22 @@ def _settle_callback(session: Session, data: dict) -> None:
 async def wechat_refund_notify(
     request: Request, session: SessionDependency
 ) -> Response:
+    settings = request.app.state.settings
+    body = await _callback_body(request)
+    if settings.credit_wechat_confirmation_mode == "query":
+        payments.verify_wechat_query_notice(
+            settings,
+            request.headers,
+            body,
+            {"REFUND.SUCCESS", "REFUND.ABNORMAL", "REFUND.CLOSED"},
+        )
+        # Refunds keep their durable query/retry workflow; no encrypted hint
+        # changes rights or marks a refund successful.
+        return Response(status_code=204)
     data = payments.decrypt_wechat_event(
-        request.app.state.settings,
+        settings,
         request.headers,
-        await _callback_body(request),
+        body,
         {"REFUND.SUCCESS", "REFUND.ABNORMAL", "REFUND.CLOSED"},
     )
     await run_in_threadpool(_settle_callback, session, data)

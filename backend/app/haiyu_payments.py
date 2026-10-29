@@ -97,7 +97,13 @@ def channels(settings: Settings) -> list[Literal["alipay", "wechat"]]:
         and settings.credit_wechat_certificate_serial
         and settings.credit_wechat_public_keys
         and settings.credit_wechat_private_key_path
-        and len(settings.credit_wechat_api_v3_key.get_secret_value().encode()) == 32
+        and (
+            len(settings.credit_wechat_api_v3_key.get_secret_value().encode()) == 32
+            or (
+                settings.credit_wechat_confirmation_mode == "query"
+                and settings.credit_payment_reconciliation_enabled
+            )
+        )
     ):
         result.append("wechat")
     return result
@@ -210,6 +216,24 @@ def decrypt_wechat_event(
 
 def decrypt_wechat(settings: Settings, headers: Any, body: bytes) -> dict:
     return decrypt_wechat_event(settings, headers, body, {"TRANSACTION.SUCCESS"})
+
+
+def verify_wechat_query_notice(
+    settings: Settings, headers: Any, body: bytes, events: set[str]
+) -> None:
+    """Authentic notification hint only; no encrypted payload can settle money."""
+    verify_wechat(settings, headers, body)
+    try:
+        event = json.loads(body)
+        if (
+            not isinstance(event, dict)
+            or event.get("event_type") not in events
+            or not isinstance(event.get("resource"), dict)
+            or event["resource"].get("algorithm") != "AEAD_AES_256_GCM"
+        ):
+            raise ValueError("Invalid notification envelope")
+    except (ValueError, TypeError):
+        raise ApiError(400, "INVALID_PAYMENT_CALLBACK", "微信通知格式无效。") from None
 
 
 class PaymentProviderError(ApiError):

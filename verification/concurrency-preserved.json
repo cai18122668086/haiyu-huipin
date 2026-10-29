@@ -1,0 +1,71 @@
+{
+  "source_image": "huipin-concurrency/backend:20261028",
+  "source_image_id": "sha256:9f174ef1ca9f334a3e75628d5a10ce8ed1125315f0152016fa2765dea9a854aa",
+  "synchronized_files": [
+    {
+      "file": "execution.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "xinghe_agent.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "outbox_worker.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "xinghe_single_image_provider.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "main.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "models.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "tasks.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "routes_v1.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "haiyu_transport.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "config.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "replica.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "task_runner.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "celery_app.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "async_provider_transport.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "worker_async_runtime.py",
+      "merge_exit": 0
+    },
+    {
+      "file": "provider_capacity.py",
+      "merge_exit": 0
+    }
+  ],
+  "removed_files": []
+}

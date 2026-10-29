@@ -220,9 +220,20 @@ def create_app(
         membership_task = asyncio.create_task(
             maintenance_loop(session_factory, app_settings)
         )
+        reconciliation_task = None
+        if app_settings.credit_payment_reconciliation_enabled:
+            from .credit_payment_reconciliation import maintenance_loop as query_loop
+
+            reconciliation_task = asyncio.create_task(
+                query_loop(session_factory, app_settings)
+            )
         try:
             yield
         finally:
+            if reconciliation_task is not None:
+                reconciliation_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await reconciliation_task
             membership_task.cancel()
             with suppress(asyncio.CancelledError):
                 await membership_task

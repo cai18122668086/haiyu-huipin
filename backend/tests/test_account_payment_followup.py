@@ -44,6 +44,16 @@ def test_pending_and_wrong_query_do_not_credit(pilot_client, monkeypatch):
     monkeypatch.setattr(
         payments, "query_payment", lambda *a: paid_fields(order, money="0.01")
     )
+    # A fresh query after the server's five-second anti-repeat window.
+    from datetime import timedelta
+
+    from app.models import CreditPurchaseRecord, utc_now
+
+    with pilot_client.app.state.session_factory() as session:
+        session.get(CreditPurchaseRecord, order["id"]).reconcile_last_at = (
+            utc_now() - timedelta(seconds=6)
+        )
+        session.commit()
     assert (
         pilot_client.post(BASE + "/purchases/" + order["id"] + "/reconcile").status_code
         == 400

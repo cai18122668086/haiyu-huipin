@@ -1,0 +1,13 @@
+{
+  "migration": "20261029_0034",
+  "channels": [
+    "alipay",
+    "wechat"
+  ],
+  "wechat_confirmation_mode": "query",
+  "automatic_reconciliation_enabled": true,
+  "worker_healthy": true,
+  "last_completed_at": "2026-10-29T03:16:30.288984+00:00",
+  "api_v3_key_in_use": false,
+  "heartbeat_advanced_after_public_checks": true
+}

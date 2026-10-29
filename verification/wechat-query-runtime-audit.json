@@ -1,0 +1,34 @@
+{
+  "backend": {
+    "files_checked": 591,
+    "missing_files": [],
+    "mismatched_files": []
+  },
+  "frontend": {
+    "files_checked": 581,
+    "mismatched_files": []
+  },
+  "services": {
+    "api": {
+      "image": "huipin-membership/backend:20261029-query",
+      "health": "healthy"
+    },
+    "worker": {
+      "image": "huipin-membership/backend:20261029-query",
+      "health": "healthy"
+    },
+    "dispatcher": {
+      "image": "huipin-membership/backend:20261029-query",
+      "health": "healthy"
+    },
+    "frontend": {
+      "image": "huipin-membership/frontend:20261029-query",
+      "health": "healthy"
+    }
+  },
+  "public_http": {
+    "/account": 200,
+    "/admin/billing": 200,
+    "/api/v1/admin/billing/reconciliation": 401
+  }
+}

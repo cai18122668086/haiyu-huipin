@@ -1031,7 +1031,7 @@ function Membership({
   );
 }
 
-const purchaseStatus = (status: string) => ({ paid: "已支付", pending: "待付款", partially_refunded: "部分退款", refunded: "已退款" })[status] ?? status;
+const purchaseStatus = (status: string) => ({ paid: "已支付", pending: "待付款", partially_refunded: "部分退款", refunded: "已退款", closed: "已关闭" })[status] ?? status;
 
 function OrderDialog({
   workspaceId,
@@ -1105,14 +1105,14 @@ function OrderDialog({
           </div>
           {order.data.status !== "pending" ? (
             <p className="checkout-note" role="status">
-              {order.data.refunded_amount_fen > 0 ? `已原路退款 ¥${money(order.data.refunded_amount_fen)}。退款对应的积分与会员权益已回收。` : order.data.product_kind === "membership"
+              {order.data.status === "closed" ? "该支付订单已关闭，如需购买，请重新选择套餐创建订单。" : order.data.refunded_amount_fen > 0 ? `已原路退款 ¥${money(order.data.refunded_amount_fen)}。退款对应的积分与会员权益已回收。` : order.data.product_kind === "membership"
                 ? "付款已确认。会员与积分按购买周期生效，可在账户概览核对。"
                 : "付款已确认，积分已到账。"}
             </p>
           ) : (
             <>
               <p className="checkout-note">
-                付款后余额与订单会自动更新。如已扣款，请点击“我已付款，核对到账”，无需重复支付。
+                付款后后台会自动向支付渠道核对并入账，关闭页面不会中断核对。如已扣款，请勿重复支付，也可点击下方按钮立即核对。
               </p>
               <Button variant="primary" disabled={reconcile.isPending}
                 onClick={() => reconcile.mutate()}>
@@ -1170,7 +1170,7 @@ function Orders({
       (filter === "全部订单" ||
         (filter === "已支付"
           ? order.status === "paid"
-          : filter === "退款订单" ? order.refunded_amount_fen > 0 : order.status === "pending")) &&
+          : filter === "退款订单" ? order.refunded_amount_fen > 0 : filter === "已关闭" ? order.status === "closed" : order.status === "pending")) &&
       `${order.id}${order.package_name}`.includes(query),
   );
   return (
@@ -1187,7 +1187,7 @@ function Orders({
       <section className="panel">
         <div className="table-toolbar">
           <div className="filter-tabs">
-            {["全部订单", "待付款", "已支付", "退款订单"].map((value) => (
+            {["全部订单", "待付款", "已支付", "退款订单", "已关闭"].map((value) => (
               <button
                 className={filter === value ? "active" : ""}
                 key={value}

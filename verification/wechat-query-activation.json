@@ -1,0 +1,24 @@
+{
+  "services_updated": [
+    "api",
+    "worker",
+    "dispatcher",
+    "frontend"
+  ],
+  "backend_image": "huipin-membership/backend:20261029-query",
+  "frontend_image": "huipin-membership/frontend:20261029-query",
+  "database_backup": "/srv/huipin-wechat-query-20261029/huipin-before-wechat-query.dump",
+  "migration_target": "20261029_0034",
+  "original_platform_unchanged": true,
+  "all_other_running_services_unchanged": true,
+  "haiyu_production_files_unchanged": true,
+  "wechat_confirmation_mode": "query",
+  "background_reconciliation_enabled": true,
+  "merchant_configuration_unchanged": true,
+  "real_refunds_executed": 0,
+  "verification_pending": false,
+  "public_checks_passed": true,
+  "source_audit_passed": true,
+  "automatic_worker_healthy": true,
+  "isolated_tests_passed": 160
+}
