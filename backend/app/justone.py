@@ -56,14 +56,12 @@ def image_url(value: object) -> str | None:
 
 
 class MarketRedirects(HTTPRedirectHandler):
+    max_redirections = 5
+
     def redirect_request(
         self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str
     ) -> Any:
-        parsed = urlparse(newurl)
-        if parsed.scheme not in {"https", "http"} or not domain_matches(
-            parsed.hostname or "",
-            tuple(d for group in MARKET_HOSTS.values() for d in group),
-        ):
+        if not _is_market_url(newurl):
             raise ApiError(
                 400,
                 "INVALID_REDIRECT",
@@ -72,7 +70,63 @@ class MarketRedirects(HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+def _is_market_url(value: str) -> bool:
+    try:
+        parsed = urlparse(value)
+        return (
+            parsed.scheme in {"https", "http"}
+            and not parsed.username
+            and not parsed.password
+            and parsed.port in {None, 80, 443}
+            and domain_matches(
+                parsed.hostname or "",
+                tuple(d for group in MARKET_HOSTS.values() for d in group),
+            )
+        )
+    except ValueError:
+        return False
+
+
+def _share_target(raw: str) -> str | None:
+    with build_opener(ProxyHandler({}), MarketRedirects()).open(
+        Request(raw, headers={"User-Agent": "Mozilla/5.0"}), timeout=15
+    ) as response:
+        final = response.geturl()
+        if not _is_market_url(final):
+            raise ApiError(400, "INVALID_REDIRECT", "分享链接跳转到了不支持的地址。")
+        if final != raw:
+            return str(final)
+        body = response.read(512 * 1024 + 1)
+    if len(body) > 512 * 1024:
+        return None
+    # 手淘 e.tb.cn 返回 HTTP 200，商品地址在脚本的 var url 中。
+    # 仅读取指定跳转字段，不执行脚本，也不从广告或推荐链接猜测商品 ID。
+    match = re.search(
+        r"""\b(?:var|let|const)\s+(?:url|targetUrl|redirectUrl)\s*=\s*"""
+        r"""(?P<quote>["'])(?P<url>[^"'\r\n]+)(?P=quote)""",
+        body.decode("utf-8", errors="replace"),
+    )
+    if not match:
+        return None
+    target = re.sub(
+        r"""\\(?:u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2})|([/"'\\]))""",
+        lambda part: (
+            chr(int(part[1] or part[2], 16)) if part[1] or part[2] else part[3]
+        ),
+        html.unescape(match["url"]),
+    )
+    if not _is_market_url(target):
+        raise ApiError(400, "INVALID_REDIRECT", "分享链接跳转到了不支持的地址。")
+    return target
+
+
 def parse_product_link(raw: str, platform_hint: str = "auto") -> tuple[str, str, str]:
+    return _parse_product_link(raw, platform_hint, remaining_shares=3)
+
+
+def _parse_product_link(
+    raw: str, platform_hint: str, *, remaining_shares: int
+) -> tuple[str, str, str]:
     raw = raw.strip()
     if raw.isdigit():
         if platform_hint not in ENDPOINTS:
@@ -123,13 +177,16 @@ def parse_product_link(raw: str, platform_hint: str = "auto") -> tuple[str, str,
         if not item_id and (
             domain_matches(host, ("tb.cn", "3.cn")) or "short" in parsed.path
         ):
+            if remaining_shares <= 0:
+                raise ApiError(
+                    400, "PRODUCT_ID_MISSING", "分享链接跳转过多，请使用完整商品链接。"
+                )
             try:
-                with build_opener(ProxyHandler({}), MarketRedirects()).open(
-                    Request(raw, headers={"User-Agent": "Mozilla/5.0"}), timeout=15
-                ) as response:
-                    final = response.geturl()
-                if final != raw:
-                    return parse_product_link(final, platform_hint)
+                target = _share_target(raw)
+                if target and target != raw:
+                    return _parse_product_link(
+                        target, platform_hint, remaining_shares=remaining_shares - 1
+                    )
             except ApiError:
                 raise
             except Exception:
@@ -320,7 +377,14 @@ def normalize_product(
     }
 
 
-def fetch_product(token: str, platform: str, item_id: str, canonical: str) -> dict:
+def fetch_product(
+    token: str,
+    platform: str,
+    item_id: str,
+    canonical: str,
+    *,
+    allow_v3_fallback: bool = False,
+) -> dict:
     if not token:
         raise ApiError(
             503,
@@ -331,10 +395,15 @@ def fetch_product(token: str, platform: str, item_id: str, canonical: str) -> di
     try:
         return _fetch_endpoint(token, platform, item_id, canonical, endpoint)
     except ApiError as error:
-        if platform not in {"taobao", "tmall"} or error.code != "PRODUCT_UNAVAILABLE":
+        # V3 单次费用较高，普通商品拉取禁止隐式升级到该接口。
+        if (
+            not allow_v3_fallback
+            or platform not in {"taobao", "tmall"}
+            or error.code not in {"PRODUCT_UNAVAILABLE", "PRODUCT_PROVIDER_301"}
+        ):
             raise
-    # V6 sometimes reports a live item as unavailable. Try the independently
-    # verified V3 once, never recursively or after transport/balance failures.
+    # V6 对可访问商品也可能返回采集失败（301）或下架文本，V3 已实测可恢复。
+    # 只回退一次；网络、鉴权、余额和限流错误不触发额外的数据请求。
     product = _fetch_endpoint(
         token, platform, item_id, canonical, TAOBAO_FALLBACK_ENDPOINT
     )

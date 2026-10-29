@@ -2332,6 +2332,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/replica/product-platforms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Product Platforms */
+        get: operations["product_platforms_api_v1_workspaces__workspace_id__replica_product_platforms_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/replica/products": {
         parameters: {
             query?: never;
@@ -4808,9 +4825,8 @@ export interface components {
             /**
              * Platform
              * @default auto
-             * @enum {string}
              */
-            platform: "auto" | "taobao" | "tmall" | "1688" | "jd";
+            platform: ("taobao" | "tmall" | "1688" | "jd" | "xianyu" | "dewu" | "amazon" | "aliexpress" | "shopee" | "temu" | "etsy" | "walmart") | "auto";
             /** Url */
             url: string;
         };
@@ -10254,6 +10270,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    product_platforms_api_v1_workspaces__workspace_id__replica_product_platforms_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    }[];
                 };
             };
             /** @description Validation Error */

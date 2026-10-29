@@ -1,0 +1,6 @@
+# Append to the active Huipin Compose stack and load the private crawler env file.
+# Product collection runs in FastAPI; generation workers do not need this token.
+services:
+  api:
+    environment:
+      POLARIS_EVERYINFRA_API_KEY: ${POLARIS_EVERYINFRA_API_KEY:?set the Huipin EveryInfra key in a private env file}

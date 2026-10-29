@@ -88,7 +88,7 @@ def test_provider_image_groups_and_1688_top_level_gallery():
 def test_paid_product_request_is_cached_and_workspace_owned(client, monkeypatch):
     calls = []
 
-    def fake_fetch(token, platform, item_id, canonical):
+    def fake_fetch(token, platform, item_id, canonical, **options):
         calls.append(item_id)
         return {
             "title": "保温杯",

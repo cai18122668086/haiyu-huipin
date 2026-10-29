@@ -30,7 +30,7 @@ from .auth import WorkspaceContext, WorkspaceDependency, WorkspaceWriteDependenc
 from .database import get_session
 from .domain import AssetMediaKind, AssetOriginKind
 from .errors import ApiError
-from .justone import fetch_product, image_url, parse_product_link
+from .everyinfra import fetch_product
 from .models import (
     JobItemRecord,
     JobRecord,
@@ -40,6 +40,7 @@ from .models import (
 )
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .new_image_skill_provider import TARGET_DIMENSIONS
+from .product_sources import SOURCES, ProductPlatform, image_url, parse_product_link
 from .replica_native import (
     SKILLS,
     NativeReplicaRun,
@@ -67,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 class ProductRequest(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
-    platform: Literal["auto", "taobao", "tmall", "1688", "jd"] = "auto"
+    platform: ProductPlatform | Literal["auto"] = "auto"
 
 
 class ImportRequest(BaseModel):
@@ -158,6 +159,8 @@ def _wire(row: ReplicaDocumentRecord) -> dict:
                 "_style_analysis_revision",
                 "_style_crop_policy_adoption",
                 "_completion_requested",
+                "_product_provider_state",
+                "_product_fetch_attempt",
             }
         },
         "created_at": row.created_at.isoformat(),
@@ -207,7 +210,9 @@ def _wire(row: ReplicaDocumentRecord) -> dict:
                     "exact-compact-v10",
                     "exact-compact-v11",
                     "exact-compact-v12",
-                    "exact-compact-v13", "exact-compact-v14", "exact-compact-v15",
+                    "exact-compact-v13",
+                    "exact-compact-v14",
+                    "exact-compact-v15",
                 }
             )
         )
@@ -348,6 +353,12 @@ def _save(app: Any, document_id: str, status: str, payload: dict) -> None:
         if row is None:
             return
         if (
+            payload.get("_product_fetch_attempt")
+            and row.payload.get("_product_fetch_attempt")
+            != payload["_product_fetch_attempt"]
+        ):
+            return
+        if (
             payload.get("analysis_attempt_id")
             and row.payload.get("analysis_attempt_id") != payload["analysis_attempt_id"]
         ):
@@ -361,13 +372,37 @@ async def _fetch(app: Any, document_id: str) -> None:
         row = session.get(ReplicaDocumentRecord, document_id)
         payload = dict(row.payload)
     try:
-        token = app.state.settings.justone_api_token.get_secret_value()
+        token = app.state.settings.everyinfra_api_key.get_secret_value()
+
+        def checkpoint(state: dict) -> None:
+            with app.state.session_factory() as session:
+                current = session.get(
+                    ReplicaDocumentRecord, document_id, with_for_update=True
+                )
+                if (
+                    current is None
+                    or current.status != "fetching"
+                    or current.payload.get("_product_fetch_attempt")
+                    != payload.get("_product_fetch_attempt")
+                ):
+                    raise ApiError(
+                        409,
+                        "PRODUCT_FETCH_LEASE_LOST",
+                        "商品采集已由其他请求继续处理。",
+                    )
+                payload["_product_provider_state"] = state
+                current.payload = dict(payload)
+                current.updated_at = utc_now()
+                session.commit()
+
         product = await asyncio.to_thread(
             fetch_product,
             token,
             payload["platform"],
             payload["item_id"],
             payload["canonical_url"],
+            state=payload.get("_product_provider_state", {}),
+            on_checkpoint=checkpoint,
         )
         _save(app, document_id, "ready", {**payload, "product": product})
     except Exception as error:
@@ -383,6 +418,41 @@ async def _fetch(app: Any, document_id: str) -> None:
                 else "商品获取失败，请稍后重试或上传参考图。",
             },
         )
+
+
+@router.get("/product-platforms")
+def product_platforms(workspace: WorkspaceDependency) -> list[dict[str, str]]:
+    return [{"code": code, "label": source.label} for code, source in SOURCES.items()]
+
+
+def _resume_product_fetch(
+    row: ReplicaDocumentRecord,
+    session: Any,
+    app: Any,
+    background_tasks: BackgroundTasks,
+    *,
+    explicit: bool = False,
+) -> None:
+    updated = (
+        row.updated_at.replace(tzinfo=UTC)
+        if row.updated_at.tzinfo is None
+        else row.updated_at
+    )
+    stale = (utc_now() - updated).total_seconds() > 300
+    if not (
+        (explicit and row.status == "failed") or (row.status == "fetching" and stale)
+    ):
+        return
+    row.status = "fetching"
+    row.payload = {
+        key: value
+        for key, value in row.payload.items()
+        if key not in {"error", "error_code", "analysis_error_details"}
+    }
+    row.payload = {**row.payload, "_product_fetch_attempt": uuid4().hex}
+    row.updated_at = utc_now()
+    session.commit()
+    background_tasks.add_task(_fetch, app, row.id)
 
 
 @router.post("/products", status_code=202)
@@ -402,27 +472,27 @@ async def create_product(
         "product",
         _hash(
             [
-                "justone-v2",
+                "everyinfra-v1",
                 platform,
                 item_id,
+                canonical,
                 (datetime.now(UTC) + timedelta(hours=8)).date().isoformat(),
             ]
         ),
-        {"platform": platform, "item_id": item_id, "canonical_url": canonical},
+        {
+            "platform": platform,
+            "item_id": item_id,
+            "canonical_url": canonical,
+            "_product_fetch_attempt": uuid4().hex,
+        },
         "fetching",
     )
     if created:
         background_tasks.add_task(_fetch, request.app, row.id)
-    elif row.status == "failed":
-        # A new button press is an explicit retry; background polling never pays again.
-        row.status = "fetching"
-        row.payload = {
-            key: value
-            for key, value in row.payload.items()
-            if key not in {"error", "error_code", "analysis_error_details"}
-        }
-        session.commit()
-        background_tasks.add_task(_fetch, request.app, row.id)
+    else:
+        _resume_product_fetch(
+            row, session, request.app, background_tasks, explicit=True
+        )
     return _wire(row)
 
 
@@ -435,15 +505,15 @@ def get_document(
     session: SessionDependency,
 ) -> dict:
     row = _get(session, workspace.workspace_id, document_id)
+    if row.kind == "product" and row.payload.get("_product_fetch_attempt"):
+        _resume_product_fetch(row, session, request.app, background_tasks)
     if reconcile_document(session, row):
         session.commit()
     from .replica_native_plan import snapshot_completion_ready
 
     if (
         row.status == "failed"
-        and (
-            snapshot_completion_ready(row.payload.get("_analysis_checkpoint", {}))
-        )
+        and (snapshot_completion_ready(row.payload.get("_analysis_checkpoint", {})))
         and row.payload.get("auto_start_after_plan") is True
         and not row.payload.get("job_ids")
         and row.payload.get("_analysis_checkpoint")
@@ -1093,8 +1163,11 @@ async def _analyse_document(app: Any, document_id: str, attempt_id: str) -> None
                 "analysis_error_details": {
                     key: last.get(key)
                     for key in (
-                        "provider_request_id", "http_status", "response_format_type",
-                        "output_characters", "parse_trace",
+                        "provider_request_id",
+                        "http_status",
+                        "response_format_type",
+                        "output_characters",
+                        "parse_trace",
                     )
                 },
             }
@@ -1108,7 +1181,8 @@ async def _analyse_document(app: Any, document_id: str, attempt_id: str) -> None
             analysis_failure = {
                 "error": error.message + " 具体原因：" + detail,
                 "analysis_error_details": {
-                    "code": error.code, "message": detail,
+                    "code": error.code,
+                    "message": detail,
                     "stage": payload.get("analysis_stage"),
                 },
             }
@@ -1128,9 +1202,14 @@ async def _analyse_document(app: Any, document_id: str, attempt_id: str) -> None
                 "analysis_error_details": {
                     key: last.get(key)
                     for key in (
-                        "provider_request_id", "http_status", "finish_reason",
-                        "output_token_limit", "input_tokens", "output_tokens",
-                        "response_format_type", "output_characters",
+                        "provider_request_id",
+                        "http_status",
+                        "finish_reason",
+                        "output_token_limit",
+                        "input_tokens",
+                        "output_tokens",
+                        "response_format_type",
+                        "output_characters",
                         "output_non_whitespace_characters",
                         "trailing_whitespace_characters",
                     )
@@ -1685,9 +1764,7 @@ async def retry_image(
         )
     retried = await retry_job(
         job_id=job_id,
-        payload=RetryRequest(
-            scope=RetryScope.FAILED
-        ),
+        payload=RetryRequest(scope=RetryScope.FAILED),
         request=request,
         background_tasks=background_tasks,
         workspace=workspace,
@@ -1728,9 +1805,11 @@ async def recover_images(
 ) -> dict:
     from .replica_preserved_outputs import recover_outputs
 
-    job = session.scalar(select(JobRecord).where(
-        JobRecord.id == job_id, JobRecord.workspace_id == workspace.workspace_id
-    ).with_for_update())
+    job = session.scalar(
+        select(JobRecord)
+        .where(JobRecord.id == job_id, JobRecord.workspace_id == workspace.workspace_id)
+        .with_for_update()
+    )
     row = _get(session, workspace.workspace_id, document_id, "session")
     if job is None:
         raise ApiError(404, "REPLICA_JOB_NOT_FOUND", "未找到当前复刻任务。")

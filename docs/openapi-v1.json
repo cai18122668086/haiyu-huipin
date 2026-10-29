@@ -6201,16 +6201,31 @@
       "ProductRequest": {
         "properties": {
           "platform": {
-            "default": "auto",
-            "enum": [
-              "auto",
-              "taobao",
-              "tmall",
-              "1688",
-              "jd"
+            "anyOf": [
+              {
+                "enum": [
+                  "taobao",
+                  "tmall",
+                  "1688",
+                  "jd",
+                  "xianyu",
+                  "dewu",
+                  "amazon",
+                  "aliexpress",
+                  "shopee",
+                  "temu",
+                  "etsy",
+                  "walmart"
+                ],
+                "type": "string"
+              },
+              {
+                "const": "auto",
+                "type": "string"
+              }
             ],
-            "title": "Platform",
-            "type": "string"
+            "default": "auto",
+            "title": "Platform"
           },
           "url": {
             "maxLength": 2048,
@@ -17221,6 +17236,60 @@
           }
         ],
         "summary": "Session For Job",
+        "tags": [
+          "one-click-replica"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/replica/product-platforms": {
+      "get": {
+        "operationId": "product_platforms_api_v1_workspaces__workspace_id__replica_product_platforms_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "title": "Response Product Platforms Api V1 Workspaces  Workspace Id  Replica Product Platforms Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Product Platforms",
         "tags": [
           "one-click-replica"
         ]
