@@ -3,9 +3,11 @@
 import base64
 import http.cookiejar
 import json
+import os
 import subprocess
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
@@ -132,7 +134,10 @@ try:
         sources = json.load(response)
         assert len(sources) == 12
     base = "https://huipin.haiyushuke.com/api/v1/workspaces/" + workspace + "/replica"
-    share = "https://e.tb.cn/h.jg61u1APU5yXxB5?tk=4gYdTBpoxZG"
+    share = os.environ.get(
+        "HUIPIN_PROBE_PRODUCT_URL",
+        "https://e.tb.cn/h.jg61u1APU5yXxB5?tk=4gYdTBpoxZG",
+    )
     request = urllib.request.Request(
         base + "/products",
         data=json.dumps({"url": share}).encode(),
@@ -161,6 +166,22 @@ try:
     )
     assert "_product_provider_state" not in document["payload"]
     assert "_product_fetch_attempt" not in document["payload"]
+    previews = [
+        base + "/products/" + document["id"] + "/images/" + group + "/" + str(index)
+        for group in ("imageUrls", "descImageUrls", "skuImageUrls")
+        for index in range(len(product[group]))
+    ]
+
+    def verify_preview(url):
+        with opener.open(url, timeout=45) as response:
+            payload = response.read(20 * 1024 * 1024 + 1)
+            assert response.status == 200
+            assert response.headers["Content-Type"].startswith("image/")
+            assert "private" in response.headers["Cache-Control"]
+            assert 0 < len(payload) <= 20 * 1024 * 1024
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(verify_preview, previews))
     request = urllib.request.Request(
         base + "/products",
         data=json.dumps({"url": document["payload"]["canonical_url"]}).encode(),
@@ -172,7 +193,8 @@ try:
     crawler = {
         "source_count": len(sources),
         "default_supplier": product["supplier"],
-        "mobile_share_resolved": True,
+        "mobile_share_resolved": "e.tb.cn" in share or "m.tb.cn" in share,
+        "same_origin_previews_verified": len(previews),
         "counts": {
             k: len(product[k]) for k in ("imageUrls", "descImageUrls", "skuImageUrls")
         },
@@ -239,7 +261,10 @@ print(json.dumps({'synthetic_account_cleaned':True}))
         ),
     )
     report.update(execute(cleanup))
-Path("/srv/huipin-everyinfra-20261029/public-integrated-probe.json").write_text(
-    json.dumps(report, indent=2)
-)
+Path(
+    os.environ.get(
+        "HUIPIN_PROBE_REPORT_PATH",
+        "/srv/huipin-everyinfra-20261029/public-integrated-probe.json",
+    )
+).write_text(json.dumps(report, indent=2))
 print(json.dumps(report))
