@@ -1,0 +1,123 @@
+{
+  "application_revision": "ce56815",
+  "source": "previous real provider originals; no new external requests",
+  "accepted_originals": 6,
+  "new_generation_requests": 0,
+  "new_planner_requests": 0,
+  "files": [
+    {
+      "page": 1,
+      "sha256": "bf3ed788ef82287be172a7e450b79047303f638aec97babc32b6033671d1b00a",
+      "delivery_receipt": {
+        "policy": "refined-native-portrait-original-v1",
+        "requested_size": [
+          1440,
+          1920
+        ],
+        "actual_size": [
+          1086,
+          1448
+        ],
+        "sha256": "bf3ed788ef82287be172a7e450b79047303f638aec97babc32b6033671d1b00a",
+        "provider_bytes_preserved": true,
+        "locally_resampled": false
+      },
+      "zip_bytes_identical": true
+    },
+    {
+      "page": 2,
+      "sha256": "9a698e7be794671cc438ba7989b4573f668b5bae8115f31197e11e670d36af96",
+      "delivery_receipt": {
+        "policy": "refined-native-portrait-original-v1",
+        "requested_size": [
+          1440,
+          1920
+        ],
+        "actual_size": [
+          1086,
+          1448
+        ],
+        "sha256": "9a698e7be794671cc438ba7989b4573f668b5bae8115f31197e11e670d36af96",
+        "provider_bytes_preserved": true,
+        "locally_resampled": false
+      },
+      "zip_bytes_identical": true
+    },
+    {
+      "page": 3,
+      "sha256": "a426f902f814fc3d3d284344532c2b2eb533988062f79dcffc93d131df784c50",
+      "delivery_receipt": {
+        "policy": "refined-native-portrait-original-v1",
+        "requested_size": [
+          1440,
+          1920
+        ],
+        "actual_size": [
+          1086,
+          1448
+        ],
+        "sha256": "a426f902f814fc3d3d284344532c2b2eb533988062f79dcffc93d131df784c50",
+        "provider_bytes_preserved": true,
+        "locally_resampled": false
+      },
+      "zip_bytes_identical": true
+    },
+    {
+      "page": 4,
+      "sha256": "6b5374f15263cb8ab6c8ccbf28f4a7c03461c05ca16e5ad02a1dd713a717e357",
+      "delivery_receipt": {
+        "policy": "refined-native-portrait-original-v1",
+        "requested_size": [
+          1440,
+          1920
+        ],
+        "actual_size": [
+          1086,
+          1448
+        ],
+        "sha256": "6b5374f15263cb8ab6c8ccbf28f4a7c03461c05ca16e5ad02a1dd713a717e357",
+        "provider_bytes_preserved": true,
+        "locally_resampled": false
+      },
+      "zip_bytes_identical": true
+    },
+    {
+      "page": 5,
+      "sha256": "1c6dfa392f97e4955eb9e8c17494a44d5c1efb22603ecb7fd4224e6a05747fd5",
+      "delivery_receipt": {
+        "policy": "refined-native-portrait-original-v1",
+        "requested_size": [
+          1440,
+          1920
+        ],
+        "actual_size": [
+          1086,
+          1448
+        ],
+        "sha256": "1c6dfa392f97e4955eb9e8c17494a44d5c1efb22603ecb7fd4224e6a05747fd5",
+        "provider_bytes_preserved": true,
+        "locally_resampled": false
+      },
+      "zip_bytes_identical": true
+    },
+    {
+      "page": 6,
+      "sha256": "b06e42618dcbe8fd056241b67f5cb32938fe4e9ff0d48d76df0b0adce4990d6a",
+      "delivery_receipt": {
+        "policy": "refined-native-portrait-original-v1",
+        "requested_size": [
+          1440,
+          1920
+        ],
+        "actual_size": [
+          1086,
+          1448
+        ],
+        "sha256": "b06e42618dcbe8fd056241b67f5cb32938fe4e9ff0d48d76df0b0adce4990d6a",
+        "provider_bytes_preserved": true,
+        "locally_resampled": false
+      },
+      "zip_bytes_identical": true
+    }
+  ]
+}
