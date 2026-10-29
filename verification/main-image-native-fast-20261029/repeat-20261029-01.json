@@ -1,0 +1,144 @@
+{
+  "variant": "native_fast",
+  "planning_profile": "aurora_native_fast_identity",
+  "frozen_prompts_match_actual_requests": true,
+  "status": "completed",
+  "job_id": "job_422e8793b511496e834f60168ba20076",
+  "planning_calls": 1,
+  "image_calls": 6,
+  "planning_seconds": 45.0014618000132,
+  "first_image_returned_seconds": 205.89,
+  "first_image_downloadable_seconds": 206.515,
+  "complete_delivery_seconds": 386.468,
+  "suite_finished_seconds": 387.5,
+  "image_submission_spread_seconds": 0.07800000000000296,
+  "downloadable_images": 6,
+  "downloads": [
+    {
+      "ordinal": 0,
+      "filename": "delivered-01.png",
+      "sha256": "d7d84092bb637102547479126964cb3a65ea53dacbceb6ab9fd8b9c99a6a723b",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 2,
+      "filename": "delivered-03.png",
+      "sha256": "65502d83fc5e9e3a0301d7b46cc742a2b518d2149da02b27616d37123ca935a7",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 4,
+      "filename": "delivered-05.png",
+      "sha256": "fb7259f3ed251b1da859e7c3eea32b1a0d294838989d3a6e9de5479e65d90fc0",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 1,
+      "filename": "delivered-02.png",
+      "sha256": "6035bfcd10010715cb2f028cc819a9600280f45956de5ae13e7022aab8cde18e",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 5,
+      "filename": "delivered-06.png",
+      "sha256": "d5076971346091dd1a4ece131a3e6b25e88bbeda67d511efba58ad78fb179b71",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 3,
+      "filename": "delivered-04.png",
+      "sha256": "1c40ed09f26ee1667a5afcfd311457a2e0bd87ecd814ae579049fac8ab766fae",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    }
+  ],
+  "zip": {
+    "http_status": 200,
+    "members": 6,
+    "valid": true,
+    "all_original_bytes": true
+  },
+  "job_api_request_count": 7,
+  "job_cost": {
+    "estimated_min": {
+      "micros": "270000",
+      "currency": "USD"
+    },
+    "estimated_max": {
+      "micros": "540000",
+      "currency": "USD"
+    },
+    "actual": null,
+    "estimated_credits": 90,
+    "actual_credits": 90,
+    "usage_completeness": "partial"
+  },
+  "actual_upstream_cost_micros": null,
+  "credit_balance_delta": 90,
+  "reserved_credits_after": 0,
+  "ai_review_status": "NOT_REVIEWED",
+  "limits": "Same inputs and same B code; new identity output and image randomness. Not a frozen-prompt scheduling experiment.",
+  "candidate_revision": "d3b8ca1",
+  "input_image_bytes_equal_prior_b": true,
+  "selling_point_text_equal_prior_b": true,
+  "all_settings_equal_prior_b": true,
+  "submitted_selling_point_count": 1,
+  "skill_content_hash": "0cb04c6ad611f08a525a7c2ba5570613f3dde2ce691b5d76a9a98971afd4caa8",
+  "harness_state": "FINALIZED",
+  "native_selected_statuses": [
+    "GENERATED_NOT_REVIEWED"
+  ],
+  "set_audit_performed": false,
+  "image_sources": [
+    {
+      "provider": "tengli",
+      "model": "image-2.5-flare",
+      "pricing_version": "tengli-configured-v1",
+      "calls": 6
+    }
+  ],
+  "prompt_sha256": [
+    "ff88daf712e8138a239d9dee61e6c5ebf806d2f2166134fa300e3beb27f9e0aa",
+    "394bc2468a1df2ea6e6a0bfc4a30388b36f28fbb6875d54591620da5da7c9cd9",
+    "abda5196f765e584778d8bafa677102db7d27b7bac74a43b4019d0b9cfe5ba41",
+    "a59488950b4fc9ccf996c1e4c4a8fe12f517320e32fef7a55174eae8752569f6",
+    "d24df278da2dfe727590d029f1d4011348bcda56f989dd59c97347358ba98f4e",
+    "8609d9a15d8d703a3596a3d4d64305f0d696f1beae70fb29c8d09dd3fee08b51"
+  ],
+  "unique_primary_claim_count": 1,
+  "local_only": true,
+  "production_changed": false,
+  "new_external_identity_calls": 1,
+  "new_external_image_calls": 6,
+  "new_external_audit_calls": 0,
+  "automatic_redraw_calls": 0
+}
