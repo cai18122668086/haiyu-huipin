@@ -27,7 +27,9 @@ from .test_replica import upload
 PLANNER_RESERVE = 250_000
 
 
-def seed(client, *, plan_usage=None, receipt=None, speed="native_fast", status="failed"):
+def seed(
+    client, *, plan_usage=None, receipt=None, speed="native_fast", status="failed"
+):
     upload(client, "red")
     now = utc_now()
     with client.app.state.session_factory() as session:

@@ -1,15 +1,14 @@
 # 国内主图：原生精简 B
 
 2026-10-29。根据用户新提供的《国内电商主图六图生成Skill-v2.0-最新版-20260820.zip》
-直接精简其执行流程并接入第三个可选项。原版仍默认，上一版快速 A 保留，历史任务不迁移。
-本分支未部署生产，等待统一集成发布。
+精简执行流程并新增独立快速入口，原版仍默认。按用户最终选择，仅保留B，A实现已删除。
+本轮统一发布还包括详情和亚马逊快速版，部署结果见verification/suite-fast-20261029。
 
-## 与 A 的区别
+## 原生编译策略
 
-A（`fast`）由一次模型请求重新设计整套六图，再组装逐图提示词。
 B（`native_fast`）只用一次原版身份检查，随后使用 ZIP 内原生本地编译器产生
 Campaign Style、六图职责、显示文案、构图、视觉表现、证据、搜索封面蓝图和完整提示词。
-B不使用A的整套JSON规划，也不套用A的生图提示词模板。
+网站直接发送原生编译器的完整生图提示词。
 
 用户ZIP SHA-256为
 `0c5d3daa3889d0ff5964114996a49c428dce9b200b3591d9b690991170869d3c`。
@@ -43,12 +42,12 @@ style_calibrated=true。网站使用最多6张滚动并发；逐张来源顺序�
 
 保留源素材归属与SHA、独立Skill/schema/version、方案及完整prompt哈希、支付前持久回执、
 未知结果不重发、成功页保留、失败项重试、clone新调用身份、原图复用、积分、额度和下载。
-A的模板及旧配置字节不变，有黄金SHA断言；省略/standard仍不写速度字段，旧幂等身份不变。
+省略/standard仍不写速度字段，旧幂等身份不变。
 三种选择均有草稿/历史恢复，B沿用原版对象身份和完整六行方案显示。
 
 B继续请求1024×1024 / high，使用既有渠道模型，不降模型或画质。
 保留供应商原字节、不放大、补白或重编码。B保留原生Harness严格正方形且短边至少1024的
-要求，在provider发布前即拒绝非精确方图，避免交付后卡在原生技术收尾；A原有1%比例容差不变。
+要求，在provider发布前即拒绝非精确方图，避免交付后卡在原生技术收尾。
 身份profile独立为 `aurora_native_fast_identity`，仍使用原版身份提示与schema；单路一次，
 长度截断不能启动生图。原系统允许的profile01_semantics_read:false只作为运行时标记剔除，
 true或其他非法字段仍拒绝。
@@ -56,7 +55,7 @@ true或其他非法字段仍拒绝。
 ## 真实对比样本
 
 独立本地SQLite/storage，通过网站上传、建任务、outbox、provider、签名下载与ZIP链路运行。
-使用与A完全相同的3张身体乳原图及卖点；没有修改A的原图、方案或数据库，没有接生产任务。
+使用用户提供的3张身体乳原图及原始卖点，未连接生产任务。
 
 - B：1次身份检查24.468秒，input2099/output3381/total5480 tokens，其中reasoning2790。
 - 原生本地编译及冻结六份请求约1.9秒，6次生图提交跨度0.078秒。
@@ -83,7 +82,7 @@ A此前总耗时248.36秒，B本次259.422秒。B规划阶段明显短，但本�
 
 可提交的脱敏结果在 `verification/main-image-native-fast-20261029/`。
 输入、完整prompt、回执、DB与图片只在忽略目录
-`backend/.data/main-image-native-fast-local/`；A样本仍在`backend/.data/main-image-fast-local/`。
+`backend/.data/main-image-native-fast-local/`。
 另导出 `outputs/国内主图Skill-v2.0-原生精简B.zip`，含修改后的24文件、独立manifest和来源证明，
 便于用户单独保存；不包含用户图片、环境文件或凭据。
 
@@ -102,11 +101,11 @@ Ruff和6个后端模块Mypy通过，OpenAPI与生成类型同步。
 技术闭环首轮暴露Windows过长SHA临时文件名导致5项失败；改短文件名后native workflow
 13/13复跑通过，随后扩展身份字段/闭环与传输测试继续通过。没有隐藏这次修复过程。
 
-本轮以main `b6b91b8`（已含原版修复和正式发布记录）为基础，保留上一版A的提交。
+本轮以main `b6b91b8`（已含原版修复和正式发布记录）为基础，最终运行树移除A。
 共享文件小幅接线包括：aurora_main_image_fast.py/router、fast_provider的variant分支、
 原planner授权分支、execution原生技术收尾、routes的clone/retry清理、schema速度枚举、
 services公共投影、Skill注册、quota识别和xinghe_agent身份profile；没有改原版v20 Skill
-或A的Skill、manifest、模型配置与提示词模板。
+；A的Skill、manifest及模板已移除。
 
 本分支只提交和推送到私有仓库，未推送main或自行部署。统一发布前需再次fetch并核对线上
 镜像、支付、队列及共享容量。真实验证入口：

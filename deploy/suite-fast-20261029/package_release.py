@@ -115,6 +115,7 @@ def main():
             Path(__file__).with_name("release_suite_fast.py"),
             arcname="release_suite_fast.py",
         )
+        archive.add(Path(__file__).with_name("probe_public.py"), arcname="probe_public.py")
         for name, value in (
             ("backend.Dockerfile", "\n".join(backend_docker) + "\n"),
             ("frontend.Dockerfile", "\n".join(frontend_docker) + "\n"),
