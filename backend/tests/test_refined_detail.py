@@ -197,6 +197,126 @@ def test_refined_rejects_missing_strategy_instead_of_filling_in_placeholders(cli
     assert refined_detail.approval_hash(payload) != original
 
 
+def test_native_originals_are_persisted_at_actual_size_and_zip_bytes_unchanged(client):
+    gateway = _gateway(client)
+    gateway.provider_name = "synthetic"
+    original_edit = gateway.edit
+    originals = {}
+
+    async def native_edit(request):
+        result = await original_edit(request)
+        stream = BytesIO()
+        Image.new("RGB", (1086, 1448), (request.page_number, 80, 120)).save(
+            stream, "PNG"
+        )
+        data = stream.getvalue()
+        originals[request.page_number] = data
+        return replace(
+            result,
+            artifact=ProviderArtifact(
+                payload=data,
+                filename=f"native-{request.page_number}.png",
+                content_type="image/png",
+                width=1086,
+                height=1448,
+                sha256=hashlib.sha256(data).hexdigest(),
+                provider_width=1086,
+                provider_height=1448,
+            ),
+        )
+
+    gateway.edit = native_edit
+    job = create(client, count=6, auto_start=True)
+    dispatch_pending(client)
+    current = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
+    assert current["status"] == "completed", current
+    outputs = [a for a in current["assets"] if a["direction"] == "output"]
+    assert len(outputs) == 6 and len(gateway.image_calls) == 6
+    for output in outputs:
+        validation = output["validation"]
+        assert (validation["actual_width"], validation["actual_height"]) == (1086, 1448)
+        assert validation["requested_size"] == "1440x1920"
+        assert validation["locally_resampled"] is False
+        asset = client.get(
+            f"/api/v1/workspaces/{WORKSPACE_ID}/assets/{output['asset_id']}"
+        ).json()
+        assert (asset["width"], asset["height"]) == (1086, 1448)
+    archive = client.get(
+        f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}/deliverables.zip"
+    )
+    assert archive.status_code == 200, archive.text
+    with ZipFile(BytesIO(archive.content)) as bundle:
+        assert len(bundle.namelist()) == 6
+        for number, data in originals.items():
+            assert bundle.read(f"page-{number:03d}.png") == data
+
+
+@pytest.mark.parametrize(
+    "size,resampled",
+    [
+        ((1086, 1448), False),
+        ((768, 1024), False),
+        ((1254, 1254), False),
+        ((1086, 1448), True),
+    ],
+)
+def test_refined_native_admission_keeps_preview_aspect_and_resampling_guards(
+    size, resampled
+):
+    import asyncio
+    from types import SimpleNamespace
+
+    from app.provider import ProviderOutcome, ProviderRequest, ProviderResult
+
+    stream = BytesIO()
+    Image.new("RGB", size).save(stream, "PNG")
+    data = stream.getvalue()
+    artifact = ProviderArtifact(
+        payload=data,
+        filename="native.png",
+        content_type="image/png",
+        width=size[0],
+        height=size[1],
+        sha256=hashlib.sha256(data).hexdigest(),
+        locally_resampled=resampled,
+    )
+
+    async def execute(_request):
+        return ProviderResult(outcome=ProviderOutcome.SUCCEEDED, artifact=artifact)
+
+    provider = refined_detail.RefinedDetailProvider(
+        SimpleNamespace(
+            name="synthetic",
+            model="native",
+            pricing_version="test",
+            execute=execute,
+        )
+    )
+    request = ProviderRequest(
+        workspace_id="ws_native",
+        job_id="job_native",
+        job_item_id="item_native",
+        attempt_id="attempt_native",
+        operation="detail_pack",
+        idempotency_key="native-test",
+        configuration={
+            "job": {"settings": {"market_region": "domestic", "platform_code": "tmall"}}
+        },
+    )
+    result = asyncio.run(provider.execute(request))
+    if size == (1086, 1448) and not resampled:
+        assert result.outcome == ProviderOutcome.SUCCEEDED
+        assert result.artifact is artifact
+        receipt = result.raw_usage["metrics"]["delivery_canvas"]
+        assert receipt["actual_size"] == [1086, 1448]
+        assert receipt["requested_size"] == [1440, 1920]
+        assert receipt["sha256"] == artifact.sha256
+        assert receipt["locally_resampled"] is False
+    else:
+        assert result.outcome == ProviderOutcome.FAILED
+        assert result.error_code == "DETAIL_OUTPUT_DIMENSIONS_INVALID"
+
+
 def test_strategy_field_location_preserves_content_and_rejects_conflicts(
     client,
 ):
@@ -223,6 +343,29 @@ def test_strategy_field_location_preserves_content_and_rejects_conflicts(
         refined_detail.validate_strategy(refined_detail.normalize_strategy(missing), 8)
 
 
+def test_top_level_screens_preserve_the_complete_authored_plan(client):
+    planned(client, count=6)
+    from app.xinghe_agent import _fake_plan
+
+    original = _fake_plan(_gateway(client).planner_calls[-1])
+    misplaced = deepcopy(original)
+    misplaced["screens"] = misplaced["plan"].pop("screens")
+    normalized = refined_detail.normalize_strategy(misplaced)
+    assert normalized == original
+    assert "screens" in misplaced and "screens" not in misplaced["plan"]
+    refined_detail.validate_strategy(normalized, 6)
+    duplicate = deepcopy(original)
+    duplicate["screens"] = deepcopy(original["plan"]["screens"])
+    assert refined_detail.normalize_strategy(duplicate) == original
+    duplicate["screens"][0]["image_prompt"] += " Conflicting authored content."
+    with pytest.raises(XingheAgentError, match="Conflicting screen"):
+        refined_detail.normalize_strategy(duplicate)
+    missing = deepcopy(original)
+    del missing["plan"]["screens"]
+    with pytest.raises(XingheAgentError, match="required"):
+        refined_detail.validate_strategy(refined_detail.normalize_strategy(missing), 6)
+
+
 def test_manual_selected_revision_reuses_other_pages_and_requires_new_approval(
     client, monkeypatch
 ):
@@ -243,14 +386,17 @@ def test_manual_selected_revision_reuses_other_pages_and_requires_new_approval(
         with Image.open(BytesIO(result.artifact.payload)) as synthetic:
             synthetic.save(output, format="PNG")
         data = output.getvalue()
-        return replace(result, artifact=ProviderArtifact(
-            payload=data,
-            filename=f"synthetic-{request.page_number}.png",
-            content_type="image/png",
-            width=1440,
-            height=1920,
-            sha256=hashlib.sha256(data).hexdigest(),
-        ))
+        return replace(
+            result,
+            artifact=ProviderArtifact(
+                payload=data,
+                filename=f"synthetic-{request.page_number}.png",
+                content_type="image/png",
+                width=1440,
+                height=1920,
+                sha256=hashlib.sha256(data).hexdigest(),
+            ),
+        )
 
     monkeypatch.setattr(gateway, "edit", edit)
     response = client.post(
