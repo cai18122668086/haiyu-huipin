@@ -2376,7 +2376,7 @@ class ExecutionCoordinator:
             ):
                 return False
 
-            expected_dimensions = _expected_delivery_dimensions(item, result)
+            expected_dimensions = _expected_delivery_dimensions(item, result, job)
             if (
                 result.outcome == ProviderOutcome.SUCCEEDED
                 and result.persisted_artifact is not None
@@ -2643,7 +2643,7 @@ class ExecutionCoordinator:
                 result_metrics = (
                     dict(metrics_value) if isinstance(metrics_value, dict) else {}
                 )
-                canonical_dimensions = _expected_delivery_dimensions(item, result)
+                canonical_dimensions = _expected_delivery_dimensions(item, result, job)
                 session.add(
                     AssetRecord(
                         id=asset_id,
@@ -3135,14 +3135,32 @@ def _output_asset_role(job_type: str) -> str:
 def _expected_delivery_dimensions(
     item: JobItemRecord,
     result: ProviderResult,
+    job: JobRecord | None = None,
 ) -> tuple[int, int] | None:
-    """Resolve the immutable per-item output contract at the final DB boundary."""
+    """Resolve item dimensions and verify native-original delivery receipts."""
 
     configuration = item.configuration if isinstance(item.configuration, dict) else {}
     size = configuration.get("size")
     if isinstance(size, str) and re.fullmatch(r"[1-9]\d*x[1-9]\d*", size):
         width_text, height_text = size.split("x", maxsplit=1)
-        return int(width_text), int(height_text)
+        expected = (int(width_text), int(height_text))
+        if (
+            job is not None
+            and job.type == JobType.DETAIL_PACK.value
+            and refined_detail.is_refined(job.configuration)
+            and result.persisted_artifact is not None
+        ):
+            artifact = result.persisted_artifact
+            metrics = result.raw_usage.get("metrics")
+            receipt = refined_detail.native_delivery_receipt(artifact, list(expected))
+            if (
+                receipt is not None
+                and isinstance(metrics, Mapping)
+                and metrics.get("locally_resampled") is False
+                and metrics.get("delivery_canvas") == receipt
+            ):
+                return artifact.width, artifact.height
+        return expected
     width = configuration.get("target_width")
     height = configuration.get("target_height")
     if (

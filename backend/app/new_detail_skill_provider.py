@@ -13,7 +13,14 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Protocol
 
-from app.provider import Provider, ProviderOutcome, ProviderRequest, ProviderResult
+from app.provider import (
+    PersistedProviderArtifact,
+    Provider,
+    ProviderArtifact,
+    ProviderOutcome,
+    ProviderRequest,
+    ProviderResult,
+)
 from app.skill_runtime import (
     SkillManifestRegistry,
     SkillRuntimeError,
@@ -82,9 +89,7 @@ class NewDetailSkillProvider:
     ) -> None:
         self.delegate = delegate
         self.route = route
-        self.manifest_validator = (
-            manifest_validator or BundledSkillManifestValidator()
-        )
+        self.manifest_validator = manifest_validator or BundledSkillManifestValidator()
         self.name = delegate.name
         self.model = delegate.model
         self.pricing_version = delegate.pricing_version
@@ -181,10 +186,15 @@ class NewDetailSkillProvider:
         expected = delivery.get("expected_dimensions")
         if isinstance(expected, Mapping):
             width, height = expected.get("width"), expected.get("height")
-            if isinstance(width, int) and isinstance(height, int) and (
-                artifact.width,
-                artifact.height,
-            ) != (width, height):
+            if (
+                isinstance(width, int)
+                and isinstance(height, int)
+                and (
+                    artifact.width,
+                    artifact.height,
+                )
+                != (width, height)
+            ):
                 # Pair canvases are normalized/sliced by the Aurora runtime;
                 # the gateway result is allowed to carry the pair dimensions
                 # while screen artifacts retain the delivery dimensions.
@@ -194,18 +204,30 @@ class NewDetailSkillProvider:
                     artifact.height,
                 ) == (pair_expected.get("width"), pair_expected.get("height")):
                     return result
-                return replace(
-                    result,
-                    outcome=ProviderOutcome.FAILED,
-                    error_code="DETAIL_OUTPUT_DIMENSIONS_INVALID",
-                    error_message=(
-                        "Generated detail output does not match the requested "
-                        f"canvas {width}x{height}."
-                    ),
-                    retryable=False,
-                    artifact=None,
-                    persisted_artifact=None,
+                native_receipt = self._native_delivery_receipt(
+                    artifact, [width, height]
                 )
+                if native_receipt is None:
+                    return replace(
+                        result,
+                        outcome=ProviderOutcome.FAILED,
+                        error_code="DETAIL_OUTPUT_DIMENSIONS_INVALID",
+                        error_message=(
+                            "Generated detail output does not match the requested "
+                            f"canvas {width}x{height}."
+                        ),
+                        retryable=False,
+                        artifact=None,
+                        persisted_artifact=None,
+                    )
+                raw_usage = dict(result.raw_usage)
+                metrics_value = raw_usage.get("metrics")
+                metrics = (
+                    dict(metrics_value) if isinstance(metrics_value, Mapping) else {}
+                )
+                metrics["delivery_canvas"] = native_receipt
+                raw_usage["metrics"] = metrics
+                result = replace(result, raw_usage=raw_usage)
         expected_type = delivery.get("content_type")
         if (
             isinstance(expected_type, str)
@@ -215,14 +237,20 @@ class NewDetailSkillProvider:
                 result,
                 outcome=ProviderOutcome.FAILED,
                 error_code="DETAIL_OUTPUT_FORMAT_INVALID",
-                error_message=(
-                    f"Generated detail output must use {expected_type}."
-                ),
+                error_message=(f"Generated detail output must use {expected_type}."),
                 retryable=False,
                 artifact=None,
                 persisted_artifact=None,
             )
         return result
+
+    def _native_delivery_receipt(
+        self,
+        artifact: ProviderArtifact | PersistedProviderArtifact,
+        expected: list[int],
+    ) -> dict[str, Any] | None:
+        """Individual Skills may opt into original native-canvas delivery."""
+        return None
 
 
 def job_configuration_from(configuration: Mapping[str, Any]) -> Mapping[str, Any]:

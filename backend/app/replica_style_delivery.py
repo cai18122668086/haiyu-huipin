@@ -16,7 +16,12 @@ from typing import Any
 from PIL import Image, UnidentifiedImageError
 
 from .models import JobRecord, ReplicaDocumentRecord, utc_now
+from .native_portrait_delivery import (
+    STYLE_NATIVE_POLICY,
+    style_native_budget_matches,
+)
 from .provider import ProviderOutcome, ProviderRequest, ProviderResult
+from .replica_canvas import delivery_receipt
 from .replica_native import (
     NativeReplicaRun,
     ReplicaNativeError,
@@ -172,9 +177,17 @@ def inspect_artwork(
             and abs(size[1] / count / size[0] - baseline_ratio) > 0.01
         ):
             raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
-    elif size != job["canvas"]:
-        raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
-    return {"artwork": str(file), "sha256": sha, "size": size}
+    record: dict[str, Any] = {"artwork": str(file), "sha256": sha, "size": size}
+    if not detail and size != job["canvas"]:
+        if not style_native_budget_matches(job["canvas"], (size[0], size[1])):
+            raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
+        # Keep the approved plan intact; record actual dimensions separately.
+        # The provider bytes are delivered unchanged, including after recovery.
+        record["delivery_canvas"] = {
+            **delivery_receipt(job["canvas"], (size[0], size[1]), sha),
+            "policy": STYLE_NATIVE_POLICY,
+        }
+    return record
 
 
 def direct_state(run: NativeReplicaRun) -> dict[str, Any]:
@@ -480,6 +493,8 @@ async def deliver(
                     "size": size,
                     "review_status": "NOT_REVIEWED",
                     "source_sha256": record["sha256"],
+                    **({"delivery_canvas": record["delivery_canvas"]}
+                       if "delivery_canvas" in record else {}),
                 }
             )
     if len(files) < len(state["unit_ids"]):

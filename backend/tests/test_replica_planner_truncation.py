@@ -2,10 +2,12 @@
 
 import asyncio
 import json
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
 
+from app import refined_detail
 from app.xinghe_agent import (
     PlannerCallResult,
     PlannerRequest,
@@ -95,7 +97,18 @@ def test_budget_and_effort_are_explicit_without_changing_the_complete_contract(
 @pytest.mark.parametrize(
     "content", ["", '{"products": []}', '{"products"' + "\n\t" * 100]
 )
-def test_length_is_rejected_even_if_partial_body_looks_like_valid_json(content):
+@pytest.mark.parametrize(
+    "profile",
+    [
+        "replica_exact_compact",
+        refined_detail.PROFILE,
+        "amazon_visual_suite",
+        "default",
+    ],
+)
+def test_length_is_rejected_even_if_partial_body_looks_like_valid_json(
+    content, profile
+):
     async def post_json(**kwargs):
         return 200, {
             "id": "truncated-receipt",
@@ -110,18 +123,80 @@ def test_length_is_rejected_even_if_partial_body_looks_like_valid_json(content):
         image_model="offline-image",
         transport=SimpleNamespace(post_json=post_json),
     )
-    result = asyncio.run(gateway.plan(request()))
+    result = asyncio.run(gateway.plan(replace(request(), planning_profile=profile)))
     assert result.payload is None
     assert result.error_code == "PLANNER_OUTPUT_TRUNCATED"
     assert result.provider_request_id == "truncated-receipt"
     assert result.normalized_usage["finish_reason"] == "length"
-    assert result.normalized_usage["output_token_limit"] == 32768
+    assert result.normalized_usage["output_token_limit"] == (
+        None if profile == "default" else 32768
+    )
     assert result.normalized_usage["output_characters"] == len(content)
     assert result.normalized_usage["trailing_whitespace_characters"] == len(
         content
     ) - len(content.rstrip())
     assert result.normalized_usage["response_format_type"] == "json_object"
     assert gateway.external_network_request_count == 1
+
+
+@pytest.mark.parametrize(
+    "profile,count",
+    [
+        (refined_detail.PROFILE, 6),
+        ("amazon_visual_suite", 21),
+    ],
+)
+@pytest.mark.parametrize("model", ["deepseek-v4.1-flash-1017", "configured-planner"])
+def test_suite_transport_keeps_full_contract_and_uses_existing_deepseek_fix(
+    profile, count, model
+):
+    from app.xinghe_agent import _planner_response_format
+
+    sent = []
+
+    async def post_json(**kwargs):
+        sent.append(kwargs)
+        return 200, {
+            "id": "receipt",
+            "choices": [
+                {"finish_reason": "stop", "message": {"content": '{"complete": true}'}}
+            ],
+        }
+
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline-test",
+        base_url="https://offline.invalid",
+        planner_model=model,
+        image_model="offline-image",
+        transport=SimpleNamespace(post_json=post_json),
+    )
+    req = replace(request(), planning_profile=profile, page_count=count)
+    schema = _planner_response_format(req)
+    result = asyncio.run(gateway.plan(req))
+    assert result.payload == {"complete": True} and not result.error_code
+    assert len(sent) == 1
+    payload = sent[0]["payload"]
+    assert payload["messages"][0]["content"] == req.system_prompt
+    if model.startswith("deepseek"):
+        assert payload["max_completion_tokens"] == 32768
+        assert payload["reasoning_effort"] == "low"
+        assert payload["response_format"] == {"type": "json_object"}
+        texts = [part["text"] for part in payload["messages"][1]["content"]]
+        if profile == "amazon_visual_suite":
+            embedded = next(t for t in texts if t.startswith("response_schema="))
+            assert (
+                json.loads(embedded.split("=", 1)[1]) == schema["json_schema"]["schema"]
+            )
+        else:
+            assert (
+                json.dumps(schema["json_schema"]["schema"], ensure_ascii=False)
+                in texts[0]
+            )
+        assert sent[0]["headers"]["Idempotency-Key"] != req.idempotency_key
+    else:
+        assert payload["response_format"] == schema
+        assert payload["max_completion_tokens"] == (24000 if count == 6 else 12000)
+        assert "reasoning_effort" not in payload
 
 
 def test_http_explains_truncation_preserves_checkpoint_and_never_generates(
