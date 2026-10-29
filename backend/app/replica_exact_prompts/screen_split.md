@@ -15,6 +15,24 @@ card or changes background color. A new screen requires its own self-contained
 commercial composition; preserve a heading and its dependent demonstration,
 ingredient labels, comparisons or chart together.
 
+Apply the same dependency test to a poster's bottom region. A price, coupon,
+buy-one-get-one offer, discount, campaign date or sales-count strip that
+completes the product/hero above is supporting content of that SAME screen.
+A bold offer headline, colored banner or clear gap alone does not make it an
+independent composition. Before cutting, verify that the lower region has its
+own self-contained hero, demonstration or evidence carrier beyond the offer.
+Keep a product hero and its dependent promotional footer together; do not turn
+the footer into an output image on its own. This is a composition dependency
+rule, not a rule about image aspect ratio or a fixed number of screens.
+This exception covers transactional purchase terms only. A lower card presenting
+a product property, ingredient, nutrition metric, performance comparison or
+benefit with its own illustration, chart or explanatory mechanism is NOT a
+promotional footer. Preserve such self-contained evidence cards as separate
+screens when they introduce distinct commercial duties. In a stack of rounded
+cards, ingredient pictures, a protein/standard comparison chart, and a separate
+gut-health mechanism are distinct evidence carriers even under one overall
+heading. A shared heading or matching card color does not merge those carriers.
+
 Return every internal horizontal boundary as an increasing y coordinate in the
 attached COLUMN image, not the original montage. The server adds 0 and the column
 height, supplies full-width bounds, and maps cuts back to original coordinates.

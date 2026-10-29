@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "backend_image": "huipin-integrated/backend:20261029-segmentation-v16",
+  "protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "other_containers_unchanged": true,
+  "environment_and_commands_unchanged": true,
+  "migration_unchanged": true,
+  "production_jobs_restarted": 0
+}

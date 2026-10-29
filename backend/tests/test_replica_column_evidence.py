@@ -10,7 +10,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from app.replica_column_evidence import GUTTER, add_evidence, blank_bands, model_column
-from app.replica_direct_delivery import V14_BINDING
+from app.replica_direct_delivery import V14_BINDING, V15_BINDING
 from app.replica_exact_compact import protocol_binding, run_class
 from app.replica_native import ReplicaSegmentationInvalid, read_json
 from tests.test_replica_compact import setup_run
@@ -164,7 +164,16 @@ def test_real_count_disagreement_still_stops_at_existing_bound_not_blank_band_co
 def test_v14_archive_and_new_protocol_keep_separate_hashes():
     old = run_class("exact", V14_BINDING)
     assert sys.modules[old.__module__].protocol_binding() == V14_BINDING
-    assert protocol_binding()["version"] == "exact-compact-v15"
+    assert protocol_binding()["version"] == "exact-compact-v16"
+
+
+def test_v15_published_snapshot_still_resolves_to_frozen_protocol():
+    old = run_class("exact", V15_BINDING)
+    module = sys.modules[old.__module__]
+    assert module.protocol_binding() == V15_BINDING
+    assert old is not run_class("exact", protocol_binding())
+    current = sys.modules[run_class("exact", protocol_binding()).__module__]
+    assert module.PROMPTS != current.PROMPTS
 
 
 def test_model_column_excludes_any_free_text_or_prior_proposal():

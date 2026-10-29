@@ -193,7 +193,7 @@ def test_every_failed_task_aspect_keeps_its_complete_native_canvas(tmp_path, can
     )
 
 
-def test_deployed_protocols_keep_their_original_hashes_and_new_runs_use_v15():
+def test_deployed_protocols_keep_their_original_hashes_and_new_runs_use_v16():
     for binding in (
         V5_BINDING,
         V6_BINDING,
@@ -208,4 +208,4 @@ def test_deployed_protocols_keep_their_original_hashes_and_new_runs_use_v15():
     ):
         cls = run_class("exact", binding)
         assert sys.modules[cls.__module__].protocol_binding() == binding
-    assert protocol_binding()["version"] == "exact-compact-v15"
+    assert protocol_binding()["version"] == "exact-compact-v16"

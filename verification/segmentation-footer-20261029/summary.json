@@ -1,0 +1,70 @@
+{
+  "protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "columns": [
+    {
+      "id": "C001",
+      "split_count": 1,
+      "inventory_count": 1
+    },
+    {
+      "id": "C002",
+      "split_count": 1,
+      "inventory_count": 1
+    },
+    {
+      "id": "C003",
+      "split_count": 3,
+      "inventory_count": 3
+    },
+    {
+      "id": "C004",
+      "split_count": 1,
+      "inventory_count": 1
+    },
+    {
+      "id": "C005",
+      "split_count": 1,
+      "inventory_count": 1
+    },
+    {
+      "id": "C006",
+      "split_count": 1,
+      "inventory_count": 1
+    },
+    {
+      "id": "C007",
+      "split_count": 1,
+      "inventory_count": 1
+    }
+  ],
+  "disagreements": [],
+  "image_generation_calls": 0,
+  "final_units": 9,
+  "crop_integrity": {
+    "checked_columns": [
+      "C003"
+    ],
+    "final_boundaries": {
+      "C001": [],
+      "C002": [],
+      "C003": [
+        406,
+        601
+      ],
+      "C004": [],
+      "C005": [],
+      "C006": [],
+      "C007": []
+    },
+    "original_screen_counts_unchanged": true
+  },
+  "final_analysis_calls": 3,
+  "intake": "reused hash-verified original container observation",
+  "regression_tests_passed": 198,
+  "original_checkpoint_preserved": true,
+  "existing_session_repair_available": true,
+  "production_images_generated": 0
+}

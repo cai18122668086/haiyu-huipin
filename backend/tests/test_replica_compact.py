@@ -397,7 +397,9 @@ def test_compact_preparation_uses_real_guard_and_server_owned_metadata(tmp_path)
     assert progress == [12, 12, 12, 12, 24, 30, 48, 48, 82, 82, 92]
     for request in gateway.requests:
         assert request.planning_profile == "replica_exact_compact"
-        assert len(request.system_prompt) < 6000
+        # Both screen observers include the bounded footer/evidence dependency
+        # rule; keep the request scoped without dropping those distinctions.
+        assert len(request.system_prompt) < 7000
         assert "native_validators" not in request.system_prompt
         assert "harness.py" not in request.system_prompt
         assert "verified_skill" not in request.system_prompt

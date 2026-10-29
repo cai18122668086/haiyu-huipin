@@ -230,7 +230,7 @@ class NativeReplicaProvider:
                     or (
                         direct_source
                         and snapshot["model_protocol"].get("version")
-                        not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15"}
+                        not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16"}
                     )
                     else run_class(
                         values["replication_method"], snapshot["model_protocol"]
@@ -246,7 +246,7 @@ class NativeReplicaProvider:
             )
             if direct_source and snapshot.get("model_protocol") and snapshot.get("model_protocol", {}).get(
                 "version"
-            ) not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15"}:
+            ) not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16"}:
                 await replica_direct_delivery.restore_source(
                     run, snapshot, direct_source[1]
                 )
@@ -389,7 +389,7 @@ class NativeReplicaProvider:
         minimum_edge = min(canvas) if run.method == "exact" else 0
         native_delivery = run.method == "exact" and getattr(run, "direct_execution", False)
         canvas_correction = native_delivery and (
-            getattr(run, "binding", {}).get("version") in {"exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15"}
+            getattr(run, "binding", {}).get("version") in {"exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16"}
             or getattr(run, "canvas_correction_enabled", False)
         )
         format_limit = 2 if canvas_correction or not getattr(run, "direct_execution", False) else 1
@@ -453,7 +453,7 @@ class NativeReplicaProvider:
 
                 if (
                     prior.get("state") == "invoked"
-                    and (getattr(run, "binding", None) or {}).get("version") in {VERSION, "exact-compact-v15"}
+                    and (getattr(run, "binding", None) or {}).get("version") in {VERSION, "exact-compact-v15", "exact-compact-v16"}
                     and prior.get("job_id") == request.job_id
                     and prior.get("target") == key
                     and prior.get("native_prompt_sha256") == digest(prompt.encode("utf-8"))
