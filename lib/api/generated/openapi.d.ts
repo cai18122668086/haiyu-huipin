@@ -2383,6 +2383,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/replica/products/{document_id}/images/{image_group}/{image_index}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview Product Image
+         * @description Serve only this workspace's returned product images through the same origin.
+         */
+        get: operations["preview_product_image_api_v1_workspaces__workspace_id__replica_products__document_id__images__image_group___image_index__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/replica/products/{document_id}/import": {
         parameters: {
             query?: never;
@@ -10383,6 +10403,38 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_product_image_api_v1_workspaces__workspace_id__replica_products__document_id__images__image_group___image_index__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                image_group: "imageUrls" | "descImageUrls" | "skuImageUrls";
+                image_index: number;
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

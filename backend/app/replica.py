@@ -16,6 +16,7 @@ from urllib.request import Request as UrlRequest
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import (
     func,
@@ -716,6 +717,59 @@ def _download(url: str, max_bytes: int) -> bytes:
     if len(payload) > max_bytes:
         raise ApiError(413, "IMAGE_TOO_LARGE", "图片过大，请选择其他参考图。")
     return payload
+
+
+@router.get(
+    "/products/{document_id}/images/{image_group}/{image_index}",
+    response_class=Response,
+)
+async def preview_product_image(
+    document_id: str,
+    image_group: Literal["imageUrls", "descImageUrls", "skuImageUrls"],
+    image_index: int,
+    request: Request,
+    workspace: WorkspaceDependency,
+    session: SessionDependency,
+) -> Response:
+    """Serve only this workspace's returned product images through the same origin."""
+    row = _get(session, workspace.workspace_id, document_id, "product")
+    urls = row.payload.get("product", {}).get(image_group, [])
+    if row.status != "ready" or not 0 <= image_index < len(urls):
+        raise ApiError(404, "PRODUCT_IMAGE_NOT_FOUND", "未找到该商品图片。")
+    url = urls[image_index]
+    session.rollback()
+    data = await asyncio.to_thread(
+        _download, url, request.app.state.settings.max_upload_bytes
+    )
+    from PIL import Image
+
+    try:
+        with Image.open(BytesIO(data)) as source:
+            if (
+                source.width * source.height
+                > request.app.state.settings.max_image_pixels
+            ):
+                raise ValueError("Image dimensions exceed the configured limit")
+            media_type = {
+                "JPEG": "image/jpeg",
+                "PNG": "image/png",
+                "WEBP": "image/webp",
+                "GIF": "image/gif",
+            }.get(source.format or "")
+            if not media_type:
+                raise ValueError("Unsupported image format")
+            source.verify()
+    except Exception:
+        raise ApiError(502, "PRODUCT_IMAGE_INVALID", "商品图片暂时无法读取。") from None
+    return Response(
+        data,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "private, max-age=86400",
+            "Vary": "Cookie",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.post("/products/{document_id}/import")

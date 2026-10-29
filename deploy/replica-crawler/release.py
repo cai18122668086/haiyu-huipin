@@ -26,6 +26,7 @@ BACKEND = "huipin-integrated/backend:20261029-everyinfra"
 FRONTEND = "huipin-integrated/frontend:20261029-everyinfra"
 SERVICES = ["api", "worker", "dispatcher", "frontend"]
 SECRET_NAME = "POLARIS_EVERYINFRA_API_KEY"
+EXTRA_TESTS: tuple[str, ...] = ()
 PROTECTED_FILES = [
     Path("/app/haiyushuke-server/.env"),
     Path("/app/haiyushuke-server/configs/platform.production.yaml"),
@@ -221,7 +222,9 @@ def test():
             "tests/test_customer_credit_billing.py tests/test_quota_fixes.py tests/test_phone_passwords.py "
             "tests/test_sms_identity_migration.py tests/test_public_browsing.py "
             "tests/test_everyinfra.py tests/test_justone.py tests/test_replica.py "
-            "-k 'not twenty_images_fit_job_capacity'"
+            + " ".join(EXTRA_TESTS)
+            + " "
+            + "-k 'not twenty_images_fit_job_capacity'"
         )
         with (ROOT / "postgres-test.log").open("w") as output:
             result = subprocess.run(

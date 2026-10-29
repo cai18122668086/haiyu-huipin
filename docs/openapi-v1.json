@@ -17399,6 +17399,79 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace_id}/replica/products/{document_id}/images/{image_group}/{image_index}": {
+      "get": {
+        "description": "Serve only this workspace's returned product images through the same origin.",
+        "operationId": "preview_product_image_api_v1_workspaces__workspace_id__replica_products__document_id__images__image_group___image_index__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "image_group",
+            "required": true,
+            "schema": {
+              "enum": [
+                "imageUrls",
+                "descImageUrls",
+                "skuImageUrls"
+              ],
+              "title": "Image Group",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "image_index",
+            "required": true,
+            "schema": {
+              "title": "Image Index",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Preview Product Image",
+        "tags": [
+          "one-click-replica"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/replica/products/{document_id}/import": {
       "post": {
         "operationId": "import_images_api_v1_workspaces__workspace_id__replica_products__document_id__import_post",

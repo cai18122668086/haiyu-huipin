@@ -167,7 +167,7 @@ def normalize_product(
         "numIid": actual,
         "sourceUrl": canonical,
         "targetPlatform": source.target,
-        "title": body.get("title") or body.get("name"),
+        "title": body.get("titleOriginal") or body.get("title") or body.get("name"),
         "price": body.get("price") or body.get("price_min"),
         "shopName": body.get("shop_name")
         or body.get("store_name")
