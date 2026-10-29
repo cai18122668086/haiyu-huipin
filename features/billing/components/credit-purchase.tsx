@@ -54,8 +54,9 @@ export function CreditPurchasePanel({ workspaceId }: { workspaceId: string }) {
     </div>)}
     {!settled && purchase.data?.code_url && <QRCodeSVG value={purchase.data.code_url} size={200} title="微信支付二维码" />}
     {paid && <p role="status">积分已到账。</p>}
+    {currentOrder.data?.status === "closed" && <p role="status">订单已关闭，请重新选择套餐创建订单。</p>}
     {refunded && <p role="status">该订单已退款 ¥{((currentOrder.data?.refunded_amount_fen ?? 0) / 100).toFixed(2)}，对应权益已回收。可在个人中心查看退款记录。</p>}
-    {!settled && purchase.data?.checkout_url && <p><a href={purchase.data.checkout_url} target="_blank" rel="noopener noreferrer">前往收银台付款 →</a><small>付款到账后积分会自动更新。每张图片的积分消耗以创作页面为准。</small></p>}
+    {!settled && purchase.data?.checkout_url && <p><a href={purchase.data.checkout_url} target="_blank" rel="noopener noreferrer">前往收银台付款 →</a><small>付款后后台会自动核对并入账，关闭页面也会继续处理。每张图片的积分消耗以创作页面为准。</small></p>}
     {purchase.isError && <p role="alert">{errorMessage(purchase.error)}</p>}
   </div>;
 }

@@ -1,0 +1,9 @@
+{
+  "api_v3_key_used": false,
+  "actual_payment_executed": false,
+  "native_qr_created": true,
+  "signed_query_verified": true,
+  "merchant_app_amount_verified": true,
+  "initial_state": "NOTPAY",
+  "probe_order_closed": true
+}

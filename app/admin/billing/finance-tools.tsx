@@ -11,12 +11,14 @@ type Refund = { id: string; purchase_id: string; workspace_id: string; amount_fe
 const statusName = (value: string) => ({ requested: "待提交", processing: "渠道处理中", succeeded: "退款成功", failed: "退款未成功" })[value] ?? value;
 type Quote = { quote_token: string; max_refundable_amount_fen: number; credits_to_revoke: number; future_credits_to_cancel: number; frozen_credits: number; membership_will_cancel: boolean };
 
+type Reconciliation = { enabled: boolean; healthy: boolean; wechat_confirmation_mode: string; last_completed_at: string | null; pending_orders: number; review_orders: number; checked_count: number; confirmed_count: number; last_error: string | null };
 export function FinanceOverview() {
+  const monitor = useQuery({ queryKey: ["support", "reconciliation"], queryFn: () => request<Reconciliation>("/reconciliation"), refetchInterval: 10000 });
   const query = useQuery({ queryKey: ["support", "overview"], queryFn: () => request<{ paid_orders: number; gross_amount_fen: number; refunded_amount_fen: number; net_amount_fen: number; pending_refunds: number; channels: Record<string, string> }>("/overview") });
   if (query.isError) return <p role="alert">{errorText(query.error)}</p>;
   if (!query.data) return null;
   const data = query.data;
-  return <><div className={styles.stats}><div>收款总额 · {data.paid_orders} 笔<strong>{money(data.gross_amount_fen)}</strong></div><div>已成功退款<strong>{money(data.refunded_amount_fen)}</strong></div><div>净收款<strong>{money(data.net_amount_fen)}</strong></div></div><p>处理中退款 {data.pending_refunds} 笔 · 支付宝：{data.channels.alipay === "ready" ? "已配置" : "未开放"} · 微信：{data.channels.wechat === "ready" ? "已配置" : "待修复商户配置"}</p></>;
+  return <><div className={styles.stats}><div>收款总额 · {data.paid_orders} 笔<strong>{money(data.gross_amount_fen)}</strong></div><div>已成功退款<strong>{money(data.refunded_amount_fen)}</strong></div><div>净收款<strong>{money(data.net_amount_fen)}</strong></div></div><p>处理中退款 {data.pending_refunds} 笔 · 支付宝：{data.channels.alipay === "ready" ? "已配置" : "未开放"} · 微信：{data.channels.wechat === "ready" ? "已配置" : "未开放"}</p>{monitor.data && <section className={styles.operation} aria-label="后台自动补单状态"><h3>后台自动补单 · {monitor.data.enabled ? monitor.data.healthy ? "运行正常" : "需检查运行状态" : "未开启"}</h3><p>微信确认方式：{monitor.data.wechat_confirmation_mode === "query" ? "服务端主动查单" : "支付回调及查单"} · 待核对 {monitor.data.pending_orders} 笔 · 异常 {monitor.data.review_orders} 笔</p><p>最近完成：{when(monitor.data.last_completed_at)} · 本轮检查 {monitor.data.checked_count} 笔，确认到账 {monitor.data.confirmed_count} 笔。用户关闭页面后仍持续核对。</p>{monitor.data.last_error && <p role="alert">{monitor.data.last_error}</p>}</section>}{monitor.isError && <p role="alert">补单状态暂时无法读取：{errorText(monitor.error)}</p>}</>;
 }
 
 export function RefundDialog({ order, close, refresh }: { order: { id: string; package_name: string; amount_fen: number; refunded_amount_fen: number }; close: () => void; refresh: () => void }) {

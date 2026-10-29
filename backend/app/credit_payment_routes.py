@@ -111,6 +111,7 @@ class CreditPurchaseResponse(BaseModel):
     checkout_url: str | None
     code_url: str | None
     channel: str
+    confirmation_mode: str
     refunded_amount_fen: int
     created_at: str
     paid_at: str | None
@@ -140,6 +141,9 @@ def _response(order: CreditPurchaseRecord) -> CreditPurchaseResponse:
         if order.status == "pending" and order.signing_key_id == "wechat"
         else None,
         channel=order.signing_key_id,
+        confirmation_mode=(order.product_snapshot or {}).get(
+            "confirmation_mode", "callback"
+        ),
         refunded_amount_fen=order.refunded_amount_fen,
     )
 
@@ -220,7 +224,13 @@ def create_purchase(
         package_name=product.name,
         amount_fen=product.amount_fen,
         credits=product.credits,
-        product_snapshot={**product.snapshot(), "payment_identity": identity},
+        product_snapshot={
+            **product.snapshot(),
+            "payment_identity": identity,
+            "confirmation_mode": settings.credit_wechat_confirmation_mode
+            if payload.channel == "wechat"
+            else "callback",
+        },
         merchant_pid=identity["merchant_id"],
         signing_key_id=payload.channel,
         checkout_url="",
@@ -290,7 +300,8 @@ def purchase_list(
     session: SessionDependency,
     cursor: str | None = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 30,
-    status: Literal["pending", "paid", "partially_refunded", "refunded"] | None = None,
+    status: Literal["pending", "paid", "partially_refunded", "refunded", "closed"]
+    | None = None,
 ) -> CreditPurchaseList:
     statement = select(CreditPurchaseRecord).where(
         CreditPurchaseRecord.workspace_id == workspace.workspace_id
@@ -366,21 +377,17 @@ def reconcile_purchase(
         raise ApiError(404, "CREDIT_PURCHASE_NOT_FOUND", "充值订单不存在。")
     if order.status in {"paid", "partially_refunded", "refunded"}:
         return _response(order)
-    order_id, channel = order.id, order.signing_key_id
+    order_id = order.id
     session.rollback()
-    data = payments.query_payment(request.app.state.settings, channel, order_id)
-    if data.get("out_trade_no") != order_id:
-        raise ApiError(400, "PAYMENT_ORDER_MISMATCH", "支付查询返回了其他订单。")
-    if channel == "alipay":
-        data.setdefault("seller_id", request.app.state.settings.credit_alipay_seller_id)
-    _native_transaction(session, channel, data)
-    # Reload after the remote query: a callback may have committed meanwhile.
-    current = session.scalar(
-        select(CreditPurchaseRecord)
-        .where(
-            CreditPurchaseRecord.id == order_id,
-        )
-        .execution_options(populate_existing=True)
+    from .credit_payment_reconciliation import process
+
+    current = process(
+        session,
+        request.app.state.settings,
+        order_id,
+        manual=True,
+        initiator="customer",
+        raise_errors=True,
     )
     assert current is not None
     return _response(current)
@@ -408,10 +415,9 @@ def _settle_native(session: Session, channel: str, data: dict) -> None:
         ) == terms.get("merchant_id")
         paid = data.get("trade_state") == "SUCCESS"
         total = data.get("amount", {}).get("total")
-        valid = (
-            valid
-            and type(total) is int
-            and data.get("amount", {}).get("currency") == "CNY"
+        valid = valid and (
+            not paid
+            or (type(total) is int and data.get("amount", {}).get("currency") == "CNY")
         )
         amount = f"{total // 100}.{total % 100:02d}" if type(total) is int else ""
         trade = data.get("transaction_id", "")
@@ -464,9 +470,17 @@ def _settle_verified_purchase(session: Session, parameters: dict[str, str]) -> N
         update(CreditPurchaseRecord)
         .where(
             CreditPurchaseRecord.id == order.id,
-            CreditPurchaseRecord.status == "pending",
+            CreditPurchaseRecord.status.in_(("pending", "closed")),
         )
-        .values(status="paid", gateway_trade_no=trade_no, paid_at=utc_now())
+        .values(
+            status="paid",
+            gateway_trade_no=trade_no,
+            paid_at=utc_now(),
+            reconcile_next_at=None,
+            reconcile_lease_until=None,
+            reconcile_lease_token=None,
+            reconcile_last_error=None,
+        )
         .execution_options(synchronize_session=False)
     )
     if cast(CursorResult[Any], claimed).rowcount != 1:
@@ -596,8 +610,14 @@ async def alipay_notify(
 
 @router.post("/api/v1/payments/wechat/notify", status_code=204)
 async def wechat_notify(request: Request, session: SessionDependency) -> Response:
-    data = payments.decrypt_wechat(
-        request.app.state.settings, request.headers, await _callback_body(request)
-    )
+    settings = request.app.state.settings
+    body = await _callback_body(request)
+    if settings.credit_wechat_confirmation_mode == "query":
+        payments.verify_wechat_query_notice(
+            settings, request.headers, body, {"TRANSACTION.SUCCESS"}
+        )
+        # Authenticated hint only. The durable server query owns fulfillment.
+        return Response(status_code=204)
+    data = payments.decrypt_wechat(settings, request.headers, body)
     await run_in_threadpool(_native_transaction, session, "wechat", data)
     return Response(status_code=204)

@@ -1003,6 +1003,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reconciliation Status */
+        get: operations["reconciliation_status_api_v1_admin_billing_reconciliation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/refunds": {
         parameters: {
             query?: never;
@@ -3194,6 +3211,8 @@ export interface components {
             checkout_url: string | null;
             /** Code Url */
             code_url: string | null;
+            /** Confirmation Mode */
+            confirmation_mode: string;
             /** Created At */
             created_at: string;
             /** Credits */
@@ -7256,7 +7275,8 @@ export interface operations {
             query?: {
                 search?: string;
                 workspace_id?: string | null;
-                status?: ("pending" | "paid" | "partially_refunded" | "refunded") | null;
+                needs_review?: boolean;
+                status?: ("pending" | "paid" | "partially_refunded" | "refunded" | "closed") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -7427,6 +7447,28 @@ export interface operations {
         };
     };
     overview_api_v1_admin_billing_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    reconciliation_status_api_v1_admin_billing_reconciliation_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -8997,7 +9039,7 @@ export interface operations {
             query?: {
                 cursor?: string | null;
                 limit?: number;
-                status?: ("pending" | "paid" | "partially_refunded" | "refunded") | null;
+                status?: ("pending" | "paid" | "partially_refunded" | "refunded" | "closed") | null;
             };
             header?: never;
             path: {

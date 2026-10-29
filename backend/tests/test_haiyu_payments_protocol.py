@@ -14,6 +14,47 @@ from tests.test_credit_payments import pilot_client as pilot_client  # noqa: F40
 HTTPClient = httpx.Client
 
 
+def test_wechat_query_mode_uses_signing_keys_with_empty_v3_secret(
+    pilot_client, monkeypatch
+):
+    from pydantic import SecretStr
+
+    settings = pilot_client.app.state.settings
+    settings.credit_wechat_api_v3_key = SecretStr("")
+    settings.credit_wechat_confirmation_mode = "query"
+    settings.credit_payment_reconciliation_enabled = True
+
+    def handle(request):
+        values = dict(re.findall(r'(\w+)="([^"]+)"', request.headers["Authorization"]))
+        path = request.url.raw_path.decode()
+        message = (
+            f"{request.method}\n{path}\n{values['timestamp']}\n{values['nonce_str']}\n".encode()
+            + request.content
+            + b"\n"
+        )
+        payments._verify(message, values["signature"], PUBLIC)
+        if request.method == "POST":
+            data = json.loads(request.content)
+            assert (
+                data["notify_url"]
+                == "https://huipin.haiyushuke.com/api/v1/payments/wechat/notify"
+            )
+            return signed_response(b'{"code_url":"weixin://wxpay/synthetic"}')
+        return signed_response(
+            b'{"out_trade_no":"pay_synthetic","trade_state":"NOTPAY"}'
+        )
+
+    transport(monkeypatch, handle)
+    assert "wechat" in payments.channels(settings)
+    assert payments.create_checkout(
+        settings, "wechat", "pay_synthetic", "Synthetic", 1
+    ).startswith("weixin://wxpay/")
+    assert (
+        payments.query_payment(settings, "wechat", "pay_synthetic")["trade_state"]
+        == "NOTPAY"
+    )
+
+
 def alipay_response(method, payload):
     raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     return httpx.Response(

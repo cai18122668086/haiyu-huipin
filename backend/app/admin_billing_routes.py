@@ -24,7 +24,7 @@ from .credit_memberships import (
     refresh,
     scheduling_end,
 )
-from .credit_payment_routes import _native_transaction, _response
+from .credit_payment_routes import _response
 from .credit_products import PRODUCTS
 from .errors import ApiError
 from .models import (
@@ -334,7 +334,9 @@ def overview(
             func.count(),
             func.coalesce(func.sum(CreditPurchaseRecord.amount_fen), 0),
             func.coalesce(func.sum(CreditPurchaseRecord.refunded_amount_fen), 0),
-        ).where(CreditPurchaseRecord.status != "pending")
+        ).where(
+            CreditPurchaseRecord.status.in_(("paid", "partially_refunded", "refunded"))
+        )
     ).one()
     return {
         "paid_orders": money[0],
@@ -509,7 +511,9 @@ def orders(
     _admin: AdminDependency,
     search: str = Query("", max_length=80),
     workspace_id: str | None = None,
-    status: Literal["pending", "paid", "partially_refunded", "refunded"] | None = None,
+    needs_review: bool = False,
+    status: Literal["pending", "paid", "partially_refunded", "refunded", "closed"]
+    | None = None,
     limit: int = Query(30, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ) -> dict[str, Any]:
@@ -518,6 +522,11 @@ def orders(
     )
     if workspace_id:
         query = query.where(CreditPurchaseRecord.workspace_id == workspace_id)
+    if needs_review:
+        query = query.where(
+            CreditPurchaseRecord.status == "pending",
+            CreditPurchaseRecord.reconcile_last_error.is_not(None),
+        )
     if status:
         query = query.where(CreditPurchaseRecord.status == status)
     if search.strip():
@@ -536,6 +545,17 @@ def orders(
                 "workspace_id": row.workspace_id,
                 "user_id": row.created_by_user_id,
                 "gateway_trade_no": row.gateway_trade_no,
+                "reconciliation": {
+                    "attempts": row.reconcile_attempts,
+                    "last_at": aware(row.reconcile_last_at).isoformat()
+                    if row.reconcile_last_at
+                    else None,
+                    "next_at": aware(row.reconcile_next_at).isoformat()
+                    if row.reconcile_next_at
+                    else None,
+                    "provider_status": row.reconcile_last_status,
+                    "last_error": row.reconcile_last_error,
+                },
                 "checkout_url": None,
                 "code_url": None,
             }
@@ -556,16 +576,18 @@ def reconcile(
     if order is None:
         raise ApiError(404, "CREDIT_PURCHASE_NOT_FOUND", "订单不存在。")
     if order.status == "pending":
-        channel, workspace_id = order.signing_key_id, order.workspace_id
+        workspace_id = order.workspace_id
         session.rollback()
-        data = payments.query_payment(request.app.state.settings, channel, order_id)
-        if data.get("out_trade_no") != order_id:
-            raise ApiError(400, "PAYMENT_ORDER_MISMATCH", "支付查询返回了其他订单。")
-        if channel == "alipay":
-            data.setdefault(
-                "seller_id", request.app.state.settings.credit_alipay_seller_id
-            )
-        _native_transaction(session, channel, data)
+        from .credit_payment_reconciliation import process
+
+        process(
+            session,
+            request.app.state.settings,
+            order_id,
+            manual=True,
+            initiator="admin",
+            raise_errors=True,
+        )
         session.add(
             AuditEventRecord(
                 workspace_id=workspace_id,
@@ -671,6 +693,7 @@ def audit(
                 "user.support_status_changed",
                 "credits.purchase_settled",
                 "credits.orders_exported",
+                "credits.purchase_closed",
                 "credits.refund_requested",
                 "credits.refund_succeeded",
                 "credits.refund_failed",
@@ -699,3 +722,12 @@ def audit(
         ],
         "total": total,
     }
+
+
+@router.get("/reconciliation")
+def reconciliation_status(
+    session: SessionDependency, _admin: AdminDependency, request: Request
+) -> dict[str, Any]:
+    from .credit_payment_reconciliation import status
+
+    return status(session, request.app.state.settings)

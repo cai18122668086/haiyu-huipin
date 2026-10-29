@@ -122,6 +122,87 @@ def _settings():
     return Settings(_env_file=None, environment="test", credit_alipay_public_key=PUBLIC)
 
 
+def test_postgres_query_workers_race_callback_once(postgres_credits, monkeypatch):
+    import time
+    from threading import Event
+
+    from app import credit_payment_reconciliation as queries
+    from app import haiyu_payments as payments
+
+    factory, _ = postgres_credits
+    order = _order(factory)
+    fields = paid_fields(order)
+    barrier = Barrier(8)
+    started = Event()
+    calls = []
+    settings = _settings()
+    settings.credit_alipay_app_id = "test-app"
+    settings.credit_alipay_seller_id = "test-seller"
+
+    def provider(*args):
+        calls.append(args[2])
+        started.set()
+        time.sleep(0.1)
+        return fields
+
+    monkeypatch.setattr(payments, "query_payment", provider)
+
+    def query():
+        barrier.wait(timeout=10)
+        with factory() as session:
+            queries.process(session, settings, order["id"], manual=True)
+
+    def callback():
+        assert started.wait(timeout=10)
+        with factory() as session:
+            _settle_native(session, "alipay", verify_alipay(settings, fields))
+
+    with ThreadPoolExecutor(max_workers=9) as executor:
+        tasks = [executor.submit(query) for _ in range(8)] + [executor.submit(callback)]
+        for task in tasks:
+            task.result(timeout=20)
+    assert calls == [order["id"]]
+    with factory() as session:
+        record = session.get(CreditPurchaseRecord, order["id"])
+        assert record.status == "paid" and record.reconcile_next_at is None
+        assert (
+            session.get(WorkspaceCreditAccountRecord, "ws_test").balance_credits == 1520
+        )
+        assert (
+            session.scalar(select(func.count()).select_from(CreditLedgerEntryRecord))
+            == 1
+        )
+
+
+def test_postgres_partial_refund_state_fits_migrated_column(postgres_credits):
+    from app import credit_refunds as refunds
+
+    factory, _ = postgres_credits
+    order = _order(factory)
+    with factory() as session:
+        _settle_native(session, "alipay", paid_fields(order))
+        quote = refunds.quote(session, order["id"])
+        refund = refunds.create(
+            session,
+            order["id"],
+            "usr_test",
+            key=uuid4().hex,
+            reason="Synthetic partial refund",
+            policy="unused",
+            quote_token=quote["quote_token"],
+            amount_fen=6600,
+        )
+        refunds.settle(
+            session,
+            refund.id,
+            {"status": "succeeded", "provider_refund_id": "synthetic-partial"},
+        )
+        assert (
+            session.get(CreditPurchaseRecord, order["id"]).status
+            == "partially_refunded"
+        )
+
+
 def test_postgres_parallel_refund_requests_and_settlement(
     postgres_credits, monkeypatch
 ):
@@ -346,12 +427,16 @@ def test_postgres_credit_migrations_preserve_legacy_reservation(postgres_credits
         from app.models import CreditAdminActionRecord
 
         CreditAdminActionRecord.__table__.drop(connection)
+        from app.models import CreditPaymentReconciliationRecord
+
+        CreditPaymentReconciliationRecord.__table__.drop(connection)
         for name in [
             "20261028_0029_credit_pricing_snapshot.py",
             "20261028_0030_credit_purchases.py",
             "20261028_0031_credit_memberships.py",
             "20261028_0032_credit_refunds.py",
             "20261028_0033_admin_entitlements.py",
+            "20261029_0034_payment_reconciliation.py",
         ]:
             path = Path(__file__).resolve().parents[1] / "migrations/versions" / name
             spec = importlib.util.spec_from_file_location("credit_migration", path)

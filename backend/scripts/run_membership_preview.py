@@ -24,6 +24,8 @@ if __name__ == "__main__":
         auto_process_jobs=False,
         task_dispatcher="inline",
         credit_payments_enabled=False,
+        credit_payment_reconciliation_enabled=True,
+        credit_wechat_confirmation_mode="query",
         workspace_credit_enforcement_enabled=False,
         workspace_credit_pilot_ids=[],
         development_provider_settings_enabled=False,
