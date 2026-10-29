@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "revision": "80b2ad06996ae1decd307d7c4778597d66079e57",
+  "backend_image": "huipin-replica-fast/backend:20261029-v2",
+  "frontend_image": "huipin-replica-fast/frontend:20261029-v2",
+  "migration": "20261029_0034",
+  "payment_configuration_preserved": true,
+  "worker_command_and_resource_limits_preserved": true,
+  "other_services_preserved": true,
+  "original_platform_files_preserved": true,
+  "database_backup": "/srv/huipin-replica-fast-20261029/huipin-before-everyinfra.dump"
+}

@@ -77,7 +77,7 @@ npm run dev -- --host 127.0.0.1 --port 18938 --strictPort
 
 已完成 3000 个模拟任务的调度验证，没有执行 3000 张真实付费图片压测。真实吞吐仍受上游、图片大小、带宽、内存、数据库和存储影响。
 
-当前生产后端镜像为 `huipin-integrated/backend:20261029-segmentation-v16`（继承并发修复），前端为 `huipin-integrated/frontend:20261029-preview`，数据库迁移到 `20261029_0034`。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
+当前生产后端镜像为 `huipin-replica-fast/backend:20261029-v2`，前端为 `huipin-replica-fast/frontend:20261029-v2`；原版继续使用已部署的 v16 拆屏修复，并保留历史 v15 恢复。数据库迁移保持 `20261029_0034`。一键复刻新增默认原版、用户可选快速，快速版单套最多 20 张滚动并发。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
 
 GitHub 推送只保存源码，不自动发布生产。2026-10-29 已将微信主动补单与 EveryInfra 采集统一合并到 `main` 并发布；商户、队列和并发配置保留。详情见 [RELEASE-STATUS.txt](RELEASE-STATUS.txt) 与 `verification/everyinfra-integrated-*.json`。
 

@@ -1,0 +1,19 @@
+{
+  "fast_concurrency": 20,
+  "speed_options": {
+    "default": "standard",
+    "enum": [
+      "standard",
+      "fast"
+    ],
+    "title": "Replica Speed",
+    "type": "string"
+  },
+  "current_protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "legacy_v15_preserved": true,
+  "image_global_concurrency": 3000,
+  "worker_async_runtime": true
+}

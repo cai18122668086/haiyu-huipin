@@ -1,16 +1,29 @@
-海宇绘品：微信补单与商品采集统一发布状态
+海宇绘品：一键复刻快速版发布状态（保留支付、采集与原版修复）
 更新日期：2026-10-29
 
 正式源码仓库（私有）：https://github.com/cai18122668086/haiyu-huipin
-本次两边功能已统一合并到 main；应用构建来源 419dabf。
-本次集成工作区：D:\Desktop\cyh\电商生图\huipin-integrated-20261029
-本地主工作区已同步集成主线；合并前的采集改动和原文件另有本机恢复副本。
+当前应用构建来源 80b2ad06996ae1decd307d7c4778597d66079e57。
+本次快速版工作区：D:\Desktop\cyh\电商生图\huipin-replica-fast-20261029。
+保留另一窗口已发布的 77d52e6 原版 v16 修复，没有覆盖主工作区其他未发布修改。
+此前支付与采集集成来源 419dabf，既有功能及配置保持。
 
 正式账户：https://huipin.haiyushuke.com/account
 正式后台：https://huipin.haiyushuke.com/admin/billing
-API/Worker/Dispatcher：huipin-integrated/backend:20261029-segmentation-v16
-前端：huipin-integrated/frontend:20261029-preview
+API/Worker/Dispatcher：huipin-replica-fast/backend:20261029-v2
+前端：huipin-replica-fast/frontend:20261029-v2
 数据库迁移：20261029_0034（本次不新增迁移）
+
+一键复刻入口：https://huipin.haiyushuke.com/style-replica
+默认原版，可选择快速；一比一模仿和风格复刻均支持快速。
+快速版一次整套规划，无独立 AI 复审或自动重绘，单套最多 20 张滚动并发。
+接受满足清晰度与比例要求的供应商原始画幅，不对成图本地放大、拼贴或覆盖文字。
+原版 v16 及冻结 v15 恢复保留；全站 3000 并发、三个队列及支付设置保持。
+本地同素材真实接口从 529.53 秒缩短至 276.44 秒，8 张全部交付；不构成稳定 SLA。
+发布镜像隔离数据库 446 项通过、1 项既有容量预期测试排除；本地兼容性 112 项通过。
+公网合成登录、支付目录、权限及浏览器版本切换验收通过，临时账号已清理。
+本次公网验收没有发送真实短信、触发生图或付费采集。
+部署目录 /srv/huipin-replica-fast-20261029；数据库和配置备份已保留，异常可回滚到 v16 基线。
+发布证据见 verification/replica-fast-20261029；未打包真实 env、客户测试图或私有回执。
 
 一键复刻默认供应商已切换为 EveryInfra，密钥仅保存在后端私有配置。
 支持淘宝、天猫、1688、京东、闲鱼、得物、Amazon、速卖通、Shopee、Temu、Etsy、Walmart。
