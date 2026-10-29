@@ -18,7 +18,7 @@ import { useConfirmPlan, useCreateJob, useFinalizeJob, useJob, useRetryJob } fro
 import { presentWorkflow, useRuntimeStatus } from "@/features/runtime/api/runtime";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import type { Asset, DomesticMainImageJobCreate } from "@/lib/api/types";
-import { MAIN_IMAGE_SPEED_OPTIONS, mainImageSpeed, mainImageSpeedSettings, mainImageUsesCompactPlan, useMainImageSpeedDraft } from "@/lib/domestic-main-image-speed";
+import { MAIN_IMAGE_SPEED_OPTIONS, mainImageHistoryLabel, mainImageSellingPoints, mainImageSpeed, mainImageSpeedSettings, mainImageUsesCompactPlan, useMainImageSpeedDraft } from "@/lib/domestic-main-image-speed";
 import { errorMessage } from "@/lib/api/request";
 import { IMAGE_UPLOAD_ACCEPT, IMAGE_UPLOAD_EXTENSIONS, IMAGE_UPLOAD_FORMAT_HINT, IMAGE_UPLOAD_MIME_TYPES } from "@/lib/image-upload";
 import { allowsJobAction } from "@/lib/jobs/actions";
@@ -212,7 +212,7 @@ export function DomesticMainImageWorkspace() {
   );
   const busy = upload.isPending || createJob.isPending || confirmPlan.isPending || finalizeJob.isPending || retryJob.isPending;
   const canCreate = Boolean(
-    !jobId && workspace && sources.length && productName.trim() && category.trim() && lines(sellingPoints, 24).length && workflow.canSubmit,
+    !jobId && workspace && sources.length && productName.trim() && category.trim() && mainImageSellingPoints(sellingPoints).length && workflow.canSubmit,
   );
 
   useEffect(() => {
@@ -309,7 +309,7 @@ export function DomesticMainImageWorkspace() {
         ...mainImageSpeedSettings(speed),
         product_name: productName.trim(),
         category: category.trim(),
-        selling_points: lines(sellingPoints, 24),
+        selling_points: mainImageSellingPoints(sellingPoints),
         user_provided_display_facts: lines(displayFacts, 24),
         product_attributes: [],
         scenes: lines(scenes, 12),
@@ -390,16 +390,17 @@ export function DomesticMainImageWorkspace() {
 
             <section className={styles.card}>
               <div className={styles.heading}><span>02</span><div><h2>告诉我们商品的亮点</h2><p>先填写名称、类目和核心卖点，其他信息可以按需补充。</p></div></div>
-              <fieldset className={styles.speedChoice} disabled={Boolean(jobId) || busy}>
+              {jobId ? <p className={styles.speedNote} aria-label="已保存的生成版本">{mainImageHistoryLabel(activeSpeed)} · 已保存的任务版本</p> : <fieldset className={styles.speedChoice} disabled={Boolean(jobId) || busy}>
                 <legend>生成版本</legend>
                 {MAIN_IMAGE_SPEED_OPTIONS.map(([value, title, note]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}</strong><small>{note}</small></span></label>)}
-              </fieldset>
+              </fieldset>}
               {fastMode && <p className={styles.speedNote}>快速版保留六张图的分工与商品身份约束，成图未经独立 AI 复审，请下载前检查。</p>}
               <div className={styles.form}>
                 <label><span>商品名称 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("product_name") : productName} onChange={(event) => setProductName(event.target.value)} placeholder="例如：轻量保温随行杯" /></label>
                 <label><span>商品类目 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("category") : category} onChange={(event) => setCategory(event.target.value)} placeholder="例如：杯壶 / 保温杯" /></label>
-                <label className={styles.full}><span>核心卖点 * <small>换行分隔</small></span><textarea disabled={Boolean(jobId)} value={jobId ? restoredLines("selling_points") : sellingPoints} onChange={(event) => setSellingPoints(event.target.value)} placeholder={'轻量便携\n杯盖防误开\n食品接触级内胆'} /></label>
+                <label className={styles.full}><span>核心卖点 * <small>每行一个真实卖点</small></span><textarea disabled={Boolean(jobId)} value={jobId ? restoredLines("selling_points") : sellingPoints} onChange={(event) => setSellingPoints(event.target.value)} placeholder={'规格：填写已确认的容量、尺寸或数量\n用法：填写已确认的使用方式\n套餐：写明原图或资料中确认包含的商品'} /></label>
               </div>
+              <p className={styles.speedNote}>规格、用法与套餐包含内容请分行写清。原图中的套餐可以保留；未确认的赠送关系或数量请留空，不自行推断。</p>
               <FormDisclosure title="补充商品细节" summary={[displayFacts, scenes, offers, trustFacts].filter(value => value.trim()).length ? `已补充 ${[displayFacts, scenes, offers, trustFacts].filter(value => value.trim()).length} 项信息` : "选填 · 规格、使用场景、优惠与服务"} defaultOpen={Boolean(jobId)}>
               <div className={styles.form}>
                 <label className={styles.full}><span>图片中清晰可读的事实 <small>逐行转录</small></span><textarea disabled={Boolean(jobId)} value={jobId ? restoredLines("user_provided_display_facts") : displayFacts} onChange={(event) => setDisplayFacts(event.target.value)} placeholder={'12V 电瓶\n双座\n清晰可见的原图标题、数字或规格'} /></label>
