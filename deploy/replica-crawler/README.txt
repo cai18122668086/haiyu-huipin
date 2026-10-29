@@ -29,4 +29,10 @@ POLARIS_EVERYINFRA_API_KEY=<本项目自己的密钥>
 compose.override.yml 只给 api 注入 EveryInfra 密钥。发布新代码需构建包含新模块的
 后端镜像，保留当前全部支付、并发和队列叠加配置。
 之前服务器上仅注入 JustOneAPI 密钥的预检已过期，不能据此启用新版本。
-用户要求暂不切换正式网站，本次只做本地实现、隔离验收和配置准备。
+用户已于 2026-10-29 授权与微信补单分支统一提交、合并和部署切换。
+集成发布以已部署的微信查询版为基线，保留查询模式、补单心跳、3000 槽位和三个队列。
+package_release.py 只打包受版本控制的源码；release.py 在服务器依次执行 build、test、activate。
+启用前核对零活动任务、镜像/源码一致性并备份数据库与配置；异常自动恢复原镜像/配置。
+provider.private.env 仅在服务器保存 EveryInfra 密钥，权限 0600。
+本次发布不新增数据库迁移，继续使用 20261029_0034。
+发布结果以根目录 RELEASE-STATUS.txt 和 verification/everyinfra-*.json 为准。
