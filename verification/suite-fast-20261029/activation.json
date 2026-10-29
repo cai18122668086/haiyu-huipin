@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "revision": "c9e5c14fb966cefafed674ae99976fac7c0e70fa",
+  "backend_image": "huipin-suite-fast/backend:c9e5c14fb966cefafed674ae99976fac7c0e70fa",
+  "frontend_image": "huipin-suite-fast/frontend:c9e5c14fb966cefafed674ae99976fac7c0e70fa",
+  "migration": "20261029_0034",
+  "payment_configuration_preserved": true,
+  "worker_command_and_resource_limits_preserved": true,
+  "other_services_preserved": true,
+  "original_platform_files_preserved": true,
+  "database_backup": "/srv/huipin-suite-fast-20261029-v5/huipin-before-everyinfra.dump"
+}

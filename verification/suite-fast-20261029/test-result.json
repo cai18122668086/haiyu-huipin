@@ -1,0 +1,7 @@
+{
+  "exit_code": 0,
+  "image_id": "sha256:540a1798370647d64ec4d2075e7359985911475bb0138a46937f004d56efbf6f",
+  "isolated_database": true,
+  "production_database_accessed": false,
+  "preexisting_capacity_test_excluded": false
+}

@@ -1,0 +1,15 @@
+{
+  "activated_at_utc": "2026-10-29T17:35:12.078749+00:00",
+  "observed_at_utc": "2026-10-29T17:41:14.156692+00:00",
+  "database_dump_bytes": 874855,
+  "database_dump_sha256": "83fdcdcb04437762d381282a6b1d8e68d4f246a9c978a409e4602db36f8d68d5",
+  "database_dump_catalog_verified": true,
+  "private_backup_modes": "0600",
+  "config_backup_retained": true,
+  "public_routes": {
+    "/workspace/domestic-main-image": 200,
+    "/workspace/detail-pack": 200,
+    "/workspace/amazon-visual-suite": 200
+  },
+  "schema_migration_changed": false
+}

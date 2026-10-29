@@ -1,5 +1,7 @@
 # 亚马逊 21 张套图·快速：实现与本地验收
 
+发布更新：2026-10-30已随PR #1统一合并部署，实际状态与备份见[统一发布记录](release-suite-fast-20261030.md)。下文保留开发验收时的历史记录。
+
 日期：2026-10-29（北京时间）。分支 `codex/amazon-suite-fast-20261029`，独立 worktree `huipin-amazon-suite-fast-20261029`。仅操作私有仓库 `cai18122668086/haiyu-huipin`，未部署、未改生产 Compose、未推送 main，也未写其他窗口的工作树。
 
 实现提交 `a837468`；已通过 `98ab58f` 合并 `origin/main` 的 `3f01230`，包含 `ce56815` 原版规划截断、原图交付和尺寸展示修复。合并冲突仅在 `xinghe_agent.py` 两处：保留主线通用 length 拒绝逻辑，DeepSeek bounded profile 在主线集合上增加快速 profile。没有复制未发布工作区的内容。最终又合并了 `b6b91b8` 的发布记录（本分支合并提交 `992c9c7`），仅更新 README、RELEASE-STATUS 与既有发布证据，运行源码未再变化。当前生产基线已是 consolidated v2；本快速亚马逊功能仍未部署。

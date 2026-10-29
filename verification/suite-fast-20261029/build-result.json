@@ -1,0 +1,29 @@
+{
+  "revision": "c9e5c14fb966cefafed674ae99976fac7c0e70fa",
+  "backend_id": "sha256:540a1798370647d64ec4d2075e7359985911475bb0138a46937f004d56efbf6f",
+  "frontend_id": "sha256:d1dd52c09709febd3c65125df41da1bffc1b1fb47b3e31b7d3ede7616efc7151",
+  "backend_sources_checked": 372,
+  "frontend_sources_checked": 573,
+  "baseline_differences": [
+    "app/amazon_suite_fast.py",
+    "app/amazon_suite_fast_provider.py",
+    "app/amazon_visual_quality.py",
+    "app/amazon_visual_suite_provider.py",
+    "app/aurora_main_image_fast.py",
+    "app/aurora_main_image_fast_provider.py",
+    "app/aurora_main_image_native_fast.py",
+    "app/aurora_main_image_planner.py",
+    "app/detail_fast.py",
+    "app/detail_fast_gateway.py",
+    "app/detail_fast_runtime.py",
+    "app/domestic_detail/auto_start.py",
+    "app/execution.py",
+    "app/provider_quota_ledger.py",
+    "app/provider_registry.py",
+    "app/routes_v1.py",
+    "app/schemas_v1.py",
+    "app/services.py",
+    "app/skill_runtime.py",
+    "app/xinghe_agent.py"
+  ]
+}

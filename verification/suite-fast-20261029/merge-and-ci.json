@@ -1,0 +1,79 @@
+{
+  "pr": 1,
+  "url": "https://github.com/cai18122668086/haiyu-huipin/pull/1",
+  "head": "7d18966c815f993c0dcaf66edebe7c9415e92db0",
+  "merge_sha": "15796bd10c77d27e106584a9a05e5220994bbeba",
+  "merged": true,
+  "checks": [
+    {
+      "name": "Backend quality",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 3",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 2",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 5",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 4",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Container build (backend)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Container build (crawl-worker)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 0",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 1",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 7",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Container build (frontend)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Backend shard 6",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "API contract",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Frontend quality",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

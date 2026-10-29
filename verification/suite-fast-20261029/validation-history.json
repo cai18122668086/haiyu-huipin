@@ -1,0 +1,37 @@
+{
+  "first_server_run": {
+    "revision": "72eaf67",
+    "passed": 1096,
+    "failed": 16,
+    "excluded": 1,
+    "causes": [
+      "Missing generator and public og fixture in test package",
+      "Unwritable test workspace root",
+      "Stale Skill inventory and original provider wrapper assertions"
+    ]
+  },
+  "intermediate_server_run": {
+    "revision": "b2d4f05",
+    "passed": 285,
+    "failed": 1,
+    "excluded": 1,
+    "cause": "CRLF/LF-only difference after manifest refresh; normalized only JSON file line endings, preserved raw Skill file hashes"
+  },
+  "first_full_ci_on_c9": {
+    "shards_1_2_3": "passed",
+    "shard_0_failed_tests": 3,
+    "causes": [
+      "Legacy first-page recovery correctly reused its original with zero new image calls",
+      "Existing SMS dependency missing from lock",
+      "PyYAML is already a production dependency through uvicorn standard; declaration classified it as dev-only"
+    ]
+  },
+  "corrections": "Dependency versions unchanged; lock SHA verified from official PyPI wheels, page-local legacy test checks zero calls for saved first page and exactly one for unfinished second page. Eight shards cover all 220 test files exactly once. No tests removed or skipped to obtain passing status.",
+  "post_activation_probe_repairs": [
+    "Added missing Path import in read-only runtime probe",
+    "Used unbuffered dump input for pg_restore catalog verification; original backup bytes unchanged"
+  ],
+  "final_server_passed": 1113,
+  "final_ci_checks_passed": 14,
+  "new_paid_model_or_crawler_requests": 0
+}

@@ -1,0 +1,39 @@
+{
+  "current_protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "legacy_v15_preserved": true,
+  "fast_replica_concurrency": 20,
+  "image_global_concurrency": 3000,
+  "worker_async_runtime": true,
+  "wechat_query_reconciliation": true,
+  "bounded_original_planners": true,
+  "native_portrait_acceptance": true,
+  "preview_and_wrong_aspect_rejected": true,
+  "a_removed": true,
+  "fast_skill_hashes": {
+    "aurora-domestic-ecommerce-main-image-native-fast": "0cb04c6ad611f08a525a7c2ba5570613f3dde2ce691b5d76a9a98971afd4caa8",
+    "xinghe-ecommerce-detail-domestic-4-fast": "b675b21fa051f3e17a84b26bf6abcc4c2802419d59723077b4a7424eefef417f",
+    "xinghe-amazon-visual-suite-fast": "2e7e3267e21f10b47d756e2ab88d5135863ff5367753c2b1c9a15677afc8815a"
+  },
+  "worker_command": [
+    "python",
+    "-m",
+    "celery",
+    "-A",
+    "app.celery_app:celery_app",
+    "worker",
+    "--loglevel=INFO",
+    "--concurrency=3000",
+    "--prefetch-multiplier=1",
+    "--queues=default,one_click_replica,domestic_detail_v431",
+    "--pool=threads"
+  ],
+  "health": {
+    "api": "healthy",
+    "worker": "healthy",
+    "dispatcher": "healthy",
+    "frontend": "healthy"
+  }
+}

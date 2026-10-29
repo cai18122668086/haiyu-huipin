@@ -1,0 +1,8 @@
+{
+  "existing_production_packages": {
+    "tencentcloud-sdk-python-sms": "3.1.153",
+    "tencentcloud-sdk-python-common": "3.1.153",
+    "PyYAML": "6.0.3"
+  },
+  "versions_changed_by_this_release": false
+}

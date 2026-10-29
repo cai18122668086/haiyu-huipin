@@ -77,9 +77,11 @@ npm run dev -- --host 127.0.0.1 --port 18938 --strictPort
 
 已完成 3000 个模拟任务的调度验证，没有执行 3000 张真实付费图片压测。真实吞吐仍受上游、图片大小、带宽、内存、数据库和存储影响。
 
-当前生产后端镜像为 `huipin-consolidated/backend:20261029-v2`，前端为 `huipin-consolidated/frontend:20261029-v2`；原版继续使用已部署的 v16 拆屏修复，并保留历史 v15 恢复。数据库迁移保持 `20261029_0034`。一键复刻新增默认原版、用户可选快速，快速版单套最多 20 张滚动并发。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
+当前生产后端镜像为 `huipin-suite-fast/backend:c9e5c14fb966cefafed674ae99976fac7c0e70fa`，前端为 `huipin-suite-fast/frontend:c9e5c14fb966cefafed674ae99976fac7c0e70fa`；原版继续使用已部署的 v16 拆屏修复，并保留历史 v15 恢复。数据库迁移保持 `20261029_0034`。一键复刻新增默认原版、用户可选快速，快速版单套最多 20 张滚动并发。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
 
 规划 tokens 与原图交付修复已随后统一合并发布，详情精修显示实际分辨率，原版 v16 协议哈希及历史恢复保留；见 `verification/consolidated-20261029`。
+
+2026-10-30 已统一发布国内主图原生快速B、国内详情快速和亚马逊快速，默认原版，A实现与Skill已删除。完整验证、实际镜像、备份与回滚见 [统一发布记录](docs/release-suite-fast-20261030.md) 与 `verification/suite-fast-20261029`。
 
 GitHub 推送只保存源码，不自动发布生产。2026-10-29 已将微信主动补单与 EveryInfra 采集统一合并到 `main` 并发布；商户、队列和并发配置保留。详情见 [RELEASE-STATUS.txt](RELEASE-STATUS.txt) 与 `verification/everyinfra-integrated-*.json`。
 
