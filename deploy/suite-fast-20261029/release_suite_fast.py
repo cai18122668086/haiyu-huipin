@@ -7,7 +7,7 @@ from pathlib import Path
 import release_base as runner
 from test_candidate import run_candidate_tests
 
-runner.ROOT = Path("/srv/huipin-suite-fast-20261029-v4")
+runner.ROOT = Path("/srv/huipin-suite-fast-20261029-v5")
 runner.BASE_BACKEND = "huipin-consolidated/backend:20261029-v2"
 runner.BASE_FRONTEND = "huipin-consolidated/frontend:20261029-v2"
 runner.BACKEND = (

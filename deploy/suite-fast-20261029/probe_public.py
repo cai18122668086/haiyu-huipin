@@ -194,7 +194,7 @@ print(json.dumps({'synthetic_account_cleaned':True}))
 Path(
     os.environ.get(
         "HUIPIN_PROBE_REPORT_PATH",
-        "/srv/huipin-suite-fast-20261029-v4/public-probe.json",
+        "/srv/huipin-suite-fast-20261029-v5/public-probe.json",
     )
 ).write_text(json.dumps(report, indent=2))
 print(json.dumps(report))

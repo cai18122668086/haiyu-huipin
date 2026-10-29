@@ -56,8 +56,6 @@ def run_candidate_tests(runner):
             "tests/test_sms_identity_migration.py tests/test_public_browsing.py "
             "tests/test_everyinfra.py tests/test_justone.py tests/test_replica.py "
             + " ".join(runner.EXTRA_TESTS)
-            + " "
-            + "-k 'not twenty_images_fit_job_capacity'"
         )
         with (runner.ROOT / "postgres-test.log").open("w") as output:
             result = subprocess.run(
@@ -86,7 +84,7 @@ def run_candidate_tests(runner):
                 "image_id": runner.inspect(runner.BACKEND)["Id"],
                 "isolated_database": True,
                 "production_database_accessed": False,
-                "preexisting_capacity_test_excluded": True,
+                "preexisting_capacity_test_excluded": False,
             },
         )
         print((runner.ROOT / "postgres-test.log").read_text()[-10000:])

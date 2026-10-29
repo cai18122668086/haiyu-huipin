@@ -499,12 +499,16 @@ def test_1688_main_gallery_does_not_absorb_sku_specification_images():
 
 
 def test_twenty_images_fit_job_capacity_and_occupied_capacity_preserves_plan(client):
-    from app.models import JobRecord, utc_now
+    from app.models import JobRecord, WorkspaceLimitRecord, utc_now
     from app.services import set_credit_enforcement_enabled
 
     client.app.state.settings.reference_remix_provider_enabled = True
     set_credit_enforcement_enabled(False)
     product, reference = upload(client, "red"), upload(client, "blue")
+    # Exercise an explicit 20-job workspace limit, independently of the 3000 default.
+    with client.app.state.session_factory() as db:
+        db.get(WorkspaceLimitRecord, "ws_test").max_active_jobs = 20
+        db.commit()
     normal_body = {
         "type": "reference_remix",
         "intent": "submit",

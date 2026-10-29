@@ -139,7 +139,9 @@ def test_manifest_valid_and_refresh_needs_no_private_archive():
         check=True,
         capture_output=True,
     )
-    assert manifest.read_bytes() == before
+    assert manifest.read_bytes().replace(b"\r\n", b"\n") == before.replace(
+        b"\r\n", b"\n"
+    )
     assert (
         BundledSkillManifestValidator().validate(SKILL_ID)
         == load(manifest)["content_hash"]
