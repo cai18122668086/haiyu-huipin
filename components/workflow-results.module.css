@@ -18,6 +18,7 @@
 .resultCard > div a,.resultCard > div button,.comparisonControls > a { display:inline-flex; align-items:center; gap:5px; border:0; color:#2149c7; background:transparent; font:inherit; font-weight:650; cursor:pointer; }
 .resultCard > div button:disabled { color:#9297a8; cursor:wait; }
 .downloadError { margin:0; padding:0 12px 10px; color:#b42318; font-size:12px; }
+.resultDimensions { margin:0; padding:0 12px 10px; color:#777d91; font-size:12px; }
 .archiveAction { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; }
 .archiveAction button { display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:8px 14px; border:1px solid #2149c7; border-radius:9px; color:#fff; background:#2149c7; font:inherit; font-weight:700; cursor:pointer; }
 .archiveAction button:disabled { opacity:.65; cursor:wait; }

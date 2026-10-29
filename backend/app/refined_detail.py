@@ -13,12 +13,15 @@ from typing import TYPE_CHECKING, Any
 
 from jsonschema import Draft202012Validator
 
+from .native_portrait_delivery import style_native_budget_matches
 from .new_detail_skill_provider import (
     AdapterValidationError,
     DetailSkillRoute,
     NewDetailSkillProvider,
     requested_page_count,
 )
+from .provider import PersistedProviderArtifact, ProviderArtifact
+from .replica_canvas import delivery_receipt
 
 if TYPE_CHECKING:
     from .provider import Provider
@@ -27,6 +30,18 @@ if TYPE_CHECKING:
 SKILL_ID = "xinghe-ecommerce-detail-domestic-4"
 PIPELINE_VERSION = "xinghe-domestic-detail-v4.0"
 PROFILE = "xinghe_domestic_detail_4"
+NATIVE_DELIVERY_POLICY = "refined-native-portrait-original-v1"
+
+
+def native_delivery_receipt(
+    artifact: ProviderArtifact | PersistedProviderArtifact,
+    expected: list[int],
+) -> dict[str, Any] | None:
+    """Keep a full native portrait and disclose its actual pixel dimensions."""
+    actual = (artifact.width, artifact.height)
+    if getattr(artifact, "locally_resampled", False) or not style_native_budget_matches(expected, actual):
+        return None
+    return {**delivery_receipt(expected, actual, artifact.sha256), "policy": NATIVE_DELIVERY_POLICY}
 
 
 def is_refined(configuration: Mapping[str, Any]) -> bool:
@@ -71,6 +86,13 @@ class RefinedDetailProvider(NewDetailSkillProvider):
         super().__init__(
             delegate, DetailSkillRoute(SKILL_ID, "domestic", prompt_configuration)
         )
+
+    def _native_delivery_receipt(
+        self,
+        artifact: ProviderArtifact | PersistedProviderArtifact,
+        expected: list[int],
+    ) -> dict[str, Any] | None:
+        return native_delivery_receipt(artifact, expected)
 
 
 def _object(properties: dict[str, Any]) -> dict[str, Any]:
@@ -271,6 +293,15 @@ def normalize_strategy(value: Mapping[str, Any]) -> dict[str, Any]:
                 "Conflicting product type strategies cannot be reconciled locally.",
             )
         analysis["product_type_strategy"] = result.pop("product_type_strategy")
+    plan = result.get("plan")
+    if isinstance(plan, dict) and "screens" in result:
+        authored_screens = result["screens"]
+        if "screens" in plan and plan["screens"] != authored_screens:
+            raise XingheAgentError(
+                "REFINED_DETAIL_PLAN_INVALID",
+                "Conflicting screen plans cannot be reconciled locally.",
+            )
+        plan["screens"] = result.pop("screens")
     return result
 
 

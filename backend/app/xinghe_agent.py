@@ -239,6 +239,10 @@ _AURORA_V20_MATERIAL_CHECKS = frozenset(
     }
 )
 PLANNER_DIAGNOSTICS_SCHEMA = "xinghe-planner-diagnostics"
+_BOUNDED_JSON_PLANNER_PROFILES = frozenset({
+    "replica_native_contract", "replica_exact_compact",
+    refined_detail.PROFILE, "amazon_visual_suite",
+})
 IMAGE_SIZE = "1024x1536"
 SUPPORTED_IMAGE_SIZES = frozenset(
     {
@@ -2605,7 +2609,7 @@ class TengliOpenAICompatibleGateway:
                     route_payload["reasoning_effort"] = "low"
                 if (
                     request.planning_profile
-                    in {"replica_native_contract", "replica_exact_compact", "amazon_visual_suite_fast"}
+                    in _BOUNDED_JSON_PLANNER_PROFILES | {"amazon_visual_suite_fast"}
                     and route.planner_model.casefold().startswith("deepseek")
                 ):
                     # This provider includes reasoning in the output allowance.
@@ -2618,6 +2622,17 @@ class TengliOpenAICompatibleGateway:
                     # in the original user envelope and is validated locally.
                     route_payload["response_format"] = {"type": "json_object"}
                     route_payload["messages"] = deepcopy(payload["messages"])
+                    if request.planning_profile == "amazon_visual_suite":
+                        # This prompt previously relied on the transport schema.
+                        # json_object must still receive the ENTIRE contract;
+                        # local validation and all 21 rows remain unchanged.
+                        route_payload["messages"][1]["content"].append({
+                            "type": "text",
+                            "text": "response_schema=" + json.dumps(
+                                payload["response_format"]["json_schema"]["schema"],
+                                ensure_ascii=False, separators=(",", ":"),
+                            ),
+                        })
                     route_payload["messages"][1]["content"].append({
                         "type": "text",
                         "text": (
@@ -2735,9 +2750,7 @@ class TengliOpenAICompatibleGateway:
                 )
             envelope_diagnostics = _planner_envelope_diagnostics(response)  # type: ignore[arg-type]
             if (
-                request.planning_profile
-                in {"replica_native_contract", "replica_exact_compact", "amazon_visual_suite_fast"}
-                and isinstance(response, Mapping)
+                isinstance(response, Mapping)
                 and any(
                     choice.get("finish_reason") == "length"
                     for choice in response.get("choices", [])
@@ -2759,7 +2772,7 @@ class TengliOpenAICompatibleGateway:
                         **normalize_usage(raw_usage),
                         "error_code": "PLANNER_OUTPUT_TRUNCATED",
                         "finish_reason": "length",
-                        "output_token_limit": route_payload["max_completion_tokens"],
+                        "output_token_limit": route_payload.get("max_completion_tokens"),
                         "provider_request_id": request_id,
                         "http_status": status,
                         "response_format_type": route_payload["response_format"]["type"],
@@ -2775,7 +2788,7 @@ class TengliOpenAICompatibleGateway:
                     actual_cost_micros=_usage_cost_micros(raw_usage),
                     error_code="PLANNER_OUTPUT_TRUNCATED",
                     error_message=(
-                        "Analysis output reached its token limit before completion "
+                        "Planning output reached its token limit before completion "
                         "(finish_reason=length); incomplete JSON cannot authorize generation."
                     ),
                     http_status=status,
@@ -2789,7 +2802,7 @@ class TengliOpenAICompatibleGateway:
             message = first_choice.get("message") if isinstance(first_choice, Mapping) else None
             raw_content = message.get("content") if isinstance(message, Mapping) else None
             native_empty = (
-                request.planning_profile in {"replica_native_contract", "replica_exact_compact"}
+                request.planning_profile in _BOUNDED_JSON_PLANNER_PROFILES
                 and isinstance(raw_content, str) and not raw_content.strip()
             )
             text = raw_content if native_empty and isinstance(raw_content, str) else _planner_message_text(response)  # type: ignore[arg-type]

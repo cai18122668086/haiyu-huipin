@@ -1,6 +1,5 @@
 import asyncio
 import hashlib
-import time
 from collections import defaultdict
 from datetime import timedelta
 from io import BytesIO
@@ -159,16 +158,28 @@ def _coordinator(
 
 @pytest.mark.parametrize("blocking_phase", ["provider", "storage"])
 def test_heartbeat_survives_blocking_provider_and_slow_artifact_save(
-    client, blocking_phase,
+    client, blocking_phase, monkeypatch,
 ):
+    import threading
+
     from app.provider import ProviderArtifact
+
+    phase_active = threading.Event()
+    renewed_during_phase = threading.Event()
 
     class BlockingProvider(FakeProvider):
         name = "real-test"
 
         async def execute(self, request):
             if blocking_phase == "provider":
-                time.sleep(0.7)
+                phase_active.set()
+                try:
+                    # The event loop is blocked here: only the keeper thread
+                    # can renew. Wait for positive evidence, not a subsecond
+                    # expiry that depends on full-suite CPU/GC scheduling.
+                    assert renewed_during_phase.wait(timeout=3)
+                finally:
+                    phase_active.clear()
             payload = _image_payload((10, 20, 30))
             return ProviderResult(
                 outcome=ProviderOutcome.SUCCEEDED,
@@ -182,7 +193,13 @@ def test_heartbeat_survives_blocking_provider_and_slow_artifact_save(
     class SlowStorage:
         async def save_validated(self, image):
             if blocking_phase == "storage":
-                await asyncio.sleep(0.7)
+                phase_active.set()
+                try:
+                    assert await asyncio.to_thread(
+                        renewed_during_phase.wait, timeout=3
+                    )
+                finally:
+                    phase_active.clear()
             return SimpleNamespace(
                 **image.__dict__, byte_size=len(image.payload), storage_provider="test",
                 storage_bucket="test", object_version="", etag=None,
@@ -193,12 +210,22 @@ def test_heartbeat_survives_blocking_provider_and_slow_artifact_save(
 
     job_id = _create_job(client)
     coordinator = ExecutionCoordinator(client.app.state.session_factory,
-        BlockingProvider(), worker_id="blocking-test", lease_seconds=0.4,
+        BlockingProvider(), worker_id="blocking-test", lease_seconds=5,
         heartbeat_seconds=0.05, artifact_storage=SlowStorage())
+    original_renew = coordinator.renew_lease
+
+    def observe_renew(lease):
+        renewed = original_renew(lease)
+        if renewed and phase_active.is_set():
+            renewed_during_phase.set()
+        return renewed
+
+    monkeypatch.setattr(coordinator, "renew_lease", observe_renew)
     coordinator.prepare(job_id)
     lease = coordinator.claim_next_item(job_id)
     assert lease is not None
     assert asyncio.run(coordinator.execute_lease(lease)) is True
+    assert renewed_during_phase.is_set()
     with client.app.state.session_factory() as session:
         assert session.get(JobAttemptRecord, lease.attempt_id).status == "succeeded"
 

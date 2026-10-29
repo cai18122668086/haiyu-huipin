@@ -192,6 +192,70 @@ def test_wrong_native_dimensions_fail_without_second_generation(tmp_path, route,
     assert direct_state(run)["state"] != "DELIVERED"
 
 
+@pytest.mark.parametrize("route,count", [("PROMO_POSTER", 1), ("CAROUSEL_SET", 3)])
+def test_complete_native_style_canvas_delivers_original_bytes_and_recovers(
+    tmp_path, route, count
+):
+    from app.native_portrait_delivery import STYLE_NATIVE_POLICY
+
+    run, provider, request, calls = fixture(tmp_path, route)
+    approved = deepcopy(run.state())
+    response = result((1086, 1448))
+
+    async def edit(request):
+        calls.append(request)
+        return response
+
+    run.gateway.edit = edit
+    outputs = asyncio.run(deliver(provider, run, request))
+    assert len(calls) == len(outputs) == count
+    assert run.state() == approved
+    for file in outputs:
+        assert Path(file).read_bytes() == response.artifact.payload
+    state = direct_state(run)
+    for row in state["files"]:
+        assert row["size"] == [1086, 1448]
+        receipt = row["delivery_canvas"]
+        assert receipt["policy"] == STYLE_NATIVE_POLICY
+        assert receipt["actual_size"] == [1086, 1448]
+        assert receipt["requested_size"] == approved["layout"]["jobs"][0]["canvas"]
+        assert receipt["sha256"] == digest(response.artifact.payload)
+        assert not receipt["locally_resampled"]
+    snapshot = asyncio.run(run.snapshot())
+    rmtree(run.root)
+    asyncio.run(run.restore(snapshot))
+    assert asyncio.run(deliver(provider, run, request)) == outputs
+    assert len(calls) == count
+    assert all(Path(file).read_bytes() == response.artifact.payload for file in outputs)
+
+
+@pytest.mark.parametrize(
+    "canvas,size,accepted",
+    [
+        ([1440, 1920], (1086, 1448), True),
+        ([1440, 1920], (768, 1024), False),
+        ([1440, 1920], (1254, 1254), False),
+        ([2880, 3840], (1086, 1448), False),
+    ],
+)
+def test_style_canvas_policy_rejects_previews_changed_aspect_and_other_contracts(
+    tmp_path, canvas, size, accepted
+):
+    from app.replica_style_delivery import inspect_artwork
+
+    image = tmp_path / "native.png"
+    image.write_bytes(result(size).artifact.payload)
+    run = SimpleNamespace(path=lambda path: Path(path))
+    job = {"canvas": canvas, "unit_ids": ["U01"]}
+    if accepted:
+        record = inspect_artwork(run, str(image), job, False)
+        assert record["delivery_canvas"]["requested_size"] == canvas
+        assert record["size"] == list(size)
+    else:
+        with pytest.raises(ReplicaCanvasMismatch):
+            inspect_artwork(run, str(image), job, False)
+
+
 @pytest.mark.parametrize("recorded", [False, True])
 def test_legacy_failed_or_returned_unrecorded_canvas_reused_after_temp_loss(
     tmp_path, recorded
