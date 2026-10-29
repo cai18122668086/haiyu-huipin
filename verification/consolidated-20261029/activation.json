@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "revision": "3f01230310c78e76f260435743801e7af8c1f4f6",
+  "backend_image": "huipin-consolidated/backend:20261029-v2",
+  "frontend_image": "huipin-consolidated/frontend:20261029-v2",
+  "migration": "20261029_0034",
+  "payment_configuration_preserved": true,
+  "worker_command_and_resource_limits_preserved": true,
+  "other_services_preserved": true,
+  "original_platform_files_preserved": true,
+  "database_backup": "/srv/huipin-consolidated-20261029/huipin-before-everyinfra.dump"
+}

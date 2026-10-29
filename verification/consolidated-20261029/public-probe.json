@@ -1,0 +1,13 @@
+{
+  "public_login": "passed",
+  "me": 200,
+  "front_token_valid": true,
+  "payment_channels_preserved": true,
+  "new_customer_credits": 0,
+  "source_count": 12,
+  "customer_admin_access": 403,
+  "real_sms_sent": 0,
+  "generation_requests": 0,
+  "crawler_requests": 0,
+  "synthetic_account_cleaned": true
+}

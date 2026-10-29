@@ -1,0 +1,10 @@
+[
+  {
+    "target": "baseline",
+    "exit_code": 0
+  },
+  {
+    "target": "candidate",
+    "exit_code": 0
+  }
+]
