@@ -1,0 +1,14 @@
+{
+  "typecheck": "passed",
+  "local_production_build": "passed",
+  "ruff": "passed for collection/payment modules and release tools",
+  "mypy": "passed for collection modules",
+  "frontend_logic_tests": 19,
+  "openapi_and_generated_types_match_backend": true,
+  "postgres_regression_tests": 253,
+  "known_preexisting_test_excluded": "test_twenty_images_fit_job_capacity_and_occupied_capacity_preserves_plan",
+  "excluded_reason": "test retains old capacity expectation of 20; deployed default is 3000",
+  "real_sms_sent": 0,
+  "real_payments_executed": 0,
+  "real_customer_refunds_executed": 0
+}
