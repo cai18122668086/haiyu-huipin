@@ -332,6 +332,7 @@ def test_bundled_manifests_load_with_frozen_policies() -> None:
         "masked-image-repair",
         "reference-visual-reverse-remix",
         "xinghe-amazon-visual-suite",
+        "xinghe-amazon-visual-suite-fast",
         "xinghe-crossborder-detail-3",
         "xinghe-ecommerce-creative-image",
         "xinghe-ecommerce-detail",
