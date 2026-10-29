@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from dataclasses import replace
 from io import BytesIO
 from typing import Any
 
@@ -150,6 +151,8 @@ class FastReplicaProvider:
         plan: dict[str, Any],
         unit: dict[str, Any],
         request: ProviderRequest,
+        *,
+        skip_rejected_cache: bool = False,
     ) -> dict[str, Any]:
         with self.session_factory() as session:
             job = session.get(JobRecord, request.job_id, with_for_update=True)
@@ -174,7 +177,11 @@ class FastReplicaProvider:
                 raise ApiError(
                     409, "FAST_REPLICA_PLAN_CHANGED", "已有图片不属于当前方案。"
                 )
-            if old.get("state") == "returned":
+            if old.get("state") == "returned" or (
+                old.get("state") == "rejected"
+                and old.get("object_key")
+                and not skip_rejected_cache
+            ):
                 prefix = (
                     f"{request.workspace_id}/replica-fast/{document_id}/{unit['id']}/"
                 )
@@ -231,7 +238,10 @@ class FastReplicaProvider:
             fmt = image.format
         if (
             fmt not in {"PNG", "JPEG", "WEBP"}
-            or min(w, h) < 1024
+            or not (
+                min(w, h) >= 1024
+                or (min(w, h) >= 768 and w * h >= 1_500_000)
+            )
             or abs((w / h) / (canvas[0] / canvas[1]) - 1) > 0.01
         ):
             raise ApiError(
@@ -254,6 +264,17 @@ class FastReplicaProvider:
         )
 
     async def execute(self, request: ProviderRequest) -> ProviderResult:
+        result = await self._execute(request)
+        # The shared router defaults to its mock delegate when identity is absent.
+        # Carry this branch's identity so real artifacts are stored and linked.
+        return replace(
+            result,
+            provider_name=self.name,
+            model_name=self.model,
+            pricing_version=self.pricing_version,
+        )
+
+    async def _execute(self, request: ProviderRequest) -> ProviderResult:
         invoked = False
         result = None
         try:
@@ -301,24 +322,34 @@ class FastReplicaProvider:
                     )
                 )
             cached = self._claim(document_id, plan, unit, request)
-            if cached:
+            while cached:
                 data = await self.storage.read_bytes(cached["object_key"])
                 if hashlib.sha256(data).hexdigest() != cached["sha256"]:
                     raise ApiError(
                         409, "FAST_REPLICA_RESULT_CHANGED", "已生成图片校验不一致。"
                     )
-                return ProviderResult(
-                    outcome=ProviderOutcome.SUCCEEDED,
-                    artifact=self._artifact(data, unit["canvas"]),
-                    usage_reported=True,
-                    actual_cost_micros=0,
-                    estimated_cost_micros=0,
-                    raw_usage={
-                        "network_requests": 0,
-                        "reused": True,
-                        "review_status": "NOT_REVIEWED",
-                    },
-                )
+                try:
+                    cached_artifact = self._artifact(data, unit["canvas"])
+                except ApiError:
+                    if cached.get("state") != "rejected":
+                        raise
+                    # Only a new explicit retry may regenerate a known bad canvas.
+                    cached = self._claim(
+                        document_id, plan, unit, request, skip_rejected_cache=True
+                    )
+                else:
+                    return ProviderResult(
+                        outcome=ProviderOutcome.SUCCEEDED,
+                        artifact=cached_artifact,
+                        usage_reported=True,
+                        actual_cost_micros=0,
+                        estimated_cost_micros=0,
+                        raw_usage={
+                            "network_requests": 0,
+                            "reused": True,
+                            "review_status": "NOT_REVIEWED",
+                        },
+                    )
             invoked = True
             result = await self.gateway.edit(
                 ImageEditRequest(

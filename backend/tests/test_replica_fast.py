@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 from copy import deepcopy
+from dataclasses import replace
 from io import BytesIO
 from types import SimpleNamespace
 from uuid import uuid4
@@ -13,7 +14,7 @@ from PIL import Image
 from app.execution import ExecutionCoordinator
 from app.models import ReplicaDocumentRecord
 from app.provider import ProviderArtifact, ProviderOutcome
-from app.replica_fast import SKILLS, compile_plan
+from app.replica_fast import CONCURRENCY, SKILLS, compile_plan
 from app.replica_fast_provider import FastReplicaProvider
 from app.xinghe_agent import FakeXingheGateway, ImageCallResult
 
@@ -125,7 +126,8 @@ def create(client, gateway, method="exact", count=1, auto=False):
     client.app.state.replica_gateway = gateway
     product = upload(client, "red")
     refs = [
-        upload(client, color) for color in ["blue", "green", "yellow", "purple"][:count]
+        upload(client, ["blue", "green", "yellow", "purple"][i % 4])
+        for i in range(count)
     ]
     response = client.post(
         ROUTE + "/sessions",
@@ -189,7 +191,7 @@ def test_one_pass_split_parallel_delivery_and_original_isolation(
         for i in client.get(f"/api/v1/workspaces/ws_test/jobs/{job_id}").json()["items"]
     ]
     assert len(gateway.plans) == 1 and len(gateway.images) == 4
-    assert gateway.maximum == 3
+    assert gateway.maximum == 4
     assert all(
         r.single_dispatch and r.preserve_provider_artifact for r in gateway.images
     )
@@ -294,23 +296,163 @@ def test_real_router_selects_fast_provider_without_extra_planning(client):
     job_id = doc["payload"]["job_ids"][0]
     assert asyncio.run(coordinator.run(job_id)) == "completed"
     assert len(gateway.plans) == len(gateway.images) == 1
+    job = client.get(f"/api/v1/workspaces/ws_test/jobs/{job_id}").json()
+    delivered = [
+        asset for asset in job["assets"]
+        if asset["direction"] == "output" and asset["is_deliverable"]
+    ]
+    assert len(delivered) == 1
+    assert job["output_asset_count"] == 1
 
 
-def test_duplicate_workers_share_the_three_image_claim_limit(client):
-    gateway = Gateway(proposal(count=4))
-    doc = create(client, gateway, count=4)
+def test_duplicate_workers_share_the_twenty_image_claim_limit(client):
+    gateway = Gateway(proposal(count=11, screens=2))
+    doc = create(client, gateway, count=11)
     job_id = confirm(client, doc)
     state = client.app.state
     provider = FastReplicaProvider(state.session_factory, gateway, state.storage)
-    first = ExecutionCoordinator(state.session_factory, provider, max_concurrency=20)
-    second = ExecutionCoordinator(state.session_factory, provider, max_concurrency=20)
+    first = ExecutionCoordinator(state.session_factory, provider, max_concurrency=3000)
+    second = ExecutionCoordinator(state.session_factory, provider, max_concurrency=3000)
     assert first.prepare(job_id) == "processing"
-    assert first.claim_next_item(job_id) is not None
-    assert second.claim_next_item(job_id) is not None
-    assert first.claim_next_item(job_id) is not None
+    for index in range(CONCURRENCY):
+        assert (first if index % 2 == 0 else second).claim_next_item(job_id) is not None
     assert second.claim_next_item(job_id) is None
     assert first.claim_next_item(job_id) is None
-    assert first.max_concurrency == second.max_concurrency == 20
+    assert first.max_concurrency == second.max_concurrency == 3000
+
+
+def test_fast_suite_refills_without_waiting_for_a_slow_screen(client):
+    class RollingGateway(Gateway):
+        async def edit(self, request):
+            if request.group_key == "F001":
+                await asyncio.wait_for(self.third_started.wait(), timeout=3)
+            if request.group_key == "F003":
+                self.third_started.set()
+            return await super().edit(request)
+
+    gateway = RollingGateway(proposal(count=4))
+    doc = create(client, gateway, count=4)
+    job_id = confirm(client, doc)
+    state = client.app.state
+    coordinator = ExecutionCoordinator(
+        state.session_factory,
+        FastReplicaProvider(state.session_factory, gateway, state.storage),
+        max_concurrency=2,
+        artifact_storage=state.storage,
+    )
+
+    async def run():
+        gateway.third_started = asyncio.Event()
+        return await coordinator.run(job_id)
+
+    assert asyncio.run(run()) == "completed"
+    assert [r.group_key for r in gateway.images].index("F003") < [
+        r.group_key for r in gateway.images
+    ].index("F001")
+    assert len(gateway.images) == 4
+
+
+def test_large_fast_suite_uses_twenty_slots_and_delivers_every_screen(client):
+    gateway = Gateway(proposal(count=11, screens=2))
+    doc = create(client, gateway, count=11)
+    job_id = confirm(client, doc)
+    assert execute(client, gateway, job_id) == "completed"
+    assert gateway.maximum == CONCURRENCY == 20
+    assert len(gateway.images) == 22
+
+
+@pytest.mark.parametrize("size,canvas", [
+    ((1254, 1254), [1024, 1024]),
+    ((960, 1639), [1024, 1748]),
+    ((959, 1641), [1024, 1753]),
+    ((957, 1643), [1024, 1758]),
+    ((887, 1774), [1024, 2048]),
+])
+def test_native_auto_resolution_preserves_original_bytes(size, canvas):
+    output = BytesIO()
+    Image.new("RGB", size, "red").save(output, "PNG")
+    raw = output.getvalue()
+    artifact = FastReplicaProvider._artifact(raw, canvas)
+    assert artifact.payload == raw
+    assert (artifact.width, artifact.height) == size
+    assert not artifact.locally_resampled
+
+
+@pytest.mark.parametrize("size", [(512, 1024), (768, 1024), (700, 2800), (1254, 1254)])
+def test_low_resolution_or_wrong_aspect_stays_blocked(size):
+    from app.errors import ApiError
+
+    output = BytesIO()
+    Image.new("RGB", size, "red").save(output, "PNG")
+    with pytest.raises(ApiError, match="画幅"):
+        FastReplicaProvider._artifact(output.getvalue(), [1024, 2048])
+
+
+def test_previous_size_rejection_recovers_native_image_without_another_call(
+    client, monkeypatch
+):
+    from app.errors import ApiError
+
+    raw = proposal()
+    raw["references"][0]["columns"][0]["bbox"] = [0, 0, 562, 1000]
+    gateway = Gateway(raw)
+    doc = create(client, gateway)
+    job_id = confirm(client, doc)
+    validate = FastReplicaProvider._artifact
+
+    # Distinguish the gateway's creation from the delivery validator below.
+    async def native_edit(request):
+        result = await Gateway.edit(gateway, request)
+        output = BytesIO()
+        Image.new("RGB", (887, 1774), "red").save(output, "PNG")
+        return replace(result, artifact=validate(output.getvalue(), [1024, 2048]))
+
+    gateway.edit = native_edit
+
+    def reject_old(data, canvas):
+        artifact = validate(data, canvas)
+        if min(artifact.width, artifact.height) < 1024:
+            raise ApiError(502, "FAST_REPLICA_CANVAS_INVALID", "旧尺寸门槛")
+        return artifact
+
+    monkeypatch.setattr(FastReplicaProvider, "_artifact", staticmethod(reject_old))
+    assert execute(client, gateway, job_id) == "failed"
+    monkeypatch.setattr(FastReplicaProvider, "_artifact", staticmethod(validate))
+    retried = client.post(
+        ROUTE + f"/sessions/{doc['id']}/jobs/{job_id}/retry",
+        json={"request_id": str(uuid4())},
+    )
+    assert retried.status_code == 202, retried.text
+    replacement = retried.json()["payload"]["job_ids"][0]
+    assert execute(client, gateway, replacement) == "completed"
+    assert len(gateway.images) == len(gateway.plans) == 1
+
+
+def test_still_invalid_cached_canvas_regenerates_only_on_explicit_retry(client):
+    class WrongCanvasGateway(Gateway):
+        async def edit(self, request):
+            result = await super().edit(request)
+            if len(self.images) == 1:
+                output = BytesIO()
+                Image.new("RGB", (1024, 1024), "red").save(output, "PNG")
+                return replace(result, artifact=FastReplicaProvider._artifact(
+                    output.getvalue(), [1024, 1024]
+                ))
+            return result
+
+    gateway = WrongCanvasGateway(proposal())
+    doc = create(client, gateway)
+    job_id = confirm(client, doc)
+    assert execute(client, gateway, job_id) == "failed"
+    assert len(gateway.images) == 1
+    response = client.post(
+        ROUTE + f"/sessions/{doc['id']}/jobs/{job_id}/retry",
+        json={"request_id": str(uuid4())},
+    )
+    assert response.status_code == 202, response.text
+    replacement = response.json()["payload"]["job_ids"][0]
+    assert execute(client, gateway, replacement) == "completed"
+    assert len(gateway.images) == 2 and len(gateway.plans) == 1
 
 
 def test_generated_receipt_recovers_after_delivery_storage_failure(client, monkeypatch):

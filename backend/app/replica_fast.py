@@ -23,7 +23,7 @@ SKILLS = {
     "exact": "aurora-ecommerce-reference-remix-fast",
     "style": "all-category-style-benchmark-still-fast",
 }
-CONCURRENCY = 3
+CONCURRENCY = 20
 
 
 def selected(values: dict[str, Any]) -> bool:

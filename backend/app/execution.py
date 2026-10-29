@@ -649,8 +649,12 @@ class ExecutionCoordinator:
         is_amazon = self._is_amazon_job(job_id)
         with self.session_factory() as session:
             fast_job = session.get(JobRecord, job_id)
-            if fast_job is not None and self._fast_replica_record(fast_job):
-                claim_width = min(claim_width, 3)
+            is_fast_replica = (
+                fast_job is not None and self._fast_replica_record(fast_job)
+            )
+        if is_fast_replica:
+            await self._run_fast_replica(job_id)
+            return self.finalize_job(job_id)
         while True:
             leases: list[AttemptLease] = []
             for _ in range(claim_width):
@@ -764,6 +768,32 @@ class ExecutionCoordinator:
         return await self._maybe_finalize_domestic_automatic_delivery(
             job_id, self.finalize_job(job_id)
         )
+
+    async def _run_fast_replica(self, job_id: str) -> None:
+        """Refill free slots immediately; database claims fence duplicate workers."""
+        from .replica_fast import CONCURRENCY
+
+        pending: set[asyncio.Task[bool]] = set()
+        try:
+            while True:
+                while len(pending) < min(self.max_concurrency, CONCURRENCY):
+                    lease = self.claim_next_item(job_id)
+                    if lease is None:
+                        break
+                    pending.add(asyncio.create_task(self.execute_lease(lease)))
+                if not pending:
+                    return
+                done, pending = await asyncio.wait(
+                    pending, return_when=asyncio.FIRST_COMPLETED
+                )
+                for task in done:
+                    task.result()
+        finally:
+            # Do not orphan provider calls when a worker is interrupted.
+            for task in pending:
+                task.cancel()
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
 
     async def _maybe_finalize_domestic_automatic_delivery(
         self, job_id: str, current: JobStatus | None
@@ -1581,8 +1611,10 @@ class ExecutionCoordinator:
                     JobAttemptRecord.lease_expires_at > utc_now(),
                 )
             )
+            from .replica_fast import CONCURRENCY as fast_replica_concurrency
+
             limit = (
-                min(self.max_concurrency, 3)
+                min(self.max_concurrency, fast_replica_concurrency)
                 if self._fast_replica_record(job)
                 else self.max_concurrency
             )
