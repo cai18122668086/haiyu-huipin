@@ -2664,6 +2664,8 @@ export interface components {
              * @default
              */
             a_plus_copy: string;
+            /** Amazon Speed */
+            amazon_speed?: ("standard" | "fast") | null;
             /**
              * Auto Start After Plan
              * @default true
@@ -3343,6 +3345,11 @@ export interface components {
              */
             detail_skill?: "quick" | "refined";
             /**
+             * Detail Speed
+             * @enum {string}
+             */
+            detail_speed?: "standard" | "fast";
+            /**
              * Language
              * @default zh-CN
              */
@@ -3937,6 +3944,12 @@ export interface components {
              * @constant
              */
             language: "zh-CN";
+            /**
+             * Main Image Speed
+             * @description Optional fast workflow opt-in; omitted requests use standard.
+             * @enum {string}
+             */
+            main_image_speed?: "standard" | "native_fast";
             /** Offers */
             offers?: string[];
             /** Product Attributes */

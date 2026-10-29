@@ -30,7 +30,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.concurrency import run_in_threadpool
 
-from . import refined_detail
+from . import detail_fast, detail_fast_runtime, refined_detail
 from .amazon_visual_suite_provider import AMAZON_EXPECTED_ITEM_COUNT
 from .archive_response import ArchiveResponse, close_archive, open_archive
 from .aurora_execution_modes import is_parallel_aurora_mode, is_v20_aurora_mode
@@ -1987,7 +1987,11 @@ def update_draft_job(
         if job.type == JobType.DETAIL_PACK.value:
             updated_configuration.pop("domestic_detail_pipeline", None)
             pipeline = job.configuration.get("domestic_detail_pipeline")
-            if pipeline in {PIPELINE_VERSION, refined_detail.PIPELINE_VERSION}:
+            if pipeline in {
+                PIPELINE_VERSION,
+                refined_detail.PIPELINE_VERSION,
+                detail_fast.PIPELINE_VERSION,
+            }:
                 updated_configuration["domestic_detail_pipeline"] = pipeline
                 # Skill selection is immutable once the job has been created.
                 updated_settings = updated_configuration.get("settings")
@@ -2000,6 +2004,7 @@ def update_draft_job(
                     updated_settings.get(key) != original_settings.get(key)
                     for key in (
                         "detail_skill",
+                        "detail_speed",
                         "market_region",
                         "website_contract_version",
                     )
@@ -2189,7 +2194,7 @@ async def retry_job(
         )
     manual_refined_revision = (
         source.type == JobType.DETAIL_PACK.value
-        and refined_detail.is_refined(source.configuration)
+        and detail_fast_runtime.is_independent(source.configuration)
         and source.status == JobStatus.COMPLETED.value
         and payload.scope == RetryScope.SELECTED
     )
@@ -2221,6 +2226,9 @@ async def retry_job(
                 session, workspace.workspace_id, cast(str, idem.resource_id)
             ),
         )
+    from .aurora_main_image_fast import require_recoverable_plan
+
+    require_recoverable_plan(session, source)
     replica_document = None
     document_id = source.configuration.get("replica_session_id")
     if source.type == JobType.REFERENCE_REMIX.value and document_id:
@@ -2422,8 +2430,21 @@ def clone_job(
         select(JobItemRecord).where(JobItemRecord.job_id == source.id)
     ).all()
     selected = [item.id for item in source_items]
+    from .aurora_main_image_fast import require_recoverable_plan
+    from .aurora_main_image_fast import selected as fast_main
+
+    require_recoverable_plan(session, source)
     _validate_domestic_detail_retry(session, source, selected, clone=True)
     cloned = _copy_job_for_retry(session, source, RetryScope.FULL, selected)
+    if source.type == JobType.DOMESTIC_MAIN_IMAGE.value and fast_main(
+        source.configuration
+    ):
+        # Clone is an explicit new generation using the frozen plan, with a new
+        # paid-call scope; it must not inherit another job's image receipts.
+        cloned.configuration = {
+            key: value for key, value in cloned.configuration.items()
+            if not key.startswith("_main_image_fast")
+        }
     cloned.root_job_id = None
     cloned.retry_of_job_id = None
     cloned.retry_scope = None
@@ -2505,7 +2526,7 @@ def update_plan(
         job.type == JobType.DETAIL_PACK.value
         and isinstance(settings, Mapping)
         and settings.get("market_region") == "domestic"
-        and not refined_detail.is_refined(job.configuration)
+        and not detail_fast_runtime.is_independent(job.configuration)
     ):
         if job.stage == "intake_confirmation_required":
             raise ApiError(
@@ -3125,7 +3146,7 @@ def confirm_plan(
         if (
             isinstance(settings, dict)
             and settings.get("market_region") == "domestic"
-            and not refined_detail.is_refined(job.configuration)
+            and not detail_fast_runtime.is_independent(job.configuration)
         ):
             aurora = plan.payload.get("aurora_v4_3")
             if (
@@ -3186,10 +3207,12 @@ def confirm_plan(
                     "AURORA_NATIVE_APPROVAL_REQUIRED",
                     "请使用当前完整原生审批文档和版本指纹确认方案。",
                 )
-    if refined_detail.is_refined(job.configuration):
+    if detail_fast_runtime.is_independent(job.configuration):
         approval = plan.payload.get("refined_approval") or {}
         if (
-            not refined_detail.approval_matches(plan.payload)
+            not detail_fast_runtime.contract(job.configuration).approval_matches(
+                plan.payload
+            )
             or payload.approval_document_sha256 != approval.get("document_sha256")
             or not payload.approval_text
             or len(payload.approval_text.strip()) < 2
@@ -3331,7 +3354,7 @@ def confirm_plan(
         job.type == JobType.DETAIL_PACK.value
         and isinstance(job.configuration.get("settings"), dict)
         and job.configuration["settings"].get("market_region") == "domestic"
-        and not refined_detail.is_refined(job.configuration)
+        and not detail_fast_runtime.is_independent(job.configuration)
     ):
         detail_payload = deepcopy(plan.payload)
         detail_aurora = detail_payload["aurora_v4_3"]
@@ -3353,7 +3376,7 @@ def confirm_plan(
         }
         plan.payload = detail_payload
     if (
-        refined_detail.is_refined(job.configuration)
+        detail_fast_runtime.is_independent(job.configuration)
         and job.retry_of_job_id is not None
         and job.retry_scope == RetryScope.SELECTED.value
     ):
@@ -4053,7 +4076,7 @@ def finalize_domestic_main_image(
         job.type == JobType.DETAIL_PACK.value
         and isinstance(detail_settings, Mapping)
         and detail_settings.get("market_region") == "domestic"
-        and not refined_detail.is_refined(job.configuration)
+        and not detail_fast_runtime.is_independent(job.configuration)
     ):
         from .domestic_detail.delivery import (
             DetailDeliveryError,
@@ -4480,7 +4503,9 @@ def _new_job_from_payload(
             **(
                 {
                     "domestic_detail_pipeline": (
-                        refined_detail.PIPELINE_VERSION
+                        detail_fast.PIPELINE_VERSION
+                        if payload.configuration.detail_speed == "fast"
+                        else refined_detail.PIPELINE_VERSION
                         if payload.configuration.detail_skill == "refined"
                         else PIPELINE_VERSION
                     )
@@ -4622,7 +4647,23 @@ def _reserve_real_provider_job_if_enabled(
             _AMAZON_PLANNER_REQUESTS + _AMAZON_MAX_SUITE_REVIEW_REQUESTS
         )
         provider_requests = _AMAZON_PROVIDER_REQUEST_ENVELOPE
+        from .amazon_suite_fast import selected as fast_amazon_selected
+        if fast_amazon_selected(configuration):
+            estimated_cost = (image_cost
+                + settings.tengli_planner_reserve_micros * int(planner_required))
+            provider_requests = AMAZON_EXPECTED_ITEM_COUNT + int(planner_required)
         group_count = int(planner_required)
+    elif (
+        job.type == JobType.DOMESTIC_MAIN_IMAGE.value
+        and (configuration.get("settings") or {}).get("main_image_speed")
+        == "native_fast"
+    ):
+        fast_count = runnable_item_count if runnable_item_count is not None else 6
+        group_count = int(runnable_item_count is None)
+        estimated_cost = (
+            image_cost + settings.tengli_planner_reserve_micros * group_count
+        )
+        provider_requests = fast_count + group_count
     elif job.type == JobType.DOMESTIC_MAIN_IMAGE.value:
         # Reserve the complete Skill envelope before the identity-planner call:
         # six initial generations, one repair per page, identity inspection,
@@ -4680,7 +4721,7 @@ def _reserve_real_provider_job_if_enabled(
             provider_requests += 2
     elif job.type == JobType.DETAIL_PACK.value:
         detail_settings = configuration.get("settings") or {}
-        if refined_detail.is_refined(configuration):
+        if detail_fast_runtime.is_independent(configuration):
             planner_groups = group_count if runnable_item_count is None else 0
             estimated_cost = (
                 image_cost * 2 + planner_groups * settings.tengli_planner_reserve_micros
@@ -4862,7 +4903,7 @@ def _validate_domestic_detail_retry(
     if (
         source.type != JobType.DETAIL_PACK.value
         or settings.get("market_region") != "domestic"
-        or refined_detail.is_refined(source.configuration)
+        or detail_fast_runtime.is_independent(source.configuration)
     ):
         return
     from .aurora_detail_runtime import detail_workspace
@@ -5151,6 +5192,13 @@ def _copy_job_relations_for_retry(
         if source_plan is not None and source_plan.confirmed_at is not None:
             copied_payload = dict(source_plan.payload)
             copied_payload["state"] = "confirmed"
+            if source_plan.schema_version == "aurora-main-image-native-fast-plan-v1":
+                for key in (
+                    "_native_final_job_id", "_native_final_session",
+                    "_native_final_manifest", "technical_delivery",
+                ):
+                    copied_payload.pop(key, None)
+                copied_payload["harness_state"] = "AUTHORIZED"
             # A transient provider failure can happen after the native v2
             # harness has issued ``generate-next`` but before an image is
             # bound.  The source session is then intentionally left in
@@ -5362,12 +5410,16 @@ def _validate_plan_payload(
         from .xinghe_agent import validate_editable_plan_payload
 
         errors = validate_editable_plan_payload(payload, job.expected_item_count)
-        if refined_detail.is_refined(job.configuration) and not errors:
+        if detail_fast_runtime.is_independent(job.configuration) and not errors:
             from .xinghe_agent import XingheAgentError
 
             try:
-                refined_detail.validate_payload(payload, job.expected_item_count)
-                if not refined_detail.approval_matches(payload):
+                detail_fast_runtime.contract(job.configuration).validate_payload(
+                    payload, job.expected_item_count
+                )
+                if not detail_fast_runtime.contract(job.configuration).approval_matches(
+                    payload
+                ):
                     errors.append(
                         {
                             "field": "refined_approval",
@@ -5386,7 +5438,7 @@ def _validate_plan_payload(
         if (
             isinstance(settings, Mapping)
             and settings.get("market_region") == "domestic"
-            and not refined_detail.is_refined(job.configuration)
+            and not detail_fast_runtime.is_independent(job.configuration)
         ):
             aurora = payload.get("aurora_v4_3")
             if not isinstance(aurora, Mapping):

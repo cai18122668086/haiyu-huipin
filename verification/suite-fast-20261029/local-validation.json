@@ -1,0 +1,23 @@
+{
+  "source_baseline": "b6b91b8",
+  "main_image_native_source": "3a6ff23",
+  "detail_source": "ef37146",
+  "amazon_source": "ce13543",
+  "retained_native_files_unchanged": 24,
+  "main_b_skill_hash": "0cb04c6ad611f08a525a7c2ba5570613f3dde2ce691b5d76a9a98971afd4caa8",
+  "removed_a_code": true,
+  "latest_repeat_and_bv2_excluded_from_release": true,
+  "local_artifact_removal": "blocked by automatic approval review; retained locally only",
+  "local_feature_regression_unique_passed": 238,
+  "frontend_tests_passed": 25,
+  "typescript": "passed",
+  "production_build": "passed",
+  "targeted_eslint": "passed",
+  "targeted_ruff": "passed",
+  "mypy_router_and_delivery": "passed",
+  "new_paid_model_requests": 0,
+  "production_deployment": "pending",
+  "native_planner_behavior_unchanged": "AST equal to 3a6ff23; unused type-ignore comment removed for full-app mypy",
+  "full_frontend_tests": "236 passed after correcting stale five-platform assertion to existing server-provided catalog",
+  "full_backend_ruff": "passed"
+}

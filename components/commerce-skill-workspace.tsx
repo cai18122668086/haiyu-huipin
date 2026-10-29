@@ -46,6 +46,7 @@ import type {
 import { getFeatureById } from "@/lib/feature-registry";
 import { IMAGE_UPLOAD_FORMAT_HINT, validateImageUpload } from "@/lib/image-upload";
 import { allowsJobAction } from "@/lib/jobs/actions";
+import { amazonSuiteSpeedConfiguration, amazonSuiteSpeedDraftKey, readAmazonSuiteSpeed, type AmazonSuiteSpeed } from "@/lib/amazon-suite-speed";
 import { selectJobResultAssets } from "@/lib/jobs/results";
 import amazonStyles from "./amazon-visual-suite-form.module.css";
 import styles from "./product-image-workspace.module.css";
@@ -186,6 +187,8 @@ function readAmazonPlanPages(payload: Record<string, unknown> | undefined): Amaz
 }
 
 type AmazonBusinessQualityStatus =
+  | "NOT_REVIEWED"
+  | "not_reviewed"
   | "needs_review"
   | "passed"
   | "failed"
@@ -195,6 +198,14 @@ const AMAZON_BUSINESS_QUALITY_COPY: Record<
   AmazonBusinessQualityStatus,
   { title: string; description: string }
 > = {
+  NOT_REVIEWED: {
+    title: "技术校验完成，未进行 AI 视觉审核",
+    description: "快速版保留原始成图，不自动审美重绘。下载后请核对商品身份、文案、事实与各页构图。",
+  },
+  not_reviewed: {
+    title: "技术校验完成，未进行 AI 视觉审核",
+    description: "快速版保留原始成图，不自动审美重绘。下载后请核对商品身份、文案、事实与各页构图。",
+  },
   passed: {
     title: "技术交付与业务审核均已通过",
     description: "已确认商品主档、商品编码一致性和跨页质量。",
@@ -234,7 +245,7 @@ function shouldShowAmazonBusinessQuality(
     jobStatus === "completed" ||
     (
       jobStatus === "partial" &&
-      (qualityStatus === "failed" || qualityStatus === "review_infrastructure_failed")
+      (qualityStatus === "failed" || qualityStatus === "review_infrastructure_failed" || qualityStatus === "NOT_REVIEWED" || qualityStatus === "not_reviewed")
     )
   );
 }
@@ -409,6 +420,8 @@ export function CommerceSkillWorkspace({
   const [draftInstruction, setInstruction] = useState("");
   const [draftSellingPoints, setSellingPoints] = useState("");
   const [draftProductName, setProductName] = useState("");
+  const [draftAmazonSpeed, setAmazonSpeed] = useState<AmazonSuiteSpeed>("standard");
+  const hydratedAmazonSpeedWorkspace = useRef<string | undefined>(undefined);
   // Keep the full backend contract while the simplified Amazon form leaves legacy optional fields blank.
   const category = "";
   const targetBuyer = "";
@@ -443,7 +456,32 @@ export function CommerceSkillWorkspace({
   const instruction = jobId ? saved.text("instruction") : draftInstruction;
   const sellingPoints = jobId ? saved.lines(featureId === "amazon-visual-suite" ? "bullet_points" : "selling_points") : draftSellingPoints;
   const productName = jobId ? saved.text("product_name") : draftProductName;
+  const amazonSpeed = jobId ? readAmazonSuiteSpeed(saved.text("amazon_speed")) : draftAmazonSpeed;
   const productFacts = jobId ? [saved.lines("bullet_points"), saved.lines("product_facts")].filter(Boolean).join("\n") : draftProductFacts;
+
+  useEffect(() => {
+    if (featureId !== "amazon-visual-suite" || !workspace?.id || jobId || hydratedAmazonSpeedWorkspace.current === workspace.id) return;
+    hydratedAmazonSpeedWorkspace.current = workspace.id;
+    try {
+      // Restore this workspace's explicit draft choice; new workspaces start with standard.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAmazonSpeed(readAmazonSuiteSpeed(window.localStorage.getItem(amazonSuiteSpeedDraftKey(workspace.id))));
+    } catch {
+      // Storage may be disabled; the default version remains usable.
+    }
+  }, [featureId, workspace?.id, jobId]);
+
+  const selectAmazonSpeed = (speed: AmazonSuiteSpeed) => {
+    if (jobId) return;
+    setAmazonSpeed(speed);
+    if (workspace?.id) {
+      try {
+        window.localStorage.setItem(amazonSuiteSpeedDraftKey(workspace.id), speed);
+      } catch {
+        // An unavailable draft store must not block task submission.
+      }
+    }
+  };
 
   useEffect(() => {
     if (jobId || typeof window === "undefined") return;
@@ -506,7 +544,7 @@ export function CommerceSkillWorkspace({
   const selectedLanguageLabel = languageOptions.find((option) => option.value === language)?.label
     ?? "未选择语言";
   const selectedSizeLabel = isAmazon
-    ? "主图 2000 × 2000；副图 1200 × 1600；桌面 A+ 1464 × 600；移动 A+ 1600 × 1200"
+    ? `${amazonSpeed === "fast" ? "目标画幅：" : ""}主图 2000 × 2000；副图 1200 × 1600；桌面 A+ 1464 × 600；移动 A+ 1600 × 1200${amazonSpeed === "fast" ? "；按通过技术校验的原图实际尺寸和格式交付" : ""}`
     : aspectRatio === "follow-reference"
       ? "跟随首张参考图画幅比例"
       : aspectRatios.find((ratio) => ratio.value === aspectRatio)?.note ?? "未选择";
@@ -723,6 +761,7 @@ export function CommerceSkillWorkspace({
       },
       configuration: {
         auto_start_after_plan: true,
+        ...amazonSuiteSpeedConfiguration(amazonSpeed),
         marketplace:
           amazonPlatforms.find((platform) => platform.value === platformCode)?.value ??
           amazonPlatforms[0].value,
@@ -914,6 +953,23 @@ export function CommerceSkillWorkspace({
 
               {isAmazon ? (
                 <div className={amazonStyles.amazonForm}>
+                  <fieldset className={amazonStyles.speedOptions} disabled={Boolean(jobId)}>
+                    <legend>生成版本</legend>
+                    <div className={amazonStyles.speedChoices}>
+                      {([
+                        ["standard", "原版", "保留原有整套审核与自动返修流程"],
+                        ["fast", "快速", "一次整套规划，原图直接交付"],
+                      ] as const).map(([value, title, note]) => (
+                        <label key={value} data-selected={amazonSpeed === value || undefined}>
+                          <input type="radio" name="amazon-suite-speed" value={value} checked={amazonSpeed === value} onChange={() => selectAmazonSpeed(value)} />
+                          <span><strong>{title}</strong><small>{note}</small></span>
+                        </label>
+                      ))}
+                    </div>
+                    <p>{amazonSpeed === "fast"
+                      ? "快速版完整生成 21 张图片，桌面与移动 A+ 各自独立构图；保留技术校验，不进行 AI 视觉审核或自动审美重绘，下载后请人工核对。模型和画质设置保持一致。原图按实际尺寸和格式交付，不裁切或放大。"
+                      : "默认使用原版，完整生成 21 张图片，桌面与移动 A+ 各自独立构图。"}</p>
+                  </fieldset>
                   <label className={amazonStyles.simpleField}>
                     <span>商品名称</span>
                     <input
@@ -1139,7 +1195,7 @@ export function CommerceSkillWorkspace({
                 data-status={amazonBusinessQuality.status}
                 aria-live="polite"
               >
-                {amazonBusinessQuality.status === "review_infrastructure_failed" ? (
+                {amazonBusinessQuality.status === "review_infrastructure_failed" || amazonBusinessQuality.status === "NOT_REVIEWED" || amazonBusinessQuality.status === "not_reviewed" ? (
                   <Info size={19} />
                 ) : (
                   <ShieldCheck size={19} />

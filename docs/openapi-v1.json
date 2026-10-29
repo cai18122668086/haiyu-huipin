@@ -161,6 +161,21 @@
             "title": "A Plus Copy",
             "type": "string"
           },
+          "amazon_speed": {
+            "anyOf": [
+              {
+                "enum": [
+                  "standard",
+                  "fast"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amazon Speed"
+          },
           "auto_start_after_plan": {
             "default": true,
             "title": "Auto Start After Plan",
@@ -2227,6 +2242,14 @@
             "title": "Detail Skill",
             "type": "string"
           },
+          "detail_speed": {
+            "enum": [
+              "standard",
+              "fast"
+            ],
+            "title": "Detail Speed",
+            "type": "string"
+          },
           "language": {
             "default": "zh-CN",
             "maxLength": 16,
@@ -3589,6 +3612,15 @@
             "const": "zh-CN",
             "default": "zh-CN",
             "title": "Language",
+            "type": "string"
+          },
+          "main_image_speed": {
+            "description": "Optional fast workflow opt-in; omitted requests use standard.",
+            "enum": [
+              "standard",
+              "native_fast"
+            ],
+            "title": "Main Image Speed",
             "type": "string"
           },
           "offers": {

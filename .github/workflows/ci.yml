@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     services:
       postgres:
         image: postgres:18.4-alpine
@@ -66,7 +66,7 @@ jobs:
       - run: python -m mypy --config-file backend/pyproject.toml backend/app
       - run: python -m alembic -c alembic.ini upgrade head
         working-directory: backend
-      - run: python backend/scripts/ci_pytest_shard.py --shard ${{ matrix.shard }} --shards 4
+      - run: python backend/scripts/ci_pytest_shard.py --shard ${{ matrix.shard }} --shards 8
       - name: Test PostgreSQL ecommerce concurrency
         if: matrix.shard == 0
         env:

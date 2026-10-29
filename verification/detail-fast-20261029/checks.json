@@ -1,0 +1,29 @@
+{
+  "base": "b6b91b8",
+  "backend": {
+    "passed": 352,
+    "failed": 0,
+    "seconds": 120.5,
+    "fast_specific": 94,
+    "command": "PYTHONPATH=<own backend> <shared venv python> -m pytest test_detail_fast_contract test_detail_fast_gateway test_detail_fast_integration test_detail_fast_planner_transport test_refined_detail test_new_detail_and_amazon_providers test_execution_reliability test_replica_fast test_skill_runtime test_replica_execution_context test_task_runner_selection test_replica_planner_truncation test_replica_style_delivery -q -o addopts="
+  },
+  "frontend": {
+    "detail_tests_passed": 7,
+    "typescript": "passed",
+    "targeted_eslint": "passed",
+    "production_build": "passed"
+  },
+  "static": {
+    "ruff": "passed",
+    "mypy_source_modules": 10,
+    "mypy": "passed",
+    "openapi_exact_export_match": true,
+    "typescript_exact_codegen_match": true,
+    "git_diff_check": "passed"
+  },
+  "notes": [
+    "Synthetic tests do not establish visual quality.",
+    "Real original output/download/accepted-task recovery is separately documented in real-summary.json.",
+    "Full private provider receipts, source images, generated originals, credentials and databases are intentionally absent."
+  ]
+}

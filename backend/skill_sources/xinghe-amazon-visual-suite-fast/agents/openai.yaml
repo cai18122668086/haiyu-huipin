@@ -1,0 +1,6 @@
+interface:
+  display_name: "星河亚马逊21张套图·快速"
+  short_description: "一次完整规划，独立生成21张主副图与桌面/移动A+原图"
+  default_prompt: "Use $xinghe-amazon-visual-suite-fast to create the selected fast Amazon 21-image suite."
+policy:
+  allow_implicit_invocation: true

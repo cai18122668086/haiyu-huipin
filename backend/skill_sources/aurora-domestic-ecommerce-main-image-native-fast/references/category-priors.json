@@ -1,0 +1,24 @@
+{
+  "schema_version": "aurora-category-priors-2.0.0",
+  "routes": [
+    {
+      "id": "HOUSEHOLD_CLEANING",
+      "terms": ["洗衣液", "洗涤剂", "清洁剂", "消毒液", "除菌液", "柔顺剂", "洗衣凝珠", "清洁用品", "家清", "日化"],
+      "proof": "完整瓶装或补充装、真实液体/泡沫/织物接触、洗涤动作、洁净结果和可信家居关系",
+      "photography": "高完成度家清淘宝商业摄影；完整包装大体量、真实织物或洗涤关系、液体材质与洁净结果共同构成主画面",
+      "light": "柔和日光感塑形主光加包装轮廓光；瓶体、标签、液体和织物纹理同时清楚",
+      "temperature": "4700K–5300K自然中性；植物或清新线索不得覆盖商品身份色",
+      "typography": "有力度的中文商业黑体；功效数字、核心结果和限定条件明显分级，避免只有一行自然系标题",
+      "graphics": "从包装盾形、液体弧面、织物纹理、泡沫或可信洁净关系提取图形语言",
+      "surfaces": "搜索页允许强数字锚点、0–5个不等权功效模块与底部条件说明；轮播页按职责降低密度",
+      "avoid": ["把洗衣液误判为服装", "纯植物枝叶海报", "只有商品和一句标题", "图标替代真实洗涤或材质证据", "无依据的微生物实验"]
+    },
+    {"id": "BEAUTY_PERSONAL_CARE", "terms": ["美妆", "口红", "面霜", "精华", "护肤", "个护"], "proof": "包装、涂抹器、真实质地和有边界的使用关系", "photography": "精致但商品主导的美妆个护商业摄影；包装、质地和使用关系承担卖点", "light": "柔和塑形光与材质高光并存", "temperature": "4700K–5300K", "typography": "精致有力度的中文展示字，功效、成分和条件有明确主次", "graphics": "从包装轮廓、涂抹轨迹和真实质地提取", "surfaces": "少量不等权信息面与真实质地微距结合", "avoid": ["unverified efficacy", "fake molecule diagrams"]},
+    {"id": "FOOD", "terms": ["食品", "零食", "饮料", "咖啡", "茶叶", "茶饮"], "proof": "完整包装、真实内容物、原料或制备关系", "photography": "食欲与包装识别并重的高完成度商业摄影", "light": "突出真实色泽和内容物纹理的自然塑形光", "temperature": "4800K–5600K", "typography": "高识别中文标题，口味、数量、规格和利益点分层", "graphics": "从包装、内容物形态和制备动作提取", "surfaces": "包装主视觉、真实内容物和规格闭合形成不等权结构", "avoid": ["invented ingredients", "invented serving result"]},
+    {"id": "APPAREL_ACCESSORY", "terms": ["服装", "上衣", "内衣", "裤装", "鞋履", "箱包", "配饰"], "proof": "完整轮廓或穿着状态，再证明版型、结构、材质或承载", "photography": "完整轮廓、穿着关系和材质细节并重的服饰商业摄影", "light": "显出版型与面料纹理的侧前方塑形光", "temperature": "4600K–5400K", "typography": "时尚但缩略图有力的中文标题，材质和规格清楚分层", "graphics": "从轮廓、车线、面料和穿着动作提取", "surfaces": "身份页较低密度，材质与版型页使用不等权双尺度", "avoid": ["metaphor as functional proof"]},
+    {"id": "ELECTRONICS_APPLIANCE", "terms": ["电器", "家电", "数码", "鼠标", "键盘", "风扇", "吸尘", "充电"], "proof": "真实控制、接口、部件、界面、接触或工作状态", "photography": "真实工作状态主导的精密商业摄影；完整商品与控制/任务关系同时清楚", "light": "35°–45°中性塑形光，关键控制区保留局部反差", "temperature": "4900K–5400K", "typography": "精密有力度的中文无衬线，数字和模式绑定真实界面", "graphics": "从控制区、接口、状态和动作关系提取", "surfaces": "少量紧凑信息面与真实操作近景结合", "avoid": ["generic technology blue", "energy effects replacing mechanism"]},
+    {"id": "HOME_DURABLE", "terms": ["家具", "收纳", "椅", "桌", "柜", "架", "推车"], "proof": "完整结构、准确部件、取放、调节、容量或使用关系", "photography": "完整结构与真实使用空间并重的耐用品商业摄影", "light": "保持结构边界、材质和接触阴影可信的空间塑形光", "temperature": "4600K–5400K", "typography": "稳重有力度的中文标题，结构和规格信息分层", "graphics": "从结构、连接、取放和空间关系提取", "surfaces": "完整结构为主，局部/动作/规格采用不等权辅助面", "avoid": ["invented load rating", "cross-SKU component blending"]},
+    {"id": "PET", "terms": ["宠物", "猫", "狗", "猫砂", "宠粮"], "proof": "动物尺度或真实喂养、如厕、护理、互动、维护关系", "photography": "商品与真实宠物任务共同主导的商业摄影", "light": "自然亲和但商品边界清楚的塑形光", "temperature": "4800K–5500K", "typography": "亲和但有商业力度的中文标题，功能与适用条件分层", "graphics": "从商品结构、颗粒、喂养或护理动作提取", "surfaces": "商品、真实任务和短信息模块构成不等权关系", "avoid": ["decorative mascot as proof"]},
+    {"id": "GENERAL", "terms": [], "proof": "完整商品加一个真实材质、部件、动作、状态或使用关系", "photography": "当前商品证据驱动的高完成度淘宝商业摄影；商品、主标题、真实证据和闭合共同构成画面", "light": "按当前材质选择中性塑形光，保持轮廓、材质与接触阴影可信", "temperature": "4600K–5400K", "typography": "从当前商品与受众推导的有力度中文展示家族；标题参与构图并保持缩略图识别", "graphics": "只从当前商品形态、部件和动作关系提取", "surfaces": "一至三处不等权信息面，围绕主结论、真实证据和商业闭合组织", "avoid": ["category stereotype", "empty editorial poster"]}
+  ]
+}

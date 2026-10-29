@@ -19,8 +19,8 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
+from . import detail_fast, detail_fast_runtime, refined_detail
 from . import provider_quota_ledger as quota_ledger
-from . import refined_detail
 from .aurora_execution_modes import (
     is_calibrated_parallel_aurora_mode,
     is_parallel_aurora_mode,
@@ -66,7 +66,7 @@ from .provider import (
     ProviderResult,
 )
 from .provider_quota_ledger import ProviderQuotaLedgerError, usage_request_count
-from .services import new_id, settle_credits, transition_job
+from .services import canonical_hash, new_id, settle_credits, transition_job
 from .skill_runtime import build_fake_skill_runtime_provider
 from .storage import ImageStorage, ValidatedImage
 
@@ -588,6 +588,10 @@ class ExecutionCoordinator:
 
     async def run(self, job_id: str) -> JobStatus | None:
         current = self.prepare(job_id)
+        if current == JobStatus.COMPLETED and self._is_domestic_main_image_job(job_id):
+            from .aurora_main_image_native_fast import finalize_delivery
+
+            await finalize_delivery(self.session_factory, self.artifact_storage, job_id)
         if current is None or current in TERMINAL_JOB_STATUSES:
             return current
         if current == JobStatus.AWAITING_FINAL_REVIEW:
@@ -652,8 +656,19 @@ class ExecutionCoordinator:
             is_fast_replica = (
                 fast_job is not None and self._fast_replica_record(fast_job)
             )
-        if is_fast_replica:
+            is_fast_main = (
+                fast_job is not None and self._fast_main_image_record(fast_job)
+            )
+        if is_fast_replica or is_fast_main or self._is_fast_amazon_job(job_id) or (
+            fast_job is not None and detail_fast_runtime.is_fast(fast_job.configuration)
+        ):
             await self._run_fast_replica(job_id)
+            if is_fast_main:
+                from .aurora_main_image_native_fast import finalize_delivery
+
+                await finalize_delivery(
+                    self.session_factory, self.artifact_storage, job_id
+                )
             return self.finalize_job(job_id)
         while True:
             leases: list[AttemptLease] = []
@@ -719,8 +734,8 @@ class ExecutionCoordinator:
 
             with self.session_factory() as session:
                 current_job = session.get(JobRecord, job_id)
-                refined_job = current_job is not None and refined_detail.is_refined(
-                    current_job.configuration
+                refined_job = current_job is not None and (
+                    detail_fast_runtime.is_independent(current_job.configuration)
                 )
             await asyncio.gather(
                 *(
@@ -768,6 +783,17 @@ class ExecutionCoordinator:
         return await self._maybe_finalize_domestic_automatic_delivery(
             job_id, self.finalize_job(job_id)
         )
+
+    @staticmethod
+    def _fast_amazon_record(job: JobRecord) -> bool:
+        from .amazon_suite_fast import selected
+        return (job.type == JobType.AMAZON_VISUAL_SUITE.value
+                and selected(job.configuration))
+
+    def _is_fast_amazon_job(self, job_id: str) -> bool:
+        with self.session_factory() as session:
+            job = session.get(JobRecord, job_id)
+            return job is not None and self._fast_amazon_record(job)
 
     async def _run_fast_replica(self, job_id: str) -> None:
         """Refill free slots immediately; database claims fence duplicate workers."""
@@ -1127,7 +1153,7 @@ class ExecutionCoordinator:
             return (
                 isinstance(settings, Mapping)
                 and settings.get("market_region") == "domestic"
-                and not refined_detail.is_refined(job.configuration)
+                and not detail_fast_runtime.is_independent(job.configuration)
             )
 
     def _is_parallel_aurora_job(self, job_id: str) -> bool:
@@ -1615,7 +1641,9 @@ class ExecutionCoordinator:
 
             limit = (
                 min(self.max_concurrency, fast_replica_concurrency)
-                if self._fast_replica_record(job)
+                if self._fast_replica_record(job) or self._fast_amazon_record(job)
+                or detail_fast_runtime.is_fast(job.configuration)
+                else min(self.max_concurrency, 6) if self._fast_main_image_record(job)
                 else self.max_concurrency
             )
             if int(active or 0) >= limit:
@@ -1663,6 +1691,7 @@ class ExecutionCoordinator:
             elif (
                 job.type == JobType.DOMESTIC_MAIN_IMAGE.value
                 and not self._job_uses_parallel_aurora(session, job.id)
+                and not self._fast_main_image_record(job)
             ):
                 # Aurora owns a strict page-by-page protocol. Outbox delivery is
                 # at-least-once, so a duplicate process_job invocation may enter
@@ -1755,7 +1784,8 @@ class ExecutionCoordinator:
                     item_query = item_query.where(
                         JobItemRecord.configuration["pair_id"].as_string() == next_pair
                     )
-            elif job.type == JobType.AMAZON_VISUAL_SUITE.value:
+            elif (job.type == JobType.AMAZON_VISUAL_SUITE.value
+                  and not self._fast_amazon_record(job)):
                 active_ordinal = session.scalar(
                     select(func.min(JobItemRecord.ordinal)).where(
                         JobItemRecord.job_id == job.id,
@@ -1865,7 +1895,15 @@ class ExecutionCoordinator:
             job.type == JobType.DETAIL_PACK.value
             and isinstance(settings, Mapping)
             and settings.get("market_region") == "domestic"
-            and not refined_detail.is_refined(job.configuration)
+            and not detail_fast_runtime.is_independent(job.configuration)
+        )
+
+    @staticmethod
+    def _fast_main_image_record(job: JobRecord) -> bool:
+        from .aurora_main_image_fast import selected
+
+        return job.type == JobType.DOMESTIC_MAIN_IMAGE.value and selected(
+            job.configuration
         )
 
     @staticmethod
@@ -2376,7 +2414,10 @@ class ExecutionCoordinator:
             ):
                 return False
 
-            expected_dimensions = _expected_delivery_dimensions(item, result, job)
+            expected_dimensions = (
+                None if self._fast_main_image_record(job)
+                else _expected_delivery_dimensions(item, result, job)
+            )
             if (
                 result.outcome == ProviderOutcome.SUCCEEDED
                 and result.persisted_artifact is not None
@@ -2643,7 +2684,10 @@ class ExecutionCoordinator:
                 result_metrics = (
                     dict(metrics_value) if isinstance(metrics_value, dict) else {}
                 )
-                canonical_dimensions = _expected_delivery_dimensions(item, result, job)
+                canonical_dimensions = (
+                    None if self._fast_main_image_record(job)
+                    else _expected_delivery_dimensions(item, result, job)
+                )
                 session.add(
                     AssetRecord(
                         id=asset_id,
@@ -2945,7 +2989,7 @@ class ExecutionCoordinator:
             if job.type in {
                 JobType.DETAIL_PACK.value,
                 JobType.AMAZON_VISUAL_SUITE.value,
-            }:
+            } or self._fast_main_image_record(job):
                 from .xinghe_agent import planner_accounting
 
                 latest_plan = session.scalar(
@@ -3020,7 +3064,7 @@ class ExecutionCoordinator:
             elif succeeded == job.expected_item_count:
                 if (
                     job.type == JobType.DETAIL_PACK.value
-                    and not refined_detail.is_refined(job.configuration)
+                    and not detail_fast_runtime.is_independent(job.configuration)
                 ):
                     # Domestic Aurora and cross-border Skill detail pages both
                     # require an explicit human delivery decision after all
@@ -3052,6 +3096,19 @@ class ExecutionCoordinator:
                 if target == JobStatus.AWAITING_FINAL_REVIEW
                 else target.value
             )
+            if self._fast_amazon_record(job) and latest_plan is not None:
+                payload = dict(latest_plan.payload)
+                payload["business_quality"] = {
+                    **payload.get("business_quality", {}),
+                    "status": "NOT_REVIEWED",
+                    "technical_delivery_status": (
+                        "complete" if succeeded == job.expected_item_count
+                        else "incomplete"
+                    ),
+                    "automatic_redraw_enabled": False,
+                }
+                latest_plan.payload = payload
+                latest_plan.payload_hash = canonical_hash(payload)
             transition_job(job, target, stage=terminal_stage, progress=100)
             from .replica_progress import reconcile_job_document
 
@@ -3140,6 +3197,14 @@ def _expected_delivery_dimensions(
     """Resolve item dimensions and verify native-original delivery receipts."""
 
     configuration = item.configuration if isinstance(item.configuration, dict) else {}
+    from .amazon_suite_fast import POLICY_VERSION, native_canvas_valid
+    if configuration.get("workflow_version") == POLICY_VERSION:
+        from .amazon_visual_suite_provider import amazon_item_spec
+        artifact = result.persisted_artifact or result.artifact
+        if artifact is not None:
+            spec = amazon_item_spec(item.item_key)
+            if native_canvas_valid(artifact.width, artifact.height, spec):
+                return artifact.width, artifact.height
     size = configuration.get("size")
     if isinstance(size, str) and re.fullmatch(r"[1-9]\d*x[1-9]\d*", size):
         width_text, height_text = size.split("x", maxsplit=1)
@@ -3147,7 +3212,7 @@ def _expected_delivery_dimensions(
         if (
             job is not None
             and job.type == JobType.DETAIL_PACK.value
-            and refined_detail.is_refined(job.configuration)
+            and detail_fast_runtime.is_independent(job.configuration)
             and result.persisted_artifact is not None
         ):
             artifact = result.persisted_artifact
@@ -3351,6 +3416,24 @@ def build_fake_coordinator(
             skill_id=REFINED_DETAIL_SKILL_ID,
         )
     )
+    from .detail_fast_gateway import DurableFastDetailGateway
+
+    fast_skill_root = default_skill_root(detail_fast.SKILL_ID)
+    fast_planner = XinghePlanningCoordinator(
+        session_factory, gateway, storage=storage, skill_root=fast_skill_root,
+        base_url_signature=base_url_signature, medium_price_micros=medium_price_micros,
+        high_price_micros=high_price_micros, budget_limit_micros=budget_limit_micros,
+        skill_id=detail_fast.SKILL_ID,
+    )
+    fast_gateway = DurableFastDetailGateway(
+        session_factory, gateway, storage, skill_id=detail_fast.SKILL_ID,
+        skill_content_hash=BundledSkillManifestValidator().validate(detail_fast.SKILL_ID),
+    )
+    fast_detail_provider = detail_fast.FastDetailProvider(XingheImageProvider(
+        session_factory, fast_gateway, storage=storage, skill_root=fast_skill_root,
+        max_concurrency=min(xinghe_concurrency, detail_fast.CONCURRENCY),
+        budget_limit_micros=budget_limit_micros, skill_id=detail_fast.SKILL_ID,
+    ))
     amazon_skill_root = default_skill_root(AMAZON_VISUAL_SUITE_SKILL_ID)
     amazon_planner = XinghePlanningCoordinator(
         session_factory,
@@ -3363,12 +3446,29 @@ def build_fake_coordinator(
         budget_limit_micros=budget_limit_micros,
         skill_id=AMAZON_VISUAL_SUITE_SKILL_ID,
     )
+    from .amazon_suite_fast import SKILL_ID as AMAZON_FAST_SKILL_ID
+    from .amazon_suite_fast_provider import (
+        AmazonFastPlannerRouter,
+        AmazonFastProvider,
+        AmazonFastProviderRouter,
+    )
+    amazon_fast_planner = XinghePlanningCoordinator(
+        session_factory, gateway, storage=storage,
+        skill_root=default_skill_root(AMAZON_FAST_SKILL_ID),
+        base_url_signature=base_url_signature,
+        medium_price_micros=medium_price_micros, high_price_micros=high_price_micros,
+        budget_limit_micros=budget_limit_micros, skill_id=AMAZON_FAST_SKILL_ID,
+    )
+    routed_amazon_planner = AmazonFastPlannerRouter(
+        session_factory, amazon_planner, amazon_fast_planner
+    )
     routed_planner = DetailMarketRoutingPlanner(
         session_factory,
         international_planner,
         domestic_planner,
-        amazon_planner,
+        routed_amazon_planner,
         refined=refined_planner,
+        fast=fast_planner,
     )
     default_provider = build_fake_skill_runtime_provider(
         session_factory,
@@ -3398,6 +3498,17 @@ def build_fake_coordinator(
         storage,
         work_root=aurora_work_root,
         execution_mode=aurora_execution_mode,
+    )
+    from .aurora_main_image_fast import (
+        MainImagePlannerRouter,
+        MainImageProviderRouter,
+    )
+    from .aurora_main_image_fast_provider import FastMainImageProvider
+    from .aurora_main_image_native_fast import NativeFastMainImagePlanner
+
+    aurora_provider = MainImageProviderRouter(
+        session_factory, aurora_provider,
+        FastMainImageProvider(session_factory, gateway, storage),
     )
     if xinghe_gateway is None:
         new_routes: dict[str, Provider] = {
@@ -3512,6 +3623,12 @@ def build_fake_coordinator(
                 else UnavailableProvider()
             ),
         }
+    new_routes[JobType.AMAZON_VISUAL_SUITE.value] = AmazonFastProviderRouter(
+        new_routes[JobType.AMAZON_VISUAL_SUITE.value],
+        AmazonFastProvider(session_factory, gateway, storage)
+        if xinghe_gateway is None or amazon_visual_suite_provider_enabled
+        else UnavailableProvider(),
+    )
     from .domestic_detail.campaign_provider import DomesticCampaignReviewProvider
 
     new_routes[JobType.DOMESTIC_DETAIL_REVIEW.value] = DomesticCampaignReviewProvider(
@@ -3524,6 +3641,7 @@ def build_fake_coordinator(
         new_routes,
         domestic_detail_provider=domestic_detail_provider,
         refined_detail_provider=refined_detail_provider,
+        fast_detail_provider=fast_detail_provider,
     )
     amazon_suite_reviewer = None
     if storage is not None:
@@ -3542,12 +3660,18 @@ def build_fake_coordinator(
         session_factory,
         provider,
         detail_planner=routed_planner,
-        campaign_planner=AuroraMainImagePlanner(
+        campaign_planner=MainImagePlannerRouter(
             session_factory,
-            storage=storage,
-            gateway=gateway,
-            work_root=aurora_work_root,
-            execution_mode=aurora_execution_mode,
+            AuroraMainImagePlanner(
+                session_factory, storage=storage, gateway=gateway,
+                work_root=aurora_work_root, execution_mode=aurora_execution_mode,
+            ),
+            NativeFastMainImagePlanner(
+                session_factory, gateway, storage,
+                work_root=(
+                    aurora_work_root / "native-fast" if aurora_work_root else None
+                ),
+            ),
         ),
         max_concurrency=xinghe_concurrency,
         # Detail-pack behavior remains unchanged. Amazon follows its own Skill

@@ -8,10 +8,12 @@ from typing import Any, cast
 import pytest
 from fastapi.testclient import TestClient
 
+from app.amazon_suite_fast_provider import AmazonFastProviderRouter
 from app.amazon_visual_suite_provider import (
     AMAZON_VISUAL_SUITE_SKILL_ID,
     AmazonVisualSuiteProvider,
 )
+from app.aurora_main_image_fast import MainImageProviderRouter
 from app.aurora_main_image_provider import AuroraMainImageProvider
 from app.config import default_skill_root, default_xinghe_skill_root
 from app.creative_image_provider import CreativeImageProvider
@@ -90,6 +92,12 @@ class RecordingPlanner:
     async def plan(self, job_id: str) -> JobStatus | None:
         self.calls.append(job_id)
         return self.status
+
+
+def standard_adapter(adapter: Any) -> Any:
+    if isinstance(adapter, (AmazonFastProviderRouter, MainImageProviderRouter)):
+        return adapter.standard
+    return adapter
 
 
 def _request(operation: str, configuration: dict[str, Any]) -> ProviderRequest:
@@ -183,7 +191,7 @@ def test_mock_new_image_routes_keep_the_structural_fake_provider(
         assert result.error_code == "PROVIDER_NOT_CONFIGURED"
         assert result.artifact is None and result.raw_usage["network_requests"] == 0
     assert default.provider.external_network_request_count == 0
-    amazon = router.routes[JobType.AMAZON_VISUAL_SUITE.value]
+    amazon = standard_adapter(router.routes[JobType.AMAZON_VISUAL_SUITE.value])
     assert isinstance(amazon, AmazonVisualSuiteProvider)
     assert amazon.delegate is default
 
@@ -444,7 +452,7 @@ def test_real_single_image_route_uses_its_own_skill_delegate_when_enabled(
         **{flag_name: True},
     )
     router = cast(RegisteredOperationRoutingProvider, coordinator.provider)
-    adapter = router.routes[operation]
+    adapter = standard_adapter(router.routes[operation])
 
     assert isinstance(adapter, adapter_type)
     delegate = adapter.delegate
@@ -464,7 +472,9 @@ def test_real_single_image_route_uses_its_own_skill_delegate_when_enabled(
             assert isinstance(other_adapter, DomesticCampaignReviewProvider)
             continue
         if other_operation != operation:
-            assert isinstance(other_adapter.delegate, UnavailableProvider)
+            assert isinstance(
+                standard_adapter(other_adapter).delegate, UnavailableProvider
+            )
 
 
 def test_real_single_image_routes_receive_independent_delegates(
@@ -480,7 +490,7 @@ def test_real_single_image_routes_receive_independent_delegates(
     )
     router = cast(RegisteredOperationRoutingProvider, coordinator.provider)
     delegates = [
-        adapter.delegate
+        standard_adapter(adapter).delegate
         for operation, adapter in router.routes.items()
         if operation
         not in {
@@ -649,9 +659,11 @@ def test_mock_coordinator_ignores_real_provider_flags(
     assert replica.legacy is router.default_provider
     assert replica.exact is router.default_provider
     assert isinstance(replica.native, UnavailableProvider)
-    amazon = router.routes[JobType.AMAZON_VISUAL_SUITE.value]
+    amazon = standard_adapter(router.routes[JobType.AMAZON_VISUAL_SUITE.value])
     assert amazon.delegate is router.default_provider
-    domestic_main_image = router.routes[JobType.DOMESTIC_MAIN_IMAGE.value]
+    domestic_main_image = standard_adapter(
+        router.routes[JobType.DOMESTIC_MAIN_IMAGE.value]
+    )
     assert isinstance(domestic_main_image, AuroraMainImageProvider)
     assert (
         domestic_main_image.gateway is coordinator.detail_planner.international.gateway
@@ -699,7 +711,7 @@ def test_tengli_task_runner_propagates_all_provider_switches(
     )
 
     assert all(
-        isinstance(adapter.delegate, XingheSingleImageProvider)
+        isinstance(standard_adapter(adapter).delegate, XingheSingleImageProvider)
         for operation, adapter in router.routes.items()
         if operation
         not in {

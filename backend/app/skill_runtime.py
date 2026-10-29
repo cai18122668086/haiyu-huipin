@@ -45,10 +45,13 @@ KNOWN_SKILLS = {
     "xinghe-ecommerce-creative-image",
     "xinghe-ecommerce-detail-domestic-3",
     "xinghe-ecommerce-detail-domestic-4",
+    "xinghe-ecommerce-detail-domestic-4-fast",
     "aurora-domestic-ecommerce-detail-page",
     "xinghe-crossborder-detail-3",
     "xinghe-amazon-visual-suite",
+    "xinghe-amazon-visual-suite-fast",
     "aurora-domestic-ecommerce-main-image",
+    "aurora-domestic-ecommerce-main-image-native-fast",
 }
 OPERATION_SKILLS = {
     JobType.LOCAL_EDIT.value: "masked-image-repair",
