@@ -652,7 +652,10 @@ class ExecutionCoordinator:
             is_fast_replica = (
                 fast_job is not None and self._fast_replica_record(fast_job)
             )
-        if is_fast_replica:
+            is_fast_main = (
+                fast_job is not None and self._fast_main_image_record(fast_job)
+            )
+        if is_fast_replica or is_fast_main:
             await self._run_fast_replica(job_id)
             return self.finalize_job(job_id)
         while True:
@@ -1616,6 +1619,7 @@ class ExecutionCoordinator:
             limit = (
                 min(self.max_concurrency, fast_replica_concurrency)
                 if self._fast_replica_record(job)
+                else min(self.max_concurrency, 6) if self._fast_main_image_record(job)
                 else self.max_concurrency
             )
             if int(active or 0) >= limit:
@@ -1663,6 +1667,7 @@ class ExecutionCoordinator:
             elif (
                 job.type == JobType.DOMESTIC_MAIN_IMAGE.value
                 and not self._job_uses_parallel_aurora(session, job.id)
+                and not self._fast_main_image_record(job)
             ):
                 # Aurora owns a strict page-by-page protocol. Outbox delivery is
                 # at-least-once, so a duplicate process_job invocation may enter
@@ -1866,6 +1871,14 @@ class ExecutionCoordinator:
             and isinstance(settings, Mapping)
             and settings.get("market_region") == "domestic"
             and not refined_detail.is_refined(job.configuration)
+        )
+
+    @staticmethod
+    def _fast_main_image_record(job: JobRecord) -> bool:
+        from .aurora_main_image_fast import selected
+
+        return job.type == JobType.DOMESTIC_MAIN_IMAGE.value and selected(
+            job.configuration
         )
 
     @staticmethod
@@ -2376,7 +2389,10 @@ class ExecutionCoordinator:
             ):
                 return False
 
-            expected_dimensions = _expected_delivery_dimensions(item, result)
+            expected_dimensions = (
+                None if self._fast_main_image_record(job)
+                else _expected_delivery_dimensions(item, result)
+            )
             if (
                 result.outcome == ProviderOutcome.SUCCEEDED
                 and result.persisted_artifact is not None
@@ -2643,7 +2659,10 @@ class ExecutionCoordinator:
                 result_metrics = (
                     dict(metrics_value) if isinstance(metrics_value, dict) else {}
                 )
-                canonical_dimensions = _expected_delivery_dimensions(item, result)
+                canonical_dimensions = (
+                    None if self._fast_main_image_record(job)
+                    else _expected_delivery_dimensions(item, result)
+                )
                 session.add(
                     AssetRecord(
                         id=asset_id,
@@ -2945,7 +2964,7 @@ class ExecutionCoordinator:
             if job.type in {
                 JobType.DETAIL_PACK.value,
                 JobType.AMAZON_VISUAL_SUITE.value,
-            }:
+            } or self._fast_main_image_record(job):
                 from .xinghe_agent import planner_accounting
 
                 latest_plan = session.scalar(
@@ -3381,6 +3400,17 @@ def build_fake_coordinator(
         work_root=aurora_work_root,
         execution_mode=aurora_execution_mode,
     )
+    from .aurora_main_image_fast import (
+        FastMainImagePlanner,
+        MainImagePlannerRouter,
+        MainImageProviderRouter,
+    )
+    from .aurora_main_image_fast_provider import FastMainImageProvider
+
+    aurora_provider = MainImageProviderRouter(
+        session_factory, aurora_provider,
+        FastMainImageProvider(session_factory, gateway, storage),
+    )
     if xinghe_gateway is None:
         new_routes: dict[str, Provider] = {
             JobType.PRODUCT_IMAGE.value: default_provider,
@@ -3524,12 +3554,13 @@ def build_fake_coordinator(
         session_factory,
         provider,
         detail_planner=routed_planner,
-        campaign_planner=AuroraMainImagePlanner(
+        campaign_planner=MainImagePlannerRouter(
             session_factory,
-            storage=storage,
-            gateway=gateway,
-            work_root=aurora_work_root,
-            execution_mode=aurora_execution_mode,
+            AuroraMainImagePlanner(
+                session_factory, storage=storage, gateway=gateway,
+                work_root=aurora_work_root, execution_mode=aurora_execution_mode,
+            ),
+            FastMainImagePlanner(session_factory, gateway, storage),
         ),
         max_concurrency=xinghe_concurrency,
         # Detail-pack behavior remains unchanged. Amazon follows its own Skill

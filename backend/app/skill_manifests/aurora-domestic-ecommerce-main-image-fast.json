@@ -1,0 +1,139 @@
+{
+  "schema_version": "skill-runtime-manifest-v1",
+  "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+  "ignored_runtime_artifacts": [
+    "**/__pycache__/**",
+    "**/*.pyc"
+  ],
+  "skill_id": "aurora-domestic-ecommerce-main-image-fast",
+  "content_hash": "703b8743d141be622cd4f9aa9b8a586eec3ca4e54aab0e2f7e0ceb91cd8a58b8",
+  "capability": "domestic_main_image",
+  "input_contract": {
+    "schema_id": "polaris.skill.aurora-domestic-ecommerce-main-image-fast.input_contract.v1",
+    "required_fields": [
+      "product_asset_ids",
+      "product_name",
+      "category",
+      "selling_points"
+    ]
+  },
+  "output_contract": {
+    "schema_id": "polaris.skill.aurora-domestic-ecommerce-main-image-fast.output_contract.v1",
+    "required_fields": [
+      "result_asset_refs",
+      "usage"
+    ]
+  },
+  "policy": {
+    "schema_version": "skill-runtime-policy-v1",
+    "auto_review_regeneration_allowed": false,
+    "successful_page_auto_redraw_allowed": false,
+    "safe_expansion_mode": "disabled",
+    "policy_version": "aurora-main-image-fast-v1",
+    "active_profile_id": null,
+    "profiles": [],
+    "iteration": null,
+    "safe_expansion": null
+  },
+  "provider_type": "mock",
+  "cost_limit_micros": 0,
+  "real_provider_request_limit": 0,
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "5cfed7b2bd3003ffd70d70c7d16c7eca32f31b0c41c3251f231c2672fbc2071f"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "6963aa90d24d22ed898ff28deb67d98bcfc1a3781ccdf79e5a7a2e3d3bef8568"
+    },
+    {
+      "path": "references/category-priors.json",
+      "sha256": "33d2759596ca172f628dce99489913f713672434485313e1bad2edb3604c33c0"
+    },
+    {
+      "path": "references/commercial-performance.md",
+      "sha256": "c8de12538eb476be31a3462a41dacb960b1d16680da5d834f102b5bb865bd168"
+    },
+    {
+      "path": "references/core-policy.md",
+      "sha256": "37c8247a7cdd4de98b4d6221f220262276d2e59c4ba899ba2c5966170cc05671"
+    },
+    {
+      "path": "references/durable-goods.md",
+      "sha256": "d640fb8e59891843e61d8addd002b6b651021271d11e2da7f1c469b0aff14589"
+    },
+    {
+      "path": "references/six-page-strategy.md",
+      "sha256": "a9a84800ef4a486bd580c0088072d6580cbce285e625cf4f043a687322806428"
+    },
+    {
+      "path": "references/visual-audit.md",
+      "sha256": "23226a0602fc858e4113b8918555f2d6803cb9ae9055cea0ce38ea1ea8fb0567"
+    },
+    {
+      "path": "references/visual-strategy.md",
+      "sha256": "cb59a7a475e2b67f4385a56abb97912c47fd3139dfe42f91d97036e31b70db3f"
+    },
+    {
+      "path": "schemas/identity.schema.json",
+      "sha256": "b57dae1048bb4260f49610763b98685505225b9c57609528a74d550cdc22718b"
+    },
+    {
+      "path": "schemas/input.schema.json",
+      "sha256": "5c17b0a23731b05aac03d1359ffdb47ee11c2dedd822cf9dfc7885c187934087"
+    },
+    {
+      "path": "schemas/plan.schema.json",
+      "sha256": "92460a27bbc0dc15d2a842277c25173add82e026ff1e7750e342e64032afafde"
+    },
+    {
+      "path": "schemas/repair.schema.json",
+      "sha256": "418144bde413b26a45387f0bec16f560971c696c6b3ddeeb508bf419172dac6f"
+    },
+    {
+      "path": "schemas/session.schema.json",
+      "sha256": "25359e23b7a805b30360a5204b34f78f7cdf8096b69b29fdcf1c2ab4dbf0b777"
+    },
+    {
+      "path": "schemas/user-adjustment.schema.json",
+      "sha256": "ffb802465e8647212963caefd21d753336c787c9acaaf1bcf385133a81951ca3"
+    },
+    {
+      "path": "schemas/visual-judgment.schema.json",
+      "sha256": "bd4c1853a1ce46ee91ec8e77e06f4c74b05c47293ab195315409a549eb83d97c"
+    },
+    {
+      "path": "scripts/harness.py",
+      "sha256": "2fd4f28c5d0bf0872ef4fb797c44fab0a6b84698d82c86ceab3e1f54abb2d055"
+    },
+    {
+      "path": "scripts/runtime/__init__.py",
+      "sha256": "187e95f167f65d25339aa19ade2f14d002f140898259a7fb4a5d916b7e66c6e1"
+    },
+    {
+      "path": "scripts/runtime/audit.py",
+      "sha256": "3d1399dbfd2c3124a120ae61c1402ae397a8478ac5a1f761a3dd13d57ddbc3a8"
+    },
+    {
+      "path": "scripts/runtime/compiler.py",
+      "sha256": "bcd2d1328dc37c07836983998c6fe24530ecae48c5295f5ab99ce717c1b0cdf3"
+    },
+    {
+      "path": "scripts/runtime/core.py",
+      "sha256": "57206952ff2dbddbb9fea21740e23cfe1a497469c2d386c78c0b9e0fbdd024a9"
+    },
+    {
+      "path": "scripts/runtime/identity.py",
+      "sha256": "c4aa922eb553b33f0deacf9171b1dda00459db989ac948f6824ad9bc4a023b07"
+    },
+    {
+      "path": "scripts/runtime/session.py",
+      "sha256": "1f2b8821d017ac38533e5014c5656ec05f8399182d7a769558e0bd11c467c4b2"
+    },
+    {
+      "path": "scripts/runtime/style.py",
+      "sha256": "542b5a5187824055003d40cbfdb33f7a31087b9581eca21b464097c17218e1db"
+    }
+  ]
+}

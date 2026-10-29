@@ -2539,7 +2539,7 @@ class TengliOpenAICompatibleGateway:
         }
         format_feedback = None
         correction_prompt = None
-        if request.planning_profile == "replica_fast_suite":
+        if request.planning_profile in {"replica_fast_suite", "aurora_main_image_fast_suite"}:
             payload["max_completion_tokens"] = 16000
         if request.planning_profile == "replica_exact_compact":
             from .replica_format_feedback import ReplicaFormatFeedback
@@ -2590,13 +2590,13 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile == "replica_fast_suite":
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_main_image_fast_suite"}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
                 route_payload = {**payload, "model": route.planner_model}
                 planner_key = request.idempotency_key
-                if (request.planning_profile == "replica_fast_suite"
+                if (request.planning_profile in {"replica_fast_suite", "aurora_main_image_fast_suite"}
                     and route.planner_model.casefold().startswith("deepseek")):
                     route_payload["max_completion_tokens"] = 32768
                     route_payload["reasoning_effort"] = "low"
@@ -2733,7 +2733,7 @@ class TengliOpenAICompatibleGateway:
             envelope_diagnostics = _planner_envelope_diagnostics(response)  # type: ignore[arg-type]
             if (
                 request.planning_profile
-                in {"replica_native_contract", "replica_exact_compact"}
+                in {"replica_native_contract", "replica_exact_compact", "aurora_main_image_fast_suite"}
                 and isinstance(response, Mapping)
                 and any(
                     choice.get("finish_reason") == "length"
@@ -10878,6 +10878,8 @@ def _aurora_structure_zone_counts(structure: Mapping[str, Any]) -> dict[str, int
 
 
 def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
+    if request.planning_profile == "aurora_main_image_fast_suite":
+        return {"type": "json_object"}
     if request.planning_profile == "replica_exact_compact":
         contract = json.loads(request.product_information[0])
         return {"type": "json_schema", "json_schema": {
@@ -11193,6 +11195,8 @@ def _planner_prompt(request: PlannerRequest) -> str:
 
 
 def _planner_prompt_body(request: PlannerRequest) -> str:
+    if request.planning_profile == "aurora_main_image_fast_suite":
+        return "Plan the complete six-image domestic suite in ONE pass. Return the entire supplied response_schema as JSON.\n" + "\n".join(request.product_information)
     if request.planning_profile == "replica_fast_suite":
         return "Plan the entire fast replica suite in ONE pass. Return only the supplied JSON contract.\n" + "\n".join(request.product_information)
     if request.planning_profile == "replica_exact_compact":

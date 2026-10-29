@@ -2221,6 +2221,9 @@ async def retry_job(
                 session, workspace.workspace_id, cast(str, idem.resource_id)
             ),
         )
+    from .aurora_main_image_fast import require_recoverable_plan
+
+    require_recoverable_plan(session, source)
     replica_document = None
     document_id = source.configuration.get("replica_session_id")
     if source.type == JobType.REFERENCE_REMIX.value and document_id:
@@ -2422,8 +2425,21 @@ def clone_job(
         select(JobItemRecord).where(JobItemRecord.job_id == source.id)
     ).all()
     selected = [item.id for item in source_items]
+    from .aurora_main_image_fast import require_recoverable_plan
+    from .aurora_main_image_fast import selected as fast_main
+
+    require_recoverable_plan(session, source)
     _validate_domestic_detail_retry(session, source, selected, clone=True)
     cloned = _copy_job_for_retry(session, source, RetryScope.FULL, selected)
+    if source.type == JobType.DOMESTIC_MAIN_IMAGE.value and fast_main(
+        source.configuration
+    ):
+        # Clone is an explicit new generation using the frozen plan, with a new
+        # paid-call scope; it must not inherit another job's image receipts.
+        cloned.configuration = {
+            key: value for key, value in cloned.configuration.items()
+            if not key.startswith("_main_image_fast")
+        }
     cloned.root_job_id = None
     cloned.retry_of_job_id = None
     cloned.retry_scope = None
@@ -4623,6 +4639,16 @@ def _reserve_real_provider_job_if_enabled(
         )
         provider_requests = _AMAZON_PROVIDER_REQUEST_ENVELOPE
         group_count = int(planner_required)
+    elif (
+        job.type == JobType.DOMESTIC_MAIN_IMAGE.value
+        and (configuration.get("settings") or {}).get("main_image_speed") == "fast"
+    ):
+        fast_count = runnable_item_count if runnable_item_count is not None else 6
+        group_count = int(runnable_item_count is None)
+        estimated_cost = (
+            image_cost + settings.tengli_planner_reserve_micros * group_count
+        )
+        provider_requests = fast_count + group_count
     elif job.type == JobType.DOMESTIC_MAIN_IMAGE.value:
         # Reserve the complete Skill envelope before the identity-planner call:
         # six initial generations, one repair per page, identity inspection,

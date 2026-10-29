@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual-judgment.schema.json",
+  "type": "object",
+  "required": ["page_index", "image_sha256", "reviewer", "decision_summary", "observations", "checks", "all_material_deficiencies", "audit_complete"],
+  "properties": {
+    "page_index": {"type": "integer", "minimum": 0, "maximum": 5},
+    "image_sha256": {"type": "string", "minLength": 64, "maxLength": 64},
+    "reviewer": {
+      "type": "object", "required": ["mode", "pixel_inspection_performed", "image_path"],
+      "properties": {
+        "mode": {"const": "AGENT_DIRECT_PIXEL_REVIEW"},
+        "pixel_inspection_performed": {"const": true},
+        "image_path": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "decision_summary": {"type": "string", "minLength": 12},
+    "observations": {
+      "type": "object",
+      "required": ["product_prominence", "headline_rank", "headline_text", "headline_line_count", "physical_evidence", "evidence_is_primary_visual", "depth_layers", "commercial_closure_visible", "background_competition", "thumbnail_scan_order", "type_roles_seen", "unequal_information_modules_seen", "visual_tension_seen", "composition_archetype_seen", "product_zone_seen", "copy_zone_seen", "dominant_view_seen", "evidence_topology_seen", "neighbor_layout_difference", "claim_to_evidence_relation", "claim_takeaway_without_copy", "source_background_leakage"],
+      "properties": {
+        "product_prominence": {"type": "number", "minimum": 0, "maximum": 100},
+        "headline_rank": {"enum": ["FIRST", "JOINT_FIRST", "SECOND", "WEAK"]},
+        "headline_text": {"type": "string", "minLength": 1},
+        "headline_line_count": {"type": "integer", "minimum": 1, "maximum": 8},
+        "physical_evidence": {"type": "array", "items": {"type": "string"}},
+        "evidence_is_primary_visual": {"type": "boolean"},
+        "depth_layers": {"type": "integer", "minimum": 0, "maximum": 5},
+        "commercial_closure_visible": {"type": "boolean"},
+        "background_competition": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "thumbnail_scan_order": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"type": "string"}},
+        "type_roles_seen": {"type": "integer", "minimum": 0, "maximum": 8},
+        "unequal_information_modules_seen": {"type": "integer", "minimum": 0, "maximum": 8},
+        "visual_tension_seen": {"type": "string", "minLength": 8},
+        "composition_archetype_seen": {"type": "string", "minLength": 1},
+        "product_zone_seen": {"type": "string", "minLength": 1},
+        "copy_zone_seen": {"type": "string", "minLength": 1},
+        "dominant_view_seen": {"type": "string", "minLength": 1},
+        "evidence_topology_seen": {"type": "string", "minLength": 1},
+        "neighbor_layout_difference": {"type": "string"},
+        "claim_to_evidence_relation": {"type": "string", "minLength": 8},
+        "claim_takeaway_without_copy": {"type": "string", "minLength": 8},
+        "source_background_leakage": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "checks": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["name", "passed", "score", "material", "observed_evidence"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "passed": {"type": "boolean"},
+          "score": {"type": "number", "minimum": 0, "maximum": 100},
+          "material": {"type": "boolean"},
+          "observed_evidence": {"type": "string", "minLength": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "all_material_deficiencies": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["check", "visible_problem", "root_cause", "required_change"],
+        "properties": {
+          "check": {"type": "string", "minLength": 1},
+          "visible_problem": {"type": "string", "minLength": 8},
+          "root_cause": {"type": "string", "minLength": 8},
+          "required_change": {"type": "string", "minLength": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "audit_complete": {"const": true}
+  },
+  "additionalProperties": true
+}

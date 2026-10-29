@@ -3937,6 +3937,12 @@ export interface components {
              * @constant
              */
             language: "zh-CN";
+            /**
+             * Main Image Speed
+             * @description Optional fast workflow opt-in; omitted requests use standard.
+             * @enum {string}
+             */
+            main_image_speed?: "standard" | "fast";
             /** Offers */
             offers?: string[];
             /** Product Attributes */

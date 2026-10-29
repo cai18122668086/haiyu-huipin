@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from .amazon_visual_suite_contract import (
     AMAZON_DEFAULT_MARKETPLACE,
@@ -536,7 +536,26 @@ class DomesticMainImageInput(BaseModel):
         return self
 
 
+def _main_image_speed_schema(schema: dict[str, Any]) -> None:
+    # Keep the opt-in optional in generated request types. Runtime still
+    # defaults to standard, whose field is omitted by the serializer below.
+    schema.pop("default", None)
+
+
 class DomesticMainImageConfiguration(BaseModel):
+    main_image_speed: Literal["standard", "fast"] = Field(
+        default="standard",
+        description="Optional fast workflow opt-in; omitted requests use standard.",
+        json_schema_extra=_main_image_speed_schema,
+    )
+
+    @model_serializer(mode="wrap")
+    def preserve_standard_request_identity(self, handler: Any) -> dict[str, Any]:
+        value = handler(self)
+        if self.main_image_speed == "standard":
+            value.pop("main_image_speed", None)
+        return value
+
     auto_start_after_plan: bool = True
     product_name: str = Field(min_length=1, max_length=160)
     category: str = Field(min_length=1, max_length=120)

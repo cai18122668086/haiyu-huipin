@@ -213,10 +213,18 @@ def _planner_charges(
     observed_usage_requests: int,
     usage_events: Sequence[UsageEventRecord],
 ) -> tuple[list[dict[str, Any]], int, int, int]:
-    if job.type not in {
-        JobType.DETAIL_PACK.value,
-        JobType.AMAZON_VISUAL_SUITE.value,
-    }:
+    fast_main_image = (
+        job.type == JobType.DOMESTIC_MAIN_IMAGE.value
+        and (job.configuration.get("settings") or {}).get("main_image_speed") == "fast"
+    )
+    if (
+        job.type
+        not in {
+            JobType.DETAIL_PACK.value,
+            JobType.AMAZON_VISUAL_SUITE.value,
+        }
+        and not fast_main_image
+    ):
         return [], 0, 0, 0
     plan = session.scalar(
         select(JobPlanRecord)
@@ -225,6 +233,8 @@ def _planner_charges(
         .limit(1)
     )
     if plan is None:
+        if fast_main_image:
+            return _fast_main_image_unplanned_charge(job, reservation, reserved_cost)
         if _was_rejected_before_provider(session, job):
             return [], 0, 0, 0
         if _is_legacy_preplanner_amazon_reservation(
@@ -333,6 +343,50 @@ def _planner_charges(
             }
         )
     return sources, len(planner), total, actual_count
+
+
+def _fast_main_image_unplanned_charge(
+    job: JobRecord,
+    reservation: AuditEventRecord,
+    reserved_cost: int,
+) -> tuple[list[dict[str, Any]], int, int, int]:
+    """Keep failed/unknown one-pass planning visible without inventing a cost.
+
+    A paid response may fail schema validation before a plan can be committed.
+    The bounded durable receipt remains the evidence; absent actual usage, use
+    the reserved budget and disclose its conservative basis in the ledger.
+    """
+    receipt = job.configuration.get("_main_image_fast_planning")
+    if isinstance(receipt, Mapping) and receipt.get("state") == "preparing":
+        # The planner marks invoked durably only after source/Skill preflight.
+        # A failed preflight never reached the paid provider boundary.
+        return [], 0, 0, 0
+    if not isinstance(receipt, Mapping) or not receipt:
+        if job.status == JobStatus.CANCELLED.value:
+            return [], 0, 0, 0
+        raise ProviderQuotaLedgerError("Fast main-image planning receipt is missing.")
+    actual = receipt.get("actual_cost_micros")
+    if _is_non_negative_int(actual):
+        charge, reported = int(actual), True
+    else:
+        charge = _planner_unit_reserve(reservation, job, reserved_cost)
+        reported = False
+    return (
+        [
+            {
+                "source": "main_image_fast_planner_receipt",
+                "planner_ordinal": 0,
+                "provider_request_count": 1,
+                "charged_cost_micros": charge,
+                "cost_basis": "actual" if reported else "conservative_unknown",
+                "actual_cost_reported": reported,
+                "receipt_state": str(receipt.get("state", "unknown"))[:32],
+            }
+        ],
+        1,
+        charge,
+        int(reported),
+    )
 
 
 def _is_legacy_preplanner_amazon_reservation(

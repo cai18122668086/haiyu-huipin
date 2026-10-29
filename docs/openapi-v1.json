@@ -3591,6 +3591,15 @@
             "title": "Language",
             "type": "string"
           },
+          "main_image_speed": {
+            "description": "Optional fast workflow opt-in; omitted requests use standard.",
+            "enum": [
+              "standard",
+              "fast"
+            ],
+            "title": "Main Image Speed",
+            "type": "string"
+          },
           "offers": {
             "items": {
               "type": "string"

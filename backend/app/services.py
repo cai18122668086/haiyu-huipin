@@ -514,7 +514,14 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
         plan_payload = public_aurora_plan_payload(plan.payload)
     return JobDetailResponse(
         **base,
-        configuration=job.configuration,
+        configuration=(
+            {key: value for key, value in job.configuration.items()
+             if not key.startswith("_main_image_fast")}
+            if job.type == JobType.DOMESTIC_MAIN_IMAGE.value
+            and (job.configuration.get("settings") or {}).get("main_image_speed")
+            == "fast"
+            else job.configuration
+        ),
         configuration_schema=job.configuration_schema,
         prompt_version=job.prompt_version,
         strategy_version=job.strategy_version,

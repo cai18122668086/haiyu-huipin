@@ -358,6 +358,12 @@ def authorize_aurora_plan(
 ) -> None:
     """Record the first and only pre-generation user authorization in Harness."""
 
+    from .aurora_main_image_fast import SCHEMA_VERSION, authorize
+
+    if plan.schema_version == SCHEMA_VERSION:
+        authorize(plan, job)
+        return
+
     if plan.schema_version != "aurora-main-image-plan-v2":
         raise AuroraPlanningError("This task uses the retired local-rule plan")
     workspace = _job_workspace(job.id, work_root)
