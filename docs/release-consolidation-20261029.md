@@ -34,3 +34,13 @@ file was repaired or that a complete Amazon suite was delivered.
 Deployment evidence is recorded in verification/consolidated-20261029 after the
 candidate build, disposable PostgreSQL regression and guarded production cutover.
 No new migration or paid generation request is required by this release.
+
+
+The complete candidate suite exposed an order-sensitive heartbeat test twice:
+751 passed and only the 0.4-second storage-lease assertion failed each time;
+the same candidate's reliability module passed 37/37 in isolation. The heartbeat
+test now synchronizes on an actual successful renewal while the provider event
+loop or artifact save is blocked. It therefore detects a missing keeper directly,
+without relying solely on a subsecond wall-clock expiry. The independent expiry,
+stale-finish fencing and duplicate-delivery tests remain unchanged. Production
+lease, heartbeat, queue and capacity settings are unchanged by this test repair.

@@ -9,8 +9,8 @@ import release_base as runner
 runner.ROOT = Path("/srv/huipin-consolidated-20261029")
 runner.BASE_BACKEND = "huipin-replica-fast/backend:20261029-v2"
 runner.BASE_FRONTEND = "huipin-replica-fast/frontend:20261029-v2"
-runner.BACKEND = "huipin-consolidated/backend:20261029-v1"
-runner.FRONTEND = "huipin-consolidated/frontend:20261029-v1"
+runner.BACKEND = "huipin-consolidated/backend:20261029-v2"
+runner.FRONTEND = "huipin-consolidated/frontend:20261029-v2"
 runner.EXTRA_TESTS = (
     "tests/test_product_previews.py",
     "tests/test_refined_detail.py",
