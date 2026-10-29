@@ -38,7 +38,7 @@ from .replica_native import (
     write_json,
 )
 
-VERSION = "exact-compact-v15"
+VERSION = "exact-compact-v16"
 PROMPTS = Path(__file__).with_name("replica_exact_prompts")
 OBSERVATIONS = (
     "subject_and_scale",
@@ -1691,6 +1691,7 @@ def run_class(method: str, protocol: Any = None) -> type[NativeReplicaRun]:
         "exact-compact-v12",
         "exact-compact-v13",
         "exact-compact-v14",
+        "exact-compact-v15",
     }:
         archive = version.rsplit("-", 1)[-1]
         name = f"app._replica_exact_compact_{archive}"

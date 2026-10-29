@@ -521,14 +521,19 @@ def test_original_default_and_native_protocol_unchanged():
         replication_method="exact",
     )
     assert body.replica_speed == "standard"
-    from app.replica_exact_compact import protocol_binding
+    import sys
+
+    from app.replica_direct_delivery import V15_BINDING
+    from app.replica_exact_compact import protocol_binding, run_class
 
     assert protocol_binding() == {
-        "version": "exact-compact-v15",
+        "version": "exact-compact-v16",
         "content_sha256": (
-            "67de9f26f2928a566acc92d1083e6fe2fa907710e7fd4eb46ed85e47ee03fe95"
+            "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
         ),
     }
+    historical = run_class("exact", V15_BINDING)
+    assert sys.modules[historical.__module__].protocol_binding() == V15_BINDING
 
 
 @pytest.mark.parametrize("mutate", ["overlap", "duplicate", "out_of_bounds"])

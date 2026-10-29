@@ -23,6 +23,15 @@ def main():
     backend = [
         p for p in changed if p.startswith(("backend/app/", "backend/skill_sources/"))
     ]
+    public_template = "backend/skill_sources/xinghe-crossborder-detail-3/.env.example"
+    assert public_template in git("ls-files", "--", public_template)
+    assert "IMG_API_KEY=your-api-key" in (ROOT / public_template).read_text()
+    backend.append(public_template)
+    baseline = json.loads(
+        Path(__file__)
+        .with_name("production-baseline.json")
+        .read_text(encoding="utf-8-sig")
+    )
     frontend = [
         p for p in changed if p.startswith(("components/", "lib/", "app/", "features/"))
     ]
@@ -57,11 +66,7 @@ def main():
             for p in git("ls-files", "backend/app")
             if p.endswith(".py")
         },
-        "backend_changed": [
-            p.removeprefix("backend/")
-            for p in backend
-            if p.startswith("backend/app/") and p.endswith(".py")
-        ],
+        "baseline": baseline,
         "frontend_sources": {
             p: hashlib.sha256(
                 (ROOT / p).read_bytes().replace(b"\r\n", b"\n")
@@ -76,7 +81,13 @@ def main():
             if not p.endswith(".py") or p.startswith("backend/skill_sources/")
         },
     }
-    backend_docker = ["FROM huipin-integrated/backend:20261029-preview", "USER root"]
+    manifest["backend_changed"] = sorted(
+        key
+        for key in manifest["backend_sources"].keys()
+        | baseline["backend_sources"].keys()
+        if manifest["backend_sources"].get(key) != baseline["backend_sources"].get(key)
+    )
+    backend_docker = ["FROM " + baseline["image"], "USER root"]
     backend_docker += [f"COPY {p} /app/{p.removeprefix('backend/')}" for p in backend]
     backend_docker += ["COPY backend/tests /app/tests", "USER 10001:10001"]
     frontend_docker = ["FROM huipin-integrated/frontend:20261029-preview", "USER root"]
@@ -88,7 +99,7 @@ def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
     with tarfile.open(OUTPUT / "source.tar.gz", "w:gz") as archive:
         for p in backend + frontend + git("ls-files", "backend/tests"):
-            assert not Path(p).name.startswith(".env")
+            assert not Path(p).name.startswith(".env") or p == public_template
             archive.add(ROOT / p, arcname=p)
         archive.add(
             ROOT / "deploy/replica-crawler/release.py", arcname="release_base.py"

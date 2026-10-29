@@ -14,6 +14,21 @@ Keep a headline with the proof, action or scene it governs. A title-only strip
 above its supporting photo is not an additional screen merely because the photo
 has a rounded edge or background change. Count self-contained commercial
 compositions, not the header and body of the same composition separately.
+Apply this dependency test also to the bottom region: price/coupon banners,
+buy-one-get-one offers, discounts, campaign dates and sales-count strips
+that complete the hero above belong to that SAME screen. A bold offer headline,
+colored banner or whitespace gap alone is insufficient evidence of a new
+composition. Count a lower region separately only when it has its own complete
+hero, demonstration or evidence carrier beyond the offer. Do not confuse a
+product poster's dependent promotional footer with a separate commercial panel.
+Do not infer a fixed screen count from image aspect ratio.
+This exception covers transactional purchase terms only. A product-property,
+ingredient, nutrition, performance-comparison or benefit card with its own
+illustration, chart or explanatory mechanism is NOT a promotional footer.
+Independently inventory each such self-contained evidence carrier with a
+distinct commercial duty. In a stack of rounded cards, ingredient pictures, a
+protein/standard comparison chart and a separate gut-health mechanism remain
+distinct carriers despite one shared overall heading and matching card colors.
 Do not assume a standard count or equal heights. The server will independently
 compare this inventory with the physical cuts; you do not issue a PASS verdict.
 

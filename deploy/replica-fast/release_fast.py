@@ -7,10 +7,10 @@ from pathlib import Path
 import release_base as runner
 
 runner.ROOT = Path("/srv/huipin-replica-fast-20261029")
-runner.BASE_BACKEND = "huipin-integrated/backend:20261029-preview"
+runner.BASE_BACKEND = "huipin-integrated/backend:20261029-segmentation-v16"
 runner.BASE_FRONTEND = "huipin-integrated/frontend:20261029-preview"
-runner.BACKEND = "huipin-replica-fast/backend:20261029-v1"
-runner.FRONTEND = "huipin-replica-fast/frontend:20261029-v1"
+runner.BACKEND = "huipin-replica-fast/backend:20261029-v2"
+runner.FRONTEND = "huipin-replica-fast/frontend:20261029-v2"
 runner.EXTRA_TESTS = (
     "tests/test_product_previews.py",
     "tests/test_replica_fast.py",
@@ -44,6 +44,8 @@ print(json.dumps(actual))
 
 
 def build():
+    manifest = json.loads((runner.ROOT / "release-manifest.json").read_text())
+    assert runner.inspect(runner.BASE_BACKEND)["Id"] == manifest["baseline"]["image_id"]
     runner.build()
     verify_assets(runner.BACKEND)
 
@@ -60,6 +62,12 @@ def activate():
     )
     assert key == current[runner.SECRET_NAME], "Existing provider credential changed"
     verify_assets(runner.BACKEND)
+    assert (
+        runner.inspect(runner.BASE_BACKEND)["Id"]
+        == json.loads((runner.ROOT / "release-manifest.json").read_text())["baseline"][
+            "image_id"
+        ]
+    )
     runner.activate()
     verify_assets()
 

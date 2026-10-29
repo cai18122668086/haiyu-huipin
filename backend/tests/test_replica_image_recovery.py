@@ -164,7 +164,7 @@ def test_api_automatically_resumes_original_after_query_failures_without_replann
         doc = db.get(ReplicaDocumentRecord, did)
         assert (
             doc.payload["native_snapshot"]["model_protocol"]["version"]
-            == "exact-compact-v15"
+            == "exact-compact-v16"
         )
         usages = list(
             db.scalars(select(UsageEventRecord).where(UsageEventRecord.job_id == jid))
