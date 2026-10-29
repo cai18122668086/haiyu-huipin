@@ -88,6 +88,14 @@ try:
             json.loads(base64.b64decode(front[0], validate=True)), dict
         )
         cookie_names = [cookie.name for cookie in jar]
+        anti_csrf = response.headers.get("anti-csrf")
+        assert anti_csrf
+        authenticated_headers = {
+            "Content-Type": "application/json",
+            "rid": "session",
+            "anti-csrf": anti_csrf,
+            "Origin": "https://huipin.haiyushuke.com",
+        }
     with opener.open("https://huipin.haiyushuke.com/api/v1/me", timeout=20) as response:
         me = json.load(response)
         assert response.status == 200
@@ -128,7 +136,7 @@ try:
     request = urllib.request.Request(
         base + "/products",
         data=json.dumps({"url": share}).encode(),
-        headers={"Content-Type": "application/json"},
+        headers=authenticated_headers,
     )
     with opener.open(request, timeout=45) as response:
         document = json.load(response)
@@ -156,7 +164,7 @@ try:
     request = urllib.request.Request(
         base + "/products",
         data=json.dumps({"url": document["payload"]["canonical_url"]}).encode(),
-        headers={"Content-Type": "application/json"},
+        headers=authenticated_headers,
     )
     with opener.open(request, timeout=30) as response:
         cached = json.load(response)

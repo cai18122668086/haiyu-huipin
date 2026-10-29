@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "wechat_confirmation_mode": "query",
+  "healthy": true,
+  "last_completed_at": "2026-10-29T04:12:18.243482+00:00",
+  "checked_count": 0,
+  "confirmed_count": 0,
+  "last_error": null,
+  "pending_orders": 2,
+  "review_orders": 1,
+  "channels": [
+    "alipay",
+    "wechat"
+  ],
+  "everyinfra_configured": true
+}

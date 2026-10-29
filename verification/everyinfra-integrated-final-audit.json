@@ -1,0 +1,28 @@
+{
+  "payment_heartbeat_advanced": true,
+  "payment_channels": [
+    "alipay",
+    "wechat"
+  ],
+  "everyinfra_configured": true,
+  "browser_source_selector_verified": 12,
+  "missing_image_warning_shown": false,
+  "services": {
+    "api": {
+      "image": "huipin-integrated/backend:20261029-everyinfra",
+      "health": "healthy"
+    },
+    "worker": {
+      "image": "huipin-integrated/backend:20261029-everyinfra",
+      "health": "healthy"
+    },
+    "dispatcher": {
+      "image": "huipin-integrated/backend:20261029-everyinfra",
+      "health": "healthy"
+    },
+    "frontend": {
+      "image": "huipin-integrated/frontend:20261029-everyinfra",
+      "health": "healthy"
+    }
+  }
+}

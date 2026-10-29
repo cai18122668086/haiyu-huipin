@@ -12,6 +12,7 @@
 ## 功能与当前边界
 
 - 商品主图、详情、套图、局部修改、模特换姿与一键复刻。
+- 一键复刻默认通过 EveryInfra 采集 12 个商品来源，支持手淘分享文本、主图/详情图/SKU 图分类、当天缓存和异步任务恢复。
 - 复刻方案与执行检查点、分屏裁切校验、已生成图片找回、部分成果保留和进度恢复。
 - 手机号验证码注册／登录、密码管理、安全会话与工作区权限。
 - 任务中心、素材库、历史记录和下载。
@@ -76,9 +77,9 @@ npm run dev -- --host 127.0.0.1 --port 18938 --strictPort
 
 已完成 3000 个模拟任务的调度验证，没有执行 3000 张真实付费图片压测。真实吞吐仍受上游、图片大小、带宽、内存、数据库和存储影响。
 
-当前生产后端镜像为 `huipin-membership/backend:20261029-query`（继承并发修复），前端为 `huipin-membership/frontend:20261029-query`，数据库迁移到 `20261029_0034`。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
+当前生产后端镜像为 `huipin-integrated/backend:20261029-everyinfra`（继承并发修复），前端为 `huipin-integrated/frontend:20261029-everyinfra`，数据库迁移到 `20261029_0034`。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
 
-GitHub 推送只保存源码，不自动发布生产。微信查询补单发布说明见 [WECHAT-QUERY-DELIVERY.txt](WECHAT-QUERY-DELIVERY.txt)。本次更改位于独立工作区与 `feat/wechat-query-20261029` 分支，避免混入其他窗口的未完成修改。
+GitHub 推送只保存源码，不自动发布生产。2026-10-29 已将微信主动补单与 EveryInfra 采集统一合并到 `main` 并发布；商户、队列和并发配置保留。详情见 [RELEASE-STATUS.txt](RELEASE-STATUS.txt) 与 `verification/everyinfra-integrated-*.json`。
 
 ## 验证
 
