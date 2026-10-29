@@ -8,7 +8,7 @@
 
 正式账户：https://huipin.haiyushuke.com/account
 正式后台：https://huipin.haiyushuke.com/admin/billing
-API/Worker/Dispatcher：huipin-integrated/backend:20261029-preview
+API/Worker/Dispatcher：huipin-integrated/backend:20261029-segmentation-v16
 前端：huipin-integrated/frontend:20261029-preview
 数据库迁移：20261029_0034（本次不新增迁移）
 
@@ -62,3 +62,10 @@ OpenAPI 与生成类型和后端重新导出结果一致。
 共 48 张不重复图片逐张导入后核验原图 SHA-256 和缩略图；测试账号、素材记录和存储对象均已清理。
 原客户天猫草稿、选中主图和详情分组已恢复；未启动生图任务、未修改生产应用。
 详见 verification/three-source-summary.json 及 three-source-*.json。
+
+2026-10-29 一键复刻拆屏修复已发布：exact-compact-v16。
+修正商品海报底部交易性促销条被误拆成独立屏的问题，同时保留独立成分/性能证据卡。
+原7张参考图最终两次独立判断均为9屏，实际裁切检查通过；本次没有重新生图。
+v15原协议已冻结归档，原失败记录和素材未改，现有保留素材校正入口可安全升级。
+198项回归通过；只更新3个后端服务，支付/采集/并发/前端/迁移配置未变化。
+发布目录 /srv/huipin-segmentation-footer-20261029；详见 verification/segmentation-footer-20261029。
