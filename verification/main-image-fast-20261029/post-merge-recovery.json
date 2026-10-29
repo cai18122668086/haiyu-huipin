@@ -1,0 +1,98 @@
+{
+  "verification": "post-merge terminal recovery and original-byte delivery",
+  "revision": "82101b7dfd3f70b6001a70b36fd683952c18e4ac",
+  "source": "isolated local real acceptance database copied read-only",
+  "terminal_run_results": [
+    "completed",
+    "completed"
+  ],
+  "new_calls": {
+    "plan": 0,
+    "edit": 0,
+    "storage_write": 0,
+    "external_network_connect": 0
+  },
+  "status": "completed",
+  "api_request_count_unchanged": 7,
+  "downloadable_images": 6,
+  "downloads": [
+    {
+      "ordinal": 0,
+      "http_status": 200,
+      "sha256": "c1729b2a6dd8408cc56c33a3145f668d8294f9bc79cac90dc85f53b6dd284f3a",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_original_live_run": true
+    },
+    {
+      "ordinal": 1,
+      "http_status": 200,
+      "sha256": "360c3ea42cc0e665cfd6f80e4f6f70b540daa80646405ea48a05296a2a974f18",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_original_live_run": true
+    },
+    {
+      "ordinal": 2,
+      "http_status": 200,
+      "sha256": "6d01083809c020158554034306d77926626213c7e47fa082fcef48754bcc72e0",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_original_live_run": true
+    },
+    {
+      "ordinal": 3,
+      "http_status": 200,
+      "sha256": "a74e0e0a0cb680fe06f478ca3b5cfce4c836e35da38664ad5e4566b8d164fbcd",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_original_live_run": true
+    },
+    {
+      "ordinal": 4,
+      "http_status": 200,
+      "sha256": "240e29e4ab49b0330152ad2f6b39edf16532c865e2cd62ea0c5686d6679408ff",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_original_live_run": true
+    },
+    {
+      "ordinal": 5,
+      "http_status": 200,
+      "sha256": "78cebd2bd226410657516a28364d2ab9b3743b11d57741619e76c7fd243a2099",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_original_live_run": true
+    }
+  ],
+  "zip": {
+    "http_status": 200,
+    "members": 6,
+    "crc_valid": true,
+    "all_members_match_original_live_sha256": true
+  },
+  "billing_unchanged": true,
+  "actual_credits": 90,
+  "actual_upstream_cost": null,
+  "original_database_and_storage_sha256_unchanged": true,
+  "image_review_status": "NOT_REVIEWED",
+  "limits": "Terminal replay and downloads only; no additional planning or generation.",
+  "execution_guards": {
+    "planning_and_image_gateway_calls": "deny and count",
+    "original_storage_save_and_delete": "deny and count",
+    "external_socket_connect": "deny and count",
+    "windows_loopback_self_pipe": "allowed for local asyncio event-loop operation"
+  }
+}

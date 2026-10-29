@@ -1,0 +1,28 @@
+{
+  "base_main": "3f01230",
+  "implementation_commit": "70231d4",
+  "integration_commit": "82101b7",
+  "backend_post_merge": {
+    "first_group_passed": 155,
+    "second_group_passed": 198,
+    "total_passed": 353,
+    "new_fast_tests": 49
+  },
+  "frontend_logic_tests_passed": 2,
+  "typescript": "passed",
+  "production_build": "passed",
+  "openapi_export_and_generated_types": "synchronized",
+  "targeted_eslint": "passed",
+  "ruff": "passed",
+  "mypy_changed_backend_modules": 5,
+  "original_main_image_skills_and_manifest": "unchanged relative to origin/main",
+  "real_generation_rounds": 1,
+  "deployment_performed": false,
+  "known_visual_limitations": [
+    "Label layout and base color drift between images",
+    "Unnatural cream dispensing gesture on page 4",
+    "Small material code mismatch on page 5",
+    "Visible source-evidence labels and unexplained superscript on page 1"
+  ],
+  "private_evidence_in_git": false
+}
