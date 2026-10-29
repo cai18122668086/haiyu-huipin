@@ -2,19 +2,23 @@
 更新日期：2026-10-29
 
 正式源码仓库（私有）：https://github.com/cai18122668086/haiyu-huipin
-本次两边功能已统一合并到 main；应用构建来源 a6f8b9a。
+本次两边功能已统一合并到 main；应用构建来源 419dabf。
 本次集成工作区：D:\Desktop\cyh\电商生图\huipin-integrated-20261029
 本地主工作区已同步集成主线；合并前的采集改动和原文件另有本机恢复副本。
 
 正式账户：https://huipin.haiyushuke.com/account
 正式后台：https://huipin.haiyushuke.com/admin/billing
-API/Worker/Dispatcher：huipin-integrated/backend:20261029-everyinfra
-前端：huipin-integrated/frontend:20261029-everyinfra
+API/Worker/Dispatcher：huipin-integrated/backend:20261029-preview
+前端：huipin-integrated/frontend:20261029-preview
 数据库迁移：20261029_0034（本次不新增迁移）
 
 一键复刻默认供应商已切换为 EveryInfra，密钥仅保存在后端私有配置。
 支持淘宝、天猫、1688、京东、闲鱼、得物、Amazon、速卖通、Shopee、Temu、Etsy、Walmart。
 手淘分享文本/短链可展开；商品图片按主图、详情图、SKU 图分类，前端只展示有图分组。
+商品图片预览与放大通过本站鉴权接口读取，不再直接引用跨域 CDN；未放宽正式站 CSP。
+已去掉加载失败与尺寸过小提示。该天猫商品 1077143235342 的中文原题已从已核实回执恢复。
+真实浏览器全部解码通过：主图 5/5、详情图 50/50、SKU 图 14/14，大图 1440×1920 可读。
+公网独立合成账号另验证全部 69 张同域图片 HTTP 读取通过，验收后账号已清理。
 不自动切换到 JustOneAPI 或更贵的淘宝 V3；当天同工作区的同商品拉取复用缓存。
 付费请求和 job_id 持久化，重试恢复原任务；未知提交结果不重复付费提交。
 公网手淘实测：5 张主图、9 张详情图、1 张 SKU 图，重复拉取命中缓存。
@@ -35,18 +39,19 @@ eBay、Craigslist、ThomasNet 没有可用单品详情接口，未宣称支持�
 全局图像准入/任务槽位的 3000 配置和三个队列不回退。配置值不代表真实上游吞吐保证。
 部署前先备份绘品数据库，发布后核对其他运行服务及原海宇正式文件校验值未变。
 
-最终候选镜像隔离 PostgreSQL：253 项支付/会员/退款/账户/采集回归通过。
+最终候选镜像隔离 PostgreSQL：260 项支付/会员/退款/账户/采集/图片预览回归通过。
 排除 1 项既有容量测试：它仍期待旧的 20 槽位默认值，而当前已部署配置为 3000。
 19 项认证/复刻前端逻辑回归、TypeScript、生产构建、定向 ESLint、Ruff、Mypy 通过。
 OpenAPI 与生成类型和后端重新导出结果一致。
 候选及运行中后端 341 个 Python 源文件一致；候选前端 569 个源码/资源文件与集成版本一致。
 所有绘品服务健康；公网合成用户可用两个支付渠道，初始积分为 0，不能访问管理员接口。
 
-部署目录：/srv/huipin-everyinfra-20261029
+部署目录：/srv/huipin-product-preview-20261029
 有效配置：既有基础 Compose + /srv/huipin-membership-20261028/billing.override.yml
-数据库备份：/srv/huipin-everyinfra-20261029/huipin-before-everyinfra.dump
-回滚配置：/srv/huipin-everyinfra-20261029/billing-before.private.yml（0600）
-详见 deploy/replica-crawler/README.txt、verification/everyinfra-integrated-*.json 与测试日志。
+数据库备份：/srv/huipin-product-preview-20261029/huipin-before-everyinfra.dump
+回滚配置：/srv/huipin-product-preview-20261029/billing-before.private.yml（0600）
+详见 deploy/replica-crawler/README.txt、verification/product-preview-*.json 与测试日志。
+初次集成证据保留在 verification/everyinfra-integrated-*.json。
 微信原交付证据保留在 WECHAT-QUERY-DELIVERY.txt 和 verification/wechat-*.json。
 正式站已核对 12 个来源选项，合成账号验收完成并清理，补单心跳持续更新。
 仓库推送不自动部署；后续发布请以该镜像及当前有效叠加配置为基线。

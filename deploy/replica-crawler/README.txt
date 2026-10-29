@@ -36,3 +36,10 @@ package_release.py 只打包受版本控制的源码；release.py 在服务器�
 provider.private.env 仅在服务器保存 EveryInfra 密钥，权限 0600。
 本次发布不新增数据库迁移，继续使用 20261029_0034。
 发布结果以根目录 RELEASE-STATUS.txt 和 verification/everyinfra-*.json 为准。
+
+同日预览修复：release_preview_fix.py 以集成版为基线，在 /srv/huipin-product-preview-20261029
+构建并切换 :20261029-preview 镜像。图片 GET 接口按工作区、商品、分组与序号鉴权，
+只能读取该商品已返回的受信任 CDN 地址；校验真实图片格式、字节及像素限制。
+前端预览与放大仅使用同源路径，选图/导入继续保留原始图片身份。
+不修改 CSP，不在界面显示图片缺失、加载失败或小图过滤提示。
+标题优先使用上游 titleOriginal；本次商品原始中文来自已核实的同商品历史回执。

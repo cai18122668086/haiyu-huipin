@@ -1,0 +1,27 @@
+{
+  "reconciliation_healthy": true,
+  "channels": [
+    "alipay",
+    "wechat"
+  ],
+  "wechat_confirmation_mode": "query",
+  "services": {
+    "api": {
+      "image": "huipin-integrated/backend:20261029-preview",
+      "health": "healthy"
+    },
+    "worker": {
+      "image": "huipin-integrated/backend:20261029-preview",
+      "health": "healthy"
+    },
+    "dispatcher": {
+      "image": "huipin-integrated/backend:20261029-preview",
+      "health": "healthy"
+    },
+    "frontend": {
+      "image": "huipin-integrated/frontend:20261029-preview",
+      "health": "healthy"
+    }
+  },
+  "image_csp": "'self' data: blob:"
+}

@@ -177,7 +177,8 @@ try:
             payload = response.read(20 * 1024 * 1024 + 1)
             assert response.status == 200
             assert response.headers["Content-Type"].startswith("image/")
-            assert "private" in response.headers["Cache-Control"]
+            cache_control = response.headers["Cache-Control"]
+            assert "private" in cache_control or "no-store" in cache_control
             assert 0 < len(payload) <= 20 * 1024 * 1024
 
     with ThreadPoolExecutor(max_workers=4) as pool:

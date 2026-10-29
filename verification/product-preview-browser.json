@@ -1,0 +1,25 @@
+{
+  "item_id": "1077143235342",
+  "title": "[SL800蓬]思凯乐户外羽绒服女男排骨鹅绒轻量10D外套冲锋衣内胆",
+  "main": {
+    "expected": 5,
+    "decoded_in_browser": 5
+  },
+  "detail": {
+    "expected": 50,
+    "decoded_in_browser": 50
+  },
+  "sku": {
+    "expected": 14,
+    "decoded_in_browser": 14
+  },
+  "lightbox_decoded_size": [
+    1440,
+    1920
+  ],
+  "same_origin_images": true,
+  "image_failure_hint_visible": false,
+  "original_selection_count_preserved": 1,
+  "csp_policy_relaxed": false,
+  "title_recovered_from_verified_prior_provider_receipt": true
+}
