@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from sqlalchemy.orm import Session
 
-from .. import refined_detail
+from .. import detail_fast_runtime
 from ..aurora_detail_runtime import detail_workspace
 from ..domain import JobStatus, PlanValidationStatus
 from ..models import AuditEventRecord, JobPlanRecord, JobRecord, utc_now
@@ -31,7 +31,7 @@ def eligible(job: JobRecord) -> bool:
         and submission.get("version") == "automatic-detail-submission-v1"
         and isinstance(submission.get("actor_user_id"), str)
         and (
-            refined_detail.is_refined(job.configuration)
+            detail_fast_runtime.is_independent(job.configuration)
             or job.configuration.get("domestic_detail_pipeline") == PIPELINE_VERSION
             and settings.get("website_contract_version")
             in {"WEBSITE_LEAN_V1", "WEBSITE_DIRECT_V2"}
@@ -73,9 +73,13 @@ def confirm_validated_plan(
         return
     authorization = None
     actor_id = job.configuration["automatic_detail_submission"]["actor_user_id"]
-    if refined_detail.is_refined(job.configuration):
-        refined_detail.validate_payload(plan.payload, job.expected_item_count)
-        if not refined_detail.approval_matches(plan.payload):
+    if detail_fast_runtime.is_independent(job.configuration):
+        detail_fast_runtime.contract(job.configuration).validate_payload(
+            plan.payload, job.expected_item_count
+        )
+        if not detail_fast_runtime.contract(job.configuration).approval_matches(
+            plan.payload
+        ):
             raise ValueError("The saved detail plan document changed")
         document_sha = plan.payload["refined_approval"]["document_sha256"]
     else:
@@ -121,9 +125,13 @@ def confirm_validated_plan(
     plan.payload_hash = canonical_hash(value)
     plan.confirmed_at = utc_now()
     transition_job(job, JobStatus.PROCESSING, stage="generating", progress=20)
-    session.add(AuditEventRecord(
-        workspace_id=job.workspace_id,
-        action="detail_plan.auto_confirmed",
-        resource_type="job", resource_id=job.id, request_id=job.id,
-        details={"plan_id": plan.id, **receipt},
-    ))
+    session.add(
+        AuditEventRecord(
+            workspace_id=job.workspace_id,
+            action="detail_plan.auto_confirmed",
+            resource_type="job",
+            resource_id=job.id,
+            request_id=job.id,
+            details={"plan_id": plan.id, **receipt},
+        )
+    )
