@@ -1,0 +1,36 @@
+{
+  "created_date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "handoff": "HANDOFF-SUITE-FAST-20261029.txt",
+  "status": "dispatched",
+  "tasks": [
+    {
+      "title": "实现主图快速版",
+      "thread_id": "01a18726-c7c8-7901-9853-815f9d69cd63",
+      "host_id": "local",
+      "workspace": "C:/Users/a1726/Desktop/cyh/电商生图/huipin-main-image-fast-20261029",
+      "branch": "codex/main-image-fast-20261029",
+      "starting_commit": "b16804b",
+      "scope": "main"
+    },
+    {
+      "title": "实现详情图快速版",
+      "thread_id": "01a18726-cc80-7e73-9e92-52aece0fd784",
+      "host_id": "local",
+      "workspace": "C:/Users/a1726/Desktop/cyh/电商生图/huipin-detail-fast-20261029",
+      "branch": "codex/detail-fast-20261029",
+      "starting_commit": "b16804b",
+      "scope": "detail"
+    },
+    {
+      "title": "实现亚马逊套图快速版",
+      "thread_id": "01a18726-d1fc-76c2-ba0d-fbc3647182bc",
+      "host_id": "local",
+      "workspace": "C:/Users/a1726/Desktop/cyh/电商生图/huipin-amazon-suite-fast-20261029",
+      "branch": "codex/amazon-suite-fast-20261029",
+      "starting_commit": "b16804b",
+      "scope": "amazon"
+    }
+  ],
+  "coordination": "Each task uses its own Git worktree, preserves standard mode, implements and validates locally, and reports scoped commits. Production integration is serialized after rebasing on current main; no independent production deployments."
+}
