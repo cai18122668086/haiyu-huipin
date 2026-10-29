@@ -22,6 +22,14 @@ from zipfile import ZipFile
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE = Path("C:/Users/a1726/Desktop/杂/身体乳测试")
+VARIANT_PROFILES = {
+    "fast": "aurora_main_image_fast_suite",
+    "native_fast": "aurora_native_fast_identity",
+}
+DEFAULT_OUTPUTS = {
+    "fast": REPO / "backend/.data/main-image-fast-local",
+    "native_fast": REPO / "backend/.data/main-image-native-fast-local",
+}
 PRODUCT_FILES = (
     "O1CN01G5SSkK4MBQL1SdaC_!!4611686018427381386-0-rate.jpg_960x960.jpg",
     "O1CN01krdMZyjilNL2BxNI_!!4611686018427387074-0-tbbala.jpg_960x960.jpg",
@@ -44,9 +52,11 @@ def write_json(path: Path, value: Any) -> None:
 class Observer:
     """Observe the real configured gateway and fence accidental extra paid calls."""
 
-    def __init__(self, gateway: Any, root: Path) -> None:
+    def __init__(self, gateway: Any, root: Path, variant: str = "fast") -> None:
         self.gateway = gateway
         self.root = root
+        self.variant = variant
+        self.profile = VARIANT_PROFILES[variant]
         self.started = time.monotonic()
         self.events: list[dict[str, Any]] = []
         self.lock = threading.Lock()
@@ -69,10 +79,7 @@ class Observer:
 
     async def plan(self, request: Any) -> Any:
         self.plan_count += 1
-        if (
-            self.plan_count > 1
-            or request.planning_profile != "aurora_main_image_fast_suite"
-        ):
+        if self.plan_count > 1 or request.planning_profile != self.profile:
             raise RuntimeError("Acceptance budget stops a second planning/audit call")
         self.event("plan_started", profile=request.planning_profile)
         write_json(
@@ -150,23 +157,38 @@ def checked(response: Any, expected: int) -> Any:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", action="store_true", help="Allow one real paid suite")
+    parser.add_argument(
+        "--variant",
+        choices=tuple(VARIANT_PROFILES),
+        default="fast",
+        help="fast = option A (default); native_fast = original-style option B",
+    )
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument(
         "--env-file",
         type=Path,
         default=REPO.parent / "polaris-commerce-next/backend/.env",
     )
-    parser.add_argument(
-        "--output-dir", type=Path, default=REPO / "backend/.data/main-image-fast-local"
-    )
+    parser.add_argument("--output-dir", type=Path, default=None)
     args = parser.parse_args()
-    root = args.output_dir.resolve()
+    root = (args.output_dir or DEFAULT_OUTPUTS[args.variant]).resolve()
+    original_fast_root = DEFAULT_OUTPUTS["fast"].resolve()
+    if args.variant == "native_fast" and (
+        root == original_fast_root or root.is_relative_to(original_fast_root)
+    ):
+        parser.error(
+            "native_fast requires its own directory outside the option-A output"
+        )
     private_root = (REPO / "backend/.data").resolve()
     if not root.is_relative_to(private_root) or root == private_root:
         parser.error("Output must be a dedicated subdirectory of this backend/.data")
     if not args.run:
         print("Dry run: no requests, no charges, no files written.")
         print("Use --run only for the authorized one-plan/six-image local acceptance.")
+        print(
+            f"Variant: {args.variant}; "
+            f"allowed profile: {VARIANT_PROFILES[args.variant]}"
+        )
         print(f"Private evidence directory: {root}")
         return 0
     if (root / "run-started.json").exists() or (root / "live.db").exists():
@@ -193,7 +215,15 @@ def main() -> int:
     from app.outbox import publish_pending_events
 
     root.mkdir(parents=True, exist_ok=True)
-    write_json(root / "run-started.json", {"run_id": uuid4().hex, "mode": "paid-fast"})
+    write_json(
+        root / "run-started.json",
+        {
+            "run_id": uuid4().hex,
+            "mode": "paid-fast",
+            "variant": args.variant,
+            "planning_profile": VARIANT_PROFILES[args.variant],
+        },
+    )
     config = Settings(_env_file=args.env_file)
     settings = config.model_copy(
         update={
@@ -231,7 +261,7 @@ def main() -> int:
             "ecommerce_pinduoduo_session_dir": root / "sessions/pinduoduo",
         }
     )
-    observer = Observer(xinghe_agent.build_tengli_gateway(settings), root)
+    observer = Observer(xinghe_agent.build_tengli_gateway(settings), root, args.variant)
     original_factory = xinghe_agent.build_tengli_gateway
     xinghe_agent.build_tengli_gateway = lambda _: observer
     try:
@@ -281,10 +311,10 @@ def main() -> int:
                 json={
                     "type": "domestic_main_image",
                     "intent": "submit",
-                    "display_name": "国内主图快速本地真实链路验收",
+                    "display_name": f"国内主图{args.variant}本地真实链路验收",
                     "input": {"product_asset_ids": asset_ids},
                     "configuration": {
-                        "main_image_speed": "fast",
+                        "main_image_speed": args.variant,
                         "auto_start_after_plan": True,
                         "product_name": "OLAY 身体乳",
                         "category": "身体护理",
@@ -302,6 +332,43 @@ def main() -> int:
         job_id = created["id"]
         write_json(root / "created-job.json", created)
         observer.event("job_created", job_id=job_id)
+
+        def freeze_plan() -> None:
+            """Persist the immutable native or option-A prompts before comparison."""
+            if (root / "frozen-prompts-private.json").exists():
+                return
+            with app.state.session_factory() as session:
+                row = session.scalar(
+                    select(JobPlanRecord).where(JobPlanRecord.job_id == job_id)
+                )
+                if row is None or row.confirmed_at is None:
+                    return
+                from app.aurora_main_image_fast_provider import image_prompt
+
+                payload = row.payload
+                prompts = [
+                    {
+                        "page_index": page["page_index"],
+                        "page_role": page["page_role"],
+                        "prompt": image_prompt(payload, page),
+                        "prompt_sha256": digest(image_prompt(payload, page).encode()),
+                        "source_asset_ids": page.get(
+                            "source_asset_ids", payload["product_asset_ids"]
+                        ),
+                    }
+                    for page in payload["pages"]
+                ]
+                write_json(root / "plan-frozen-private.json", payload)
+                write_json(
+                    root / "frozen-prompts-private.json",
+                    {
+                        "variant": args.variant,
+                        "version": payload.get("version"),
+                        "skill_id": payload.get("skill_id"),
+                        "plan_hash": row.payload_hash,
+                        "prompts": prompts,
+                    },
+                )
 
         def download_available(detail: dict[str, Any]) -> None:
             ordinals = {item["id"]: index for index, item in enumerate(detail["items"])}
@@ -356,10 +423,12 @@ def main() -> int:
             )
             while not dispatch.done():
                 detail = checked(client.get(base + f"/jobs/{job_id}"), 200)
+                freeze_plan()
                 download_available(detail)
                 time.sleep(0.5)
             published = dispatch.result()
         detail = checked(client.get(base + f"/jobs/{job_id}"), 200)
+        freeze_plan()
         download_available(detail)
         observer.event("suite_finished", status=detail["status"], published=published)
         write_json(root / "job-public.json", detail)
@@ -400,7 +469,27 @@ def main() -> int:
             event for event in observer.events if event["event"] == "image_started"
         ]
         costs = [event.get("actual_cost_micros") for event in returned + plan_events]
+        frozen_match = None
+        frozen_file = root / "frozen-prompts-private.json"
+        if frozen_file.exists():
+            frozen = json.loads(frozen_file.read_text(encoding="utf-8"))
+            frozen_match = all(
+                (
+                    root / f"image-request-{page['page_index'] + 1:02d}-private.json"
+                ).exists()
+                and json.loads(
+                    (
+                        root
+                        / f"image-request-{page['page_index'] + 1:02d}-private.json"
+                    ).read_text(encoding="utf-8")
+                )["prompt"]
+                == page["prompt"]
+                for page in frozen["prompts"]
+            )
         summary = {
+            "variant": args.variant,
+            "planning_profile": VARIANT_PROFILES[args.variant],
+            "frozen_prompts_match_actual_requests": frozen_match,
             "status": detail["status"],
             "job_id": job_id,
             "planning_calls": observer.plan_count,
@@ -449,6 +538,7 @@ def main() -> int:
                 and len(downloaded) == 6
                 and observer.plan_count == 1
                 and observer.image_count == 6
+                and frozen_match is True
                 and zip_summary.get("members") == 6
                 and zip_summary.get("all_original_bytes")
             )

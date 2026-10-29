@@ -1,14 +1,29 @@
 import { useCallback, useSyncExternalStore } from "react";
 
-export type MainImageSpeed = "standard" | "fast";
+export type MainImageSpeed = "standard" | "fast" | "native_fast";
+
+export const MAIN_IMAGE_SPEED_OPTIONS = [
+  ["standard", "原版", "按现有流程规划、生成与审核"],
+  ["fast", "快速A·整套规划", "一次规划六图，生成后直接交付"],
+  ["native_fast", "快速B·原生精简", "保留原生风格与六图方案，精简生成流程"],
+] as const;
 
 export function mainImageSpeed(value: unknown): MainImageSpeed {
-  return value === "fast" ? "fast" : "standard";
+  return value === "fast" || value === "native_fast" ? value : "standard";
 }
 
 // Omit the standard default so legacy request identities remain unchanged.
-export function mainImageSpeedSettings(speed: MainImageSpeed): { main_image_speed?: "fast" } {
-  return speed === "fast" ? { main_image_speed: "fast" } : {};
+export function mainImageSpeedSettings(speed: MainImageSpeed): { main_image_speed?: Exclude<MainImageSpeed, "standard"> } {
+  return speed === "standard" ? {} : { main_image_speed: speed };
+}
+
+// Rendering follows the persisted plan format, independently of execution speed.
+// Native-fast keeps Aurora's original object identity and full page contracts.
+export function mainImageUsesCompactPlan(payload?: Record<string, unknown>): boolean {
+  return typeof payload?.product_identity_lock === "string"
+    && Array.isArray(payload.pages)
+    && payload.pages.some((page: unknown) => Boolean(page && typeof page === "object"
+      && "visual_plan" in page && typeof page.visual_plan === "string"));
 }
 
 const SPEED_DRAFT_EVENT = "huipin-main-image-speed-change";

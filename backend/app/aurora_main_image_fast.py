@@ -26,10 +26,9 @@ CONCURRENCY = 6
 
 
 def selected(configuration: Any) -> bool:
-    return (
-        isinstance(configuration, dict)
-        and (configuration.get("settings") or {}).get("main_image_speed") == "fast"
-    )
+    return isinstance(configuration, dict) and (
+        configuration.get("settings") or {}
+    ).get("main_image_speed") in {"fast", "native_fast"}
 
 
 def response_schema() -> dict[str, Any]:
@@ -75,6 +74,11 @@ def response_schema() -> dict[str, Any]:
 
 
 def validate_plan(plan: JobPlanRecord, job: JobRecord) -> None:
+    if job.configuration.get("settings", {}).get("main_image_speed") == "native_fast":
+        from .aurora_main_image_native_fast import validate_plan as validate_native
+
+        validate_native(plan, job)
+        return
     payload = plan.payload
     authored = {key: payload.get(key) for key in response_schema()["properties"]}
     if (
@@ -154,7 +158,7 @@ class FastMainImagePlanner:
             )
             if existing is not None:
                 return JobStatus(job.status)
-            if not selected(job.configuration):
+            if job.configuration.get("settings", {}).get("main_image_speed") != "fast":
                 raise AuroraPlanningError("Fast main-image requires explicit opt-in")
             config = dict(job.configuration)
             ids = config["input"]["product_asset_ids"]
@@ -353,16 +357,28 @@ class FastMainImagePlanner:
 
 class MainImagePlannerRouter:
     def __init__(
-        self, session_factory: Any, standard: Any, fast: FastMainImagePlanner
+        self,
+        session_factory: Any,
+        standard: Any,
+        fast: FastMainImagePlanner,
+        native_fast: Any = None,
     ) -> None:
         self.session_factory, self.standard, self.fast = session_factory, standard, fast
         self.work_root = standard.work_root
+        self.native_fast = native_fast
 
     async def plan(self, job_id: str) -> JobStatus | None:
         with self.session_factory() as session:
             job = session.get(JobRecord, job_id)
             fast = job is not None and selected(job.configuration)
-        return await (self.fast if fast else self.standard).plan(job_id)
+            native = (
+                job is not None
+                and job.configuration.get("settings", {}).get("main_image_speed")
+                == "native_fast"
+            )
+        return await (
+            self.native_fast if native else self.fast if fast else self.standard
+        ).plan(job_id)
 
 
 class MainImageProviderRouter:

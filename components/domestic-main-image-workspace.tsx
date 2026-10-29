@@ -18,7 +18,7 @@ import { useConfirmPlan, useCreateJob, useFinalizeJob, useJob, useRetryJob } fro
 import { presentWorkflow, useRuntimeStatus } from "@/features/runtime/api/runtime";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import type { Asset, DomesticMainImageJobCreate } from "@/lib/api/types";
-import { mainImageSpeed, mainImageSpeedSettings, useMainImageSpeedDraft } from "@/lib/domestic-main-image-speed";
+import { MAIN_IMAGE_SPEED_OPTIONS, mainImageSpeed, mainImageSpeedSettings, mainImageUsesCompactPlan, useMainImageSpeedDraft } from "@/lib/domestic-main-image-speed";
 import { errorMessage } from "@/lib/api/request";
 import { IMAGE_UPLOAD_ACCEPT, IMAGE_UPLOAD_EXTENSIONS, IMAGE_UPLOAD_FORMAT_HINT, IMAGE_UPLOAD_MIME_TYPES } from "@/lib/image-upload";
 import { allowsJobAction } from "@/lib/jobs/actions";
@@ -183,7 +183,8 @@ export function DomesticMainImageWorkspace() {
     : "off";
   const activeShadowMode = jobId ? restoredShadowMode : shadowMode;
   const activeSpeed = jobId ? mainImageSpeed(restoredSettings?.main_image_speed) : speed;
-  const fastMode = activeSpeed === "fast";
+  const fastMode = activeSpeed !== "standard";
+  const compactPlan = mainImageUsesCompactPlan(planPayload);
   const results = selectJobResultAssets(job.data);
   const acceptedResultCount = job.data
     ? results.filter((asset) => job.data?.items.some(
@@ -350,7 +351,7 @@ export function DomesticMainImageWorkspace() {
         <WorkspaceHeader
           eyebrow="海宇绘品 · 国内电商主图"
           title="国内电商主图"
-          description={fastMode ? "提交商品素材后，一次规划整套六图，生成后直接查看与下载。" : "提交商品素材后，后台自动规划、生成与审图，完成后直接查看六张成图。"}
+          description={activeSpeed === "native_fast" ? "采用原生六图方案，精简生成流程，完成后直接查看与下载。" : fastMode ? "提交商品素材后，一次规划整套六图，生成后直接查看与下载。" : "提交商品素材后，后台自动规划、生成与审图，完成后直接查看六张成图。"}
           meta={<span className={styles.secure}><ShieldCheck size={15} />连续创作流程</span>}
         />
 
@@ -391,7 +392,7 @@ export function DomesticMainImageWorkspace() {
               <div className={styles.heading}><span>02</span><div><h2>告诉我们商品的亮点</h2><p>先填写名称、类目和核心卖点，其他信息可以按需补充。</p></div></div>
               <fieldset className={styles.speedChoice} disabled={Boolean(jobId) || busy}>
                 <legend>生成版本</legend>
-                {([["standard", "原版", "按现有流程规划、生成与审核"], ["fast", "快速", "一次规划六图，生成后直接交付"]] as const).map(([value, title, note]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}</strong><small>{note}</small></span></label>)}
+                {MAIN_IMAGE_SPEED_OPTIONS.map(([value, title, note]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}</strong><small>{note}</small></span></label>)}
               </fieldset>
               {fastMode && <p className={styles.speedNote}>快速版保留六张图的分工与商品身份约束，成图未经独立 AI 复审，请下载前检查。</p>}
               <div className={styles.form}>
@@ -422,14 +423,14 @@ export function DomesticMainImageWorkspace() {
                 <div className={styles.identityLock}>
                   <span>PRODUCT IDENTITY LOCK</span>
                   <h3>{identityLock?.product_form ?? "当前商品身份已锁定"}</h3>
-                  {fastMode ? <><p>{fastIdentityLock}</p><div><strong>授权事实</strong><p>{fastConfirmedFacts.join("；") || "未添加额外事实"}</p></div></> : <><p>{identityLock?.identity_summary}</p>
+                  {compactPlan ? <><p>{fastIdentityLock}</p><div><strong>授权事实</strong><p>{fastConfirmedFacts.join("；") || "未添加额外事实"}</p></div></> : <><p>{identityLock?.identity_summary}</p>
                   <div><strong>必须保持</strong><p>{identityLock?.must_preserve?.join("；")}</p></div>
                   <div><strong>禁止改变</strong><p>{identityLock?.must_not_change?.join("；")}</p></div></>}
                 </div>
 
                 <div className={styles.campaignWorld}>
                   <div className={styles.worldTitle}><span>整组视觉世界</span><strong>六张图共享一套美术方向，版式与镜头按页面职责变化</strong></div>
-                  {fastMode ? <p>{fastStyleLock}</p> : <dl>
+                  {compactPlan ? <p>{fastStyleLock}</p> : <dl>
                     <div><dt>色彩角色</dt><dd>{styleSummary(campaignStyle?.palette_roles)}</dd></div>
                     <div><dt>字体气质</dt><dd>{styleSummary(campaignStyle?.typography)}</dd></div>
                     <div><dt>图形 / 信息面</dt><dd>{campaignStyle?.graphic_language}；{campaignStyle?.information_surface_geometry}</dd></div>
@@ -440,9 +441,9 @@ export function DomesticMainImageWorkspace() {
                 </div>
 
                 <div className={styles.contractLegend} aria-label="六页执行契约字段">
-                  {fastMode ? <><span>完整画面规划</span><span>可见文案</span><span>禁止元素</span></> : <><span>主卖点</span><span>辅助卖点</span><span>画面证明</span><span>构图与主体</span><span>阅读路径</span><span>不重复理由</span><span>商业闭合</span></>}
+                  {compactPlan ? <><span>完整画面规划</span><span>可见文案</span><span>禁止元素</span></> : <><span>主卖点</span><span>辅助卖点</span><span>画面证明</span><span>构图与主体</span><span>阅读路径</span><span>不重复理由</span><span>商业闭合</span></>}
                 </div>
-                <div className={styles.plan}>{plan.map((page) => <article key={page.page_index}><i>{String(page.page_index + 1).padStart(2, "0")}</i><div><span>{roleNames[page.page_role] ?? page.page_role}</span><strong>{fastMode ? page.visible_copy?.join(" · ") || roleNames[page.page_role] : page.main_selling_point}</strong>{page.buyer_question && <p>{page.buyer_question}</p>}{fastMode ? <dl><div><dt>画面规划</dt><dd>{page.visual_plan}</dd></div><div><dt>可见文案</dt><dd>{page.visible_copy?.join("；") || "本图无可见文案"}</dd></div><div><dt>禁止元素</dt><dd>{page.forbidden_elements}</dd></div></dl> : <dl>
+                <div className={styles.plan}>{plan.map((page) => <article key={page.page_index}><i>{String(page.page_index + 1).padStart(2, "0")}</i><div><span>{roleNames[page.page_role] ?? page.page_role}</span><strong>{compactPlan ? page.visible_copy?.join(" · ") || roleNames[page.page_role] : page.main_selling_point}</strong>{page.buyer_question && <p>{page.buyer_question}</p>}{compactPlan ? <dl><div><dt>画面规划</dt><dd>{page.visual_plan}</dd></div><div><dt>可见文案</dt><dd>{page.visible_copy?.join("；") || "本图无可见文案"}</dd></div><div><dt>禁止元素</dt><dd>{page.forbidden_elements}</dd></div></dl> : <dl>
                   <div><dt>主卖点</dt><dd>{page.main_selling_point}</dd></div>
                   <div><dt>辅助卖点</dt><dd>{page.supporting_selling_points?.length ? page.supporting_selling_points.join(" · ") : "无强制辅助卖点，按画面需要取舍"}</dd></div>
                   <div><dt>画面证明</dt><dd>{page.visual_proof}</dd></div>

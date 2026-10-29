@@ -4641,7 +4641,8 @@ def _reserve_real_provider_job_if_enabled(
         group_count = int(planner_required)
     elif (
         job.type == JobType.DOMESTIC_MAIN_IMAGE.value
-        and (configuration.get("settings") or {}).get("main_image_speed") == "fast"
+        and (configuration.get("settings") or {}).get("main_image_speed")
+        in {"fast", "native_fast"}
     ):
         fast_count = runnable_item_count if runnable_item_count is not None else 6
         group_count = int(runnable_item_count is None)
@@ -5177,6 +5178,13 @@ def _copy_job_relations_for_retry(
         if source_plan is not None and source_plan.confirmed_at is not None:
             copied_payload = dict(source_plan.payload)
             copied_payload["state"] = "confirmed"
+            if source_plan.schema_version == "aurora-main-image-native-fast-plan-v1":
+                for key in (
+                    "_native_final_job_id", "_native_final_session",
+                    "_native_final_manifest", "technical_delivery",
+                ):
+                    copied_payload.pop(key, None)
+                copied_payload["harness_state"] = "AUTHORIZED"
             # A transient provider failure can happen after the native v2
             # harness has issued ``generate-next`` but before an image is
             # bound.  The source session is then intentionally left in

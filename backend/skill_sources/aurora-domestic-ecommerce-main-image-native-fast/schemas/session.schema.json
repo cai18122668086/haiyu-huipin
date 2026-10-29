@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "session.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "request_id",
+    "state",
+    "raw_input",
+    "modifications_used_by_page",
+    "accepted_pages",
+    "generated_versions",
+    "history"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "aurora-native-fast-session-v1"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "AWAITING_IDENTITY",
+        "IDENTITY_LOCKED",
+        "AWAITING_AUTHORIZATION",
+        "AUTHORIZED",
+        "AWAITING_GENERATED_ASSET",
+        "READY_FOR_DELIVERY",
+        "FINALIZED"
+      ]
+    },
+    "raw_input": {
+      "type": "object"
+    },
+    "identity": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "plan": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "authorization": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "modifications_used_by_page": {
+      "type": "object",
+      "required": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "properties": {
+        "0": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "1": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "2": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "3": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "4": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "5": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "modification_history": {
+      "type": "array"
+    },
+    "accepted_pages": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 5
+      }
+    },
+    "generated_versions": {
+      "type": "array"
+    },
+    "history": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}

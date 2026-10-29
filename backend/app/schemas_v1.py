@@ -543,7 +543,7 @@ def _main_image_speed_schema(schema: dict[str, Any]) -> None:
 
 
 class DomesticMainImageConfiguration(BaseModel):
-    main_image_speed: Literal["standard", "fast"] = Field(
+    main_image_speed: Literal["standard", "fast", "native_fast"] = Field(
         default="standard",
         description="Optional fast workflow opt-in; omitted requests use standard.",
         json_schema_extra=_main_image_speed_schema,

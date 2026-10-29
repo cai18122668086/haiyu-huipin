@@ -1,0 +1,198 @@
+{
+  "variant": "native_fast",
+  "verification": "One paid isolated-local website acceptance",
+  "candidate_base_revision": "3a2b2c00aae6c5fbd08cc49fce9da017ea90c3db",
+  "candidate_state": "working tree implementation; exact Skill content hash below",
+  "skill_id": "aurora-domestic-ecommerce-main-image-native-fast",
+  "skill_content_hash": "0cb04c6ad611f08a525a7c2ba5570613f3dde2ce691b5d76a9a98971afd4caa8",
+  "status": "completed",
+  "planning_profile": "aurora_native_fast_identity",
+  "planning_calls": 1,
+  "image_calls": 6,
+  "ai_review_calls": 0,
+  "automatic_redraw_calls": 0,
+  "api_request_count": 7,
+  "requested_planner_model": "deepseek-v4.1-flash-1017",
+  "image_sources": [
+    {
+      "provider": "tengli",
+      "model": "image-2.5-flare",
+      "pricing_version": "tengli-configured-v1",
+      "calls": 6
+    }
+  ],
+  "planning_seconds": 24.46772900002543,
+  "planning_usage": {
+    "reported": true,
+    "input_tokens": 2099,
+    "output_tokens": 3381,
+    "cached_tokens": null,
+    "total_tokens": 5480
+  },
+  "planning_reasoning_tokens": 2790,
+  "first_image_returned_seconds": 169.312,
+  "first_image_downloadable_seconds": 169.937,
+  "complete_delivery_seconds": 259.422,
+  "image_generation_and_delivery_seconds": 232.172,
+  "image_submission_spread_seconds": 0.078,
+  "image_api_seconds_by_page": [
+    {
+      "page_index": 0,
+      "seconds": 151.70592330000363
+    },
+    {
+      "page_index": 1,
+      "seconds": 231.54279680002946
+    },
+    {
+      "page_index": 2,
+      "seconds": 142.03285890002735
+    },
+    {
+      "page_index": 3,
+      "seconds": 153.78852729999926
+    },
+    {
+      "page_index": 4,
+      "seconds": 155.38002270000288
+    },
+    {
+      "page_index": 5,
+      "seconds": 171.34517139999662
+    }
+  ],
+  "downloadable_images": 6,
+  "downloads": [
+    {
+      "ordinal": 0,
+      "sha256": "1433df9e6f88270cae3be4383a5b13b53a9b820364bedbd581d047d4f14820d9",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 1,
+      "sha256": "ca81ac2ac84d817837a84e28f24617398c935012b96f0321815f7bc6d5b94edd",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 2,
+      "sha256": "c891f5051498bce93a096477f5ebd28ce1c3710e8f9b74bcd4de9cf5eb0e8c00",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 3,
+      "sha256": "0f9b8a45d3d68c94ad8d518ae1831810ae19672a428653ba664888c38f6c9172",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 4,
+      "sha256": "2791537b9f3e1f5860ce47c3938770ddf1cbfc4e6b5693e8612b1ace99c5b9cc",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    },
+    {
+      "ordinal": 5,
+      "sha256": "e0a00fe2081383492db258d441fd18bf2735041cc0f9b565197b34c1846704cb",
+      "size": [
+        1254,
+        1254
+      ],
+      "same_bytes_as_provider": true,
+      "http_status": 200
+    }
+  ],
+  "zip": {
+    "http_status": 200,
+    "members": 6,
+    "valid": true,
+    "all_original_bytes": true
+  },
+  "actual_credits": 90,
+  "credit_balance_delta": 90,
+  "reserved_credits_after": 0,
+  "actual_upstream_cost_micros": null,
+  "usage_completeness": "partial",
+  "frozen_prompts_match_actual_requests": true,
+  "prompts": [
+    {
+      "page_index": 0,
+      "sha256": "bf9d5f08a9cc27ed58aef565a86702e4d3943dacb2523b5a70d4e6d16c56ee63",
+      "characters": 3923,
+      "db_frozen_prompt_matches_gateway_request": true,
+      "requested_quality": "high",
+      "requested_canvas": "1024x1024"
+    },
+    {
+      "page_index": 1,
+      "sha256": "6e4965bc563e6860143448a259cef5f9b9922d496a953c44314b25904ab0b8c4",
+      "characters": 3482,
+      "db_frozen_prompt_matches_gateway_request": true,
+      "requested_quality": "high",
+      "requested_canvas": "1024x1024"
+    },
+    {
+      "page_index": 2,
+      "sha256": "1011b844e8dbc1f66a6bc8b9574d993e4e50cdbc5705ec39902b88a934df0043",
+      "characters": 3458,
+      "db_frozen_prompt_matches_gateway_request": true,
+      "requested_quality": "high",
+      "requested_canvas": "1024x1024"
+    },
+    {
+      "page_index": 3,
+      "sha256": "73b0445c380868f4dc91c79001b8551658b95f2b889544e668b51b466a73d5d7",
+      "characters": 3447,
+      "db_frozen_prompt_matches_gateway_request": true,
+      "requested_quality": "high",
+      "requested_canvas": "1024x1024"
+    },
+    {
+      "page_index": 4,
+      "sha256": "8db326f5ef9762c28930eb2c2b3852006f59f4fedfe25b5564191cdd9170f152",
+      "characters": 3453,
+      "db_frozen_prompt_matches_gateway_request": true,
+      "requested_quality": "high",
+      "requested_canvas": "1024x1024"
+    },
+    {
+      "page_index": 5,
+      "sha256": "aeb3c2cbb3fd27afe8ac9018f023e72ef1e1b636f693cf252dc6bc3e684c78db",
+      "characters": 3482,
+      "db_frozen_prompt_matches_gateway_request": true,
+      "requested_quality": "high",
+      "requested_canvas": "1024x1024"
+    }
+  ],
+  "source_image_sha256": [
+    "cb1b54d326b36820f674e4521907421def892b726befce98395cc99e3d02f9d1",
+    "cc034480e025c50442a50a86399dea6d5936772652459e8cbd630839d6381122",
+    "08f5987cdc995504b545f57777812b5c819abb0a6ace27ae49aec819c2ea2b8f"
+  ],
+  "source_images_and_facts_match_option_a": true,
+  "image_review_status": "NOT_REVIEWED",
+  "native_compiled_session_state_after_direct_website_delivery": "AUTHORIZED",
+  "limits": "One real sample; new native compiled prompts differ from option A. This is not a frozen-prompt scheduling comparison, a quality-equivalence claim or a speed guarantee."
+}

@@ -588,6 +588,10 @@ class ExecutionCoordinator:
 
     async def run(self, job_id: str) -> JobStatus | None:
         current = self.prepare(job_id)
+        if current == JobStatus.COMPLETED and self._is_domestic_main_image_job(job_id):
+            from .aurora_main_image_native_fast import finalize_delivery
+
+            await finalize_delivery(self.session_factory, self.artifact_storage, job_id)
         if current is None or current in TERMINAL_JOB_STATUSES:
             return current
         if current == JobStatus.AWAITING_FINAL_REVIEW:
@@ -657,6 +661,12 @@ class ExecutionCoordinator:
             )
         if is_fast_replica or is_fast_main:
             await self._run_fast_replica(job_id)
+            if is_fast_main:
+                from .aurora_main_image_native_fast import finalize_delivery
+
+                await finalize_delivery(
+                    self.session_factory, self.artifact_storage, job_id
+                )
             return self.finalize_job(job_id)
         while True:
             leases: list[AttemptLease] = []
@@ -3424,6 +3434,7 @@ def build_fake_coordinator(
         MainImageProviderRouter,
     )
     from .aurora_main_image_fast_provider import FastMainImageProvider
+    from .aurora_main_image_native_fast import NativeFastMainImagePlanner
 
     aurora_provider = MainImageProviderRouter(
         session_factory, aurora_provider,
@@ -3579,6 +3590,12 @@ def build_fake_coordinator(
                 work_root=aurora_work_root, execution_mode=aurora_execution_mode,
             ),
             FastMainImagePlanner(session_factory, gateway, storage),
+            NativeFastMainImagePlanner(
+                session_factory, gateway, storage,
+                work_root=(
+                    aurora_work_root / "native-fast" if aurora_work_root else None
+                ),
+            ),
         ),
         max_concurrency=xinghe_concurrency,
         # Detail-pack behavior remains unchanged. Amazon follows its own Skill

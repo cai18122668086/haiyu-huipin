@@ -126,7 +126,15 @@ def setup(client, monkeypatch, gateway=None):
     return provider, gateway, request, plan
 
 
-def persist(client, plan, *, retry_of=None, receipts=None):
+def persist(
+    client,
+    plan,
+    *,
+    retry_of=None,
+    receipts=None,
+    speed="fast",
+    schema_version=SCHEMA_VERSION,
+):
     job_id, item_id, attempt_id = [prefix + uuid4().hex for prefix in ("j", "i", "a")]
     with client.app.state.session_factory() as session:
         session.add(
@@ -138,7 +146,7 @@ def persist(client, plan, *, retry_of=None, receipts=None):
                 retry_of_job_id=retry_of,
                 configuration={
                     "input": {"product_asset_ids": plan["product_asset_ids"]},
-                    "settings": {"main_image_speed": "fast"},
+                    "settings": {"main_image_speed": speed},
                     RECEIPTS_KEY: receipts or {},
                 },
                 expected_item_count=6,
@@ -162,7 +170,7 @@ def persist(client, plan, *, retry_of=None, receipts=None):
                 workspace_id="ws_test",
                 job_id=job_id,
                 revision=1,
-                schema_version=SCHEMA_VERSION,
+                schema_version=schema_version,
                 payload=deepcopy(plan),
                 payload_hash=canonical_hash(plan),
                 validation_status="valid",

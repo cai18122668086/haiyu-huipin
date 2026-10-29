@@ -1,0 +1,36 @@
+{
+  "base_main": "b6b91b8",
+  "variant": "native_fast",
+  "new_native_tests": 59,
+  "existing_fast_a_tests": 49,
+  "a_b_tests_passed": 108,
+  "original_regressions_passed": 235,
+  "distinct_backend_cases_passed": 343,
+  "provider_boundary_followup_passed": 33,
+  "frontend_logic_passed": 4,
+  "typescript": "passed",
+  "production_build": "passed",
+  "targeted_eslint": "passed",
+  "ruff": "passed",
+  "mypy_checked_modules": 6,
+  "openapi": "synchronized",
+  "original_v20_and_fast_a_skill_trees": "unchanged byte-for-byte relative to 213d2d4",
+  "paid_b_suites": 1,
+  "external_calls": {
+    "identity": 1,
+    "image": 6,
+    "audit": 0,
+    "automatic_redraw": 0
+  },
+  "image_quality": "high",
+  "real_delivery": "6 signed originals and six-file ZIP verified",
+  "native_finalization": "zero additional model calls; actual originals bound through current website runner in an isolated DB copy",
+  "deployment_performed": false,
+  "private_credentials_or_images_committed": false,
+  "known_visual_observations": [
+    "Repeated copy across pages",
+    "Supplementary tube and pouch appear on page 1, implying a possible bundle",
+    "Label topology and small printing vary across images"
+  ],
+  "skill_zip_sha256": "a642787de0efe4f3246021543bf9a37cd9018e746c6bdec4d707be7f375f1e3e"
+}

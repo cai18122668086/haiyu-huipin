@@ -3595,7 +3595,8 @@
             "description": "Optional fast workflow opt-in; omitted requests use standard.",
             "enum": [
               "standard",
-              "fast"
+              "fast",
+              "native_fast"
             ],
             "title": "Main Image Speed",
             "type": "string"

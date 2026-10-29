@@ -508,6 +508,13 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
         .limit(1)
     )
     plan_payload = plan.payload if plan is not None else None
+    if (
+        plan is not None
+        and plan.schema_version == "aurora-main-image-native-fast-plan-v1"
+    ):
+        from .aurora_main_image_native_fast import public_payload
+
+        plan_payload = public_payload(plan.payload)
     if plan is not None and plan.schema_version == "aurora-main-image-plan-v2":
         from .aurora_main_image_planner import public_aurora_plan_payload
 
@@ -519,7 +526,7 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
              if not key.startswith("_main_image_fast")}
             if job.type == JobType.DOMESTIC_MAIN_IMAGE.value
             and (job.configuration.get("settings") or {}).get("main_image_speed")
-            == "fast"
+            in {"fast", "native_fast"}
             else job.configuration
         ),
         configuration_schema=job.configuration_schema,

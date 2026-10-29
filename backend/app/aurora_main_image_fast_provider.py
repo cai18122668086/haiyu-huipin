@@ -31,6 +31,13 @@ logger = logging.getLogger(__name__)
 VERSION = "aurora-main-image-fast-v1"
 SCHEMA_VERSION = "aurora-main-image-fast-plan-v1"
 SKILL_ID = "aurora-domestic-ecommerce-main-image-fast"
+NATIVE_VERSION = "aurora-main-image-native-fast-v1"
+NATIVE_SCHEMA_VERSION = "aurora-main-image-native-fast-plan-v1"
+NATIVE_SKILL_ID = "aurora-domestic-ecommerce-main-image-native-fast"
+_VARIANTS = {
+    "fast": (VERSION, SCHEMA_VERSION, SKILL_ID),
+    "native_fast": (NATIVE_VERSION, NATIVE_SCHEMA_VERSION, NATIVE_SKILL_ID),
+}
 RECEIPTS_KEY = "_main_image_fast_invocations"
 _GENERATION_KEYS = (
     "version",
@@ -53,6 +60,15 @@ def generation_hash(plan: dict[str, Any]) -> str:
 
 
 def image_prompt(plan: dict[str, Any], page: dict[str, Any]) -> str:
+    if plan.get("version") == NATIVE_VERSION:
+        # The compiler's native prompt is frozen in the plan, including all
+        # original spacing and copy. Do not wrap it in the first fast template.
+        prompt = page.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ApiError(
+                409, "FAST_MAIN_IMAGE_PLAN_CHANGED", "原生快速主图提示词不完整。"
+            )
+        return prompt
     return (
         "Create ONE complete, high-quality Chinese domestic e-commerce main image. "
         "Never combine multiple pages or output a contact sheet. Each attached "
@@ -100,6 +116,11 @@ class FastMainImageProvider:
             job = session.get(JobRecord, request.job_id)
             item = session.get(JobItemRecord, request.job_item_id)
             attempt = session.get(JobAttemptRecord, request.attempt_id)
+            speed = (
+                job.configuration.get("settings", {}).get("main_image_speed")
+                if job is not None
+                else None
+            )
             if (
                 request.operation != "domestic_main_image"
                 or job is None
@@ -115,14 +136,14 @@ class FastMainImageProvider:
                 or attempt.status != "running"
                 or attempt.provider_idempotency_key != request.idempotency_key
                 or job.status != "processing"
-                or job.configuration.get("settings", {}).get("main_image_speed")
-                != "fast"
+                or speed not in _VARIANTS
             ):
                 raise ApiError(
                     409,
                     "FAST_MAIN_IMAGE_SCOPE_INVALID",
                     "快速主图任务归属或执行状态无效。",
                 )
+            version, schema_version, skill_id = _VARIANTS[speed]
             row = session.scalar(
                 select(JobPlanRecord)
                 .where(JobPlanRecord.job_id == job.id)
@@ -132,7 +153,7 @@ class FastMainImageProvider:
             if (
                 row is None
                 or row.workspace_id != request.workspace_id
-                or row.schema_version != SCHEMA_VERSION
+                or row.schema_version != schema_version
                 or row.validation_status != "valid"
                 or row.confirmed_at is None
                 or row.payload_hash != canonical_hash(row.payload)
@@ -142,8 +163,8 @@ class FastMainImageProvider:
                 )
             plan = dict(row.payload)
             if (
-                plan.get("version") != VERSION
-                or plan.get("skill_id") != SKILL_ID
+                plan.get("version") != version
+                or plan.get("skill_id") != skill_id
                 or len(plan.get("pages", [])) != 6
                 or [p.get("page_index") for p in plan["pages"]] != list(range(6))
                 or [p.get("page_role") for p in plan["pages"]] != list(PAGE_ROLES)
@@ -157,8 +178,34 @@ class FastMainImageProvider:
                     "FAST_MAIN_IMAGE_PLAN_CHANGED",
                     "快速主图六图职责或素材绑定已变化。",
                 )
+            if speed == "native_fast":
+                if not (
+                    isinstance(plan.get("product_identity_lock"), dict)
+                    and plan["product_identity_lock"]
+                    and isinstance(plan.get("style_lock"), dict)
+                    and plan["style_lock"]
+                ):
+                    raise ApiError(
+                        409, "FAST_MAIN_IMAGE_PLAN_CHANGED", "原生身份或风格锁不完整。"
+                    )
+                for page in plan["pages"]:
+                    source_ids = page.get("source_asset_ids")
+                    if (
+                        not isinstance(page.get("prompt"), str)
+                        or not page["prompt"].strip()
+                        or not isinstance(source_ids, list)
+                        or not source_ids
+                        or any(not isinstance(key, str) for key in source_ids)
+                        or len(set(source_ids)) != len(source_ids)
+                        or not set(source_ids).issubset(plan["product_asset_ids"])
+                    ):
+                        raise ApiError(
+                            409,
+                            "FAST_MAIN_IMAGE_SOURCE_CHANGED",
+                            "原生快速主图提示词或逐页来源绑定无效。",
+                        )
             if (
-                BundledSkillManifestValidator().validate(SKILL_ID)
+                BundledSkillManifestValidator().validate(skill_id)
                 != plan["skill_content_hash"]
             ):
                 raise ApiError(
@@ -311,7 +358,9 @@ class FastMainImageProvider:
             session.commit()
 
     @staticmethod
-    def _artifact(data: bytes, canvas: list[int]) -> ProviderArtifact:
+    def _artifact(
+        data: bytes, canvas: list[int], *, strict_square: bool = False
+    ) -> ProviderArtifact:
         with Image.open(BytesIO(data)) as image:
             image.load()
             w, h, fmt = *image.size, image.format
@@ -320,6 +369,7 @@ class FastMainImageProvider:
         if (
             fmt not in {"PNG", "JPEG", "WEBP"}
             or min(w, h) < 1024
+            or (strict_square and w != h)
             or abs((w / h) / (canvas[0] / canvas[1]) - 1) > 0.01
         ):
             raise ApiError(
@@ -356,7 +406,11 @@ class FastMainImageProvider:
         try:
             plan, page, records = self._load(request)
             sources = []
-            for key in plan["product_asset_ids"]:
+            native = plan["version"] == NATIVE_VERSION
+            source_ids = (
+                page["source_asset_ids"] if native else plan["product_asset_ids"]
+            )
+            for key in source_ids:
                 record = records[key]
                 data = await self.storage.read_bytes(record[3])
                 if hashlib.sha256(data).hexdigest() != record[2]:
@@ -382,7 +436,9 @@ class FastMainImageProvider:
                         409, "FAST_MAIN_IMAGE_RESULT_CHANGED", "已生成图片校验不一致。"
                     )
                 try:
-                    artifact = self._artifact(data, plan["canvas"])
+                    artifact = self._artifact(
+                        data, plan["canvas"], strict_square=native
+                    )
                 except ApiError:
                     if cached.get("state") != "rejected":
                         raise
@@ -424,11 +480,11 @@ class FastMainImageProvider:
                 **(result.normalized_usage or {}),
                 "network_requests": 1,
                 "review_status": "NOT_REVIEWED",
-                "main_image_speed": "fast",
+                "main_image_speed": "native_fast" if native else "fast",
                 "planning_rounds": 1,
                 "metrics": {
                     "api_latency_seconds": result.api_latency_seconds,
-                    "skill_id": SKILL_ID,
+                    "skill_id": plan["skill_id"],
                     "skill_content_hash": plan["skill_content_hash"],
                     "page_index": page["page_index"],
                 },
@@ -493,7 +549,7 @@ class FastMainImageProvider:
             )
             artifact = None
             with suppress(ApiError):
-                artifact = self._artifact(data, plan["canvas"])
+                artifact = self._artifact(data, plan["canvas"], strict_square=native)
             self._finish(
                 page,
                 request,

@@ -215,7 +215,8 @@ def _planner_charges(
 ) -> tuple[list[dict[str, Any]], int, int, int]:
     fast_main_image = (
         job.type == JobType.DOMESTIC_MAIN_IMAGE.value
-        and (job.configuration.get("settings") or {}).get("main_image_speed") == "fast"
+        and (job.configuration.get("settings") or {}).get("main_image_speed")
+        in {"fast", "native_fast"}
     )
     if (
         job.type
