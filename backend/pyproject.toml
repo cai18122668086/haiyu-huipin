@@ -18,6 +18,7 @@ dependencies = [
   "pillow>=11,<13",
   "psycopg[binary]>=3.2,<4",
   "pydantic-settings>=2.7,<3",
+  "PyYAML>=6,<7",
   "python-multipart>=0.0.20,<1",
   "redis>=6,<7",
   "sqlalchemy>=2.0,<3",
@@ -31,7 +32,6 @@ browser = [
   "playwright>=1.50,<2",
 ]
 dev = [
-  "PyYAML>=6,<7",
   "mypy>=1.16,<2",
   "pytest>=8,<10",
   "ruff>=0.12,<1",

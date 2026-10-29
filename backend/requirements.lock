@@ -394,6 +394,14 @@ tldextract==5.3.1 \
 twilio==9.10.9 \
     --hash=sha256:1c50bfb394b5dbc044bacab24b2e3b550bee0c08da51c4a1fa4816293303e66c
     # via supertokens-python
+tencentcloud-sdk-python-common==3.1.153 \
+    --hash=sha256:73070624e9c9181fc049fd15f391b4d9220005d53d672d6255fb40eb9c8b1774
+    # Matches the SDK version already installed in production.
+
+tencentcloud-sdk-python-sms==3.1.153 \
+    --hash=sha256:951dcdb0fb34ba6c2be4782ddfd87eb3b06820b9b6e8c6014429e4f6993ae631
+    # Matches the SDK version already installed in production.
+
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
     # via
