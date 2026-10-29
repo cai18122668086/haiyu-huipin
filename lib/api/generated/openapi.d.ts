@@ -3949,7 +3949,7 @@ export interface components {
              * @description Optional fast workflow opt-in; omitted requests use standard.
              * @enum {string}
              */
-            main_image_speed?: "standard" | "fast" | "native_fast";
+            main_image_speed?: "standard" | "native_fast";
             /** Offers */
             offers?: string[];
             /** Product Attributes */

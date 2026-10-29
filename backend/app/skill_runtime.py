@@ -51,7 +51,6 @@ KNOWN_SKILLS = {
     "xinghe-amazon-visual-suite",
     "xinghe-amazon-visual-suite-fast",
     "aurora-domestic-ecommerce-main-image",
-    "aurora-domestic-ecommerce-main-image-fast",
     "aurora-domestic-ecommerce-main-image-native-fast",
 }
 OPERATION_SKILLS = {

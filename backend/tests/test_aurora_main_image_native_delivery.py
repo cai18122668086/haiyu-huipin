@@ -100,12 +100,12 @@ def setup(client, monkeypatch, gateway=None):
                     "height": asset.height,
                 }
             ],
-            "product_identity_lock": (
-                "Red primary product; preserve exact label and shape."
-            ),
+            "product_identity_lock": {
+                "identity": "Red primary product; preserve exact label and shape."
+            },
             "confirmed_facts": ["用户授权的红色商品"],
             "user_facts": ["用户授权的红色商品"],
-            "style_lock": "Consistent white and red lighting and typography.",
+            "style_lock": {"style": "original style"},
             "pages": [
                 {
                     "page_index": i,
@@ -120,6 +120,9 @@ def setup(client, monkeypatch, gateway=None):
             ],
             "canvas": [1024, 1024],
         }
+    for page in plan["pages"]:
+        page["prompt"] = f"Complete native page {page['page_index']} prompt"
+        page["source_asset_ids"] = list(plan["product_asset_ids"])
     request = persist(client, plan)
     gateway = gateway or Gateway()
     provider = FastMainImageProvider(state.session_factory, gateway, state.storage)
@@ -132,7 +135,7 @@ def persist(
     *,
     retry_of=None,
     receipts=None,
-    speed="fast",
+    speed="native_fast",
     schema_version=SCHEMA_VERSION,
 ):
     job_id, item_id, attempt_id = [prefix + uuid4().hex for prefix in ("j", "i", "a")]
@@ -387,7 +390,7 @@ def test_cross_job_receipt_theft_and_frozen_prompt_changes_are_rejected(
         == "FAST_MAIN_IMAGE_PLAN_CHANGED"
     )
     changed = deepcopy(plan)
-    changed["pages"][0]["visual_plan"] = "A new expensive image prompt"
+    changed["pages"][0]["prompt"] = "A new expensive image prompt"
     retry = persist(
         client, changed, retry_of=request.job_id, receipts=receipt(client, request)
     )

@@ -4656,7 +4656,7 @@ def _reserve_real_provider_job_if_enabled(
     elif (
         job.type == JobType.DOMESTIC_MAIN_IMAGE.value
         and (configuration.get("settings") or {}).get("main_image_speed")
-        in {"fast", "native_fast"}
+        == "native_fast"
     ):
         fast_count = runnable_item_count if runnable_item_count is not None else 6
         group_count = int(runnable_item_count is None)

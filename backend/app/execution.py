@@ -3500,7 +3500,6 @@ def build_fake_coordinator(
         execution_mode=aurora_execution_mode,
     )
     from .aurora_main_image_fast import (
-        FastMainImagePlanner,
         MainImagePlannerRouter,
         MainImageProviderRouter,
     )
@@ -3667,7 +3666,6 @@ def build_fake_coordinator(
                 session_factory, storage=storage, gateway=gateway,
                 work_root=aurora_work_root, execution_mode=aurora_execution_mode,
             ),
-            FastMainImagePlanner(session_factory, gateway, storage),
             NativeFastMainImagePlanner(
                 session_factory, gateway, storage,
                 work_root=(

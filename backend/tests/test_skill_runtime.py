@@ -324,7 +324,6 @@ def test_bundled_manifests_load_with_frozen_policies() -> None:
         "all-category-style-benchmark-still-fast",
         "aurora-domestic-ecommerce-detail-page",
         "aurora-domestic-ecommerce-main-image",
-        "aurora-domestic-ecommerce-main-image-fast",
         "aurora-domestic-ecommerce-main-image-native-fast",
         "aurora-ecommerce-reference-remix",
         "aurora-ecommerce-reference-remix-fast",

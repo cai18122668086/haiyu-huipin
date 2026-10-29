@@ -216,7 +216,7 @@ def _planner_charges(
     fast_main_image = (
         job.type == JobType.DOMESTIC_MAIN_IMAGE.value
         and (job.configuration.get("settings") or {}).get("main_image_speed")
-        in {"fast", "native_fast"}
+        == "native_fast"
     )
     if (
         job.type

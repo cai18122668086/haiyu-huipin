@@ -1,6 +1,0 @@
-interface:
-  display_name: "极光国内电商主图 v2"
-  short_description: "单核运行的淘宝六图策略、生成、审计与连续修订"
-  default_prompt: "使用 $aurora-domestic-ecommerce-main-image 规划并连续完成一张淘宝搜索主图和五张轮播图。"
-policy:
-  allow_implicit_invocation: true

@@ -28,25 +28,22 @@ from app.services import canonical_hash
 from app.task_runner import MockTaskRunner
 from app.xinghe_agent import FakeXingheGateway
 
-from .test_api import dispatch_pending, idem, upload_asset
-from .test_aurora_main_image_fast_workflow import (
+from ._main_image_workflow_helpers import (
     BASE,
     assert_delivery,
     confirm,
     detail,
     retry,
 )
-from .test_aurora_main_image_fast_workflow import (
-    Gateway as FirstFastGateway,
+from ._main_image_workflow_helpers import (
+    Gateway as SyntheticSuiteGateway,
 )
-from .test_aurora_main_image_fast_workflow import (
-    create as create_first_fast,
-)
+from .test_api import dispatch_pending, idem, upload_asset
 
 PROFILE = "aurora_native_fast_identity"
 
 
-class NativeGateway(FirstFastGateway):
+class NativeGateway(SyntheticSuiteGateway):
     async def plan(self, request):
         assert request.planning_profile == PROFILE, (
             "Native fast must only call its isolated one-pass identity profile"
@@ -223,28 +220,6 @@ def test_native_fast_native_plan_six_downloads_billing_and_exact_prompts(
     )
 
 
-def test_native_fast_and_first_fast_keep_separate_plan_and_history_identity(
-    client, tmp_path
-):
-    native_id, native_gateway = create(client, tmp_path)
-    dispatch_pending(client)
-    native = assert_delivery(client, native_id)
-    first_id, first_gateway = create_first_fast(client, tmp_path / "first")
-    dispatch_pending(client)
-    first = assert_delivery(client, first_id)
-    restored = detail(client, native_id)
-    assert restored["configuration"]["settings"]["main_image_speed"] == "native_fast"
-    assert restored["plan"]["payload"]["version"] == NATIVE_VERSION
-    assert native["plan"]["payload"]["skill_id"] != first["plan"]["payload"]["skill_id"]
-    assert first["configuration"]["settings"]["main_image_speed"] == "fast"
-    assert isinstance(first["plan"]["payload"]["product_identity_lock"], str)
-    assert native_gateway.planner_calls[0].planning_profile == PROFILE
-    assert (
-        first_gateway.planner_calls[0].planning_profile
-        == "aurora_main_image_fast_suite"
-    )
-
-
 @pytest.mark.parametrize("binding", ["speed", "version", "schema", "skill"])
 def test_native_fast_rejects_plan_variant_binding_mismatch(client, tmp_path, binding):
     job_id, gateway = create(client, tmp_path, auto=False)
@@ -373,10 +348,10 @@ def test_paid_acceptance_script_dry_variants_and_output_directory_guard(tmp_path
     import sys
     from pathlib import Path
 
-    repo = Path(__file__).resolve().parents[2]
-    script = repo / "backend/scripts/verify_main_image_fast_local.py"
+    backend_root = Path(__file__).resolve().parents[1]
+    repo = backend_root.parent
+    script = backend_root / "scripts/verify_main_image_fast_local.py"
     for variant, profile, directory in [
-        ("fast", "aurora_main_image_fast_suite", "main-image-fast-local"),
         ("native_fast", PROFILE, "main-image-native-fast-local"),
     ]:
         result = subprocess.run(
@@ -477,3 +452,41 @@ def test_native_identity_runtime_flag_only_accepts_explicit_false(
         assert current["status"] == "failed"
         assert current.get("plan") is None
         assert not gateway.image_calls
+
+
+def test_removed_a_cannot_be_created_or_registered(client):
+    from app.skill_runtime import KNOWN_SKILLS
+
+    assert "aurora-domestic-ecommerce-main-image-fast" not in KNOWN_SKILLS
+    asset = upload_asset(client)
+    response = client.post(
+        BASE + "/jobs",
+        headers=idem(),
+        json={
+            "type": "domestic_main_image",
+            "intent": "submit",
+            "input": {"product_asset_ids": [asset["id"]]},
+            "configuration": {
+                "main_image_speed": "fast",
+                "product_name": "测试商品",
+                "category": "测试",
+                "selling_points": ["真实卖点"],
+            },
+        },
+    )
+    assert response.status_code == 422, response.text
+
+
+def test_standard_default_serialization_preserves_existing_request_identity():
+    from app.schemas_v1 import DomesticMainImageConfiguration
+
+    data = {
+        "product_name": "测试商品",
+        "category": "测试",
+        "selling_points": ["真实卖点"],
+    }
+    omitted = DomesticMainImageConfiguration(**data).model_dump()
+    explicit = DomesticMainImageConfiguration(
+        **data, main_image_speed="standard"
+    ).model_dump()
+    assert omitted == explicit and "main_image_speed" not in omitted

@@ -23,7 +23,6 @@ from zipfile import ZipFile
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE = Path("C:/Users/a1726/Desktop/杂/身体乳测试")
 VARIANT_PROFILES = {
-    "fast": "aurora_main_image_fast_suite",
     "native_fast": "aurora_native_fast_identity",
 }
 DEFAULT_OUTPUTS = {
@@ -52,7 +51,7 @@ def write_json(path: Path, value: Any) -> None:
 class Observer:
     """Observe the real configured gateway and fence accidental extra paid calls."""
 
-    def __init__(self, gateway: Any, root: Path, variant: str = "fast") -> None:
+    def __init__(self, gateway: Any, root: Path, variant: str = "native_fast") -> None:
         self.gateway = gateway
         self.root = root
         self.variant = variant
@@ -160,8 +159,8 @@ def main() -> int:
     parser.add_argument(
         "--variant",
         choices=tuple(VARIANT_PROFILES),
-        default="fast",
-        help="fast = option A (default); native_fast = original-style option B",
+        default="native_fast",
+        help="native_fast = retained original-style workflow",
     )
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument(

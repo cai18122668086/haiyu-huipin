@@ -3,39 +3,21 @@
 import asyncio
 import hashlib
 from copy import deepcopy
-from io import BytesIO
 
 import pytest
-from PIL import Image
 
 from app.aurora_main_image_fast_provider import (
     NATIVE_SCHEMA_VERSION,
     NATIVE_SKILL_ID,
     NATIVE_VERSION,
-    SCHEMA_VERSION,
-    SKILL_ID,
-    VERSION,
-    FastMainImageProvider,
     generation_hash,
     image_prompt,
 )
-from app.errors import ApiError
 from app.models import AssetRecord
 from app.provider import ProviderOutcome
 
-from .test_aurora_main_image_fast_provider import Gateway, persist, receipt, setup
+from .test_aurora_main_image_native_delivery import Gateway, persist, receipt, setup
 from .test_replica import upload
-
-
-def test_native_canvas_gate_matches_exact_square_harness_without_changing_a():
-    output = BytesIO()
-    Image.new("RGB", (1025, 1024), "white").save(output, format="PNG")
-    data = output.getvalue()
-    # A retains its existing ratio tolerance; B must fail before publication,
-    # rather than leave six successful files blocked at the native finalizer.
-    assert FastMainImageProvider._artifact(data, [1024, 1024]).width == 1025
-    with pytest.raises(ApiError):
-        FastMainImageProvider._artifact(data, [1024, 1024], strict_square=True)
 
 
 def native_setup(client, monkeypatch, gateway=None):
@@ -64,9 +46,9 @@ def native_setup(client, monkeypatch, gateway=None):
     # The original compiler has selected its edit target first, independently
     # from upload order. These exact ordered IDs are frozen in each page.
     for page in plan["pages"]:
-        page.pop("visual_plan")
-        page.pop("visible_copy")
-        page.pop("forbidden_elements")
+        page.pop("visual_plan", None)
+        page.pop("visible_copy", None)
+        page.pop("forbidden_elements", None)
         page["source_asset_ids"] = list(reversed(plan["product_asset_ids"]))
         page["prompt"] = (
             f"\n原生第 {page['page_index']} 页完整提示词。\n  保留中文和尾部空白。  \n"
@@ -82,26 +64,6 @@ def native_persist(client, plan, **kwargs):
         speed="native_fast",
         schema_version=NATIVE_SCHEMA_VERSION,
         **kwargs,
-    )
-
-
-def test_first_fast_template_matches_unchanged_a_byte_digest():
-    plan = {
-        "version": VERSION,
-        "product_identity_lock": "A lock",
-        "user_facts": ["A fact"],
-        "style_lock": "A style",
-        "canvas": [1024, 1024],
-    }
-    page = {
-        "page_index": 0,
-        "page_role": "SEARCH_MAIN_IMAGE_LISTING_COVER",
-        "visual_plan": "A composition",
-        "visible_copy": ["A copy"],
-        "forbidden_elements": "A ban",
-    }
-    assert hashlib.sha256(image_prompt(plan, page).encode()).hexdigest() == (
-        "eff7a0af9c39d45467a6e6b1fb9ec2b338831553d85e0442e7dff424d70566be"
     )
 
 
@@ -144,14 +106,14 @@ def test_native_prompt_exact_bytes_ordered_sources_and_high_quality(
 def test_variants_cannot_mix_plan_or_selection_bindings(client, monkeypatch, part):
     provider, gateway, _, plan = native_setup(client, monkeypatch)
     if part == "version":
-        plan["version"] = VERSION
+        plan["version"] = "retired-main-image-version"
     elif part == "skill":
-        plan["skill_id"] = SKILL_ID
+        plan["skill_id"] = "retired-main-image-skill"
     request = persist(
         client,
         plan,
         speed="fast" if part == "speed" else "native_fast",
-        schema_version=SCHEMA_VERSION if part == "schema" else NATIVE_SCHEMA_VERSION,
+        schema_version="retired-schema" if part == "schema" else NATIVE_SCHEMA_VERSION,
     )
     assert asyncio.run(provider.execute(request)).outcome == ProviderOutcome.FAILED
     assert not gateway.requests

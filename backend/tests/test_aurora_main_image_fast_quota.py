@@ -27,7 +27,7 @@ from .test_replica import upload
 PLANNER_RESERVE = 250_000
 
 
-def seed(client, *, plan_usage=None, receipt=None, speed="fast", status="failed"):
+def seed(client, *, plan_usage=None, receipt=None, speed="native_fast", status="failed"):
     upload(client, "red")
     now = utc_now()
     with client.app.state.session_factory() as session:
@@ -54,7 +54,7 @@ def seed(client, *, plan_usage=None, receipt=None, speed="fast", status="failed"
                     workspace_id="ws_test",
                     job_id=job.id,
                     revision=1,
-                    schema_version="aurora-main-image-fast-plan-v1",
+                    schema_version="aurora-main-image-native-fast-plan-v1",
                     payload=payload,
                     payload_hash=canonical_hash(payload),
                     validation_status="valid",
