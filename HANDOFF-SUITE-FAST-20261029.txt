@@ -1,0 +1,121 @@
+海宇绘品套图快速版后续优化交接
+更新时间：2026-10-29，北京时间
+
+一、任务与用户确认
+
+一键复刻快速版已正式上线。用户已在正式网站进行真实测试，并反馈“效果非常好”。用户希望把成功经验用于其他套图功能，减少重复规划、审计和自动返工，允许开启多个新对话及子 agent 并行推进。
+
+所有功能保留原版，默认仍为原版；复制对应 Skill 和运行策略，新增明确可选择的“快速”。不要直接砍掉原版流程，不静默迁移历史任务，也不要把快速版假称为经过完整 AI 审核。
+
+本轮分为三个独立实现任务：国内主图快速版、详情图快速版、亚马逊套图快速版。各自先审计实际链路、实现独立快速路径、做本地真实链路验证，交付可合并的提交和报告。生产切换必须统一集成、串行发布，三个窗口不得各自部署覆盖对方；本轮不重做已经上线的一键复刻快速版。
+
+二、仓库与启动位置
+
+唯一允许写入的私有仓库：https://github.com/cai18122668086/haiyu-huipin
+正式入口：https://huipin.haiyushuke.com/style-replica
+共享项目父目录：C:\Users\a1726\Desktop\cyh\电商生图
+本交接与成功实现：C:\Users\a1726\Desktop\cyh\电商生图\huipin-replica-fast-20261029
+主工作区：C:\Users\a1726\Desktop\cyh\电商生图\polaris-commerce-next
+
+先读所在仓库的 AGENTS.md、README.md、RELEASE-STATUS.txt，核对 git remote -v，fetch origin/main。禁止向姐妹网站、旧仓库或参考仓库写入、推送和部署。主工作区存在其他窗口未提交的工作，不能 reset、clean、checkout 或覆盖它；不要把它的脏工作树整体打包发布。
+
+每个新对话使用预先准备的独立 Git worktree 和分支；所有工具明确指定自己的工作目录。Windows 的 C:\Users\a1726\Desktop 实际可能解析至 D:\Desktop，两个路径可能是同一份文件；不能仅凭盘符不同判断是独立副本。路径过长时优先用 Path.resolve() 后的路径。
+
+现有 Python 环境：polaris-commerce-next\.venv-codex\Scripts\python.exe。
+必须设置 PYTHONPATH 为自己的 worktree\backend，防止 editable install 意外导入主工作区代码。不要在共享虚拟环境里随意升级依赖。前端依赖可复用主工作区 node_modules 的本地 Junction，避免多窗口重复安装或升级；生成目录、测试数据库、素材和回执均放本任务独立的忽略目录。
+
+三、当前正式基线及并行窗口
+
+截至本交接，origin/main 已包含一键复刻快速版的源码和发布记录，基准提交为 75b5ac8。正式应用构建来源为 80b2ad06996ae1decd307d7c4778597d66079e57。
+后端：huipin-replica-fast/backend:20261029-v2。
+前端：huipin-replica-fast/frontend:20261029-v2。
+迁移：20261029_0034。
+原版当前协议：exact-compact-v16，哈希 63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c。
+历史 v15：67de9f26f2928a566acc92d1083e6fe2fa907710e7fd4eb46ed85e47ee03fe95，冻结恢复路径必须保留。
+
+以上是时间点快照，不是未来发布基线：开始实现、做最终测试和准备发布前，都必须重新 fetch 并核对当前生产镜像和 RELEASE-STATUS.txt。
+
+已有窗口“排查真实素材展示功能失败”，threadId 01a186d8-4545-7631-94ff-076ca9eda969，正在将遗漏的原版规划截断、原始尺寸兼容及结果尺寸展示修复合入最新主线。它已经发现把尺寸辅助函数放进共享画布文件会改变原版协议哈希，正改为独立模块。新窗口可只读 read_thread 了解进度；不要重复实现、改写其工作区或中断它。它也获得了用户的原版补丁合并部署授权，但这不代表三个新快速功能可以各自抢占生产切换。
+
+其他已有窗口：
+“排查一键复刻生成问题”，01a186e4-8056-7d61-86a4-981fbb1386f1，已发布 v16 促销附属区拆屏修复；提交 77d52e6 已包含在快速版。
+“用真实素材展示平台功能效果”，01a1865d-e054-7870-88e3-76ce3eb20f76，包含早期原始素材与功能演示背景。
+
+不要把现有窗口的本地修改误认为已经部署。尤其 execution.py、xinghe_agent.py、refined_detail.py、schemas_v1.py、skill_runtime.py、routes_v1.py 及公共结果展示组件可能被多路任务涉及。各任务使用自己的分支，优先新增专属模块；对共享入口仅做最小接线，说明改动范围。准备合并前先吸收最新 main，处理冲突并重新验证，不整体覆盖共享大文件。
+
+四、成功案例与实际证据
+
+实现入口：
+backend/app/replica_fast.py：一次整套规划、共享身份/事实/风格锁、逐屏计划、顺序/拆屏/几何校验和提示词组装。
+backend/app/replica_fast_provider.py：独立生图、持久提交回执、原图保存、尺寸检查、结果复用、真实 provider 来源标识。
+backend/app/execution.py：仅快速分支使用单套最多 20 张、FIRST_COMPLETED 滚动补位；数据库活跃租约限制重复 worker 的总占用。
+components/style-replica-workspace.tsx：默认原版、快速可选，历史与草稿保留版本。
+lib/replica/result-assets.ts：按 job_item_id 与屏号绑定图片，兼容乱序、部分失败和重试。
+backend/tests/test_replica_fast.py、docs/replica-fast-suite.md、verification/replica-fast-20261029/。
+
+独立 Skill：aurora-ecommerce-reference-remix-fast、all-category-style-benchmark-still-fast。完整复制原始资料，新的 SKILL.md 覆盖旧执行流程；运行时只装载相关视觉章节，不执行副本里的历史审计 CLI。两者有独立 manifest。原版 Skill 不变。
+
+本地真实素材：3 张 OLAY 身体乳商品图、8 张对标图和卖点文本。
+第一轮快速版：一次规划 72.28 秒，3 张并发且整批等待，8 张原图返回共 529.53 秒；4 张被旧尺寸门槛拦截。
+第二轮快速版：一次规划 79.15 秒，8 张在 0.25 秒内全部开始；生图与交付 194.33 秒，总计 276.44 秒，8 张均可下载。
+本样本总耗时下降 47.8%。用户上线后的真实测试反馈很好。正式发布验证：446 项隔离回归通过、排除 1 项既有旧容量预期测试，另有本地 112 项兼容性回归；公网默认版本与切换、登录、支付目录和权限均验证通过。
+
+两轮原始用料和 Skill 相同，但第二轮重新规划，全部逐屏文案/构图及全局配色都变化。第一轮蓝白，第二轮白金/墨绿。因此 47.8% 是两次完整链路观测差值，不是只改变并发的严格 A/B，也不是与原版的同输入盲评。不要声称提示词模板相同就代表实际生图提示词相同。
+
+冻结方案与完整生图提示词，再只改变并发，才能评估纯调度收益。评估规划精简时单独对比规划；最后再评估完整新旧流程。允许图像模型固有随机性，不承诺固定分钟数。
+
+五、可复用原则与必须保留的约束
+
+1. 一次有效规划完成整套分工；商品身份、授权事实、共享风格只输出一次，各屏只写自己的构图、文案、职责和禁项。服务器组合每张完整提示词，不用机械模板替代创意设计。
+2. 去掉重复方案审查、阻塞交付的成品 AI 审计及自动审美重绘；文件和业务完整性校验继续保留。没有语义审查就是 NOT_REVIEWED，程序校验通过不能叫视觉 PASS。
+3. 独立画布有界并发，完成一张立即补位。单套 20 已有经验，但不能把上游 3000 全站共享额度直接当作每套额度；真正互相依赖的画布先识别依赖，不强行并行。
+4. 原版仍默认，原 Skill 与历史任务绑定版本保持。新增默认字段不得改变旧请求的幂等身份、方案哈希、重试或账单行为。已经上线的快速版识别字段是 replica_speed，仅适用于复刻；其他功能新增字段先核对现有 schema，不批量改名。
+5. 保留原图 SHA、方案哈希、Skill 版本、任务归属与逐屏索引；提交前写持久回执。未知提交/下载结果不得盲目重发。重试优先复用已有原图，只处理确实失败项，不重新规划整套或重绘成功项。
+6. 显式返回 provider_name/model_name/pricing_version。首次实测缺少来源标识，公共执行器把真实图当成 mock 丢弃；以后必须测试经过真实路由后生成素材可下载，不能只断言 job.status。
+7. 请求画质保持高质量，不为提速偷偷换模型、降档或本地重排。当前复刻请求最短边 1024；验收接受短边至少 1024，或短边至少 768 且总像素至少 150 万，比例误差不超过 1%。这是本通道样本适配经验，不是所有功能、平台的通用标准。原图原样交付，不靠放大制造达标尺寸。
+8. token 上限与 reasoning_tokens 需一起核算；finish_reason=length 必须当截断，不能用解析到的部分 JSON 创建任务。不要假设所有“慢”都是多轮规划；单轮长输入、重复长输出、上游等待和整批屏障也会耗时。
+9. 日志至少记录规划/生图调用数、各阶段耗时、输入输出 tokens、首张返回/首张可下载、整套交付、实际下载数量及是否额外收费。上游未返回费用时 actual=null；不要把旧 USD 估算或内部积分当实际人民币成本。
+10. 不照搬竞品品牌、实测数据、价格、赠品或认证；没有原始数据就不画“使用前后”数据曲线。多张商品原图可能为不同包装版本，身份锁应明确主商品，避免混装细节。
+
+六、三个后续任务的切入点
+
+A 国内主图快速版，优先级高
+原始审计路径：商品身份核对、六图方案、逐张生成/审计、前两张风格校准、整套审计；运行模式以当前实际配置为准。检查已有 parallel_v20_calibrated 的复用价值，不能只看到分支存在就认定已启用。
+重点文件：backend/app/aurora_main_image_planner.py、aurora_main_image_provider.py、aurora_main_image_runtime.py、aurora_execution_modes.py、components/domestic-main-image-workspace.tsx。
+原 Skill：backend/skill_sources/aurora-domestic-ecommerce-main-image-v20。
+目标：独立快速 Skill/版本，冻结一次整套计划，减少阻塞审计/自动重绘，保持六张的任务分工与商品身份，以独立画布滚动并发交付。若保留某项校准，说明真实依赖和耗时收益，不默认保留旧整套审计。
+
+B 详情图快速版，优先级高
+国内精致详情当前已是一次合并规划，不能以“从三轮改一轮”为前提。早期审计发现输入参考资料多、逐页提示词重复共享约束、生成有三秒错峰提交。先核对当前链路和正在集成的截断修复。
+重点文件：backend/app/refined_detail.py、xinghe_agent.py、new_detail_skill_provider.py、execution.py、app/workspace/detail-pack/page.tsx。
+原 Skill：xinghe-ecommerce-detail-domestic-4；跨境 xinghe-crossborder-detail-3 作为第二阶段同类核查，先保证国内路径完整可用，不同时重写所有详情模式。
+目标：只加载必要设计资料、共享锁输出一次、逐页差异化表达、消除无根据的提交错峰/整批等待。保留完整页数、逐页画布和有效文案，不能截断长方案、减少字段或把多页拼成一张冒充套图。
+
+C 亚马逊套图快速版，优先级次于前两项，可并行
+原始审计路径：21 项规划、独立生图、最多两轮整套 QA、失败项自动重绘与交付阻断。当前其他窗口正在修复原版规划截断，新快速版应继承其合并结果。
+重点文件：backend/app/amazon_visual_suite_provider.py、amazon_visual_quality.py、amazon_visual_suite_contract.py、amazon_auto_start.py、xinghe_agent.py、app/workspace/amazon-visual-suite/page.tsx、components/amazon-visual-suite-form.module.css。
+原 Skill：backend/skill_sources/xinghe-amazon-visual-suite。
+目标：保留完整 21 张和各自用途，复制独立快速版本；研究取消常规阻塞 QA/自动审美返工，用一次共享策略与逐项差异、滚动并发直接交付。21 张可先跑 20，完成一张补第 21 张。桌面和移动画面有各自构图要求，不能只裁切替代；平台硬约束与身份/事实检查保留。
+
+七、并行协作与交付要求
+
+每个窗口可使用子 agent 做只读审计、独立模块实现或评审；同一分支不要让多人同时改同一文件。前端、后端、manifest、schema、恢复、积分与下载需要一起验收，不交付仅有 SKILL.md 改字的半成品。
+
+三个窗口分别在自己的 docs/ 写实现说明和本地验收报告，提交自己的分支，明确改动清单、共享文件冲突点、测试结果、真实 API 次数、已知限制和下一步。不要修改或重做本交接的共同部分；需要记录分歧时写各自报告。
+
+原版与新快速版本必须隔离测试：旧任务恢复和幂等不变；多 worker 共享单套上限；慢图不阻塞补位；未知结果不重发；部分失败重试；乱序/稀疏图片索引；原始图尺寸与格式；真实路由后素材保存；签名下载及 ZIP 完整性；积分预留与结算；成品真实标签/文案。
+
+先完成本地实现与可审阅结果。真实测试使用项目现有渠道，只在独立本地数据库与输出目录运行；没有适合当前功能的素材时，先用可用样本做有意义的验证并明确不足，不能伪称经过真实完整套图验收。不得使用内置 ImageGen 替代网站链路来证明功能成功。素材、凭据、完整回执及真实 env 不入 Git；不得改正在运行的真实客户任务状态或篡改账单制造成功。
+
+准备统一集成时，先核对三个分支及正在处理原版遗漏修复的窗口是否已合并。重新 fetch 当前 main，并读运行中容器/配置；保留支付、SMS、EveryInfra、CSP、全站共享并发、队列和资源配置。复用最新基线构建镜像、隔离数据库回归、零活动任务检查、备份和可回滚切换。禁止从本交接中的历史镜像直接覆盖后来发布的版本。
+
+八、参考材料与本地样本
+
+docs/replica-fast-suite.md：已上线实现、两次实测、并行发布保护和踩坑记录。
+verification/replica-fast-20261029/：构建、运行、隔离测试、公网验收证据，无真实凭据。
+backend/.data/replica-fast-body-lotion/：第一轮本地规划、原图与调用回执，仅忽略目录。
+backend/.data/replica-fast-body-lotion-concurrency20/：第二轮完整结果、summary.json、comparison.html，仅忽略目录。
+本地原始测试素材：C:\Users\a1726\Desktop\杂\身体乳测试；前三张为用户商品，其余八张为对标，卖点.txt 为用户输入。
+早期只读审计：C:\Users\a1726\.cursor\projects\c-Users-a1726-Desktop-cyh\canvases\huipin-suite-speed-audit-20261029.canvas.tsx。它基于较早版本，仅作定位线索，实际流程需重新读当前源码。
+
+用户已经认可快速版的方向与效果。后续优先节省重复思考和等待，保留真正决定画面的身份、事实、风格与逐屏表达，不以降低模型或画质来换速度。
