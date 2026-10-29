@@ -1,0 +1,114 @@
+{
+  "baseline_revision": "75b5ac8",
+  "changes_revision": "3f01230310c78e76f260435743801e7af8c1f4f6",
+  "chats": [
+    {
+      "title": "同步账户管理与会员制度",
+      "thread_id": "01a181c3-a5e6-7a92-9006-5a2622ed7169",
+      "before": "merged_deployed",
+      "evidence": "0492f21 ancestor; current payment settings preserved"
+    },
+    {
+      "title": "提高网站并发上限",
+      "thread_id": "01a182f5-ab23-7083-9793-10fd4afbc12d",
+      "before": "included_in_main_and_deployed",
+      "evidence": "current shared image capacity and worker slots 3000"
+    },
+    {
+      "title": "接入一键复刻爬虫",
+      "thread_id": "01a18584-69e6-7cb3-97af-d4c3e60359e7",
+      "before": "merged_deployed",
+      "evidence": "bb164b3 ancestor; source preview fixes retained"
+    },
+    {
+      "title": "排查一键复刻生成问题",
+      "thread_id": "01a186e4-8056-7d61-86a4-981fbb1386f1",
+      "before": "merged_deployed",
+      "evidence": "77d52e6 ancestor; v16 baseline fingerprint retained"
+    },
+    {
+      "title": "审计套图 Skill 生成耗时",
+      "thread_id": "01a18682-4c8a-7172-9da1-fddcaa8ec433",
+      "before": "merged_deployed",
+      "evidence": "75b5ac8; deployed fast v2 images"
+    },
+    {
+      "title": "排查真实素材展示功能失败",
+      "thread_id": "01a186d8-4545-7631-94ff-076ca9eda969",
+      "before": "uncommitted_local_functional_patches",
+      "action": "consolidated_as_ce56815"
+    },
+    {
+      "title": "用真实素材展示平台功能效果",
+      "thread_id": "01a1865d-e054-7870-88e3-76ce3eb20f76",
+      "before": "local_review_only",
+      "action": "preserved_local_case_preview_and_user_material_excluded_from_production"
+    }
+  ],
+  "scope_excludes": [
+    "unrelated H3/hyskapi service",
+    "later independent handover work",
+    "private env and user images"
+  ],
+  "local_validation": {
+    "frontend_typecheck": "passed",
+    "frontend_targeted_lint": "passed",
+    "frontend_build": "passed",
+    "frontend_logic_tests": 22,
+    "backend_ruff": "passed",
+    "backend_targeted_mypy": "passed",
+    "initial_compatibility_run": {
+      "passed": 364,
+      "skipped": 2,
+      "failed": 1,
+      "failure": "v16 fingerprint changed by shared helper"
+    },
+    "post_fix_targeted_run": {
+      "passed": 44,
+      "fingerprint_unchanged": true
+    },
+    "reliability_module_after_synchronization_repair": 37,
+    "heartbeat_disabled_negative_control": "both cases correctly failed"
+  },
+  "production_cutover": "activated",
+  "functional_patch_revision": "ce56815f50eb890c2f9ef117201481acbe04fc4e",
+  "source_merged_to_main": true,
+  "candidate_postgres_regression": {
+    "passed": 752,
+    "deselected": 1,
+    "deselection": "preexisting twenty_images_fit_job_capacity expectation",
+    "production_database_accessed": false,
+    "first_two_runs": "751 passed; same 0.4-second heartbeat storage assertion failed",
+    "resolution": "assert actual successful renewal during blocked phase; retain expiry and stale fencing coverage; final complete run passed"
+  },
+  "subsequent_new_work": [
+    "实现主图快速版",
+    "实现详情图快速版",
+    "实现亚马逊套图快速版"
+  ],
+  "activation": {
+    "status": "activated",
+    "revision": "3f01230310c78e76f260435743801e7af8c1f4f6",
+    "backend_image": "huipin-consolidated/backend:20261029-v2",
+    "frontend_image": "huipin-consolidated/frontend:20261029-v2",
+    "migration": "20261029_0034",
+    "payment_configuration_preserved": true,
+    "worker_command_and_resource_limits_preserved": true,
+    "other_services_preserved": true,
+    "original_platform_files_preserved": true,
+    "database_backup": "/srv/huipin-consolidated-20261029/huipin-before-everyinfra.dump"
+  },
+  "public_verification": {
+    "public_login": "passed",
+    "me": 200,
+    "front_token_valid": true,
+    "payment_channels_preserved": true,
+    "new_customer_credits": 0,
+    "source_count": 12,
+    "customer_admin_access": 403,
+    "real_sms_sent": 0,
+    "generation_requests": 0,
+    "crawler_requests": 0,
+    "synthetic_account_cleaned": true
+  }
+}

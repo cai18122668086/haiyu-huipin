@@ -1,0 +1,5 @@
+{
+  "heartbeat_disabled_negative_control": "both blocking phases correctly fail",
+  "expected_failures": 2,
+  "production_code_mutated": false
+}
