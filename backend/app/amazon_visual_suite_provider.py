@@ -698,7 +698,12 @@ def validate_editable_amazon_plan_payload(
     from app.xinghe_agent import XingheAgentError
 
     try:
-        validate_amazon_planner_payload(editable_amazon_structured_plan(payload))
+        from .amazon_suite_fast import POLICY_VERSION, validate_expanded_payload
+        structured = editable_amazon_structured_plan(payload)
+        if payload.get("workflow_version") == POLICY_VERSION:
+            validate_expanded_payload(structured)
+        else:
+            validate_amazon_planner_payload(structured)
     except (AdapterValidationError, XingheAgentError) as exc:
         return [
             {
@@ -724,9 +729,17 @@ def synchronize_confirmed_amazon_plan(
     from app.xinghe_agent import XingheAgentError
 
     try:
-        structured = validate_amazon_planner_payload(
-            editable_amazon_structured_plan(plan.payload)
-        )
+        from types import SimpleNamespace
+
+        from .amazon_suite_fast import selected, validate_expanded_payload
+        if selected(job.configuration):
+            sources = tuple(SimpleNamespace(asset_id=asset_id, source_role="white_background_product")
+                for asset_id in job.configuration.get("input", {}).get("white_background_product_asset_ids", []))
+            structured = validate_expanded_payload(editable_amazon_structured_plan(plan.payload), sources=sources)
+        else:
+            structured = validate_amazon_planner_payload(
+                editable_amazon_structured_plan(plan.payload)
+            )
     except (AdapterValidationError, XingheAgentError):
         raise
     items = session.scalars(
@@ -740,16 +753,18 @@ def synchronize_confirmed_amazon_plan(
             "AMAZON_ITEM_INVENTORY_INVALID",
             "Durable Amazon items do not match the confirmed plan.",
         )
+    from .amazon_suite_fast import POLICY_VERSION, selected
+    version = POLICY_VERSION if selected(job.configuration) else AMAZON_PLANNING_POLICY_VERSION
     payload = dict(plan.payload)
     resume_signature = canonical_hash(
         {
-            "version": AMAZON_PLANNING_POLICY_VERSION,
+            "version": version,
             "input_signature": payload.get("input_signature"),
             "structured_plan": structured,
         }
     )
     context = {
-        "schema_version": AMAZON_PLANNING_POLICY_VERSION,
+        "schema_version": version,
         "analysis": structured["analysis"],
         "campaign_style_lock": structured["plan"]["campaign_style_lock"],
         "product_consistency_lock": structured["plan"]["product_consistency_lock"],
@@ -761,8 +776,8 @@ def synchronize_confirmed_amazon_plan(
         configuration = dict(item.configuration)
         configuration.update(
             {
-                "workflow_version": AMAZON_PLANNING_POLICY_VERSION,
-                "planning_policy_version": AMAZON_PLANNING_POLICY_VERSION,
+                "workflow_version": version,
+                "planning_policy_version": version,
                 "resume_signature": resume_signature,
                 "quality": "high",
                 AMAZON_PLAN_CONFIGURATION_KEY: {**context, "screen": screen},

@@ -189,6 +189,12 @@ class AmazonSuiteQualityService:
         self.review_lease_seconds = review_lease_seconds
 
     async def review(self, job_id: str) -> AmazonSuiteReviewOutcome:
+        from .amazon_suite_fast import selected
+
+        with self.session_factory() as session:
+            job = session.get(JobRecord, job_id)
+            if job is not None and selected(job.configuration):
+                return AmazonSuiteReviewOutcome("not_applicable")
         try:
             snapshot = self._snapshot(job_id)
         except Exception as exc:

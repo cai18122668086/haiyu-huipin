@@ -4622,6 +4622,11 @@ def _reserve_real_provider_job_if_enabled(
             _AMAZON_PLANNER_REQUESTS + _AMAZON_MAX_SUITE_REVIEW_REQUESTS
         )
         provider_requests = _AMAZON_PROVIDER_REQUEST_ENVELOPE
+        from .amazon_suite_fast import selected as fast_amazon_selected
+        if fast_amazon_selected(configuration):
+            estimated_cost = (image_cost
+                + settings.tengli_planner_reserve_micros * int(planner_required))
+            provider_requests = AMAZON_EXPECTED_ITEM_COUNT + int(planner_required)
         group_count = int(planner_required)
     elif job.type == JobType.DOMESTIC_MAIN_IMAGE.value:
         # Reserve the complete Skill envelope before the identity-planner call:
