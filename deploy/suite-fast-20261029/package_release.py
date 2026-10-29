@@ -31,7 +31,7 @@ def main():
     assert public_template in git("ls-files", "--", public_template)
     assert "IMG_API_KEY=your-api-key" in (ROOT / public_template).read_text()
     backend.append(public_template)
-    backend.append("backend/scripts/verify_main_image_fast_local.py")
+    backend += git("ls-files", "backend/scripts")
     baseline = json.loads(
         Path(__file__)
         .with_name("production-baseline.json")
@@ -96,7 +96,11 @@ def main():
     )
     backend_docker = ["FROM " + baseline["image"], "USER root"]
     backend_docker += [f"COPY {p} /app/{p.removeprefix('backend/')}" for p in backend]
-    backend_docker += ["COPY backend/tests /app/tests", "USER 10001:10001"]
+    backend_docker += [
+        "COPY backend/tests /app/tests",
+        "COPY public/og.png /app/test-fixtures/og.png",
+        "USER 10001:10001",
+    ]
     frontend_docker = ["FROM " + baseline["frontend_image"], "USER root"]
     frontend_docker += [f"COPY --chown=1000:1000 {p} /app/{p}" for p in frontend]
     frontend_docker += [
@@ -115,7 +119,13 @@ def main():
             Path(__file__).with_name("release_suite_fast.py"),
             arcname="release_suite_fast.py",
         )
-        archive.add(Path(__file__).with_name("probe_public.py"), arcname="probe_public.py")
+        archive.add(
+            Path(__file__).with_name("probe_public.py"), arcname="probe_public.py"
+        )
+        archive.add(
+            Path(__file__).with_name("test_candidate.py"), arcname="test_candidate.py"
+        )
+        archive.add(ROOT / "public/og.png", arcname="public/og.png")
         for name, value in (
             ("backend.Dockerfile", "\n".join(backend_docker) + "\n"),
             ("frontend.Dockerfile", "\n".join(frontend_docker) + "\n"),

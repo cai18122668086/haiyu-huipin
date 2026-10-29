@@ -5,8 +5,9 @@ import json
 from pathlib import Path
 
 import release_base as runner
+from test_candidate import run_candidate_tests
 
-runner.ROOT = Path("/srv/huipin-suite-fast-20261029-v2")
+runner.ROOT = Path("/srv/huipin-suite-fast-20261029-v3")
 runner.BASE_BACKEND = "huipin-consolidated/backend:20261029-v2"
 runner.BASE_FRONTEND = "huipin-consolidated/frontend:20261029-v2"
 runner.BACKEND = (
@@ -114,4 +115,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["build", "test", "activate"])
     action = parser.parse_args().action
-    {"build": build, "test": runner.test, "activate": activate}[action]()
+    {"build": build, "test": lambda: run_candidate_tests(runner), "activate": activate}[
+        action
+    ]()
