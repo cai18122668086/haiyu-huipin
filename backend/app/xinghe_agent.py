@@ -34,7 +34,7 @@ from PIL import Image, ImageChops, ImageOps, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from . import refined_detail
+from . import detail_fast, detail_fast_runtime, refined_detail
 from .aurora_detail_runtime import (
     AuroraDetailHarnessError,
     AuroraDetailHarnessRunner,
@@ -241,7 +241,7 @@ _AURORA_V20_MATERIAL_CHECKS = frozenset(
 PLANNER_DIAGNOSTICS_SCHEMA = "xinghe-planner-diagnostics"
 _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "replica_native_contract", "replica_exact_compact",
-    refined_detail.PROFILE, "amazon_visual_suite",
+    refined_detail.PROFILE, detail_fast.PROFILE, "amazon_visual_suite",
 })
 IMAGE_SIZE = "1024x1536"
 SUPPORTED_IMAGE_SIZES = frozenset(
@@ -376,7 +376,7 @@ _AMAZON_PLANNER_PROTOCOL_FILES = (
     "references/generation-backend.md",
 )
 _COMPLETE_REFERENCE_PROTOCOL_SKILLS = frozenset(
-    {"xinghe-ecommerce-detail-domestic-3", "aurora-domestic-ecommerce-detail-page", refined_detail.SKILL_ID}
+    {"xinghe-ecommerce-detail-domestic-3", "aurora-domestic-ecommerce-detail-page", refined_detail.SKILL_ID, detail_fast.SKILL_ID}
 )
 _AURORA_DOMESTIC_DETAIL_SKILL_ID = "aurora-domestic-ecommerce-detail-page"
 _AURORA_PLANNER_PROTOCOL_FILES = (
@@ -400,7 +400,7 @@ _AURORA_PLANNER_PROTOCOL_FILES = (
     "references/commercial-aversion-control.md",
 )
 _DOMESTIC_DETAIL_SKILL_IDS = frozenset(
-    {"xinghe-ecommerce-detail-domestic-3", _AURORA_DOMESTIC_DETAIL_SKILL_ID, refined_detail.SKILL_ID}
+    {"xinghe-ecommerce-detail-domestic-3", _AURORA_DOMESTIC_DETAIL_SKILL_ID, refined_detail.SKILL_ID, detail_fast.SKILL_ID}
 )
 _PLANNER_PROTOCOL_FILES_BY_SKILL = {
     "xinghe-crossborder-detail-3": _CROSSBORDER_PLANNER_PROTOCOL_FILES,
@@ -1317,8 +1317,8 @@ def compile_page_prompt(
 ) -> str:
     """Compile the template's fidelity and prompt-density contract."""
 
-    if skill_id == refined_detail.SKILL_ID:
-        return refined_detail.compile_prompt(
+    if detail_fast_runtime.independent_skill(skill_id):
+        return detail_fast_runtime.skill_contract(skill_id).compile_prompt(
             structured_plan=structured_plan, screen=screen, page_number=page_number,
             page_count=page_count, language=language, product_name=product_name,
             product_information=product_information, source_roles=source_roles, size=size,
@@ -1816,6 +1816,7 @@ def load_planner_system_prompt(
 ) -> str:
     """Load the pinned direct-Codex protocol after manifest verification."""
 
+    protocol_files: tuple[str, ...]
     sections: list[str] = [
         (
             "You are the production runtime for the pinned "
@@ -1825,7 +1826,9 @@ def load_planner_system_prompt(
         )
     ]
     try:
-        if skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID:
+        if skill_id == detail_fast.SKILL_ID:
+            protocol_files = detail_fast.PROTOCOL_FILES
+        elif skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID:
             protocol_files = _AURORA_PLANNER_PROTOCOL_FILES
         elif skill_id in _COMPLETE_REFERENCE_PROTOCOL_SKILLS:
             references_root = skill_root / "references"
@@ -1836,9 +1839,9 @@ def load_planner_system_prompt(
                     key=lambda candidate: candidate.name,
                 )
             )
-            protocol_files = ("SKILL.md", *reference_files)  # type: ignore[assignment]
+            protocol_files = ("SKILL.md", *reference_files)
         else:
-            protocol_files = _PLANNER_PROTOCOL_FILES_BY_SKILL.get(  # type: ignore[assignment]
+            protocol_files = _PLANNER_PROTOCOL_FILES_BY_SKILL.get(
                 skill_id,
                 _DEFAULT_PLANNER_PROTOCOL_FILES,
             )
@@ -1854,7 +1857,7 @@ def load_planner_system_prompt(
             "SKILL_PROTOCOL_LOAD_FAILED",
             f"Pinned planner protocol could not be loaded ({type(exc).__name__}).",
         ) from exc
-    if skill_id == refined_detail.SKILL_ID:
+    if detail_fast_runtime.independent_skill(skill_id):
         sections.append(
             "\nWEBSITE ADAPTER: You only author the full strategy as structured JSON. "
             "The website owns provider selection, credentials, durable storage and delivery. "
@@ -2556,7 +2559,7 @@ class TengliOpenAICompatibleGateway:
                 payload["messages"].append({"role": "user", "content": correction_prompt})
         if request.planning_profile in {"replica_native_contract", "replica_exact_compact"}:
             payload.update({"max_completion_tokens": 16000})
-        elif request.planning_profile == refined_detail.PROFILE:
+        elif request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}:
             payload.update({"max_completion_tokens": 24000})
         elif request.planning_profile == "amazon_visual_suite":
             payload.update(
@@ -2594,7 +2597,7 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile == "replica_fast_suite":
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", detail_fast.PROFILE}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
@@ -2672,7 +2675,7 @@ class TengliOpenAICompatibleGateway:
                         NativeUrllibOpenAITransport()
                         if (
                             request.planning_profile in NATIVE_PLANNER_PROFILES
-                            or request.planning_profile == refined_detail.PROFILE
+                            or request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}
                         )
                         and type(self.transport) is UrllibOpenAITransport
                         else self.transport
@@ -2718,7 +2721,7 @@ class TengliOpenAICompatibleGateway:
                 native_error = {}
                 if (
                     request.planning_profile in NATIVE_PLANNER_PROFILES
-                    or request.planning_profile == refined_detail.PROFILE
+                    or request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}
                 ) and isinstance(response, Mapping):
                     native_error = safe_native_provider_error(
                         response, (route.planner_api_key, self._api_key, self._planner_api_key, self._image_api_key),
@@ -3665,7 +3668,7 @@ class XinghePlanningCoordinator:
                         system_prompt
                         + (
                             ""
-                            if self.skill_id in {_AURORA_DOMESTIC_DETAIL_SKILL_ID, refined_detail.SKILL_ID}
+                            if self.skill_id in {_AURORA_DOMESTIC_DETAIL_SKILL_ID, refined_detail.SKILL_ID, detail_fast.SKILL_ID}
                             else _auto_identity_resolution_system_prompt(request)
                         )
                     ),
@@ -3771,12 +3774,16 @@ class XinghePlanningCoordinator:
                                 "Aurora returned an unresolved identity-evidence board; "
                                 "the plan cannot enter image generation.",
                             )
-                    elif self.skill_id == refined_detail.SKILL_ID:
+                    elif detail_fast_runtime.independent_skill(self.skill_id):
                         if not isinstance(result.payload, Mapping):
                             raise XingheAgentError("REFINED_DETAIL_PLAN_INVALID", "The complete plan must be an object.")
                         structured = _bounded_protocol_mapping(result.payload, path="/")
-                        structured = refined_detail.normalize_strategy(structured)
-                        refined_detail.validate_strategy(structured, request.page_count)
+                        structured = detail_fast_runtime.skill_contract(self.skill_id).normalize_strategy(structured)
+                        detail_fast_runtime.skill_contract(self.skill_id).validate_strategy(structured, request.page_count)
+                        if self.skill_id == detail_fast.SKILL_ID:
+                            detail_fast.validate_source_selection(
+                                structured, tuple(source.source_role for source in request.sources)
+                            )
                         validated.append(structured)
                     else:
                         structured = validate_planner_payload(
@@ -4946,7 +4953,7 @@ class XinghePlanningCoordinator:
             from .new_detail_skill_provider import AdapterValidationError
 
             try:
-                configure = refined_detail.prompt_configuration if self.skill_id == refined_detail.SKILL_ID else domestic_detail_prompt_configuration
+                configure = detail_fast_runtime.skill_contract(self.skill_id).prompt_configuration if detail_fast_runtime.independent_skill(self.skill_id) else domestic_detail_prompt_configuration
                 detail_prompt_configuration = configure(settings)
             except AdapterValidationError as exc:
                 raise XingheAgentError(exc.code, str(exc)) from exc
@@ -5176,15 +5183,15 @@ class XinghePlanningCoordinator:
                     if self.skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID
                     else identity_directives,
                     intake_settings=dict(settings)
-                    if self.skill_id in {_AURORA_DOMESTIC_DETAIL_SKILL_ID, refined_detail.SKILL_ID}
+                    if self.skill_id in {_AURORA_DOMESTIC_DETAIL_SKILL_ID, refined_detail.SKILL_ID, detail_fast.SKILL_ID}
                     else None,
                     intake_resolution=configuration.get(
                         "domestic_detail_intake_resolution"
                     ),
                     domestic_protocol=domestic_protocol,
                     planning_profile=(
-                        refined_detail.PROFILE
-                        if self.skill_id == refined_detail.SKILL_ID
+                        detail_fast_runtime.skill_contract(self.skill_id).PROFILE
+                        if detail_fast_runtime.independent_skill(self.skill_id)
                         else
                         "crossborder_detail"
                         if self.skill_id == "xinghe-crossborder-detail-3"
@@ -6034,11 +6041,22 @@ class XinghePlanningCoordinator:
                     ),
                 },
             }
-            if self.skill_id == refined_detail.SKILL_ID:
+            if detail_fast_runtime.independent_skill(self.skill_id):
+                if self.skill_id == detail_fast.SKILL_ID:
+                    payload["detail_fast"] = {
+                        "version": detail_fast.PIPELINE_VERSION,
+                        "skill_id": detail_fast.SKILL_ID,
+                        "skill_content_hash": SkillManifestRegistry.bundled().verify_source(
+                            self.skill_id, self.skill_root
+                        ),
+                        "validation_status": "STRUCTURALLY_VALIDATED",
+                        "review_status": "NOT_REVIEWED",
+                        "concurrency_limit": detail_fast.CONCURRENCY,
+                    }
                 payload["refined_approval"] = {
                     "version": "xinghe-detail-4-approval-v1",
-                    "document_markdown": refined_detail.approval_document(payload),
-                    "document_sha256": refined_detail.approval_hash(payload),
+                    "document_markdown": detail_fast_runtime.skill_contract(self.skill_id).approval_document(payload),
+                    "document_sha256": detail_fast_runtime.skill_contract(self.skill_id).approval_hash(payload),
                 }
             if self.skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID:
                 job_settings = (
@@ -6490,7 +6508,7 @@ class XingheImageProvider:
                 else request.idempotency_key
             ),
             single_dispatch=pair_mode,
-            preserve_provider_artifact=self.skill_id == refined_detail.SKILL_ID,
+            preserve_provider_artifact=detail_fast_runtime.independent_skill(self.skill_id),
             size=(
                 native_size or str(configuration.get("pair_canvas_size"))
                 if self.skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID
@@ -8270,8 +8288,8 @@ def synchronize_confirmed_plan(
 
     if job.type != JobType.DETAIL_PACK.value:
         return
-    if refined_detail.is_refined(job.configuration):
-        refined_detail.validate_payload(plan.payload, job.expected_item_count)
+    if detail_fast_runtime.is_independent(job.configuration):
+        detail_fast_runtime.contract(job.configuration).validate_payload(plan.payload, job.expected_item_count)
     payload = dict(plan.payload)
     # A conflict-blocked Aurora packet is an internal intake artifact.  It is
     # never a valid rendering contract and must not be allowed to reach the
@@ -8342,7 +8360,7 @@ def synchronize_confirmed_plan(
         .order_by(JobItemRecord.ordinal)
         .with_for_update()
     ).all()
-    if refined_detail.is_refined(job.configuration) and job.retry_of_job_id:
+    if detail_fast_runtime.is_independent(job.configuration) and job.retry_of_job_id:
         source_plan = session.scalar(
             select(JobPlanRecord)
             .where(JobPlanRecord.job_id == job.retry_of_job_id)
@@ -8471,7 +8489,7 @@ def synchronize_confirmed_plan(
                 confirmed_prompt = str(existing.get("pair_prompt") or "")
         else:
             confirmed_prompt = compile_page_prompt(
-                skill_id=refined_detail.SKILL_ID if refined_detail.is_refined(job.configuration) else None,
+                skill_id=detail_fast_runtime.contract(job.configuration).SKILL_ID if detail_fast_runtime.is_independent(job.configuration) else None,
                 structured_plan=structured,
                 screen=prompt_page,
                 page_number=int(page["page"]),
@@ -8995,6 +9013,8 @@ def _fake_usage(
 
 
 def _fake_plan(request: PlannerRequest) -> dict[str, Any]:
+    if request.planning_profile == detail_fast.PROFILE:
+        return detail_fast.fake_strategy(_fake_plan(replace(request, planning_profile="detail_pack", domestic_protocol=False)), request)
     if request.planning_profile == refined_detail.PROFILE:
         from .refined_detail_mock import fake_strategy
 
@@ -10901,10 +10921,10 @@ def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
         from .remix_fast_contract import response_format as remix_fast_response_format
 
         return remix_fast_response_format(request.planning_profile)
-    if request.planning_profile == refined_detail.PROFILE:
+    if request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}:
         return {"type": "json_schema", "json_schema": {
             "name": "xinghe_detail_4_plan", "strict": False,
-            "schema": refined_detail.strategy_schema(request.page_count),
+            "schema": (detail_fast if request.planning_profile == detail_fast.PROFILE else refined_detail).strategy_schema(request.page_count),
         }}
     if request.authoring_stage == "direct":
         from .domestic_detail.direct import response_format
@@ -11216,8 +11236,8 @@ def _planner_prompt_body(request: PlannerRequest) -> str:
                 + "\n".join(request.product_information))
     if request.planning_profile == "replica_native_contract":
         return "Author the requested native Skill contract from actual attached pixels. JSON only.\n" + "\n".join(request.product_information)
-    if request.planning_profile == refined_detail.PROFILE:
-        return refined_detail.planner_prompt(request)
+    if request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}:
+        return (detail_fast if request.planning_profile == detail_fast.PROFILE else refined_detail).planner_prompt(request)
     if request.planning_profile == "aurora_detail_revision_scope":
         from .domestic_detail.revision_protocol import scope_prompt
 

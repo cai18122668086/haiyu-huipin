@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "branch": "codex/detail-fast-20261029",
+  "main_base": "b6b91b8",
+  "production_deployed_by_this_branch": false,
+  "scope": "Local independent SQLite/storage, real website routes and configured upstream provider. Failed first storage attempt followed by ordinary accepted-task retry, no manual success-state changes.",
+  "skills": {
+    "original": "xinghe-ecommerce-detail-domestic-4",
+    "fast": "xinghe-ecommerce-detail-domestic-4-fast",
+    "original_default": true,
+    "required_reference_bytes": {
+      "original": 86766,
+      "fast": 26159
+    }
+  },
+  "models": {
+    "planner": "deepseek-v4.1-flash-1017",
+    "image": "image-2.5-flare",
+    "quality": "high",
+    "requested_size": [
+      1440,
+      1920
+    ]
+  },
+  "acceptance_case": {
+    "product_references": 3,
+    "pages": 6,
+    "real_planner_calls": 1,
+    "real_paid_image_submissions": 6,
+    "planner_seconds": 124.2759420000366,
+    "planner_usage": {
+      "completion_tokens": 20857,
+      "prompt_tokens": 9814,
+      "total_tokens": 30671,
+      "prompt_tokens_details": {
+        "cached_tokens": 4096
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 14604
+      }
+    },
+    "compiled_page_prompt_utf8_bytes": [
+      9480,
+      9205,
+      9261,
+      9110,
+      9336,
+      9291
+    ],
+    "submit_span_seconds": 0.125,
+    "first_original_return_seconds": 181.09400000004098,
+    "all_originals_return_seconds": 373.156,
+    "initial_attempt_end_seconds": 373.531,
+    "initial_status": "failed",
+    "initial_failure": "Windows MAX_PATH in old private storage key, originals retained; compact key now tested",
+    "recovery_status": "completed",
+    "recovery_counts": {
+      "planner_calls": 0,
+      "image_post_attempts": 0,
+      "other_post_attempts": 0,
+      "upstream_task_gets": 6,
+      "cdn_download_gets": 6,
+      "reconcile_edits": 6
+    },
+    "recovery_first_downloadable_seconds": 30.625,
+    "recovery_total_seconds": 82.01600000000326,
+    "creation_to_completed_wall_seconds_including_debug_gap": 548.991754,
+    "download_count": 6,
+    "zip_http": 200,
+    "zip_count": 6,
+    "all_original_dimensions": [
+      1086,
+      1448
+    ],
+    "original_and_zip_sha_match_count": 6,
+    "original_record_preserved": true,
+    "credits_reserved_initial": 90,
+    "credits_settled_initial": 0,
+    "credits_settled_recovery": 90,
+    "remaining_reserved_credits": 0,
+    "balance_delta": -90,
+    "actual_provider_cost": null,
+    "semantic_review": "NOT_REVIEWED",
+    "serialized_planner_json_utf8_bytes": 26443,
+    "provider_content_utf8_bytes": [
+      25771
+    ]
+  },
+  "all_local_real_test_calls": {
+    "planner_calls": 2,
+    "paid_image_submissions": 12,
+    "local_completed_plan_replays": 2,
+    "accepted_task_recovery_paid_image_submissions": 0,
+    "accepted_task_recovery_planner_calls": 0,
+    "accepted_task_gets": 6,
+    "cdn_download_gets": 6,
+    "first_debug_case": "Original schema-shaped completed result was initially blocked; strict instance envelope normalization and zero-network local replay used. Its six originals remain private; not reported as uninterrupted acceptance."
+  },
+  "limitations": [
+    "No fixed-plan scheduling A/B or original/fast blind quality comparison. No speedup percentage claimed.",
+    "Accepted sample required a normal retry after a local storage defect; recorded wall time includes debugging, not a stable latency measurement.",
+    "Provider did not return actual pricing; actual cost stays null.",
+    "No production customer database, SMS, payment, deployment or server configuration touched."
+  ],
+  "private_evidence": [
+    "backend/.data/detail-fast-real/",
+    "backend/.data/detail-fast-real-clean/",
+    "backend/.data/detail-fast-real-clean/accepted-task-recovery/"
+  ]
+}

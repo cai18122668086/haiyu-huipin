@@ -2227,6 +2227,14 @@
             "title": "Detail Skill",
             "type": "string"
           },
+          "detail_speed": {
+            "enum": [
+              "standard",
+              "fast"
+            ],
+            "title": "Detail Speed",
+            "type": "string"
+          },
           "language": {
             "default": "zh-CN",
             "maxLength": 16,

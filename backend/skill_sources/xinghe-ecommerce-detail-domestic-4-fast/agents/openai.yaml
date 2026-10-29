@@ -1,0 +1,6 @@
+interface:
+  display_name: "星河电商详情4.0"
+  short_description: "Buyer-demand-led ecommerce detail page generation with scene layouts, unified style locks, and product-physics consistency."
+  default_prompt: "Use $星河电商详情4.0 to turn my product images or product info into a buyer-demand-led ecommerce detail page set, generate the images directly, save local files, and show previews in chat."
+policy:
+  allow_implicit_invocation: true

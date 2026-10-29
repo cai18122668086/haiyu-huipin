@@ -35,6 +35,7 @@ import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { errorMessage } from "@/lib/api/request";
 import { validateImageUpload } from "@/lib/image-upload";
 import { detailSkillSettings, savedDetailSkill } from "@/lib/detail-skills";
+import { DETAIL_SPEED_OPTIONS, detailSpeedSettings, savedDetailSpeed, type DetailSpeed } from "@/lib/detail-speed";
 import type { Asset } from "@/lib/api/types";
 import { allowsJobAction } from "@/lib/jobs/actions";
 import { jobNote } from "@/lib/jobs/presentation";
@@ -124,6 +125,7 @@ function DetailPackWorkspace() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [draftPageCount, setPageCount] = useState(8);
+  const [draftDetailSpeed, setDetailSpeed] = useState<DetailSpeed>("standard");
   const [draftMarketRegion, setMarketRegion] = useState<MarketRegion>("domestic");
   const [draftMarketplaceId, setMarketplaceId] = useState("tmall");
   const [draftImageSize, setImageSize] = useState<MarketplaceImageSize>(DOMESTIC_DETAIL_SIZE);
@@ -159,6 +161,8 @@ function DetailPackWorkspace() {
   const marketRegion: MarketRegion = jobId ? saved?.market_region === "international" ? "international" : "domestic" : draftMarketRegion;
   const detailSkill = jobId ? savedDetailSkill(job.data?.configuration) : "refined";
   const isRefinedDetail = marketRegion === "domestic" && detailSkill === "refined";
+  const detailSpeed = jobId ? savedDetailSpeed(job.data?.configuration) : draftDetailSpeed;
+  const isFastDetail = isRefinedDetail && detailSpeed === "fast";
   const marketplaceId = savedString("platform_code", draftMarketplaceId);
   const imageSize = (savedString("size", draftImageSize ?? "1440x1920") || DOMESTIC_DETAIL_SIZE) as MarketplaceImageSize;
   const language = jobId ? saved?.language === "en-US" ? "en-US" : "zh-CN" : draftLanguage;
@@ -285,6 +289,7 @@ function DetailPackWorkspace() {
       language,
       market_region: marketRegion,
       ...detailSkillSettings(marketRegion, detailSkill),
+      ...detailSpeedSettings(marketRegion, detailSpeed),
       category: category.trim() || undefined,
       target_buyer: targetBuyer.trim() || undefined,
       auto_start_after_plan: true,
@@ -378,10 +383,12 @@ function DetailPackWorkspace() {
           <div className="creation-output-settings">
             <div className="creation-output-heading"><h3>输出设置</h3><span>{selectedMarketplace.name} · {language === "zh-CN" ? "简体中文" : "English"} · {pageCount} 页</span></div>
             <div className="output-options">
+              {isRefinedDetail && <div className="option-field"><span><Sparkles size={16} />生成版本</span><div className="segmented-control" role="group" aria-label="详情图生成版本">{DETAIL_SPEED_OPTIONS.map(option => <button key={option.value} type="button" aria-pressed={detailSpeed === option.value} className={detailSpeed === option.value ? "active" : ""} disabled={Boolean(jobId) || createJob.isPending} onClick={() => setDetailSpeed(option.value)}>{detailSpeed === option.value && <Check size={14} aria-hidden="true" />}{option.title}</button>)}</div></div>}
               <div className="option-field"><span><Languages size={16} />内容语言</span><div className="segmented-control"><button type="button" aria-pressed={language === "zh-CN"} className={language === "zh-CN" ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setLanguage("zh-CN")}>{language === "zh-CN" && <Check size={14} aria-hidden="true" />}简体中文</button><button type="button" aria-pressed={language === "en-US"} className={language === "en-US" ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setLanguage("en-US")}>{language === "en-US" && <Check size={14} aria-hidden="true" />}English</button></div></div>
               <div className="option-field"><span><FileCheck2 size={16} />详情页数</span>{isRefinedDetail ? <ReplicaSelect label="详情页数" layout="grid" disabled={Boolean(jobId)} value={String(pageCount)} onChange={value => setPageCount(Number(value))} options={Array.from({ length: 12 }, (_, index) => [String(index + 1), `${index + 1} 页`] as const)} /> : <div className="page-count-control">{[8, 10, 12].map((count) => <button key={count} className={pageCount === count ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setPageCount(count)}>{count} 页</button>)}</div>}</div>
               {marketRegion === "international" && <div className="option-field"><span><Globe2 size={16} />图片尺寸</span><div className="page-count-control">{selectedMarketplace.sizePresets?.map((preset) => <button key={preset.value} className={imageSize === preset.value ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setImageSize(preset.value)}>{preset.label}</button>)}</div></div>}
             </div>
+            {isRefinedDetail && <p className="field-hint">{isFastDetail ? "快速版一次规划完整套图，逐页独立生成；不进行独立 AI 成品审核或自动重绘。" : "原版保留现有规划与生成流程，可选择快速版对比效果。"}</p>}
           </div>
           </section>
 
@@ -390,7 +397,7 @@ function DetailPackWorkspace() {
           {job.data?.stage === "intake_confirmation_required" && <DomesticDetailIntakeQuestion key={`${job.data.id}:${job.data.plan?.revision}`} workspaceId={workspace?.id} job={job.data} />}
 
           {!automaticPlan && jobId && <section className="planning-card" aria-busy={job.isFetching}>
-            <div className="planning-head"><div><span className="number-chip number-chip--violet">4</span><div><h2>页面规划{marketRegion === "domestic" ? ` · ${isRefinedDetail ? "精致" : "历史快速"}` : ""}</h2><p>{jobId ? automaticPlan ? "规划校验通过后自动生成整套图片，无需再次确认方案。" : "正在读取页面规划。" : marketRegion === "domestic" ? "提交后自动规划并生成整套图片。" : "创建任务后将生成待确认的页面方案。"}</p><small>{isRefinedDetail ? "先规划买家需求、卖点表达和逐页构图，再分别生成每张 3:4 详情图。已生成图片可直接查看与下载。" : marketRegion === "domestic" ? "国内详情按相邻两屏生成一个 3:8 连续画布，固定切成两张 3:4 图片并审核。" : "跨境详情按平台尺寸分别生成独立模块，生成完成后需完成人工 QA 审阅再交付。"}</small></div></div>{job.data && <StatusBadge status={job.data.status} />}</div>
+            <div className="planning-head"><div><span className="number-chip number-chip--violet">4</span><div><h2>页面规划{marketRegion === "domestic" ? ` · ${isFastDetail ? "快速" : isRefinedDetail ? "原版" : "历史快速"}` : ""}</h2><p>{jobId ? automaticPlan ? "规划校验通过后自动生成整套图片，无需再次确认方案。" : "正在读取页面规划。" : marketRegion === "domestic" ? "提交后自动规划并生成整套图片。" : "创建任务后将生成待确认的页面方案。"}</p><small>{isRefinedDetail ? "先规划买家需求、卖点表达和逐页构图，再分别生成每张 3:4 详情图。已生成图片可直接查看与下载。" : marketRegion === "domestic" ? "国内详情按相邻两屏生成一个 3:8 连续画布，固定切成两张 3:4 图片并审核。" : "跨境详情按平台尺寸分别生成独立模块，生成完成后需完成人工 QA 审阅再交付。"}</small></div></div>{job.data && <StatusBadge status={job.data.status} />}</div>
             {!jobId && <div className="api-state"><Info size={22} /><p>尚未创建规划任务。</p></div>}
             {jobId && job.isPending && <div className="api-state"><LoaderCircle className="spin" /><p>正在准备页面规划，请稍候…</p></div>}
             {job.data && planPages.length === 0 && <div className="api-state"><Clock3 size={22} /><p>{jobNote(job.data)}</p></div>}

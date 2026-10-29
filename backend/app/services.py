@@ -514,7 +514,10 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
         plan_payload = public_aurora_plan_payload(plan.payload)
     return JobDetailResponse(
         **base,
-        configuration=job.configuration,
+        configuration={
+            key: value for key, value in job.configuration.items()
+            if key != "_detail_fast_invocations"
+        },
         configuration_schema=job.configuration_schema,
         prompt_version=job.prompt_version,
         strategy_version=job.strategy_version,

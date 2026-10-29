@@ -19,8 +19,8 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
+from . import detail_fast, detail_fast_runtime, refined_detail
 from . import provider_quota_ledger as quota_ledger
-from . import refined_detail
 from .aurora_execution_modes import (
     is_calibrated_parallel_aurora_mode,
     is_parallel_aurora_mode,
@@ -652,7 +652,9 @@ class ExecutionCoordinator:
             is_fast_replica = (
                 fast_job is not None and self._fast_replica_record(fast_job)
             )
-        if is_fast_replica:
+        if is_fast_replica or (
+            fast_job is not None and detail_fast_runtime.is_fast(fast_job.configuration)
+        ):
             await self._run_fast_replica(job_id)
             return self.finalize_job(job_id)
         while True:
@@ -719,8 +721,8 @@ class ExecutionCoordinator:
 
             with self.session_factory() as session:
                 current_job = session.get(JobRecord, job_id)
-                refined_job = current_job is not None and refined_detail.is_refined(
-                    current_job.configuration
+                refined_job = current_job is not None and (
+                    detail_fast_runtime.is_independent(current_job.configuration)
                 )
             await asyncio.gather(
                 *(
@@ -1127,7 +1129,7 @@ class ExecutionCoordinator:
             return (
                 isinstance(settings, Mapping)
                 and settings.get("market_region") == "domestic"
-                and not refined_detail.is_refined(job.configuration)
+                and not detail_fast_runtime.is_independent(job.configuration)
             )
 
     def _is_parallel_aurora_job(self, job_id: str) -> bool:
@@ -1616,6 +1618,7 @@ class ExecutionCoordinator:
             limit = (
                 min(self.max_concurrency, fast_replica_concurrency)
                 if self._fast_replica_record(job)
+                or detail_fast_runtime.is_fast(job.configuration)
                 else self.max_concurrency
             )
             if int(active or 0) >= limit:
@@ -1865,7 +1868,7 @@ class ExecutionCoordinator:
             job.type == JobType.DETAIL_PACK.value
             and isinstance(settings, Mapping)
             and settings.get("market_region") == "domestic"
-            and not refined_detail.is_refined(job.configuration)
+            and not detail_fast_runtime.is_independent(job.configuration)
         )
 
     @staticmethod
@@ -3020,7 +3023,7 @@ class ExecutionCoordinator:
             elif succeeded == job.expected_item_count:
                 if (
                     job.type == JobType.DETAIL_PACK.value
-                    and not refined_detail.is_refined(job.configuration)
+                    and not detail_fast_runtime.is_independent(job.configuration)
                 ):
                     # Domestic Aurora and cross-border Skill detail pages both
                     # require an explicit human delivery decision after all
@@ -3147,7 +3150,7 @@ def _expected_delivery_dimensions(
         if (
             job is not None
             and job.type == JobType.DETAIL_PACK.value
-            and refined_detail.is_refined(job.configuration)
+            and detail_fast_runtime.is_independent(job.configuration)
             and result.persisted_artifact is not None
         ):
             artifact = result.persisted_artifact
@@ -3351,6 +3354,24 @@ def build_fake_coordinator(
             skill_id=REFINED_DETAIL_SKILL_ID,
         )
     )
+    from .detail_fast_gateway import DurableFastDetailGateway
+
+    fast_skill_root = default_skill_root(detail_fast.SKILL_ID)
+    fast_planner = XinghePlanningCoordinator(
+        session_factory, gateway, storage=storage, skill_root=fast_skill_root,
+        base_url_signature=base_url_signature, medium_price_micros=medium_price_micros,
+        high_price_micros=high_price_micros, budget_limit_micros=budget_limit_micros,
+        skill_id=detail_fast.SKILL_ID,
+    )
+    fast_gateway = DurableFastDetailGateway(
+        session_factory, gateway, storage, skill_id=detail_fast.SKILL_ID,
+        skill_content_hash=BundledSkillManifestValidator().validate(detail_fast.SKILL_ID),
+    )
+    fast_detail_provider = detail_fast.FastDetailProvider(XingheImageProvider(
+        session_factory, fast_gateway, storage=storage, skill_root=fast_skill_root,
+        max_concurrency=min(xinghe_concurrency, detail_fast.CONCURRENCY),
+        budget_limit_micros=budget_limit_micros, skill_id=detail_fast.SKILL_ID,
+    ))
     amazon_skill_root = default_skill_root(AMAZON_VISUAL_SUITE_SKILL_ID)
     amazon_planner = XinghePlanningCoordinator(
         session_factory,
@@ -3369,6 +3390,7 @@ def build_fake_coordinator(
         domestic_planner,
         amazon_planner,
         refined=refined_planner,
+        fast=fast_planner,
     )
     default_provider = build_fake_skill_runtime_provider(
         session_factory,
@@ -3524,6 +3546,7 @@ def build_fake_coordinator(
         new_routes,
         domestic_detail_provider=domestic_detail_provider,
         refined_detail_provider=refined_detail_provider,
+        fast_detail_provider=fast_detail_provider,
     )
     amazon_suite_reviewer = None
     if storage is not None:

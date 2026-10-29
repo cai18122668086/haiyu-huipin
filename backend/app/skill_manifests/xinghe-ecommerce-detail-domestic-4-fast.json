@@ -1,0 +1,138 @@
+{
+  "schema_version": "skill-runtime-manifest-v1",
+  "content_hash_algorithm": "sha256-ordered-path-nul-file-sha256-lf-v1",
+  "ignored_runtime_artifacts": [
+    "**/__pycache__/**",
+    "**/*.pyc"
+  ],
+  "skill_id": "xinghe-ecommerce-detail-domestic-4-fast",
+  "content_hash": "b675b21fa051f3e17a84b26bf6abcc4c2802419d59723077b4a7424eefef417f",
+  "capability": "ecommerce_detail_pack",
+  "input_contract": {
+    "schema_id": "polaris.skill.xinghe-ecommerce-detail-domestic-4-fast.input.v1",
+    "required_fields": [
+      "product_groups",
+      "market_profile",
+      "language",
+      "page_count",
+      "product_information"
+    ]
+  },
+  "output_contract": {
+    "schema_id": "polaris.skill.xinghe-ecommerce-detail-domestic-4-fast.output.v1",
+    "required_fields": [
+      "validated_plan",
+      "requested_page_count",
+      "page_asset_refs",
+      "usage"
+    ]
+  },
+  "policy": {
+    "schema_version": "skill-runtime-policy-v1",
+    "auto_review_regeneration_allowed": false,
+    "successful_page_auto_redraw_allowed": false,
+    "safe_expansion_mode": "disabled",
+    "policy_version": "domestic-detail-fast-suite-v1",
+    "active_profile_id": null,
+    "profiles": [],
+    "iteration": null,
+    "safe_expansion": null
+  },
+  "provider_type": "mock",
+  "cost_limit_micros": 0,
+  "real_provider_request_limit": 0,
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "285cfe382a47c4e974d3e06d4f221a4d3a9fa7c10382d04fba378f6c50c2759e"
+    },
+    {
+      "path": "agents/openai.yaml",
+      "sha256": "7556c0a8efc90082dbd15ae2db487256258ae96a50a08abf7e124438b4395f52"
+    },
+    {
+      "path": "references/anti-template-check.md",
+      "sha256": "27672424d2b06f0e93f8524d92ad1bd5a19573a5c50a77282b6ffe7547969946"
+    },
+    {
+      "path": "references/beauty-personalcare-structures.md",
+      "sha256": "410bda7e95109c34a7fa9dd8a490ed28d7cdb13756266d932ca03653e420c954"
+    },
+    {
+      "path": "references/buyer-demand-strategy.md",
+      "sha256": "f8dacfe9d29adecf45e0b86f97ed83f8f5905b84c888f6758ac203f8b40c1e67"
+    },
+    {
+      "path": "references/category-router.md",
+      "sha256": "6b611250b2af6fe8fe84c46be549d48cd0425fcfe6ee08b628df098cf6c6a904"
+    },
+    {
+      "path": "references/compliance.md",
+      "sha256": "427c9a0230f2bba0742a66a01ee70e66e2279abd07793e57c6d4c7755eba08f6"
+    },
+    {
+      "path": "references/design-strength-system.md",
+      "sha256": "d0b2e325f60eafc78725f572a5033d9148d232ff20e0bb089f881327debcd01c"
+    },
+    {
+      "path": "references/electronics-structures.md",
+      "sha256": "768966a8bcd73b8f0263a96bfa28850c7adc60164a4a4ee955fceff183a27e50"
+    },
+    {
+      "path": "references/fashion-page-structures.md",
+      "sha256": "0c815f656d82c119d10d6610529724defe7abcfc212fb5561a5413797f7e3dd8"
+    },
+    {
+      "path": "references/food-page-structures.md",
+      "sha256": "1ad1a757bbd0f134601d980004726da56338e07736a6962bbb60288ab83e21a7"
+    },
+    {
+      "path": "references/general-page-structures.md",
+      "sha256": "e07fae5f50caea10357b9c87681b9a022014ac9ba66e40bff5ca89ef80f0789e"
+    },
+    {
+      "path": "references/generation-tools.md",
+      "sha256": "2e3a6c0c708a74b91e531b930e6c472edd0305eca0edb76d3d6c7ed351ec2c59"
+    },
+    {
+      "path": "references/home-daily-structures.md",
+      "sha256": "7814e2105de5f84b733765ff0d3dbab82c9943d43dbfdca298422f2153ef7f45"
+    },
+    {
+      "path": "references/page-planning-strategy.md",
+      "sha256": "091e8592b1a6496069051982effdb5f4dc8aa2414e0e1fa69f54d89c0ab1a7e0"
+    },
+    {
+      "path": "references/page-task-table.md",
+      "sha256": "43019c7f7cc1b54751942017f7f8861e6e4e68af3f8cd1688de42ca9390a7b85"
+    },
+    {
+      "path": "references/pet-page-structures.md",
+      "sha256": "a87d45ec9455c1545cba88e9915578b9da8d90d153f546d9806a75b886617fb1"
+    },
+    {
+      "path": "references/product-consistency-physics.md",
+      "sha256": "1921b2ac2ec1b75562512f5b2bd11af7b035ba6b60c550d7f0c11df7be9e08df"
+    },
+    {
+      "path": "references/prompt-contract.md",
+      "sha256": "b9016f037920de14593b9acc66ed29a460b113e88f808ebbf084652d4e8b089d"
+    },
+    {
+      "path": "references/quality-control.md",
+      "sha256": "b7e037e29555da14659dde603fa45e495f6ae67ce6363db3916c54843cf663a0"
+    },
+    {
+      "path": "references/scene-layout-standard.md",
+      "sha256": "6d448d75aebdc262a428120e595ee4bb6eb64f56d697ee06a2cd705319dc1530"
+    },
+    {
+      "path": "references/style-system-standard.md",
+      "sha256": "460de8b6cd3dd1a59484a71294e8cd4b41a2067d5f16dfdb2855ed5085aef9eb"
+    }
+  ],
+  "rename_only": false,
+  "source_zip_sha256": "d206039bd52282ce62fd50f37f338fa1398d3fd04e3805be3f13c7dfc54db695",
+  "source_root": "星河电商详情",
+  "controlled_differences": []
+}

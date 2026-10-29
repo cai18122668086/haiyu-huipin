@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from .amazon_visual_suite_contract import (
     AMAZON_DEFAULT_MARKETPLACE,
@@ -391,6 +391,18 @@ class DetailPackInput(BaseModel):
 
 class DetailPackConfiguration(BaseModel):
     detail_skill: Literal["quick", "refined"] = Field(default_factory=lambda: "quick")
+    detail_speed: Literal["standard", "fast"] = Field(
+        default_factory=lambda: "standard"
+    )
+
+    @model_serializer(mode="wrap")
+    def serialize_detail_speed(self, handler: Any) -> dict[str, Any]:
+        # A new default must not change historical request hashes or settings.
+        value: dict[str, Any] = handler(self)
+        if self.detail_speed == "standard":
+            value.pop("detail_speed", None)
+        return value
+
     website_contract_version: Literal["WEBSITE_LEAN_V1", "WEBSITE_DIRECT_V2"] | None = (
         None
     )
@@ -418,6 +430,10 @@ class DetailPackConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def default_domestic_delivery_size(self) -> "DetailPackConfiguration":
+        if self.detail_speed == "fast" and (
+            self.detail_skill != "refined" or self.market_region != "domestic"
+        ):
+            raise ValueError("Fast detail requires domestic refined detail.")
         if self.detail_skill == "refined" and self.market_region != "domestic":
             raise ValueError(
                 "Refined detail 4.0 is available for domestic markets only."

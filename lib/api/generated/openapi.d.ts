@@ -3343,6 +3343,11 @@ export interface components {
              */
             detail_skill?: "quick" | "refined";
             /**
+             * Detail Speed
+             * @enum {string}
+             */
+            detail_speed?: "standard" | "fast";
+            /**
              * Language
              * @default zh-CN
              */
