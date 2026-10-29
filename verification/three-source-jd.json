@@ -1,0 +1,30 @@
+{
+  "item_id": "10232190491534",
+  "groups": {
+    "imageUrls": {
+      "returned": 1,
+      "preview_verified": 1,
+      "import_verified": 1,
+      "imported_original_verified": 1,
+      "imported_thumbnail_verified": 1
+    },
+    "descImageUrls": {
+      "returned": 6,
+      "preview_verified": 6,
+      "import_verified": 6,
+      "imported_original_verified": 6,
+      "imported_thumbnail_verified": 6
+    },
+    "skuImageUrls": {
+      "returned": 2,
+      "preview_verified": 2,
+      "import_verified": 2,
+      "imported_original_verified": 2,
+      "imported_thumbnail_verified": 2
+    }
+  },
+  "unique_imported_assets": 8,
+  "repeat_import_reused_asset": true,
+  "repeat_fetch_reused_document": true,
+  "cost_usd": 0.005556
+}

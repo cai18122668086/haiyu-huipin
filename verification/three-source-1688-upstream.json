@@ -1,0 +1,15 @@
+{
+  "upstream_1688": {
+    "item_id": "1015547666587",
+    "sku_rows_returned": 170,
+    "sku_row_fields": [
+      "available",
+      "id",
+      "name",
+      "options",
+      "stock"
+    ],
+    "sku_image_fields_returned": 0,
+    "normalized_sku_images": 0
+  }
+}

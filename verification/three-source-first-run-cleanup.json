@@ -1,0 +1,8 @@
+{
+  "production": true,
+  "generation_requests": 0,
+  "real_sms_sent": 0,
+  "cases": {},
+  "synthetic_account_cleaned": true,
+  "test_asset_objects_removed": 23
+}
