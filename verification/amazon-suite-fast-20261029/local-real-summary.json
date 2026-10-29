@@ -1,0 +1,431 @@
+{
+  "date": "2026-10-29",
+  "final_collection_base_commit": "98ab58f",
+  "scope": "Isolated local website upload/job API, real configured network gateway and normal signed/ZIP downloads",
+  "source": "Previously authorized local light-blue tumbler sample; only visible facts supplied",
+  "source_sha256": "d093d1397764046438783382f2c5b0738223b4cbd39dd1b10d269fb7b5b0bf67",
+  "models": {
+    "provider": "tengli",
+    "planner_model": "deepseek-v4.1-flash-1017",
+    "image_model": "image-2.5-flare"
+  },
+  "model_or_quality_lowered": false,
+  "quality": "high",
+  "local_resampling": false,
+  "initial_real_run": {
+    "calls": {
+      "planning": 1,
+      "image": 21,
+      "review": 0
+    },
+    "raw_successful_images": 21,
+    "planner_seconds": 105.94675609999103,
+    "planner_tokens": {
+      "reported": true,
+      "input_tokens": 5791,
+      "output_tokens": 15320,
+      "cached_tokens": null,
+      "total_tokens": 21111,
+      "reasoning_tokens": 9907
+    },
+    "raw_suite_last_return_seconds": 296.469,
+    "first_raw_return_seconds": 141.688,
+    "run_end_seconds": 297.703,
+    "first_20_image_start_elapsed_seconds": [
+      108.641,
+      109.219
+    ],
+    "first_slot_refill_elapsed_seconds": 141.907,
+    "first_dispatch_21st_before_slow_earlier_canvas_finished": true,
+    "job_status": "failed",
+    "reason": "Original process still used exact pixel equality; all native originals durably retained",
+    "unique_downloads": 0,
+    "zip_http_status": 409,
+    "credits_reserved": 315,
+    "credits_charged": 0,
+    "actual_provider_cost": null,
+    "duplicate_completed_dispatch_exercised": false
+  },
+  "explicit_cached_recovery": {
+    "normal_failed_retry_api": true,
+    "new_calls": {
+      "planning": 0,
+      "image": 0,
+      "review": 0
+    },
+    "seconds": 6.922,
+    "first_signed_download_seconds": 3.813,
+    "status": "completed",
+    "unique_original_downloads": 21,
+    "signed_download_http_status": 200,
+    "zip_http_status": 200,
+    "zip_image_count": 21,
+    "all_downloads_match_provider_original_sha256": true,
+    "credits_reserved": 315,
+    "credits_charged": 315,
+    "final_balance_credits": 9685,
+    "final_reserved_credits": 0,
+    "original_failed_job_preserved": true
+  },
+  "final_merged_base_collection": {
+    "status": "completed",
+    "new_model_calls": 0,
+    "signed_original_downloads": 21,
+    "zip_image_count": 21,
+    "zip_http_status": 200,
+    "all_provider_original_sha256_match": true,
+    "balance_credits": 9685,
+    "reserved_credits": 0
+  },
+  "delivery_policy": "Native ratio error <=1%; desktop minimum 1464x600; other groups use native high-resolution acceptance, preserving original bytes",
+  "semantic_review": "NOT_REVIEWED",
+  "automatic_aesthetic_redraws": 0,
+  "prompt_note": "The original real run preceded the direct user-hard-constraint prompt suffix. Recovery accepts only an exact reconstructed legacy binding; no new prompt or generation was used. No scheduling A/B comparison was performed.",
+  "production_modified": false,
+  "raw_images_env_complete_receipts_in_git": false,
+  "download_integrity": [
+    {
+      "item_key": "MAIN-01",
+      "ordinal": 0,
+      "sha256": "b43d0d0fbcec4bd2460fb4a7982605bc01f401094f5f18f7aa660581e7317984",
+      "width": 1254,
+      "height": 1254,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "SECONDARY-01",
+      "ordinal": 1,
+      "sha256": "a19bee9ce1be43f6f9fc3ef2546ea2adb5b69d94fef5bc60c7b84be914a76d5f",
+      "width": 1086,
+      "height": 1448,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "SECONDARY-02",
+      "ordinal": 2,
+      "sha256": "a181125b064bacd1ee37941d1dd58ecdbb73659455098e724bdba08c3f3ac275",
+      "width": 1086,
+      "height": 1448,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "SECONDARY-03",
+      "ordinal": 3,
+      "sha256": "22b0249063c40f50de9ec1989aeeead4831bfb84c62f8a17fcc75f548e44a323",
+      "width": 1086,
+      "height": 1448,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "SECONDARY-04",
+      "ordinal": 4,
+      "sha256": "038007f90503b7c985f5731fa8775d5c7b7a1bf3ef23d94dab8b769d1db7cbed",
+      "width": 1086,
+      "height": 1448,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "SECONDARY-05",
+      "ordinal": 5,
+      "sha256": "0cd65ebbf05ef438745b78b71599bf9a8956be91938323eacd4612f5e612ba8d",
+      "width": 1086,
+      "height": 1448,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "SECONDARY-06",
+      "ordinal": 6,
+      "sha256": "9690562fb3c021319ace196a4accbae13a7a841da4067e036b88c71caa667a25",
+      "width": 1086,
+      "height": 1448,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-01",
+      "ordinal": 7,
+      "sha256": "30393d665f3ba8a9e0ebe4c8ed6ef71e38bac6e4eaba816f583918ff6840125b",
+      "width": 1961,
+      "height": 802,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-02",
+      "ordinal": 8,
+      "sha256": "ab88dd92b29bec64882d107f72c31d4407dc31d800cbdd8dc4bcbfefbd4f0142",
+      "width": 1961,
+      "height": 802,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-03",
+      "ordinal": 9,
+      "sha256": "3c680b4ae7bae0e866b1c2baf59a5c64c82dcf88bca3e9d2797a4116acb60a31",
+      "width": 1962,
+      "height": 802,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-04",
+      "ordinal": 10,
+      "sha256": "1d3a60e34f828f312c353c5d45e6181a726c5386b4574a27b84273e4d2356077",
+      "width": 1959,
+      "height": 803,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-05",
+      "ordinal": 11,
+      "sha256": "df6c9a490bc10a1d5994a18f41244e31c2a8ef2287fb84a135ff783116825297",
+      "width": 1962,
+      "height": 802,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-06",
+      "ordinal": 12,
+      "sha256": "2d3fe719fce36e9309ba8925f744000ef865079d84a62d4adf102fa29d31404c",
+      "width": 1961,
+      "height": 802,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-DESKTOP-07",
+      "ordinal": 13,
+      "sha256": "538ecec3ba0f0561b57d8a82a6e5770c74ca1911065eea31f104230ada4a5329",
+      "width": 1960,
+      "height": 802,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-01",
+      "ordinal": 14,
+      "sha256": "c47fe1457d6233500b39b67b7395f8a40e4a5e0048b04c791d035651b965f48d",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-02",
+      "ordinal": 15,
+      "sha256": "773212f3edc8532bfa591f3fc31dde08798ed5dd2d104c94ec49266071e122a0",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-03",
+      "ordinal": 16,
+      "sha256": "4a8f880eb0066024ddac3b4b7aec7bf955fa544c760bde6f58c6c9b9bafd23ae",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-04",
+      "ordinal": 17,
+      "sha256": "16c8d777902ee70c9616cea596954b982ca5595878e73772ff36b11a5f4970bf",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-05",
+      "ordinal": 18,
+      "sha256": "f30ae67675aa1e62ec1c2ef51fa2beec3b5f2e0413dd5a1dff8a8ed54e71ba87",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-06",
+      "ordinal": 19,
+      "sha256": "ad493908987a63a4580315a95af38ee9ddd7176fd0ff60c61e9e8e1ef8600881",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    },
+    {
+      "item_key": "A-MOBILE-07",
+      "ordinal": 20,
+      "sha256": "ce857e22df4c6f51e909fc0720ffee263117e9c169dc8e17bf5e33c3bbed521a",
+      "width": 1448,
+      "height": 1086,
+      "http_status": 200,
+      "provider_original_sha_matches": true
+    }
+  ],
+  "frozen_generation_requests": [
+    {
+      "item_key": "MAIN-01",
+      "full_prompt_sha256": "e45e1b4a3229cd7443c4a180e23073dd89a74a55f78cb28bd768a282932649aa",
+      "requested_canvas": "2000x2000",
+      "quality": "high"
+    },
+    {
+      "item_key": "SECONDARY-01",
+      "full_prompt_sha256": "a94c36be5c08556768a0cfcfed5f31e91008b85f331143f8f69f0ce57f43d231",
+      "requested_canvas": "1200x1600",
+      "quality": "high"
+    },
+    {
+      "item_key": "SECONDARY-02",
+      "full_prompt_sha256": "fc52349b6f5c46742cca20d0109e61c20c190994a4754c29c511e540f2c3f63c",
+      "requested_canvas": "1200x1600",
+      "quality": "high"
+    },
+    {
+      "item_key": "SECONDARY-03",
+      "full_prompt_sha256": "acb2447fa764ac22139e0ca7f85e479a589ff82a8cd07f28c042e4f85df3aacf",
+      "requested_canvas": "1200x1600",
+      "quality": "high"
+    },
+    {
+      "item_key": "SECONDARY-04",
+      "full_prompt_sha256": "19324ab7a0043d351235f82095264a4ed1a9567b23402c894f0cceb659db25d3",
+      "requested_canvas": "1200x1600",
+      "quality": "high"
+    },
+    {
+      "item_key": "SECONDARY-05",
+      "full_prompt_sha256": "26d27338cc949e694cbc8af123a152b0ecc5d80f50349b3c12550a611533d2b2",
+      "requested_canvas": "1200x1600",
+      "quality": "high"
+    },
+    {
+      "item_key": "SECONDARY-06",
+      "full_prompt_sha256": "fe18a6d413c0729b362fec1ea808eaa9e13249ce01a713505412bb526d6232ea",
+      "requested_canvas": "1200x1600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-01",
+      "full_prompt_sha256": "9aae49e223df5b7903132f3d68eef4e4d2ea48ffc11f74b8e6565f1c24ad118c",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-02",
+      "full_prompt_sha256": "d76f81d707c79ce6da637a8fa9d3dbcc58f187673cf0bd1dacf72af575c63b5c",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-03",
+      "full_prompt_sha256": "b039adb791ac3b27a65a8e9770bc7010546313af700b3319d47cfdd5df04a93d",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-04",
+      "full_prompt_sha256": "f3c524d0c2f39d03edd1dda6b26f8d370491ef43f5d81a0519727e5163d7a412",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-05",
+      "full_prompt_sha256": "a5d641ce247fe6c1b7bb31980a6d27555d7c5a079af9084d861b75dddaf6e249",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-06",
+      "full_prompt_sha256": "94f9e77038fa006a9c7867b02fb183aad6f6b71c6baa3a7ae1645c838d04969e",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-DESKTOP-07",
+      "full_prompt_sha256": "05a754f7b5495ac740ac2f81cab3a4fa887806ba55e2bbd69a567e03760bfb79",
+      "requested_canvas": "1464x600",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-01",
+      "full_prompt_sha256": "18b1693962fb35be9c9ac2492bc92a8d72f033d488c4c8730983533e93d50e59",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-02",
+      "full_prompt_sha256": "184f18b34fc77c778c39eec17791df1088bc92f446dda661f9b024e2f28a3625",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-03",
+      "full_prompt_sha256": "e1ae037e1e04db9d73cedf4db67bcbec7ea51dadc34d1aaf38e210191ca2bdac",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-04",
+      "full_prompt_sha256": "fcc2ff616a8507ab20c4bb8c395cfb97ba9099e2f35d262db3e3e4c24bd6ee6b",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-05",
+      "full_prompt_sha256": "0483338493e3629e60a44bc5198bc85970413b2ceefc9ed4d193434fa22bdf7c",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-06",
+      "full_prompt_sha256": "880eafce88d6b0d003072dd62e680f31bdff86d2b9e297221ddfff618f4892dd",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    },
+    {
+      "item_key": "A-MOBILE-07",
+      "full_prompt_sha256": "4e2a3d08d0dbc43199043764b91fd446282e973f34d3e1204745c41079236c17",
+      "requested_canvas": "1600x1200",
+      "quality": "high"
+    }
+  ],
+  "successful_signed_original_http_downloads_across_recovery_and_final_recheck": 42,
+  "final_compatibility_tests": {
+    "passed": 120,
+    "warnings": 3,
+    "seconds": 80.81,
+    "execution_and_boundary_cases": 37,
+    "core_planner_cases": 23,
+    "original_path_compatibility_cases": 60,
+    "base_commit": "98ab58f"
+  },
+  "development_spot_check": {
+    "items": [
+      "MAIN-01",
+      "SECONDARY-01",
+      "A-DESKTOP-01",
+      "A-MOBILE-01"
+    ],
+    "observation": "Preserved blue handled tumbler identity; white main image without added copy; desktop/mobile use distinct compositions",
+    "whole_suite_visual_pass_claimed": false,
+    "additional_observations": [
+      "A-MOBILE-06 returned a product-only composition and omitted its planned headline/subcopy.",
+      "A-DESKTOP-06 added descriptive copy beyond the frozen authored strings; no quantitative performance claim was observed in this sample."
+    ],
+    "scope": "Developer model visual spot check of 7 images plus all authored copy; no human blind review and no whole-suite visual PASS."
+  },
+  "final_prompt_hardening": "Future first dispatches directly bind original user constraints and explicitly require exact planned copy. Existing paid prompts remain frozen; this hardening has synthetic regression coverage, not a second paid visual run."
+}

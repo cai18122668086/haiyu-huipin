@@ -405,6 +405,7 @@ _DOMESTIC_DETAIL_SKILL_IDS = frozenset(
 _PLANNER_PROTOCOL_FILES_BY_SKILL = {
     "xinghe-crossborder-detail-3": _CROSSBORDER_PLANNER_PROTOCOL_FILES,
     "xinghe-amazon-visual-suite": _AMAZON_PLANNER_PROTOCOL_FILES,
+    "xinghe-amazon-visual-suite-fast": ("SKILL.md", "references/fast-planning.md"),
 }
 _SUBJECT_SCALES = {
     "hero",
@@ -2561,6 +2562,8 @@ class TengliOpenAICompatibleGateway:
             payload.update({"max_completion_tokens": 16000})
         elif request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}:
             payload.update({"max_completion_tokens": 24000})
+        elif request.planning_profile == "amazon_visual_suite_fast":
+            payload.update({"max_completion_tokens": 32768})
         elif request.planning_profile == "amazon_visual_suite":
             payload.update(
                 {
@@ -2597,7 +2600,7 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_main_image_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE}:
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_main_image_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast"}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
@@ -2613,7 +2616,7 @@ class TengliOpenAICompatibleGateway:
                     route_payload["reasoning_effort"] = "low"
                 if (
                     request.planning_profile
-                    in _BOUNDED_JSON_PLANNER_PROFILES
+                    in _BOUNDED_JSON_PLANNER_PROFILES | {"amazon_visual_suite_fast"}
                     and route.planner_model.casefold().startswith("deepseek")
                 ):
                     # This provider includes reasoning in the output allowance.
@@ -3756,7 +3759,12 @@ class XinghePlanningCoordinator:
                     error_path=result.error_path,
                 )
             try:
-                if request.planning_profile == "amazon_visual_suite":
+                if request.planning_profile == "amazon_visual_suite_fast":
+                    from .amazon_suite_fast import (
+                        validate_planner_payload as validate_fast_amazon,
+                    )
+                    validated.append(validate_fast_amazon(result.payload, sources=request.sources))
+                elif request.planning_profile == "amazon_visual_suite":
                     from .amazon_visual_suite_provider import (
                         validate_amazon_planner_payload,
                     )
@@ -5214,13 +5222,20 @@ class XinghePlanningCoordinator:
         input_configuration: Mapping[str, Any],
         settings: Mapping[str, Any],
     ) -> tuple[PlannerRequest, ...]:
+        from .amazon_suite_fast import POLICY_VERSION
+        from .amazon_suite_fast import selected as fast_selected
         from .amazon_visual_suite_provider import (
             AMAZON_EXPECTED_ITEM_COUNT,
             AMAZON_PLANNING_POLICY_VERSION,
             AMAZON_VISUAL_SUITE_SKILL_ID,
         )
+        if fast_selected(job.configuration):
+            AMAZON_PLANNING_POLICY_VERSION = POLICY_VERSION
 
-        if self.skill_id != AMAZON_VISUAL_SUITE_SKILL_ID:
+        from .amazon_suite_fast import SKILL_ID as FAST_SKILL_ID
+        from .amazon_suite_fast import selected as fast_selected
+        fast = fast_selected(job.configuration)
+        if self.skill_id != (FAST_SKILL_ID if fast else AMAZON_VISUAL_SUITE_SKILL_ID):
             raise XingheAgentError(
                 "AMAZON_PLANNER_UNAVAILABLE",
                 "The Amazon visual-suite planner is not registered.",
@@ -5345,7 +5360,7 @@ class XinghePlanningCoordinator:
                 platform_code=marketplace,
                 size="amazon-canonical-multi-size-v1",
                 idempotency_key=f"{job.id}:planner:amazon:{signature}",
-                planning_profile="amazon_visual_suite",
+                planning_profile="amazon_visual_suite_fast" if fast else "amazon_visual_suite",
             ),
         )
 
@@ -6151,12 +6166,16 @@ class XinghePlanningCoordinator:
         results: Sequence[PlannerCallResult],
         validated: Sequence[dict[str, Any]],
     ) -> JobStatus:
+        from .amazon_suite_fast import POLICY_VERSION
+        from .amazon_suite_fast import selected as fast_selected
         from .amazon_visual_suite_provider import (
             AMAZON_EXPECTED_ITEM_COUNT,
             AMAZON_ITEM_KEYS,
             AMAZON_PLAN_CONFIGURATION_KEY,
             AMAZON_PLANNING_POLICY_VERSION,
         )
+        if fast_selected(job.configuration):
+            AMAZON_PLANNING_POLICY_VERSION = POLICY_VERSION
 
         if len(requests) != 1 or len(validated) != 1:
             self._fail_planning_locked(
@@ -6326,6 +6345,11 @@ class XinghePlanningCoordinator:
                 "usage_missing_count": int(not results[0].normalized_usage["reported"]),
             },
         }
+        if fast_selected(job.configuration):
+            payload["controls"].update({"automatic_review_enabled": False, "automatic_redraw_enabled": False, "max_suite_review_rounds": 0})
+            payload["business_quality"].update({"status": "NOT_REVIEWED", "automatic_redraw_enabled": False})
+            payload["skill_id"] = self.skill_id
+            payload["skill_content_hash"] = SkillManifestRegistry.bundled().verify_source(self.skill_id, self.skill_root)
         plan.payload = payload
         plan.payload_hash = canonical_hash(payload)
         plan.validation_status = PlanValidationStatus.VALID.value
@@ -9287,6 +9311,9 @@ def _fake_plan(request: PlannerRequest) -> dict[str, Any]:
                 "不得使用生成图片作为商品身份依据",
             ],
         }
+    if request.planning_profile == "amazon_visual_suite_fast":
+        from .amazon_suite_fast import fake_planner_payload
+        return fake_planner_payload(request)
     if request.planning_profile == "amazon_visual_suite":
         return _fake_amazon_plan(request)
     if request.planning_profile in {
@@ -11192,6 +11219,9 @@ def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
                 "schema": schema,
             },
         }
+    if request.planning_profile == "amazon_visual_suite_fast":
+        from .amazon_suite_fast import planner_json_schema
+        return {"type": "json_schema", "json_schema": {"name": "amazon_suite_fast_plan", "strict": True, "schema": planner_json_schema()}}
     if request.planning_profile != "amazon_visual_suite":
         return {"type": "json_object"}
     return {
@@ -11230,6 +11260,8 @@ def _planner_prompt(request: PlannerRequest) -> str:
                 "Do not adopt product_reference images as style reference patterns. "
                 "Their observed product features remain factual identity evidence."
             )
+    if request.planning_profile == "amazon_visual_suite_fast":
+        prompt += "\nresponse_schema=" + json.dumps(_planner_response_format(request)["json_schema"]["schema"], ensure_ascii=False)
     return prompt
 
 
@@ -11517,6 +11549,9 @@ def _planner_prompt_body(request: PlannerRequest) -> str:
             "boundaries. Use only visible pixels for identity; ignore source "
             "backgrounds and do not add unverified product facts."
         )
+    if request.planning_profile == "amazon_visual_suite_fast":
+        from .amazon_suite_fast import planner_prompt
+        return planner_prompt(request)
     if request.planning_profile == "amazon_visual_suite":
         return _amazon_planner_prompt(request)
     if request.planning_profile == "aurora_domestic_modules_completion":

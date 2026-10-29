@@ -2664,6 +2664,8 @@ export interface components {
              * @default
              */
             a_plus_copy: string;
+            /** Amazon Speed */
+            amazon_speed?: ("standard" | "fast") | null;
             /**
              * Auto Start After Plan
              * @default true

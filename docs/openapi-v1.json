@@ -161,6 +161,21 @@
             "title": "A Plus Copy",
             "type": "string"
           },
+          "amazon_speed": {
+            "anyOf": [
+              {
+                "enum": [
+                  "standard",
+                  "fast"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amazon Speed"
+          },
           "auto_start_after_plan": {
             "default": true,
             "title": "Auto Start After Plan",

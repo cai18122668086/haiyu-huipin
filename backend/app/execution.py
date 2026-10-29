@@ -66,7 +66,7 @@ from .provider import (
     ProviderResult,
 )
 from .provider_quota_ledger import ProviderQuotaLedgerError, usage_request_count
-from .services import new_id, settle_credits, transition_job
+from .services import canonical_hash, new_id, settle_credits, transition_job
 from .skill_runtime import build_fake_skill_runtime_provider
 from .storage import ImageStorage, ValidatedImage
 
@@ -659,7 +659,7 @@ class ExecutionCoordinator:
             is_fast_main = (
                 fast_job is not None and self._fast_main_image_record(fast_job)
             )
-        if is_fast_replica or is_fast_main or (
+        if is_fast_replica or is_fast_main or self._is_fast_amazon_job(job_id) or (
             fast_job is not None and detail_fast_runtime.is_fast(fast_job.configuration)
         ):
             await self._run_fast_replica(job_id)
@@ -783,6 +783,17 @@ class ExecutionCoordinator:
         return await self._maybe_finalize_domestic_automatic_delivery(
             job_id, self.finalize_job(job_id)
         )
+
+    @staticmethod
+    def _fast_amazon_record(job: JobRecord) -> bool:
+        from .amazon_suite_fast import selected
+        return (job.type == JobType.AMAZON_VISUAL_SUITE.value
+                and selected(job.configuration))
+
+    def _is_fast_amazon_job(self, job_id: str) -> bool:
+        with self.session_factory() as session:
+            job = session.get(JobRecord, job_id)
+            return job is not None and self._fast_amazon_record(job)
 
     async def _run_fast_replica(self, job_id: str) -> None:
         """Refill free slots immediately; database claims fence duplicate workers."""
@@ -1630,7 +1641,7 @@ class ExecutionCoordinator:
 
             limit = (
                 min(self.max_concurrency, fast_replica_concurrency)
-                if self._fast_replica_record(job)
+                if self._fast_replica_record(job) or self._fast_amazon_record(job)
                 or detail_fast_runtime.is_fast(job.configuration)
                 else min(self.max_concurrency, 6) if self._fast_main_image_record(job)
                 else self.max_concurrency
@@ -1773,7 +1784,8 @@ class ExecutionCoordinator:
                     item_query = item_query.where(
                         JobItemRecord.configuration["pair_id"].as_string() == next_pair
                     )
-            elif job.type == JobType.AMAZON_VISUAL_SUITE.value:
+            elif (job.type == JobType.AMAZON_VISUAL_SUITE.value
+                  and not self._fast_amazon_record(job)):
                 active_ordinal = session.scalar(
                     select(func.min(JobItemRecord.ordinal)).where(
                         JobItemRecord.job_id == job.id,
@@ -3084,6 +3096,19 @@ class ExecutionCoordinator:
                 if target == JobStatus.AWAITING_FINAL_REVIEW
                 else target.value
             )
+            if self._fast_amazon_record(job) and latest_plan is not None:
+                payload = dict(latest_plan.payload)
+                payload["business_quality"] = {
+                    **payload.get("business_quality", {}),
+                    "status": "NOT_REVIEWED",
+                    "technical_delivery_status": (
+                        "complete" if succeeded == job.expected_item_count
+                        else "incomplete"
+                    ),
+                    "automatic_redraw_enabled": False,
+                }
+                latest_plan.payload = payload
+                latest_plan.payload_hash = canonical_hash(payload)
             transition_job(job, target, stage=terminal_stage, progress=100)
             from .replica_progress import reconcile_job_document
 
@@ -3172,6 +3197,14 @@ def _expected_delivery_dimensions(
     """Resolve item dimensions and verify native-original delivery receipts."""
 
     configuration = item.configuration if isinstance(item.configuration, dict) else {}
+    from .amazon_suite_fast import POLICY_VERSION, native_canvas_valid
+    if configuration.get("workflow_version") == POLICY_VERSION:
+        from .amazon_visual_suite_provider import amazon_item_spec
+        artifact = result.persisted_artifact or result.artifact
+        if artifact is not None:
+            spec = amazon_item_spec(item.item_key)
+            if native_canvas_valid(artifact.width, artifact.height, spec):
+                return artifact.width, artifact.height
     size = configuration.get("size")
     if isinstance(size, str) and re.fullmatch(r"[1-9]\d*x[1-9]\d*", size):
         width_text, height_text = size.split("x", maxsplit=1)
@@ -3413,11 +3446,27 @@ def build_fake_coordinator(
         budget_limit_micros=budget_limit_micros,
         skill_id=AMAZON_VISUAL_SUITE_SKILL_ID,
     )
+    from .amazon_suite_fast import SKILL_ID as AMAZON_FAST_SKILL_ID
+    from .amazon_suite_fast_provider import (
+        AmazonFastPlannerRouter,
+        AmazonFastProvider,
+        AmazonFastProviderRouter,
+    )
+    amazon_fast_planner = XinghePlanningCoordinator(
+        session_factory, gateway, storage=storage,
+        skill_root=default_skill_root(AMAZON_FAST_SKILL_ID),
+        base_url_signature=base_url_signature,
+        medium_price_micros=medium_price_micros, high_price_micros=high_price_micros,
+        budget_limit_micros=budget_limit_micros, skill_id=AMAZON_FAST_SKILL_ID,
+    )
+    routed_amazon_planner = AmazonFastPlannerRouter(
+        session_factory, amazon_planner, amazon_fast_planner
+    )
     routed_planner = DetailMarketRoutingPlanner(
         session_factory,
         international_planner,
         domestic_planner,
-        amazon_planner,
+        routed_amazon_planner,
         refined=refined_planner,
         fast=fast_planner,
     )
@@ -3575,6 +3624,12 @@ def build_fake_coordinator(
                 else UnavailableProvider()
             ),
         }
+    new_routes[JobType.AMAZON_VISUAL_SUITE.value] = AmazonFastProviderRouter(
+        new_routes[JobType.AMAZON_VISUAL_SUITE.value],
+        AmazonFastProvider(session_factory, gateway, storage)
+        if xinghe_gateway is None or amazon_visual_suite_provider_enabled
+        else UnavailableProvider(),
+    )
     from .domestic_detail.campaign_provider import DomesticCampaignReviewProvider
 
     new_routes[JobType.DOMESTIC_DETAIL_REVIEW.value] = DomesticCampaignReviewProvider(

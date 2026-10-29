@@ -1130,6 +1130,21 @@ def retry_item_ids(
     if blocker_ids and not has_retryable_non_blocker:
         _raise_amazon_review_retry_not_applicable(blocker_ids)
 
+    from .amazon_suite_fast import selected as fast_amazon_selected
+
+    if source.type == JobType.AMAZON_VISUAL_SUITE.value and fast_amazon_selected(
+        source.configuration
+    ):
+        # Fast retries retain successful originals and never bill a cached
+        # successful image a second time, even under FULL/SELECTED scope.
+        candidates = {item.id for item in items if item.status not in {
+            JobItemStatus.SUCCEEDED.value, JobItemStatus.REUSED.value
+        }}
+        if scope == RetryScope.FULL:
+            return [item.id for item in items if item.id in candidates]
+        if scope == RetryScope.SELECTED:
+            return [item_id for item_id in selected_item_ids if item_id in candidates]
+
     if scope == RetryScope.FULL:
         return [item.id for item in items if item.id not in blocker_ids]
     if scope == RetryScope.SELECTED:

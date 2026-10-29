@@ -49,6 +49,7 @@ KNOWN_SKILLS = {
     "aurora-domestic-ecommerce-detail-page",
     "xinghe-crossborder-detail-3",
     "xinghe-amazon-visual-suite",
+    "xinghe-amazon-visual-suite-fast",
     "aurora-domestic-ecommerce-main-image",
     "aurora-domestic-ecommerce-main-image-fast",
     "aurora-domestic-ecommerce-main-image-native-fast",

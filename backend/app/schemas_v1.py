@@ -523,6 +523,7 @@ class AmazonVisualSuiteInput(BaseModel):
 
 
 class AmazonVisualSuiteConfiguration(BaseModel):
+    amazon_speed: Literal["standard", "fast"] | None = None
     auto_start_after_plan: bool = True
     marketplace: AmazonMarketplace = AMAZON_DEFAULT_MARKETPLACE
     product_name: str = Field(default="", max_length=160)
@@ -540,6 +541,14 @@ class AmazonVisualSuiteConfiguration(BaseModel):
     style_preferences: list[str] = Field(default_factory=list, max_length=12)
     instruction: str = Field(default="", max_length=4000)
     language: str = Field(default="en-US", min_length=2, max_length=16)
+
+    @model_serializer(mode="wrap")
+    def serialize_speed(self, handler: Any) -> dict[str, Any]:
+        value = handler(self)
+        # Preserve historical request hashes and durable settings for the default.
+        if value.get("amazon_speed") in {None, "standard"}:
+            value.pop("amazon_speed", None)
+        return value
 
 
 class DomesticMainImageInput(BaseModel):
