@@ -1,0 +1,14 @@
+{
+  "status": "activated",
+  "revision": "32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+  "backend_image": "huipin-main-image-recovery/backend:32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+  "frontend_image": "huipin-main-image-recovery/frontend:32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+  "migration": "20261030_0035",
+  "plan_schema_length": 64,
+  "backup_sha256": "efc4085424bac95888d4cb2aa4bef5b5b8da740dadc29969240ed9c55a5b8d91",
+  "backup_bytes": 995130,
+  "backup_catalog_verified": true,
+  "payments_queues_capacity_preserved": true,
+  "other_services_preserved": true,
+  "customer_task_restarted": false
+}

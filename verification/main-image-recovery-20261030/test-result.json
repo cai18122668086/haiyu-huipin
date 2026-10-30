@@ -1,0 +1,20 @@
+{
+  "exit_code": 0,
+  "image_id": "sha256:7ea5d123e81ba28c2ff7414b116adfba692cba765c7b22d8aeeb9465babf0f4f",
+  "isolated_database": true,
+  "tests": [
+    "tests/test_stage_length_migration_postgres.py",
+    "tests/test_aurora_main_image_native_fast_workflow.py",
+    "tests/test_aurora_main_image_native_fast_runtime.py",
+    "tests/test_aurora_main_image_native_fast_provider.py",
+    "tests/test_aurora_main_image_native_fast_transport.py",
+    "tests/test_aurora_main_image_fast_quota.py",
+    "tests/test_main_image_auto_start.py",
+    "tests/test_credit_migration_chain.py",
+    "tests/test_credit_payments_postgres.py",
+    "tests/test_credit_memberships.py",
+    "tests/test_credit_refunds.py",
+    "tests/test_phone_passwords.py",
+    "tests/test_payment_reconciliation.py"
+  ]
+}

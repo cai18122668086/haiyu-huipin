@@ -1,0 +1,5 @@
+ Container huipin-prelaunch-migrate-run-d9caf64c46b2 Creating 
+ Container huipin-prelaunch-migrate-run-d9caf64c46b2 Created 
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 20261029_0034 -> 20261030_0035, Allow complete plan protocol identifiers without changing their identity.

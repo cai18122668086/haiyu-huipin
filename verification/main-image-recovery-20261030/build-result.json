@@ -1,0 +1,12 @@
+{
+  "revision": "32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+  "backend_id": "sha256:7ea5d123e81ba28c2ff7414b116adfba692cba765c7b22d8aeeb9465babf0f4f",
+  "frontend_id": "sha256:263c179835479023e122b57709927fe14b4a634bc0b6d31b395f896d0be05809",
+  "backend_sources_checked": 372,
+  "frontend_sources_checked": 576,
+  "baseline_differences": [
+    "app/aurora_main_image_fast.py",
+    "app/models.py",
+    "app/routes_v1.py"
+  ]
+}

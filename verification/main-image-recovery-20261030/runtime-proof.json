@@ -1,0 +1,41 @@
+{
+  "services": {
+    "api": {
+      "image": "huipin-main-image-recovery/backend:32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+      "image_id": "sha256:7ea5d123e81ba28c2ff7414b116adfba692cba765c7b22d8aeeb9465babf0f4f",
+      "health": "healthy",
+      "revision": "32d60f187bc0cc55548db62b6b7e1537e2850ed2"
+    },
+    "worker": {
+      "image": "huipin-main-image-recovery/backend:32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+      "image_id": "sha256:7ea5d123e81ba28c2ff7414b116adfba692cba765c7b22d8aeeb9465babf0f4f",
+      "health": "healthy",
+      "revision": "32d60f187bc0cc55548db62b6b7e1537e2850ed2"
+    },
+    "dispatcher": {
+      "image": "huipin-main-image-recovery/backend:32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+      "image_id": "sha256:7ea5d123e81ba28c2ff7414b116adfba692cba765c7b22d8aeeb9465babf0f4f",
+      "health": "healthy",
+      "revision": "32d60f187bc0cc55548db62b6b7e1537e2850ed2"
+    },
+    "frontend": {
+      "image": "huipin-main-image-recovery/frontend:32d60f187bc0cc55548db62b6b7e1537e2850ed2",
+      "image_id": "sha256:263c179835479023e122b57709927fe14b4a634bc0b6d31b395f896d0be05809",
+      "health": "healthy",
+      "revision": "32d60f187bc0cc55548db62b6b7e1537e2850ed2"
+    }
+  },
+  "worker_command": [
+    "python",
+    "-m",
+    "celery",
+    "-A",
+    "app.celery_app:celery_app",
+    "worker",
+    "--loglevel=INFO",
+    "--concurrency=3000",
+    "--prefetch-multiplier=1",
+    "--queues=default,one_click_replica,domestic_detail_v431",
+    "--pool=threads"
+  ]
+}
