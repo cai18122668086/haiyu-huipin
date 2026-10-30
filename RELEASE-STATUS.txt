@@ -33,7 +33,7 @@
 海宇绘品：规划与原图交付修复发布状态（保留快速版、支付、采集与拆屏）
 更新日期：2026-10-29
 
-正式源码仓库（私有）：https://github.com/cai18122668086/haiyu-huipin
+正式源码仓库（用户已授权公开）：https://github.com/cai18122668086/haiyu-huipin
 当前应用构建来源 3f01230310c78e76f260435743801e7af8c1f4f6。
 本次整理发布工作区：D:\Desktop\cyh\电商生图\huipin-release-consolidation-20261029。
 保留另一窗口已发布的 77d52e6 原版 v16 修复，没有覆盖主工作区其他未发布修改。

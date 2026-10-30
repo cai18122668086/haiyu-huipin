@@ -2,7 +2,7 @@
 
 面向电商商家的 AI 图片工作台，提供商品图、详情图、套图、一键复刻、任务与素材管理，以及独立的账户、会员、积分和支付后台。运营主体为海宇数科（广东横琴）科技有限公司。
 
-- 唯一正式源码仓库：<https://github.com/cai18122668086/haiyu-huipin>（私有）。
+- 唯一正式源码仓库：<https://github.com/cai18122668086/haiyu-huipin>（用户已授权公开）。
 - 正式网站：<https://huipin.haiyushuke.com>。
 - 账户中心：<https://huipin.haiyushuke.com/account>。
 - 管理后台：<https://huipin.haiyushuke.com/admin/billing>。
@@ -107,4 +107,4 @@ node --experimental-strip-types --test tests/replica-progress.test.mjs tests/rep
 
 `AGENTS.md` 与 `.cursor/rules/repository-isolation.mdc` 固化开发约束；`.githooks/pre-push` 校验目标仓库，并阻止把旧历史分支推入新主线。新克隆需执行上面的 hooks 安装命令。Git 本地检查可以被人为绕过，不能代替账号权限控制。
 
-远程 `origin` 应指向上述私有仓库；合并协作修改前先获取最新 `origin/main`。不要强推共享主线，不要把凭据、真实环境文件、数据库、用户素材或运行缓存加入版本控制。
+远程 `origin` 应指向上述正式仓库；合并协作修改前先获取最新 `origin/main`。不要强推共享主线，不要把凭据、真实环境文件、数据库、用户素材或运行缓存加入版本控制。
