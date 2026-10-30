@@ -9,7 +9,7 @@
 }
 
 .workspacePage > :global(.workspace-header) {
-  width: min(1280px, calc(100% - 48px));
+  width: min(1240px, calc(100% - 48px));
   margin: 0 auto;
   padding-top: 34px;
 }
@@ -35,7 +35,7 @@
 .stepBar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  width: min(1280px, calc(100% - 48px));
+  width: min(1240px, calc(100% - 48px));
   margin: 24px auto;
   overflow: hidden;
   border: 1px solid var(--ink-150);
@@ -93,7 +93,7 @@
   grid-template-columns: minmax(0, 1fr) 310px;
   align-items: start;
   gap: 18px;
-  width: min(1280px, calc(100% - 48px));
+  width: min(1240px, calc(100% - 48px));
   margin: 0 auto;
 }
 
@@ -112,7 +112,7 @@
 }
 
 .panel {
-  padding: 22px;
+  padding: 24px;
 }
 
 .sectionHeading {
@@ -135,11 +135,11 @@
   width: 30px;
   height: 30px;
   flex: none;
-  border-radius: 9px;
-  background: var(--studio-black, var(--ink-900));
-  color: white;
   font-size: 10px;
   font-weight: 900;
+  background: var(--haiyu-lime);
+  color: var(--ink-950);
+  border-radius: 7px;
 }
 
 .sectionHeading h2,
@@ -650,8 +650,9 @@
   padding: 12px max(24px, calc((100vw - 1280px) / 2));
   border-top: 1px solid var(--ink-150);
   background: rgb(255 255 255 / 94%);
-  box-shadow: 0 -12px 32px rgb(20 25 35 / 7%);
   backdrop-filter: blur(14px);
+  border-color: var(--violet-100);
+  box-shadow: 0 -6px 24px #29223a08;
 }
 
 .stickyContext,
@@ -712,13 +713,13 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
   padding: 0 17px;
-  border-radius: 11px;
   font: inherit;
   font-size: 12px;
-  font-weight: 800;
   cursor: pointer;
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .primaryAction {
@@ -726,10 +727,16 @@
   background: var(--studio-black, var(--ink-900));
   color: white;
   box-shadow: var(--shadow-sm);
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .primaryAction:hover:not(:disabled) {
   transform: translateY(-1px);
+  background: var(--haiyu-lime);
+  color: var(--ink-950);
+  border-color: var(--haiyu-lime);
 }
 
 .primaryAction:disabled {
@@ -745,6 +752,9 @@
   border: 1px solid var(--ink-200);
   background: white;
   color: var(--ink-700);
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 @media (max-width: 1080px) {
@@ -806,6 +816,8 @@
 
   .stickyBar {
     padding-inline: 14px;
+    border-color: var(--violet-100);
+    box-shadow: 0 -6px 24px #29223a08;
   }
 }
 
@@ -819,7 +831,7 @@
   }
 
   .panel {
-    padding: 17px;
+    padding: 24px;
   }
 
   .stepBar {
@@ -869,6 +881,8 @@
     flex-direction: column;
     gap: 8px;
     padding-block: 9px;
+    border-color: var(--violet-100);
+    box-shadow: 0 -6px 24px #29223a08;
   }
 
   .stickyContext {
@@ -889,6 +903,9 @@
   .primaryAction,
   .secondaryAction {
     width: 100%;
+    min-height: 44px;
+    border-radius: 8px;
+    font-weight: 600;
   }
 }
 

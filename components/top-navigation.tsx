@@ -76,7 +76,7 @@ export function TopNavigation({
   const activeCount = summary.data?.active ?? 0;
   const errorCount = summary.data?.needs_attention ?? 0;
   const taskStateClass = activeCount ? "is-active" : errorCount ? styles.taskNotice : "";
-  const taskLabel = activeCount ? "进行中" : "任务中心";
+  const taskLabel = "任务中心";
   const taskAriaLabel = activeCount
     ? `打开任务中心，${activeCount} 个进行中任务`
     : errorCount ? `打开任务中心，${errorCount} 项任务可查看详情` : "打开任务中心";
@@ -176,7 +176,6 @@ export function TopNavigation({
         />
         <div className="top-nav__actions">
           <AnnouncementBanner />
-          <Link href="/jobs" className="haiyu-workspace-link" aria-label="全部生成记录">记录</Link>
           <button ref={taskTriggerRef} className={`task-trigger ${taskStateClass}`} onClick={() => workspace ? onOpenTasks() : requestLogin("/jobs")} aria-label={taskAriaLabel} aria-controls="task-drawer" aria-expanded={taskOpen} aria-haspopup="dialog">
             <PanelRightOpen size={18} /><span>{taskLabel}</span>{activeCount || errorCount ? <i>{activeCount || errorCount}</i> : null}
           </button>

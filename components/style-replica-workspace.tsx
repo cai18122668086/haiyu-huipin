@@ -1,6 +1,6 @@
 "use client";
+import { SettingField, ChoiceControl, GenerationVersionField } from "@/components/creation-settings";
 
-import { GenerationRecommendation } from "@/components/generation-recommendation";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -8,8 +8,7 @@ import Link from "next/link";
 import { WorkspaceVisualPreview } from "./workspace-visual-preview";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatBeijingDate } from "@/lib/datetime.mjs";
-import { Check, ChevronRight, CircleHelp, Download, History, ImagePlus, LoaderCircle, Plus, RotateCcw, Sparkles, Upload, X } from "lucide-react";
+import { Check, ChevronRight, CircleHelp, Download, ImagePlus, LoaderCircle, Plus, RotateCcw, Sparkles, Upload, X } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { usePreviewVisibility } from "@/features/assets/hooks/use-preview-visibility";
 import { ImageDropZone } from "@/components/image-drop-zone";
@@ -107,8 +106,7 @@ export function StyleReplicaWorkspace() {
   const [instructions, setInstructions] = useState<string[]>([]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  const [modal, setModal] = useState<"history" | "help" | "fees" | null>(null);
-  const [history, setHistory] = useState<ReplicaDocument[]>([]);
+  const [modal, setModal] = useState<"help" | "fees" | null>(null);
   const [preview, setPreview] = useState("");
   useBodyScrollLock(Boolean(modal || preview));
   const [jobStatuses, setJobStatuses] = useState<Record<string, string>>({});
@@ -294,9 +292,6 @@ export function StyleReplicaWorkspace() {
   });
   const confirm = () => workspaceId && sessionDoc && perform("提交生成", async isCurrent => { try { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/confirm`, { plan_hash: sessionDoc.payload.plan_hash, instructions: sessionDoc.payload.confirmed_instructions ?? instructions }); if (isCurrent()) setSessionDoc(value); } catch (caught) { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/documents/${sessionDoc.id}`); if (isCurrent()) setSessionDoc(value); throw caught; } });
   const retryImage = (jobId: string) => workspaceId && sessionDoc && perform("重新生成", async isCurrent => { const requestId = retryIntents.current[jobId] ?? crypto.randomUUID(); retryIntents.current[jobId] = requestId; const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/jobs/${jobId}/retry`, { request_id: requestId }); if (isCurrent()) setSessionDoc(value); });
-  const restoreSession = (item: ReplicaDocument) => { if (sessionDoc?.id !== item.id) draftGeneration.current += 1; actionLock.current = false; uploadBatchLock.current = false; setBusy(""); window.history.replaceState(null, "", `/style-replica?sessionId=${encodeURIComponent(item.id)}`); setSessionDoc(item); setReplicationMethod(item.payload.replication_method ?? "exact"); setReplicaSpeed(item.payload.replica_speed === "fast" ? "fast" : "standard"); setInstructions(item.payload.confirmed_instructions ?? []); setProducts((item.payload.product_asset_ids ?? []).map((id, index) => ({ id, name: `产品图 ${index + 1}` }))); const referenceIds = [...new Set((item.payload.references ?? []).map(value => value.asset_id))]; setReferences(referenceIds.map((id, index) => ({ id, name: `参考图 ${index + 1}` }))); setSelectedReferences(referenceIds); setMode("image"); setFacts(item.payload.facts ?? ""); setPlatform(item.payload.platform_code ?? "auto"); setLanguage(item.payload.language ?? "zh-CN"); setProductDoc(undefined); setSelected([]); setError(""); setModal(null); };
-  const openHistorySession = (item: ReplicaDocument) => workspaceId && perform("读取任务", async isCurrent => { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/documents/${item.id}`); if (isCurrent()) restoreSession(value); });
-  const showHistory = () => workspaceId && perform("读取历史", async isCurrent => { const value = await replicaRequest<ReplicaDocument[]>(workspaceId, "/sessions"); if (isCurrent()) { setHistory(value); setModal("history"); } });
   const retryAnalysis = () => workspaceId && sessionDoc && perform("重试分析", async isCurrent => { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/retry`, {}); if (isCurrent()) setSessionDoc(value); });
   const reviseAnalysis = () => workspaceId && sessionDoc && perform("调整剩余方案", async isCurrent => { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/revise`, {}); if (isCurrent()) setSessionDoc(value); });
   const editSources = () => {
@@ -309,7 +304,7 @@ export function StyleReplicaWorkspace() {
     editSources();
     setProducts([]); setReferences([]); setSelectedReferences([]); setSelected([]);
     setProductDoc(undefined); setFacts(""); setUrl(""); setHiddenSources([]);
-    setPreview(""); setModal(null); setHistory([]);
+    setPreview(""); setModal(null);
     setMode("link"); setReplicationMethod("exact"); setReplicaSpeed("standard"); setSourcePlatform("auto"); setImageTab("imageUrls");
     setPlatform("auto"); setLanguage("zh-CN"); setMainRatio("1:1"); setDetailRatio("3:4"); setRatio("follow-reference");
     upload.reset();
@@ -334,9 +329,13 @@ export function StyleReplicaWorkspace() {
         <div className={styles.fieldHeading}><strong><ImagePlus size={15} />商品原图<em>*</em></strong><small>{products.length} / 6</small></div>
         <p className={styles.hint}>清晰展示商品外观，支持多角度补充。</p>
         {uploadBox("product", products, 6)}
-        <section className={styles.generationSettings}><div className={styles.fieldHeading}><strong>复刻方式</strong></div> <div className={styles.methodChoice} role="radiogroup" aria-label="复刻方式">{([["exact", "一比一模仿", "风格最像，存在侵权风险"], ["style", "风格复刻", "提取风格机制，原创重构商品画面"]] as const).map(([value, title, note]) => <label key={value} className={replicationMethod === value ? styles.methodSelected : ""}><input type="radio" name="replication-method" value={value} checked={replicationMethod === value} disabled={working} onChange={() => selectReplicationMethod(value)} /><span><strong>{title}</strong><small>{note}</small></span></label>)}</div>
-        <div className={styles.fieldHeading}><strong>生成版本</strong></div>
-        <div className={styles.methodChoice} role="radiogroup" aria-label="生成版本">{([["fast", "快速版", "约5分钟", 8], ["standard", "精致版", "约40分钟", 15]] as const).map(([value, title, duration, credits]) => <label key={value} className={replicaSpeed === value ? styles.methodSelected : ""}><input type="radio" name="replica-speed" value={value} checked={replicaSpeed === value} disabled={working} onChange={() => selectReplicaSpeed(value)} /><span><strong>{title}{value === "fast" && <GenerationRecommendation />}</strong><small>{duration}</small><b className={styles.versionPrice}>{credits}<small> 积分 / 张</small></b></span></label>)}</div></section>
+        <section className={styles.generationSettings}>
+          <SettingField label="复刻方式" span="full"><ChoiceControl name="replication-method" label="复刻方式" value={replicationMethod} onChange={selectReplicationMethod} disabled={working || !!sessionDoc} variant="cards" options={[
+            {value:"exact",label:"一比一模仿",description:"贴近参考构图与排版"},
+            {value:"style",label:"风格复刻",description:"提取风格，重构商品画面"},
+          ]} /></SettingField>
+          <GenerationVersionField name="replica-speed" span="full" value={replicaSpeed} onChange={selectReplicaSpeed} disabled={working || !!sessionDoc} />
+        </section>
         <div className={styles.modeTabs} role="tablist" aria-label="参考来源"><button role="tab" aria-selected={mode === "link"} className={mode === "link" ? styles.activeTab : ""} onClick={() => setMode("link")}>商品链接</button><button role="tab" aria-selected={mode === "image"} className={mode === "image" ? styles.activeTab : ""} onClick={() => setMode("image")}>风格参考图</button></div>
         {mode === "link" ? <>
           <label className={styles.field}><span><em>*</em>商品链接 / 商品 ID</span><div className={styles.linkInput}><input value={url} onChange={event => setUrl(event.target.value)} placeholder="粘贴商品链接或手淘分享文本" aria-label="商品链接" /><button disabled={working || !url.trim() || !workspaceId} onClick={() => void fetchProduct()}>{productDoc?.status === "fetching" ? <LoaderCircle className="spin" size={16} /> : "拉取商品"}</button></div></label>
@@ -362,7 +361,7 @@ export function StyleReplicaWorkspace() {
         </div>
       </aside>
       <section className={styles.stage}>
-        <header className={styles.stageHeader}><div><Sparkles size={18} /><h1>一键复刻</h1><span>让好灵感，成为你的商品图</span></div><nav><button className={styles.newReplicaButton} disabled={!!busy} onClick={reset} aria-label="新建复刻任务" title="当前任务会保留在历史记录中，继续在后台处理"><Plus size={18} />新建复刻</button><button onClick={() => void showHistory()}><History size={14} />历史记录</button><button onClick={() => setModal("help")}><CircleHelp size={14} />使用教程</button></nav></header>
+        <header className={styles.stageHeader}><div><Sparkles size={18} /><h1>一键复刻</h1><span>让好灵感，成为你的商品图</span></div><nav><button className={styles.newReplicaButton} disabled={!!busy} onClick={reset} aria-label="新建复刻任务" title="当前任务会保留在历史记录中，继续在后台处理"><Plus size={18} />新建复刻</button><button onClick={() => setModal("help")}><CircleHelp size={14} />使用教程</button></nav></header>
         {sessionDoc && !native && <p className={styles.hint}>历史任务沿用此前的复刻方式；如需使用新方式，请重新诊断。</p>}
         {executionProgress && <section className={styles.executionProgress} aria-label="整组复刻进度" role="status"><strong>{executionHeading}</strong><progress max={100} value={overallProgress} /><span>{directDelivery ? `已生成 ${executionProgress.generated ?? 0} / ${executionProgress.total} 屏` : <>已审 {executionProgress.reviewed} / {executionProgress.total} 屏 · 通过 {executionProgress.accepted} 屏{executionProgress.rejected > 0 ? ` · 待修正 ${executionProgress.rejected} 屏` : ""}</>}</span><small>{directDelivery ? "按已确认方案生成，未进行自动审图。可从历史查看和下载。" : "整组处理后交付，可离开页面后从历史继续查看。"}</small></section>}
         {mode === "link" && product && !sessionDoc && <div className={styles.sourcePanel}><div className={styles.sourceHeading}><div><span className={styles.sourceBadge}>{sourcePlatforms.find(item => item.code === product.platform)?.label ?? product.platform}</span><strong>{product.title ?? "商品参考图"}</strong></div><span>已选 {selected.length}/20</span></div><div className={styles.selectionActions}><span>点击图片选择，长图会拆屏，最终数量以诊断方案为准</span><button onClick={() => setSelected([...new Set([...selected, ...sourceImages(activeImageTab)])].slice(0,20))}>全选本组</button><button onClick={() => setSelected([])}>清空选择</button></div><div className={styles.sourceTabs}>{[["imageUrls", "主图"], ["descImageUrls", "详情图"], ["skuImageUrls", "SKU 图"]].filter(([key]) => sourceImages(key as typeof imageTab).length > 0).map(([key, label]) => <button className={activeImageTab === key ? styles.sourceTabActive : ""} key={key} onClick={() => setImageTab(key as typeof imageTab)}>{label}<b>{sourceImages(key as "imageUrls" | "descImageUrls" | "skuImageUrls").length}</b></button>)}</div><div className={styles.sourceGrid}>{sourceImages(activeImageTab).map((src, index) => <div key={src} className={`${styles.sourceTile} ${selected.includes(src) ? styles.sourceSelected : ""}`}><img src={sourcePreview(src)} alt={`参考图 ${index + 1}`} loading="lazy" referrerPolicy="no-referrer" onLoad={event => { if (event.currentTarget.naturalWidth < 32 || event.currentTarget.naturalHeight < 32) hideSource(src); }} onError={() => hideSource(src)} onClick={() => setSelected(selected.includes(src) ? selected.filter(item => item !== src) : selected.length < 20 ? [...selected, src] : selected)} /><button aria-label={`${selected.includes(src) ? "取消选择" : "选择"}参考图 ${index + 1}`} onClick={() => setSelected(selected.includes(src) ? selected.filter(item => item !== src) : selected.length < 20 ? [...selected, src] : selected)}>{selected.includes(src) ? <Check size={13} /> : index + 1}</button><button className={styles.previewTile} onClick={() => setPreview(sourcePreview(src))}>放大</button></div>)}</div></div>}
@@ -375,7 +374,7 @@ export function StyleReplicaWorkspace() {
         {!sessionDoc && (mode === "link" ? !product : !references.length) && <div className={styles.emptyState}><WorkspaceVisualPreview /><h2>好构图，换成你的好商品</h2><p>上传产品图，添加商品链接或风格参考图<br />选好参考后，生成你的商品套图</p><div className={styles.emptySteps}><span>01 上传产品</span><ChevronRight size={13} /><span>02 选择参考</span><ChevronRight size={13} /><span>03 查看成图</span></div></div>}
       </section>
     </div>
-    {modal && <div className={styles.overlay} onClick={() => setModal(null)}><section className={styles.modal} role="dialog" aria-modal="true" aria-label={modal === "history" ? "复刻历史" : modal === "fees" ? "用量说明" : "使用教程"} onClick={event => event.stopPropagation()}><button className={styles.closeModal} onClick={() => setModal(null)} aria-label="关闭"><X size={20} /></button>{modal === "history" ? <><h2>复刻历史</h2>{history.length ? history.map(item => <button className={styles.historyRow} key={item.id} onClick={() => void openHistorySession(item)}><span>{formatBeijingDate(item.created_at, { dateStyle: "short", timeStyle: "medium" })}<small>{item.payload.replica_speed === "fast" ? "快速版" : "精致版"} · {item.payload.plans?.length ?? item.payload.references?.length ?? 0} 张图片</small></span><b>{item.status === "awaiting_confirmation" ? "待确认" : item.status === "analysing" ? "诊断中" : item.status === "failed" ? "未完成" : "查看结果"}</b><ChevronRight size={16} /></button>) : <p>还没有复刻记录，提交后即可在这里查看。</p>}</> : modal === "fees" ? <><h2>用量说明</h2><p>商品拉取通过第三方数据服务完成；同一商品当天再次查询会复用已有结果。</p><p>一键复刻快速版每张 8 积分、精致版每张 15 积分，按成功生成图片结算；提交时预留，失败或未执行部分释放。重新生成会创建新的计费任务。</p><Link href="/dashboard">查看创作记录与进度 <ChevronRight size={14} /></Link></> : <><h2>把参考风格，变成你的商品图</h2><ol><li>上传自己的产品图，让外观、材质与品牌清晰可见。</li><li>粘贴商品链接选图，或直接上传风格参考图。</li><li>选择目标平台与语言，可补充自己的真实卖点。</li><li>提交素材后自动分析、规划与生成。</li><li>查看成图，结果保存在素材库和生成记录中。</li></ol><p>参考图用于学习构图、光影和排版。商品参数、认证与售后承诺请以自己的真实信息为准。</p></>}</section></div>}
+    {modal && <div className={styles.overlay} onClick={() => setModal(null)}><section className={styles.modal} role="dialog" aria-modal="true" aria-label={modal === "fees" ? "用量说明" : "使用教程"} onClick={event => event.stopPropagation()}><button className={styles.closeModal} onClick={() => setModal(null)} aria-label="关闭"><X size={20} /></button>{modal === "fees" ? <><h2>用量说明</h2><p>商品拉取通过第三方数据服务完成；同一商品当天再次查询会复用已有结果。</p><p>一键复刻快速版每张 8 积分、精致版每张 15 积分，按成功生成图片结算；提交时预留，失败或未执行部分释放。重新生成会创建新的计费任务。</p><Link href="/jobs">前往任务中心 <ChevronRight size={14} /></Link></> : <><h2>把参考风格，变成你的商品图</h2><ol><li>上传自己的产品图，让外观、材质与品牌清晰可见。</li><li>粘贴商品链接选图，或直接上传风格参考图。</li><li>选择目标平台与语言，可补充自己的真实卖点。</li><li>提交素材后自动分析、规划与生成。</li><li>查看成图，结果保存在素材库和生成记录中。</li></ol><p>参考图用于学习构图、光影和排版。商品参数、认证与售后承诺请以自己的真实信息为准。</p></>}</section></div>}
     {preview && <div className={styles.lightbox} role="dialog" aria-modal="true" aria-label="图片预览" onClick={() => setPreview("")}><button onClick={() => setPreview("")} aria-label="关闭图片预览"><X size={24} /></button><img src={preview} alt="图片预览" referrerPolicy="no-referrer" /></div>}
   </div>;
 }

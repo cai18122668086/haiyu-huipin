@@ -1,4 +1,5 @@
 "use client";
+import { GenerationVersionField } from "@/components/creation-settings";
 import { splitProductFacts } from "@/lib/product-facts";
 
 import { useDraftState } from "@/lib/hooks/use-creation-draft";
@@ -10,7 +11,6 @@ import { AlertTriangle, ArrowRight, ImagePlus, LoaderCircle, ShieldCheck, Sparkl
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { GenerationRecommendation } from "@/components/generation-recommendation";
 import { AppShell } from "@/components/app-shell";
 import { JobDeliverablesDownload } from "@/components/job-deliverables-download";
 import { JobResultImage } from "@/components/job-result-image";
@@ -25,7 +25,7 @@ import { useConfirmPlan, useCreateJob, useFinalizeJob, useJob, useRetryJob } fro
 import { presentWorkflow, useRuntimeStatus } from "@/features/runtime/api/runtime";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import type { Asset, DomesticMainImageJobCreate } from "@/lib/api/types";
-import { MAIN_IMAGE_SPEED_OPTIONS, mainImageSpeed, mainImageSpeedSettings, useMainImageSpeedDraft } from "@/lib/domestic-main-image-speed";
+import { mainImageSpeed, mainImageSpeedSettings, useMainImageSpeedDraft } from "@/lib/domestic-main-image-speed";
 import { errorMessage } from "@/lib/api/request";
 import { IMAGE_UPLOAD_ACCEPT, IMAGE_UPLOAD_EXTENSIONS, IMAGE_UPLOAD_FORMAT_HINT, IMAGE_UPLOAD_MIME_TYPES } from "@/lib/image-upload";
 import { allowsJobAction } from "@/lib/jobs/actions";
@@ -399,10 +399,7 @@ export function DomesticMainImageWorkspace() {
 
             <section className={styles.card}>
               <div className={styles.heading}><span>02</span><div><h2>告诉我们商品的亮点</h2><p>填写商品基本信息，真实卖点和资料越完整，越有助于规划整套图片。</p></div></div>
-              <fieldset className={styles.speedChoice} disabled={Boolean(jobId) || busy}>
-                <legend>生成版本</legend>
-                {MAIN_IMAGE_SPEED_OPTIONS.map(([value, title]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}{value === "native_fast" && <GenerationRecommendation />}</strong></span></label>)}
-              </fieldset>
+              <GenerationVersionField name="main-image-speed" span="full" value={activeSpeed === "native_fast" ? "fast" : "standard"} onChange={value => setSpeed(value === "fast" ? "native_fast" : "standard")} disabled={Boolean(jobId) || busy} />
               <ProductFactsGuidance /><div className={styles.form}>
                 <label><span>商品名称 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("product_name") : productName} onChange={(event) => setProductName(event.target.value)} placeholder="例如：轻量保温随行杯" /></label>
                 <label><span>商品类目 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("category") : category} onChange={(event) => setCategory(event.target.value)} placeholder="例如：杯壶 / 保温杯" /></label>

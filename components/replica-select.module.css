@@ -25,3 +25,4 @@
 .menu[data-layout="grid"] button.selected{background:#eaff8b}
 .menu[data-layout="grid"] button>svg{position:absolute;right:4px;top:4px;width:10px;height:10px}
 @media(prefers-reduced-motion:reduce){.menu button{transition:none}}
+.trigger.trigger[data-size="compact"] { display:flex;align-items:center;justify-content:space-between;width:auto;min-height:36px;padding:7px 10px;border-radius:8px;background:#fff;color:var(--ink-700);font-size:12px; }

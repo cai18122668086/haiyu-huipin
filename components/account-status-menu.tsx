@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ChevronDown, Coins, Crown, History, Images, RefreshCw, UserRound } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Coins, Crown, Images, RefreshCw, UserRound } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { authUserLabel, useCurrentAuthUser } from "@/features/auth/api/me";
 import { useCreditAccount } from "@/features/billing/api/credits";
@@ -67,7 +67,6 @@ export function AccountStatusMenu() {
         </details>}
       </div>
       <nav className={styles.shortcuts} onClick={() => setOpen(false)} aria-label="账户快捷导航">
-        <Link href="/jobs"><History size={17} /><span>生成记录</span><ArrowUpRight size={13} /></Link>
         <Link href="/assets"><Images size={17} /><span>我的素材</span><ArrowUpRight size={13} /></Link>
       </nav>
       <nav className={styles.footer} onClick={() => setOpen(false)} aria-label="账户设置与帮助">

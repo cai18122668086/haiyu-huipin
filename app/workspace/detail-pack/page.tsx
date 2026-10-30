@@ -1,4 +1,5 @@
 "use client";
+import { CreationSettings, SettingField, ChoiceControl, GenerationVersionField, QuantityControl } from "@/components/creation-settings";
 import { splitProductFacts } from "@/lib/product-facts";
 
 import { useDraftState } from "@/lib/hooks/use-creation-draft";
@@ -18,8 +19,6 @@ import {
 import { ImageDropZone } from "@/components/image-drop-zone";
 import { assetHandoffKey } from "@/lib/assets/creation-handoff";
 import { useAssetHandoff } from "@/features/assets/hooks/use-asset-handoff";
-import { ReplicaSelect } from "@/components/replica-select";
-import { GenerationRecommendation } from "@/components/generation-recommendation";
 import { AppShell } from "@/components/app-shell";
 import { DomesticDetailIntakeQuestion } from "@/components/domestic-detail-intake-question";
 import { DomesticDetailApproval, NATIVE_DETAIL_APPROVAL_TEXT } from "@/components/domestic-detail-approval";
@@ -41,7 +40,7 @@ import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { errorMessage } from "@/lib/api/request";
 import { validateImageUpload } from "@/lib/image-upload";
 import { detailSkillSettings, savedDetailSkill } from "@/lib/detail-skills";
-import { DETAIL_SPEED_OPTIONS, detailSpeedSettings, savedDetailSpeed, type DetailSpeed } from "@/lib/detail-speed";
+import { detailSpeedSettings, savedDetailSpeed, type DetailSpeed } from "@/lib/detail-speed";
 import type { Asset } from "@/lib/api/types";
 import { allowsJobAction } from "@/lib/jobs/actions";
 import { jobNote } from "@/lib/jobs/presentation";
@@ -388,15 +387,18 @@ function DetailPackWorkspace() {
               <label><span>平台规格</span><div className="selected-output-platform"><Store size={16} /><strong>{selectedMarketplace.name} · {isRefinedDetail ? "3:4 · 实际尺寸见结果" : imageSize}</strong></div></label>
               <label className="full"><span>真实卖点与商品资料</span><ProductFactsGuidance /><textarea disabled={Boolean(jobId)} value={sellingPoints} onChange={(event) => setSellingPoints(event.target.value)} placeholder="可直接粘贴完整商品介绍，或逐行填写真实卖点和规格" /></label>
             </div>
-          <div className="creation-output-settings">
-            <div className="creation-output-heading"><h3>输出设置</h3><span>{selectedMarketplace.name} · {language === "zh-CN" ? "简体中文" : "English"} · {pageCount} 页</span></div>
-            <div className="output-options">
-              {isRefinedDetail && <div className="option-field"><span><Sparkles size={16} />生成版本</span><div className="segmented-control" role="group" aria-label="详情图生成版本">{DETAIL_SPEED_OPTIONS.map(option => <button key={option.value} type="button" aria-pressed={detailSpeed === option.value} className={detailSpeed === option.value ? "active" : ""} disabled={Boolean(jobId) || createJob.isPending} onClick={() => setDetailSpeed(option.value)}>{detailSpeed === option.value && <Check size={14} aria-hidden="true" />}{option.title}{option.value === "fast" && <GenerationRecommendation />}</button>)}</div></div>}
-              <div className="option-field"><span><Languages size={16} />内容语言</span><div className="segmented-control"><button type="button" aria-pressed={language === "zh-CN"} className={language === "zh-CN" ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setLanguage("zh-CN")}>{language === "zh-CN" && <Check size={14} aria-hidden="true" />}简体中文</button><button type="button" aria-pressed={language === "en-US"} className={language === "en-US" ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setLanguage("en-US")}>{language === "en-US" && <Check size={14} aria-hidden="true" />}English</button></div></div>
-              <div className="option-field"><span><FileCheck2 size={16} />详情页数</span>{isRefinedDetail ? <ReplicaSelect label="详情页数" layout="grid" disabled={Boolean(jobId)} value={String(pageCount)} onChange={value => setPageCount(Number(value))} options={Array.from({ length: 12 }, (_, index) => [String(index + 1), `${index + 1} 页`] as const)} /> : <div className="page-count-control">{[8, 10, 12].map((count) => <button key={count} className={pageCount === count ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setPageCount(count)}>{count} 页</button>)}</div>}</div>
-              {marketRegion === "international" && <div className="option-field"><span><Globe2 size={16} />图片尺寸</span><div className="page-count-control">{selectedMarketplace.sizePresets?.map((preset) => <button key={preset.value} className={imageSize === preset.value ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setImageSize(preset.value)}>{preset.label}</button>)}</div></div>}
-            </div>
-          </div>
+          <CreationSettings balanced={isRefinedDetail} summary={`${selectedMarketplace.name} · ${language === "zh-CN" ? "简体中文" : "English"} · ${pageCount} 页`}>
+            {isRefinedDetail && <GenerationVersionField name="detail-speed" span="half" value={detailSpeed} onChange={setDetailSpeed} disabled={Boolean(jobId) || createJob.isPending} />}
+            <SettingField label="内容语言" icon={<Languages size={15} />} span={isRefinedDetail ? "quarter" : "half"}>
+              <ChoiceControl name="detail-language" label="内容语言" value={language} onChange={setLanguage} disabled={Boolean(jobId)} options={[{ value:"zh-CN", label:"简体中文" }, { value:"en-US", label:"English" }]} />
+            </SettingField>
+            <SettingField label="详情页数" icon={<FileCheck2 size={15} />} span={isRefinedDetail ? "quarter" : "half"}>
+              <QuantityControl label="详情页数" unit="页" value={pageCount} onChange={setPageCount} allowedValues={isRefinedDetail ? Array.from({ length:12 }, (_, i) => i + 1) : [8,10,12]} disabled={Boolean(jobId)} />
+            </SettingField>
+            {marketRegion === "international" && <SettingField label="图片尺寸" icon={<Globe2 size={15} />} span="full">
+              <ChoiceControl label="图片尺寸" name="detail-image-size" value={imageSize ?? ""} onChange={value => setImageSize(value as MarketplaceImageSize)} disabled={Boolean(jobId)} options={(selectedMarketplace.sizePresets ?? []).filter(preset => preset.value).map(preset => ({value:preset.value!,label:preset.label}))} />
+            </SettingField>}
+          </CreationSettings>
           </section>
 
           {requestError && <div className="api-state api-state--error" role="alert"><AlertCircle size={24} /><div><strong>请求未完成</strong><p>{errorMessage(requestError)}</p></div></div>}

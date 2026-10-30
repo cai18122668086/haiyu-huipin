@@ -1,4 +1,5 @@
 "use client";
+import { ChoiceControl } from "@/components/creation-settings";
 import { useDraftState } from "@/lib/hooks/use-creation-draft";
 import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
@@ -544,48 +545,12 @@ export function ModelPoseTransferWorkspace() {
                 <strong>单选</strong>
               </div>
 
-              <div className={styles.modeTabs} role="tablist" aria-label="姿势来源">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={poseMode === "catalog"}
-                  data-active={poseMode === "catalog" || undefined}
-                  disabled={Boolean(jobId) || isSubmitting}
-                  onClick={() => choosePoseMode("catalog")}
-                >
-                  <Images size={16} /> 内置姿势库
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={poseMode === "custom"}
-                  data-active={poseMode === "custom" || undefined}
-                  disabled={Boolean(jobId) || isSubmitting}
-                  onClick={() => choosePoseMode("custom")}
-                >
-                  <Upload size={16} /> 自定义姿势
-                </button>
-              </div>
+              <ChoiceControl label="姿势来源" name="pose-source" value={poseMode} onChange={choosePoseMode} disabled={Boolean(jobId) || isSubmitting} options={[{value:"catalog",label:"内置姿势库"},{value:"custom",label:"自定义姿势"}]} />
 
               {poseMode === "catalog" ? (
                 <div className={styles.catalogArea}>
                   <div className={styles.catalogToolbar}>
-                    <div role="group" aria-label="筛选模特性别">
-                      <button
-                        type="button"
-                        data-active={gender === "female" || undefined}
-                        aria-pressed={gender === "female"}
-                        disabled={Boolean(jobId) || isSubmitting}
-                        onClick={() => setGender("female")}
-                      >女模姿势 <span>39</span></button>
-                      <button
-                        type="button"
-                        data-active={gender === "male" || undefined}
-                        aria-pressed={gender === "male"}
-                        disabled={Boolean(jobId) || isSubmitting}
-                        onClick={() => setGender("male")}
-                      >男模姿势 <span>21</span></button>
-                    </div>
+                    <ChoiceControl label="筛选模特性别" name="pose-gender" value={gender} onChange={setGender} disabled={Boolean(jobId) || isSubmitting} options={[{value:"female",label:"女模姿势 · 39"},{value:"male",label:"男模姿势 · 21"}]} />
                     <p>已显示 {visiblePoses.length} 个姿势</p>
                   </div>
                   <div className={styles.poseGrid}>

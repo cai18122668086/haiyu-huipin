@@ -8,7 +8,7 @@ import styles from "./replica-select.module.css";
 type Choice = readonly [value: string, label: string];
 type Placement = { left: number; width: number; top?: number; bottom?: number; maxHeight: number };
 
-export function ReplicaSelect({ value, onChange, options, label, disabled = false, layout = "list", searchable: allowSearch }: {
+export function ReplicaSelect({ value, onChange, options, label, disabled = false, layout = "list", searchable: allowSearch, size = "default" }: {
   value: string;
   onChange: (value: string) => void;
   options: readonly Choice[];
@@ -16,6 +16,7 @@ export function ReplicaSelect({ value, onChange, options, label, disabled = fals
   disabled?: boolean;
   layout?: "list" | "grid";
   searchable?: boolean;
+  size?: "default" | "compact";
 }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -71,7 +72,7 @@ export function ReplicaSelect({ value, onChange, options, label, disabled = fals
   }, [placement]);
 
   return <>
-    <button ref={trigger} type="button" disabled={disabled} className={`${styles.trigger} ${placement ? styles.open : ""}`} aria-label={label} aria-haspopup="listbox" aria-expanded={!!placement} aria-controls={placement ? id : undefined} onClick={() => placement ? close() : open()} onKeyDown={event => {
+    <button ref={trigger} type="button" disabled={disabled} data-size={size} className={`${styles.trigger} ${placement ? styles.open : ""}`} aria-label={label} aria-haspopup="listbox" aria-expanded={!!placement} aria-controls={placement ? id : undefined} onClick={() => placement ? close() : open()} onKeyDown={event => {
       if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); open(); }
     }}>
       <span>{options[selected]?.[1]}</span><ChevronDown size={14} aria-hidden="true" />

@@ -1,7 +1,7 @@
 "use client";
+import { CreationSettings, SettingField, QuantityControl, RatioControl } from "@/components/creation-settings";
 
 import { useDraftState } from "@/lib/hooks/use-creation-draft";
-import { FormDisclosure } from "@/components/form-disclosure";
 import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
@@ -19,7 +19,6 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { ImageDropZone } from "@/components/image-drop-zone";
@@ -41,7 +40,6 @@ import { errorMessage } from "@/lib/api/request";
 import { IMAGE_UPLOAD_FORMAT_HINT } from "@/lib/image-upload";
 import type { ProductImageJobCreate } from "@/lib/api/types";
 import {
-  PRODUCT_IMAGE_FEATURES,
   getProductImageFeatureByPresetSlug
 } from "@/lib/feature-registry";
 import { selectJobResultAssets } from "@/lib/jobs/results";
@@ -134,7 +132,6 @@ function UploadPanel({
 }
 
 export function ProductImageWorkspace({ preset }: { preset: string }) {
-  const router = useRouter();
   const feature = getProductImageFeatureByPresetSlug(preset);
   const [jobId, setJobId] = useWorkspaceJobId(feature?.route ?? `/workspace/product-image/${preset}`);
   const { workspace, isPending: workspacePending, error: workspaceError } = useWorkspace();
@@ -356,57 +353,11 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
                 <strong>{feature.shortTitle}</strong>
               </div>
 
-              <FormDisclosure title="输出设置" summary={`${platforms.find(item => item.value === platformCode)?.label ?? "目标平台"} · ${aspectRatio} · ${imageCount} 张`} defaultOpen={Boolean(jobId)}>
-              <div className={styles.formGrid}>
-                <label>
-                  <span>创作功能</span>
-                  <ReplicaSelect label="创作功能" value={feature.presetSlug} onChange={value => router.push(`/workspace/product-image/${value}`)} disabled={Boolean(jobId)} options={PRODUCT_IMAGE_FEATURES.map(item => [item.presetSlug, item.title] as const)} />
-                </label>
-                <label>
-                  <span>目标平台</span>
-                  <ReplicaSelect label="目标平台" value={platformCode} onChange={setPlatformCode} disabled={Boolean(jobId)} options={platforms.map(platform => [platform.value, platform.label] as const)} />
-                </label>
-              </div>
-
-              <fieldset className={styles.optionGroup} disabled={Boolean(jobId)}>
-                <legend>画面比例</legend>
-                <div className={styles.ratioGrid}>
-                  {aspectRatios.map((ratio) => (
-                    <label key={ratio.value} data-selected={aspectRatio === ratio.value || undefined}>
-                      <input
-                        type="radio"
-                        name="aspect-ratio"
-                        value={ratio.value}
-                        checked={aspectRatio === ratio.value}
-                        onChange={() => setAspectRatio(ratio.value)}
-                      />
-                      <span className={styles.ratioPreview} aria-hidden="true"><i style={{ aspectRatio: ratio.value.replace(":", " / ") }} /></span>
-                      <strong>{ratio.label}</strong>
-                      <small>{ratio.note}</small>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset className={styles.optionGroup} disabled={Boolean(jobId)}>
-                <legend>生成数量</legend>
-                <div className={styles.countOptions}>
-                  {[1, 2, 3, 4].map((count) => (
-                    <label key={count} data-selected={imageCount === count || undefined}>
-                      <input
-                        type="radio"
-                        name="image-count"
-                        value={count}
-                        checked={imageCount === count}
-                        onChange={() => setImageCount(count)}
-                      />
-                      <strong>{count}</strong><span>张</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              </FormDisclosure>
+              <CreationSettings summary={`${platforms.find(item => item.value === platformCode)?.label ?? "目标平台"} · ${aspectRatio} · ${imageCount} 张`}>
+                <SettingField label="目标平台" span="half"><ReplicaSelect label="目标平台" value={platformCode} onChange={setPlatformCode} disabled={Boolean(jobId)} options={platforms.map(platform => [platform.value, platform.label] as const)} /></SettingField>
+                <SettingField label="生成数量" span="half"><QuantityControl value={imageCount} onChange={setImageCount} allowedValues={[1, 2, 3, 4]} disabled={Boolean(jobId)} /></SettingField>
+                <SettingField label="画面比例" span="full"><RatioControl name="aspect-ratio" value={aspectRatio} onChange={value => setAspectRatio(value as typeof aspectRatio)} options={aspectRatios} disabled={Boolean(jobId)} /></SettingField>
+              </CreationSettings>
               {feature.taskPreset === "change_color" ? (
                 <label className={styles.colorField}>
                   <span><Palette size={16} />目标颜色 <i>必填</i></span>

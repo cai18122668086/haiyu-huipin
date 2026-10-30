@@ -146,7 +146,7 @@ export function TaskDrawer({
         tabIndex={-1}
       >
         <div className="drawer-head">
-          <div><p>任务中心</p><h2 id="task-drawer-title">创作进度</h2></div>
+          <div><p>创作进度与历史</p><h2 id="task-drawer-title">任务中心</h2></div>
           <button ref={closeButtonRef} className="icon-button" onClick={onClose} aria-label="关闭任务抽屉"><X size={19} /></button>
         </div>
         <div className="drawer-summary">

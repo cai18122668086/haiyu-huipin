@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Clock3, FolderOpen, Lightbulb } from "lucide-react";
+import { ArrowLeft, FolderOpen, Lightbulb } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ALL_TOOLS_MENU } from "@/lib/navigation-registry";
 import { FEATURE_REGISTRY } from "@/lib/feature-registry";
@@ -24,6 +24,6 @@ export function CreationWorkspaceBar({ featureId }: { featureId: string }) {
   }, [open]);
   return <nav className="creation-workspace-bar" aria-label="创作工具切换" ref={root}>
     <div className="creation-workspace-bar__left"><Link href="/#start" className="creation-back" aria-label="返回创作首页"><ArrowLeft size={20} /></Link><NavigationMegaMenu definition={{ ...ALL_TOOLS_MENU, label }} activeFeatureId={featureId} active open={open} onClose={() => setOpen(false)} onToggle={() => setOpen(value => !value)} idPrefix="workspace-tool-menu" triggerAsButton /></div>
-    <div className="creation-workspace-bar__right"><Link href="/inspiration" aria-label="找灵感"><Lightbulb size={15} /><span>找灵感</span></Link><Link href="/assets" aria-label="我的素材"><FolderOpen size={15} /><span>我的素材</span></Link><Link href="/jobs" aria-label="历史记录"><Clock3 size={15} /><span>历史记录</span></Link></div>
+    <div className="creation-workspace-bar__right"><Link href="/inspiration" aria-label="找灵感"><Lightbulb size={15} /><span>找灵感</span></Link><Link href="/assets" aria-label="我的素材"><FolderOpen size={15} /><span>我的素材</span></Link></div>
   </nav>;
 }

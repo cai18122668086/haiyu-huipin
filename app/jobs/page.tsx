@@ -111,7 +111,7 @@ export default function JobsPage() {
     <AppShell>
       <div className="content-page">
         <div className="page-title-row">
-          <div><span>创作管理</span><h1>生成记录</h1><p>任务结束后记录保留 30 天；草稿从创建起保留 30 天，请及时下载结果。</p></div>
+          <div><span>创作管理</span><h1>任务中心</h1><p>任务结束后记录保留 30 天；草稿从创建起保留 30 天，请及时下载结果。</p></div>
         </div>
         <section className="job-stats">
           <div><span className="stat-icon stat-icon--violet"><Sparkles size={19} /></span><p>当前加载</p><strong>{jobsQuery.data?.total ?? allJobs.length}</strong><small>由任务列表统计</small></div>

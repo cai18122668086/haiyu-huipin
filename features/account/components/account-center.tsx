@@ -349,7 +349,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
               海宇绘品<small>HAIYU HUIPIN</small>
             </span>
           </Link>
-          <div className="topbar-right"><Link className="account-button" href="/jobs">任务与记录</Link><AccountStatusMenu />
+          <div className="topbar-right"><Link className="account-button" href="/jobs">任务中心</Link><AccountStatusMenu />
             {process.env.NODE_ENV !== "production" && (
               <span className="local-badge">
                 <span />
