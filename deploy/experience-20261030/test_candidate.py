@@ -10,6 +10,8 @@ def run(runner):
         "tests/test_stage_length_migration_postgres.py",
         "tests/test_support_cases.py",
         "tests/test_experience_pricing.py",
+        "tests/test_detail_fast_integration.py",
+        "tests/test_amazon_suite_fast_execution.py",
         "tests/test_customer_credit_billing.py",
         "tests/test_admin_billing.py",
         "tests/test_credit_payments.py",

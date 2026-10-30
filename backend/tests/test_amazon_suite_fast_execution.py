@@ -159,7 +159,7 @@ def test_fast_full_21_real_router_original_downloads_and_single_credit_settlemen
             )
         )
         account = session.get(WorkspaceCreditAccountRecord, WORKSPACE_ID)
-        assert reservation.reserved_credits == reservation.settled_credits == 315
+        assert reservation.reserved_credits == reservation.settled_credits == 168
         assert reservation.status == "settled"
         assert account.reserved_credits == 0
         balance = account.balance_credits
@@ -345,8 +345,8 @@ def test_full_or_selected_retry_bills_only_failed_canvas_and_preserves_successes
             )
         ).all()
         assert sorted(reservation.settled_credits for reservation in reservations) == [
-            15,
-            300,
+            8,
+            160,
         ]
         assert (
             session.get(WorkspaceCreditAccountRecord, WORKSPACE_ID).reserved_credits

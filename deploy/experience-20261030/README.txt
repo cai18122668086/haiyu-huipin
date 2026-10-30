@@ -8,7 +8,8 @@ deployment entry point or against the sister website.
 
 Commit reviewed source first, then run package_release.py locally. Upload the
 resulting release-package/experience-20261030/source.tar.gz to a new directory
-/srv/huipin-experience-20261030 and extract there. On the approved host run:
+/srv/huipin-experience-20261030 and extract there. Use a fresh suffixed directory
+for each replacement candidate; retain the previous logs. On the approved host run:
 python3 release.py build
 python3 release.py test
 python3 release.py activate
