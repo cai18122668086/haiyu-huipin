@@ -20,4 +20,4 @@
 .accountMenuPanel > a:hover, .accountMenuPanel > button:hover { background: #f3effc; }
 .accountMenuPanel small { font-size: 11px; color: #746a8b; }
 
-.header :global(.top-nav__actions){margin-left:auto;gap:10px}.header :global(.task-trigger){flex-shrink:0}@media(max-width:640px){.header :global(.top-nav__actions){gap:6px}.header :global(.top-nav__brand){max-width:100px}.header :global(.task-trigger){padding:8px;min-width:40px}}
+.header :global(.top-nav__actions){margin-left:auto;gap:10px}.header :global(.task-trigger){flex-shrink:0}@media(max-width:640px){.header :global(.top-nav__actions){gap:6px}.header :global(.top-nav__brand){max-width:100px}.header :global(.top-nav__brand) :global(.brand-lockup){width:100px}.header :global(.task-trigger){padding:8px;min-width:40px}}
