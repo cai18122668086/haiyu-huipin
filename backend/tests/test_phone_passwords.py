@@ -15,6 +15,7 @@ from app.phone_accounts import (
     validate_password,
     verify_password_account,
 )
+from app.processing_consent import POLICY_VERSION
 from app.supertokens_auth import ExternalIdentity
 from tests.test_auth_external import FakeExternalAuthBackend, external_settings
 
@@ -29,6 +30,13 @@ def identity(version: int = 0) -> ExternalIdentity:
         phone_verified=True,
         credential_version=version,
     )
+
+
+CONSENT = {
+    "policyVersion": POLICY_VERSION,
+    "hongKongProcessing": True,
+    "aiTraining": True,
+}
 
 
 def test_password_hash_is_salted_and_checks_without_plaintext() -> None:
@@ -57,7 +65,7 @@ def test_registration_and_reset_preserve_local_identity_and_invalidate_old_sessi
         client.app.state.session_factory() as session,
     ):
         account = persist_otp_account(
-            session, identity(), "register", "FirstPassword123"
+            session, identity(), "register", "FirstPassword123", CONSENT
         )
         assert account.version == 1
         assert (
@@ -90,7 +98,9 @@ def test_registering_existing_phone_cannot_replace_password(tmp_path) -> None:
         ) as client,
         client.app.state.session_factory() as session,
     ):
-        persist_otp_account(session, identity(), "register", "FirstPassword123")
+        persist_otp_account(
+            session, identity(), "register", "FirstPassword123", CONSENT
+        )
         with pytest.raises(ApiError, match="已注册"):
             persist_otp_account(session, identity(1), "register", "InjectedPassword123")
         session.rollback()

@@ -348,7 +348,24 @@ def require_workspace_write(
     return workspace
 
 
+def require_workspace_processing_write(
+    request: HTTPConnection,
+    session: SessionDependency,
+    workspace: WorkspaceDependency,
+) -> WorkspaceContext:
+    require_workspace_write(workspace)
+    if (
+        request.app.state.settings.auth_mode == "external"
+        and not request.url.path.endswith("/cancel")
+    ):
+        from .processing_consent import require_processing_consent
+
+        require_processing_consent(session, workspace.principal.user_id)
+        session.rollback()
+    return workspace
+
+
 WorkspaceWriteDependency = Annotated[
     WorkspaceContext,
-    Depends(require_workspace_write),
+    Depends(require_workspace_processing_write),
 ]

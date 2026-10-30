@@ -31,7 +31,7 @@ www.tengliapi.xyz {
 	}
 	header @api Cache-Control "no-store"
 
-	@immutable path /_polaris-static/* /assets/*
+	@immutable path /_polaris-static/* /assets/* /images/display/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
 
 	# Signed private asset responses carry their own short-lived cache policy;

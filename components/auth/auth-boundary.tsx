@@ -15,6 +15,7 @@ import { AUTH_SESSION_QUERY_KEY } from "@/features/auth/api/session";
 import { withAuthTimeout } from "@/lib/auth/request-timeout";
 import { AuthStatus } from "./auth-status";
 import { AuthDialog } from "./auth-dialog";
+import { ProcessingConsentGate } from "./processing-consent";
 import { AuthDiagnosticDetails } from "./auth-diagnostic-details";
 import { beginAuthDiagnostics, createAuthDiagnostic, finishAuthDiagnostics, observeAuthCheck, reportAuthDiagnostic } from "@/lib/auth/diagnostics";
 import { authFailureCanRetry, type AuthDiagnostic, type AuthPhase } from "@/lib/auth/diagnostic-payload";
@@ -138,7 +139,8 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
     setLoginTarget(null);
     if (!publicRoute && result?.state === "unauthenticated") router.replace("/");
   }} /> : null;
-  if (publicRoute) return <>{children}{loginDialog}</>;
+  const creationRoute = pathname.startsWith("/workspace/") || pathname === "/style-replica" || pathname === "/commerce-crawler";
+  if (publicRoute) return <>{pathname === "/inspiration" ? <ProcessingConsentGate>{children}</ProcessingConsentGate> : children}{loginDialog}</>;
   if (developmentAuth) return routeRequiresWorkspace(pathname) ? <WorkspaceGate>{children}</WorkspaceGate> : <>{children}</>;
   if (!result) return <AuthStatus busy title={recovering ? "正在恢复连接" : "正在确认登录状态"} description={recovering ? "连接暂时中断，正在为你重新检查。" : "请稍候，我们正在安全地恢复你的会话。"} />;
   if (result.state === "unauthenticated") return <><AuthStatus title="登录后开始创作" description="登录你的手机号账号，即可使用这项功能。"><button type="button" className="auth-button auth-button--primary" onClick={() => setLoginTarget(currentReturnTo())}>登录 / 注册</button><Link href="/">返回首页</Link></AuthStatus>{loginDialog}</>;
@@ -147,7 +149,7 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
     <Link className="auth-button auth-button--secondary" href={AUTH_ROUTES.login}>返回登录</Link>
     <AuthDiagnosticDetails diagnostic={result.diagnostic} />
   </AuthStatus>;
-  return <>{routeRequiresWorkspace(pathname) ? <WorkspaceGate>{children}</WorkspaceGate> : children}{loginDialog}</>;
+  return <>{routeRequiresWorkspace(pathname) ? <WorkspaceGate>{creationRoute ? <ProcessingConsentGate>{children}</ProcessingConsentGate> : children}</WorkspaceGate> : children}{loginDialog}</>;
 }
 
 function WorkspaceGate({ children }: { children: React.ReactNode }) {

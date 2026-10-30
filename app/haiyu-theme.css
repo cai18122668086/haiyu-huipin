@@ -316,13 +316,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 @media (max-width: 640px) {
   :root { --nav-height: 64px; }
-  .top-nav .top-nav__inner { padding-inline: 15px; gap: 3px; }
+  .top-nav .top-nav__inner { padding-inline: 12px; gap: 4px; }
   .brand-lockup { gap: 6px; }
   .brand-lockup .brand-mark { width: 29px; height: 29px; }
   .brand-lockup .brand-copy strong { font-size: 17px; }
   .brand-lockup .brand-copy small { display: none; }
-  .top-nav .top-nav__brand { margin-right: 7px; }
-  .top-nav .mobile-tool-entry { min-width: 57px; font-size: 11px; gap: 3px; padding-inline: 6px; }
+  .top-nav .top-nav__brand { margin-right: 0; }
+  .top-nav .mobile-tool-entry { min-width: 36px; font-size: 11px; gap: 3px; padding-inline: 6px; }
   .top-nav .top-nav__actions { gap: 4px; }
   .top-nav .usage-pill { padding-inline: 5px; }
   .top-nav .usage-pill span { display: none; }

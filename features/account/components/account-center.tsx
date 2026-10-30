@@ -1,5 +1,6 @@
 "use client";
 import { SupportCases } from "@/components/support-cases";
+import { ProcessingConsentPanel } from "@/components/auth/processing-consent";
 import { AccountStatusMenu } from "@/components/account-status-menu";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -441,6 +442,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
           {page === "settings" && (
             <div className="settings-integration">
               <AccountPanel />
+              <ProcessingConsentPanel />
               <Link className="button outline" href="/auth/forgot-password">
                 修改或重置密码
                 <ShieldCheck size={16} />

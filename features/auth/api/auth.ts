@@ -6,6 +6,7 @@ import { initializeAuthClient } from "@/lib/auth/client";
 import { isLocalDevelopmentAuthEnabled, LOCAL_DEV_AUTH_USER_ID } from "@/lib/auth/local-dev";
 import type { AuthTraceContext } from "@/lib/auth/diagnostics";
 import { emitAuthSessionChanged } from "@/lib/auth/session-events";
+import type { ProcessingConsentChoice } from "@/lib/auth/processing-consent";
 
 export type AuthFieldError = { id: string; error: string };
 const PASSWORD_ERROR_MESSAGES: Record<string, string> = {
@@ -22,11 +23,12 @@ export function normalizeLoginPhone(phone: string): string {
   return `+86${digits}`;
 }
 
-export async function sendPhoneLoginCode(phone: string, resend = false) {
+export async function sendPhoneLoginCode(phone: string, resend = false, flow: "login" | "register" | "reset" = "login", processingConsent?: ProcessingConsentChoice) {
   if (isLocalDevelopmentAuthEnabled()) throw new Error("短信登录需要连接账号服务，请使用短信登录预览地址。");
   initialise();
-  if (resend) return Passwordless.resendCode();
-  const result = await Passwordless.createCode({ phoneNumber: normalizeLoginPhone(phone), shouldTryLinkingWithSessionUser: false });
+  const options = { preAPIHook: async ({url,requestInit}: {url:string;requestInit:RequestInit}) => ({url,requestInit:{...requestInit,body:JSON.stringify({...JSON.parse(String(requestInit.body)),acceptedAgreements:true,flow,processingConsent})}}) };
+  if (resend) return Passwordless.resendCode({options});
+  const result = await Passwordless.createCode({ phoneNumber: normalizeLoginPhone(phone), shouldTryLinkingWithSessionUser: false, options });
   if (result.status === "OK") {
     await Passwordless.setLoginAttemptInfo({ attemptInfo: {
       deviceId: result.deviceId,
@@ -38,13 +40,13 @@ export async function sendPhoneLoginCode(phone: string, resend = false) {
   return result;
 }
 
-export async function signInWithPhoneCode(code: string, flow: "login" | "register" | "reset" = "login", password?: string) {
+export async function signInWithPhoneCode(code: string, flow: "login" | "register" | "reset" = "login", password?: string, processingConsent?: ProcessingConsentChoice) {
   initialise();
   const result = await Passwordless.consumeCode({
     userInputCode: code,
     options: { preAPIHook: async ({ url, requestInit }) => ({
       url,
-      requestInit: { ...requestInit, body: JSON.stringify({ ...JSON.parse(String(requestInit.body)), acceptedAgreements: true, flow, password }) },
+      requestInit: { ...requestInit, body: JSON.stringify({ ...JSON.parse(String(requestInit.body)), acceptedAgreements: true, flow, password, processingConsent }) },
     }) },
   });
   if (result.status === "OK") {

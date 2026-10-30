@@ -18,6 +18,8 @@ test("phone authentication closes the dialog only on success, including storage 
         builder.onResolve({ filter: /^(supertokens-web-js\/recipe\/|@\/lib\/auth\/)/ }, ({ path }) => ({ path, namespace: "mock" }));
         builder.onLoad({ filter: /.*/, namespace: "mock" }, ({ path }) => {
           if (path.endsWith("/passwordless")) return { contents: `export default {
+            async createCode(input) { const request = await input.options.preAPIHook({url:'/create',requestInit:{body:JSON.stringify({phoneNumber:input.phoneNumber})}}); globalThis.__phoneLoginTest.bodies.push(JSON.parse(request.requestInit.body)); return {status:'RESTART_FLOW_ERROR'}; },
+            async resendCode(input) { const request = await input.options.preAPIHook({url:'/resend',requestInit:{body:'{}'}}); globalThis.__phoneLoginTest.bodies.push(JSON.parse(request.requestInit.body)); return {status:'RESTART_FLOW_ERROR'}; },
             async consumeCode(input) { const request = await input.options.preAPIHook({url:'/consume',requestInit:{body:JSON.stringify({userInputCode:input.userInputCode})}}); globalThis.__phoneLoginTest.bodies.push(JSON.parse(request.requestInit.body)); return {status:globalThis.__phoneLoginTest.status}; },
             async clearLoginAttemptInfo() { globalThis.__phoneLoginTest.cleared++; if(globalThis.__phoneLoginTest.failCleanup) throw new Error('storage unavailable'); }
           }` };
@@ -33,6 +35,16 @@ test("phone authentication closes the dialog only on success, including storage 
     assert.deepEqual(state.events, [true]);
     assert.equal(state.cleared, 1);
     assert.equal(state.bodies[0].acceptedAgreements, true);
+    assert.equal(state.bodies[0].processingConsent, undefined, "the client must not invent processing consent");
+    state.status = "RESTART_FLOW_ERROR";
+    await auth.signInWithPhoneCode("synthetic", "login", undefined, {policyVersion:"test-version",hongKongProcessing:true,aiTraining:false});
+    assert.deepEqual(state.bodies.at(-1).processingConsent, {policyVersion:"test-version",hongKongProcessing:true,aiTraining:false});
+    await auth.sendPhoneLoginCode("13800000000", false, "register", {policyVersion:"test-version",hongKongProcessing:true,aiTraining:true});
+    assert.equal(state.bodies.at(-1).flow, "register");
+    assert.equal(state.bodies.at(-1).processingConsent.aiTraining, true);
+    await auth.sendPhoneLoginCode("13800000000", true, "reset");
+    assert.equal(state.bodies.at(-1).flow, "reset");
+    assert.equal(state.bodies.at(-1).processingConsent, undefined);
     state.status = "RESTART_FLOW_ERROR";
     await auth.signInWithPhoneCode("synthetic", "login");
     assert.deepEqual(state.events, [true]);

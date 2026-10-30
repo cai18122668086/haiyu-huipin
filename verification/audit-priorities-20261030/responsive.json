@@ -1,0 +1,30 @@
+{
+  "synthetic_balance": 999999999,
+  "checks": [
+    {
+      "viewport_width": 320,
+      "client_width": 312,
+      "all_header_controls_inside": true
+    },
+    {
+      "viewport_width": 375,
+      "client_width": 367,
+      "all_header_controls_inside": true
+    },
+    {
+      "viewport_width": 390,
+      "client_width": 382,
+      "all_header_controls_inside": true
+    },
+    {
+      "viewport_width": 430,
+      "client_width": 422,
+      "all_header_controls_inside": true
+    },
+    {
+      "viewport_width": 768,
+      "client_width": 760,
+      "all_header_controls_inside": true
+    }
+  ]
+}

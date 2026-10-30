@@ -91,4 +91,4 @@ where = ["."]
 include = ["app*"]
 
 [tool.setuptools.package-data]
-app = ["skill_manifests/*.json"]
+app = ["skill_manifests/*.json", "processing_notice.json"]

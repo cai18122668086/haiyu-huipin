@@ -106,7 +106,11 @@ def verify_password_account(
 
 
 def persist_otp_account(
-    session: Session, identity: ExternalIdentity, flow: str, password: str | None
+    session: Session,
+    identity: ExternalIdentity,
+    flow: str,
+    password: str | None,
+    processing_consent: dict[str, Any] | None = None,
 ) -> PhoneAccount:
     if (
         flow == "reset"
@@ -139,6 +143,10 @@ def persist_otp_account(
     if not user.display_name:
         user.display_name = "用户" + (user.phone_number or "")[-4:]
     ensure_personal_workspace(session, user)
+    if flow != "reset":
+        from .processing_consent import record_consent
+
+        record_consent(session, user.id, processing_consent, source="phone_" + flow)
     session.commit()
     return account_snapshot(user)
 
@@ -169,7 +177,13 @@ async def finish_otp_login(result: Any, body: dict[str, Any], request: Request) 
 
     def persist() -> PhoneAccount:
         with request.app.state.session_factory() as session:
-            return persist_otp_account(session, identity, flow, body.get("password"))
+            return persist_otp_account(
+                session,
+                identity,
+                flow,
+                body.get("password"),
+                body.get("processingConsent"),
+            )
 
     account = await run_in_threadpool(persist)
     if flow in {"register", "reset"}:

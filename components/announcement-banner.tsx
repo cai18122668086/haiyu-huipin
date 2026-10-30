@@ -59,6 +59,7 @@ export function AnnouncementBanner() {
       <button
         type="button"
         className="announcement-center__trigger"
+        aria-label="公告通知"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}

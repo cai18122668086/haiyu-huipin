@@ -25,6 +25,7 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - run: npm ci
+      - run: npm run audit:security
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
