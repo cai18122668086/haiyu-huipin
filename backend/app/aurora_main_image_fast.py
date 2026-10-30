@@ -10,7 +10,7 @@ from .aurora_main_image_native_fast import validate_plan
 from .aurora_main_image_planner import AuroraPlanningError
 from .domain import JobStatus
 from .errors import ApiError
-from .models import JobPlanRecord, JobRecord
+from .models import JobAssetRecord, JobAttemptRecord, JobPlanRecord, JobRecord
 
 
 def selected(configuration: Any) -> bool:
@@ -21,16 +21,44 @@ def selected(configuration: Any) -> bool:
     )
 
 
-def require_recoverable_plan(session: Any, job: JobRecord) -> None:
-    """Reject paid recovery with missing plans or unresolved submissions."""
+def require_recoverable_plan(
+    session: Any, job: JobRecord, *, allow_replanning: bool = False
+) -> bool:
+    """Validate recovery and return whether a fresh plan is required."""
     if job.type != "domestic_main_image" or not selected(job.configuration):
-        return
+        return False
     plan = session.scalar(
         select(JobPlanRecord)
         .where(JobPlanRecord.job_id == job.id)
         .order_by(JobPlanRecord.revision.desc())
         .limit(1)
     )
+    # 仅规划阶段失败且从未启动生图的任务可重新规划；原方案重试仍须完整授权。
+    if (
+        allow_replanning
+        and plan is None
+        and job.status == JobStatus.FAILED.value
+        and job.stage == "planning_failed"
+        and job.expected_item_count == 6
+        and job.succeeded_item_count == 0
+        and not job.configuration.get("_main_image_fast_invocations")
+        and session.scalar(
+            select(JobAttemptRecord.id)
+            .where(JobAttemptRecord.job_id == job.id)
+            .limit(1)
+        )
+        is None
+        and session.scalar(
+            select(JobAssetRecord.id)
+            .where(
+                JobAssetRecord.job_id == job.id,
+                JobAssetRecord.direction == "output",
+            )
+            .limit(1)
+        )
+        is None
+    ):
+        return True
     if plan is None or plan.confirmed_at is None:
         raise ApiError(
             409,
@@ -50,6 +78,7 @@ def require_recoverable_plan(session: Any, job: JobRecord) -> None:
             "PROVIDER_OUTCOME_UNKNOWN",
             "原生图结果尚未核实，请先找回原任务，避免重复生成。",
         )
+    return False
 
 
 class MainImagePlannerRouter:

@@ -43,11 +43,8 @@ def migration_connection():
     engine.dispose()
 
 
-def _load_migration():
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "migrations/versions/20261017_0026_job_stage_lengths.py"
-    )
+def _load_migration(name="20261017_0026_job_stage_lengths.py"):
+    path = Path(__file__).resolve().parents[1] / "migrations/versions" / name
     spec = importlib.util.spec_from_file_location("stage_length_migration", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -55,12 +52,69 @@ def _load_migration():
     return module
 
 
+@pytest.mark.parametrize("length", [32, 64])
+def test_plan_schema_expansion_preserves_protocols_and_stored_plans(
+    migration_connection, length
+):
+    from app.aurora_main_image_native_fast import SCHEMA_VERSION
+    from app.models import JobPlanRecord
+
+    connection = migration_connection
+    connection.execute(
+        sa.text(
+            "CREATE TABLE job_plans (id text PRIMARY KEY, "
+            f"schema_version varchar({length}) NOT NULL, payload jsonb NOT NULL)"
+        )
+    )
+    connection.execute(
+        sa.text(
+            "INSERT INTO job_plans VALUES ('before', 'aurora-main-image-plan-v2', '{}')"
+        )
+    )
+    migration = _load_migration("20261030_0035_job_plan_schema_length.py")
+    with Operations.context(MigrationContext.configure(connection)):
+        migration.upgrade()
+        migration.upgrade()
+    assert (
+        next(
+            item["type"].length
+            for item in sa.inspect(connection).get_columns("job_plans")
+            if item["name"] == "schema_version"
+        )
+        == JobPlanRecord.__table__.c.schema_version.type.length
+        == 64
+    )
+    connection.execute(
+        sa.text(
+            "INSERT INTO job_plans VALUES ('after', :version, "
+            "'{\"pages\": [1,2,3,4,5,6]}')"
+        ),
+        {"version": SCHEMA_VERSION},
+    )
+    with (
+        Operations.context(MigrationContext.configure(connection)),
+        pytest.raises(RuntimeError, match="Keep plan schema identifiers at 64"),
+    ):
+        migration.downgrade()
+    assert (
+        connection.scalar(
+            sa.text("SELECT schema_version FROM job_plans WHERE id='after'")
+        )
+        == SCHEMA_VERSION
+    )
+    assert (
+        connection.scalar(
+            sa.text("SELECT schema_version FROM job_plans WHERE id='before'")
+        )
+        == "aurora-main-image-plan-v2"
+    )
+
+
 def _create_tables(connection, lengths):
     for table, length in zip(TABLES, lengths, strict=True):
         connection.execute(
             sa.text(
-                f'CREATE TABLE "{table}" '
-                f"(id text PRIMARY KEY, stage varchar({length}))"
+                f'CREATE TABLE "{table}" (id text PRIMARY KEY, stage varchar({length}))'
             )
         )
         value = LONG_STAGE if length == 64 else "queued"

@@ -1,8 +1,8 @@
 export type DetailSpeed = "standard" | "fast";
 
 export const DETAIL_SPEED_OPTIONS = [
-  { value: "standard", title: "原版" },
-  { value: "fast", title: "快速" },
+  { value: "fast", title: "快速版（约5分钟）" },
+  { value: "standard", title: "精致版（约40分钟）" },
 ] as const;
 
 export function detailSpeedSettings(region: "domestic" | "international", speed: DetailSpeed) {

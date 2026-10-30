@@ -321,6 +321,86 @@ def test_native_fast_unknown_call_blocks_retry_and_clone(client, tmp_path):
     assert len(gateway.planner_calls) == 1
 
 
+def test_native_fast_plan_save_failure_can_replan_with_original_inputs(
+    client, tmp_path
+):
+    from sqlalchemy import event
+    from sqlalchemy.exc import DataError
+
+    job_id, gateway = create(client, tmp_path)
+    with client.app.state.session_factory() as db:
+        engine = db.get_bind()
+
+    def fail_plan_save(conn, cursor, statement, parameters, context, executemany):
+        if statement.startswith("INSERT INTO job_plans"):
+            raise DataError(statement, {}, ValueError("value too long for varchar(32)"))
+
+    event.listen(engine, "before_cursor_execute", fail_plan_save)
+    try:
+        dispatch_pending(client)
+    finally:
+        event.remove(engine, "before_cursor_execute", fail_plan_save)
+    source = detail(client, job_id)
+    assert source["stage"] == "planning_failed" and source["plan"] is None
+    assert not gateway.image_calls and len(gateway.planner_calls) == 1
+    with client.app.state.session_factory() as db:
+        assert db.get(JobRecord, job_id).configuration[
+            "_main_image_fast_planning"
+        ]["state"] == "invoked"
+    key = idem()
+    response = client.post(
+        BASE + f"/jobs/{job_id}/retry",
+        headers=key,
+        json={"scope": "failed", "item_ids": []},
+    )
+    assert response.status_code == 201, response.text
+    child = response.json()
+    assert child["configuration"]["input"] == source["configuration"]["input"]
+    assert child["configuration"]["settings"] == source["configuration"]["settings"]
+    assert "_main_image_fast_planning" not in child["configuration"]
+    assert child["plan"] is None and child["status"] == "queued"
+    replay = client.post(
+        BASE + f"/jobs/{job_id}/retry",
+        headers=key,
+        json={"scope": "failed", "item_ids": []},
+    )
+    assert replay.status_code == 201 and replay.json()["id"] == child["id"]
+    dispatch_pending(client)
+    current = assert_delivery(client, child["id"])
+    assert len(gateway.planner_calls) == 2 and len(gateway.image_calls) == 6
+    assert current["cost"]["actual_credits"] == 90
+    assert detail(client, job_id)["stage"] == "planning_failed"
+    assert detail(client, job_id)["plan"] is None
+
+
+def test_native_fast_missing_plan_with_image_receipt_cannot_replan(client, tmp_path):
+    class FailedIdentity(NativeGateway):
+        async def plan(self, request):
+            await super().plan(request)
+            raise RuntimeError("synthetic planning failure")
+
+    job_id, gateway = create(client, tmp_path, gateway=FailedIdentity())
+    dispatch_pending(client)
+    with client.app.state.session_factory() as db:
+        row = db.get(JobRecord, job_id)
+        row.configuration = {
+            **row.configuration,
+            RECEIPTS_KEY: {"page-001": {"state": "unknown"}},
+        }
+        db.commit()
+    for suffix, body in [
+        ("retry", {"scope": "failed", "item_ids": []}),
+        ("clone", None),
+    ]:
+        response = client.post(
+            BASE + f"/jobs/{job_id}/{suffix}",
+            headers=idem(),
+            json=body,
+        )
+        assert response.status_code == 409, response.text
+    assert len(gateway.planner_calls) == 1 and not gateway.image_calls
+
+
 def test_native_fast_workers_share_six_active_claims(client, tmp_path):
     job_id, gateway = create(client, tmp_path, auto=False, concurrency=3000)
     dispatch_pending(client)

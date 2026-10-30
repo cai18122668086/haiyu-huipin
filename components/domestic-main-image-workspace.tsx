@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowRight, ImagePlus, LoaderCircle, ShieldCheck, Sparkl
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { GenerationRecommendation } from "@/components/generation-recommendation";
 import { AppShell } from "@/components/app-shell";
 import { JobDeliverablesDownload } from "@/components/job-deliverables-download";
 import { JobResultImage } from "@/components/job-result-image";
@@ -22,6 +23,7 @@ import { MAIN_IMAGE_SPEED_OPTIONS, mainImageSpeed, mainImageSpeedSettings, useMa
 import { errorMessage } from "@/lib/api/request";
 import { IMAGE_UPLOAD_ACCEPT, IMAGE_UPLOAD_EXTENSIONS, IMAGE_UPLOAD_FORMAT_HINT, IMAGE_UPLOAD_MIME_TYPES } from "@/lib/image-upload";
 import { allowsJobAction } from "@/lib/jobs/actions";
+import { mainImageRecoveryMode } from "@/lib/jobs/main-image-recovery";
 import { selectJobResultAssets } from "@/lib/jobs/results";
 import styles from "./domestic-main-image-workspace.module.css";
 
@@ -96,7 +98,7 @@ function generationItemLabel(status: string, resultSource?: string | null, fast 
 }
 
 function domesticFailureMessage(message?: string | null) {
-  if (!message) return "生成流程未完成，请查看失败页后按原方案重新生成。";
+  if (!message) return "生成流程未完成，请查看失败原因后重试。";
   const sizeMatch = message.match(/must be square 1:1, got (\d+)x(\d+)/i);
   if (sizeMatch) {
     return `图片服务返回了 ${sizeMatch[1]}×${sizeMatch[2]} 非方图，未满足 1:1 主图要求。`;
@@ -200,6 +202,7 @@ export function DomesticMainImageWorkspace() {
     && ["partial", "failed", "cancelled"].includes(job.data.status)
     && !hasCompleteSet,
   );
+  const recoveryMode = mainImageRecoveryMode(job.data);
   const showGeneration = Boolean(
     job.data && ["processing", "awaiting_final_review", "completed", "partial", "failed"].includes(job.data.status),
   );
@@ -324,7 +327,8 @@ export function DomesticMainImageWorkspace() {
   }
 
   async function retryFailedPages() {
-    if (!job.data || !allowsJobAction(job.data.allowed_actions, "retry")) return;
+    if (!job.data || !recoveryMode || !allowsJobAction(job.data.allowed_actions, "retry")) return;
+    setLocalError(undefined);
     try {
       const retried = await retryJob.mutateAsync({
         jobId: job.data.id,
@@ -344,7 +348,7 @@ export function DomesticMainImageWorkspace() {
         <WorkspaceHeader
           eyebrow="海宇绘品 · 国内电商主图"
           title="国内电商主图"
-          description={activeSpeed === "native_fast" ? "采用原生六图方案，精简生成流程，完成后直接查看与下载。" : fastMode ? "提交商品素材后，一次规划整套六图，生成后直接查看与下载。" : "提交商品素材后，后台自动规划、生成与审图，完成后直接查看六张成图。"}
+          description="上传商品素材，生成完整六张主图，完成后可查看与下载。"
           meta={<span className={styles.secure}><ShieldCheck size={15} />连续创作流程</span>}
         />
 
@@ -385,9 +389,8 @@ export function DomesticMainImageWorkspace() {
               <div className={styles.heading}><span>02</span><div><h2>告诉我们商品的亮点</h2><p>先填写名称、类目和核心卖点，其他信息可以按需补充。</p></div></div>
               <fieldset className={styles.speedChoice} disabled={Boolean(jobId) || busy}>
                 <legend>生成版本</legend>
-                {MAIN_IMAGE_SPEED_OPTIONS.map(([value, title, note]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}</strong><small>{note}</small></span></label>)}
+                {MAIN_IMAGE_SPEED_OPTIONS.map(([value, title]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}{value === "native_fast" && <GenerationRecommendation />}</strong></span></label>)}
               </fieldset>
-              {fastMode && <p className={styles.speedNote}>快速版保留六张图的分工与商品身份约束，成图未经独立 AI 复审，请下载前检查。</p>}
               <div className={styles.form}>
                 <label><span>商品名称 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("product_name") : productName} onChange={(event) => setProductName(event.target.value)} placeholder="例如：轻量保温随行杯" /></label>
                 <label><span>商品类目 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("category") : category} onChange={(event) => setCategory(event.target.value)} placeholder="例如：杯壶 / 保温杯" /></label>
@@ -448,16 +451,16 @@ export function DomesticMainImageWorkspace() {
               </>}
             </section>}
 
-            {showGeneration && <section className={styles.card}><div className={styles.heading}><span>04</span><div><h2>逐张生成进度</h2><p>{fastMode ? "六张图独立生成，完成一张即可查看与下载。" : "逐张生成并审核，通过整组审核后自动交付。"}</p></div></div>{terminalIncomplete && <div className={styles.generationFailure} role="alert"><AlertTriangle size={20} /><div><strong>{setAuditFailed && hasAllGeneratedImages ? "六张图片已生成，但整组审核未通过" : "任务已经终止，不再继续运行"}</strong><p>{setAuditFailed && hasAllGeneratedImages ? "图片资产完整保留，但整组审核未通过，因此暂不能进入整组确认。" : failedItem ? `第 ${failedItem.ordinal + 1} 页：${domesticFailureMessage(failedItem.error_message)}` : "任务没有完成全部六张图片。"}{blockedItemCount ? ` 后续 ${blockedItemCount} 页因顺序生成规则没有执行。` : ""}</p><small>修复原因后，可点击右侧“按原方案重新生成”。</small></div></div>}<div className={styles.generationProgress}><strong>{hasAllGeneratedImages ? "6 / 6 张图片已生成" : fastMode ? `${acceptedResultCount} / 6 张已生成` : `${acceptedResultCount} / 6 张已通过审核`}</strong>{!fastMode && hasAllGeneratedImages && acceptedResultCount < 6 && <small className={styles.auditNote}>{setAuditFailed ? "整组审核未通过，但六张图片均已生成" : "整组审核未通过，当前任务仍为部分完成"}</small>}<div>{job.data!.items.map((item) => <span key={item.id} data-status={item.error_code === "AURORA_SET_AUDIT_FAILED" ? "set-audit-failed" : item.status}><i>{String(item.ordinal + 1).padStart(2, "0")}</i>{roleNames[plan[item.ordinal]?.page_role] ?? `图 ${item.ordinal + 1}`}<em>{generationItemLabel(item.status, item.result_source, fastMode)}</em></span>)}</div></div>{job.data?.status === "completed" && !hasCompleteSet && <div className={styles.mockWarning}><strong>没有生成真实图片</strong><p>这条任务由安全 Mock 执行，只模拟了六页状态，不能进入整组图片确认。启用真实 Provider 后请重新运行任务。</p></div>}</section>}
+            {showGeneration && <section className={styles.card}><div className={styles.heading}><span>04</span><div><h2>逐张生成进度</h2><p>{fastMode ? "六张图独立生成，完成一张即可查看与下载。" : "逐张生成并审核，通过整组审核后自动交付。"}</p></div></div>{terminalIncomplete && <div className={styles.generationFailure} role="alert"><AlertTriangle size={20} /><div><strong>{setAuditFailed && hasAllGeneratedImages ? "六张图片已生成，但整组审核未通过" : "任务已经终止，不再继续运行"}</strong><p>{setAuditFailed && hasAllGeneratedImages ? "图片资产完整保留，但整组审核未通过，因此暂不能进入整组确认。" : failedItem ? `第 ${failedItem.ordinal + 1} 页：${domesticFailureMessage(failedItem.error_message)}` : "任务没有完成全部六张图片。"}{blockedItemCount ? ` 后续 ${blockedItemCount} 页因顺序生成规则没有执行。` : ""}</p><small>{recoveryMode === "replan" ? "修复原因后，可点击右侧“重新规划并生成”；商品素材与参数将保留。" : recoveryMode === "retry" ? "修复原因后，可点击右侧“按原方案重新生成”。" : "请核对任务失败原因。"}</small></div></div>}<div className={styles.generationProgress}><strong>{hasAllGeneratedImages ? "6 / 6 张图片已生成" : fastMode ? `${acceptedResultCount} / 6 张已生成` : `${acceptedResultCount} / 6 张已通过审核`}</strong>{!fastMode && hasAllGeneratedImages && acceptedResultCount < 6 && <small className={styles.auditNote}>{setAuditFailed ? "整组审核未通过，但六张图片均已生成" : "整组审核未通过，当前任务仍为部分完成"}</small>}<div>{job.data!.items.map((item) => <span key={item.id} data-status={item.error_code === "AURORA_SET_AUDIT_FAILED" ? "set-audit-failed" : item.status}><i>{String(item.ordinal + 1).padStart(2, "0")}</i>{roleNames[plan[item.ordinal]?.page_role] ?? `图 ${item.ordinal + 1}`}<em>{generationItemLabel(item.status, item.result_source, fastMode)}</em></span>)}</div></div>{job.data?.status === "completed" && !hasCompleteSet && <div className={styles.mockWarning}><strong>没有生成真实图片</strong><p>这条任务由安全 Mock 执行，只模拟了六页状态，不能进入整组图片确认。启用真实 Provider 后请重新运行任务。</p></div>}</section>}
 
-            {results.length > 0 && <section className={styles.card}><div className={styles.heading}><span>05</span><div><h2>六图交付</h2><p>{fastMode ? "快速版成图未经独立 AI 复审，请检查商品、文案与各图内容。" : job.data?.status === "awaiting_final_review" ? "整组审计已完成，请逐张检查后确认交付。" : "单张可查看与下载，全部完成后可下载整套文件。"}</p></div></div>{!fastMode && finalReview && (!finalReview.set_audit_passed || finalReview.residual_issues.length > 0) && <div className={styles.generationFailure} role="alert"><AlertTriangle size={20} /><div><strong>确认前请检查以下未解决的问题</strong>{finalReview.residual_issues.map((issue, index) => <p key={index}>{typeof issue.page_index === "number" ? `第 ${issue.page_index + 1} 页：` : ""}{issue.decision_summary}</p>)}{!finalReview.set_audit_passed && <p>整组页面职责区分未通过审计，请检查搜索主图是否足够明确。确认交付表示接受这些问题。</p>}</div></div>}<div className={styles.results}>{results.map((asset) => <JobResultImage key={asset.asset_id} workspaceId={workspace?.id} assetId={asset.asset_id} alt={`国内电商主图 ${asset.ordinal + 1}`} label={roleNames[plan.find((page) => page.page_index === asset.ordinal)?.page_role ?? ""] ?? `图 ${asset.ordinal + 1}`} />)}</div>{job.data?.status === "completed" && hasCompleteSet && <JobDeliverablesDownload workspaceId={workspace?.id} jobId={job.data.id} />}</section>}
+            {results.length > 0 && <section className={styles.card}><div className={styles.heading}><span>05</span><div><h2>六图交付</h2><p>{job.data?.status === "awaiting_final_review" ? "整组审计已完成，请逐张检查后确认交付。" : "单张可查看与下载，全部完成后可下载整套文件。"}</p></div></div>{!fastMode && finalReview && (!finalReview.set_audit_passed || finalReview.residual_issues.length > 0) && <div className={styles.generationFailure} role="alert"><AlertTriangle size={20} /><div><strong>确认前请检查以下未解决的问题</strong>{finalReview.residual_issues.map((issue, index) => <p key={index}>{typeof issue.page_index === "number" ? `第 ${issue.page_index + 1} 页：` : ""}{issue.decision_summary}</p>)}{!finalReview.set_audit_passed && <p>整组页面职责区分未通过审计，请检查搜索主图是否足够明确。确认交付表示接受这些问题。</p>}</div></div>}<div className={styles.results}>{results.map((asset) => <JobResultImage key={asset.asset_id} workspaceId={workspace?.id} assetId={asset.asset_id} alt={`国内电商主图 ${asset.ordinal + 1}`} label={roleNames[plan.find((page) => page.page_index === asset.ordinal)?.page_role ?? ""] ?? `图 ${asset.ordinal + 1}`} />)}</div>{job.data?.status === "completed" && hasCompleteSet && <JobDeliverablesDownload workspaceId={workspace?.id} jobId={job.data.id} />}</section>}
           </main>
 
           <aside className={styles.side}>
             {localError || createJob.error || confirmPlan.error || finalizeJob.error || retryJob.error ? <p className={styles.error}>{localError ?? errorMessage(createJob.error ?? confirmPlan.error ?? finalizeJob.error ?? retryJob.error)}</p> : null}
             {!jobId && <CreditCostHint jobType="domestic_main_image" count={6} />}
-            {!jobId ? <button className={styles.primary} disabled={!canCreate || busy} onClick={() => void createPlan()}>{busy ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}生成主图六件套<ArrowRight size={17} /></button> : job.data && !automaticPlan && allowsJobAction(job.data.allowed_actions, "finalize") ? <button className={styles.primary} disabled={finalizeJob.isPending} onClick={() => finalizeJob.mutate({ jobId: job.data!.id, allowedActions: job.data!.allowed_actions, approvalText: "我已审阅六张成图，确认整组结果并批准按 Aurora Skill 完成交付。" })}>{finalizeJob.isPending ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}确认整组并完成交付<ArrowRight size={17} /></button> : job.data && ["completed", "failed", "partial", "cancelled"].includes(job.data.status) && !hasCompleteSet && providerReady && allowsJobAction(job.data.allowed_actions, "retry") ? <button className={styles.primary} disabled={retryJob.isPending} onClick={() => void retryFailedPages()}>{retryJob.isPending ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}按原方案重新生成<ArrowRight size={17} /></button> : !automaticPlan && job.data?.plan && allowsJobAction(job.data.allowed_actions, "confirm_plan") && providerReady ? <button className={styles.primary} disabled={confirmPlan.isPending} onClick={() => confirmPlan.mutate({ jobId: job.data!.id, revision: job.data!.plan!.revision, allowedActions: job.data!.allowed_actions, approvalText: fastMode ? "我确认当前快速六图规划，授权独立生成并直接交付，成图未经独立 AI 复审。" : "我确认当前六图规划，并授权按 Aurora Skill 逐张生成、审图及执行每页至多一次自动修复。" })}>{confirmPlan.isPending ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}确认方案并开始<ArrowRight size={17} /></button> : <button className={styles.primary} disabled><LoaderCircle className={job.data && ["queued", "planning", "processing"].includes(job.data.status) ? "spin" : ""} size={17} />{terminalIncomplete ? "任务已终止" : automaticPlan && job.data?.status === "awaiting_final_review" ? "正在整理交付" : job.data?.status === "completed" && hasCompleteSet ? "整组已完成" : job.data?.status === "completed" ? "未生成真实图片" : workflow.mode === "mock" && job.data?.status === "awaiting_confirmation" ? "真实生成服务未启用" : "任务处理中"}</button>}
-            <small className={styles.note}>{providerReady ? fastMode ? "快速版：自动规划六图、独立生成并交付，成图未经独立 AI 复审" : "在线生成已启用；提交后自动规划、生成、审图与交付" : "当前为安全 Mock：只允许编译和查看规划，不会授权生图或产生图片费用"}</small>
+            {!jobId ? <button className={styles.primary} disabled={!canCreate || busy} onClick={() => void createPlan()}>{busy ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}生成主图六件套<ArrowRight size={17} /></button> : job.data && !automaticPlan && allowsJobAction(job.data.allowed_actions, "finalize") ? <button className={styles.primary} disabled={finalizeJob.isPending} onClick={() => finalizeJob.mutate({ jobId: job.data!.id, allowedActions: job.data!.allowed_actions, approvalText: "我已审阅六张成图，确认整组结果并批准按 Aurora Skill 完成交付。" })}>{finalizeJob.isPending ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}确认整组并完成交付<ArrowRight size={17} /></button> : job.data && recoveryMode && !hasCompleteSet && providerReady ? <button className={styles.primary} disabled={retryJob.isPending} onClick={() => void retryFailedPages()}>{retryJob.isPending ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}{recoveryMode === "replan" ? "重新规划并生成" : "按原方案重新生成"}<ArrowRight size={17} /></button> : !automaticPlan && job.data?.plan && allowsJobAction(job.data.allowed_actions, "confirm_plan") && providerReady ? <button className={styles.primary} disabled={confirmPlan.isPending} onClick={() => confirmPlan.mutate({ jobId: job.data!.id, revision: job.data!.plan!.revision, allowedActions: job.data!.allowed_actions, approvalText: fastMode ? "我确认当前快速六图规划，授权独立生成并直接交付，成图未经独立 AI 复审。" : "我确认当前六图规划，并授权按 Aurora Skill 逐张生成、审图及执行每页至多一次自动修复。" })}>{confirmPlan.isPending ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}确认方案并开始<ArrowRight size={17} /></button> : <button className={styles.primary} disabled><LoaderCircle className={job.data && ["queued", "planning", "processing"].includes(job.data.status) ? "spin" : ""} size={17} />{terminalIncomplete ? "任务已终止" : automaticPlan && job.data?.status === "awaiting_final_review" ? "正在整理交付" : job.data?.status === "completed" && hasCompleteSet ? "整组已完成" : job.data?.status === "completed" ? "未生成真实图片" : workflow.mode === "mock" && job.data?.status === "awaiting_confirmation" ? "真实生成服务未启用" : "任务处理中"}</button>}
+            <small className={styles.note}>{providerReady ? "图片完成后可逐张查看与下载。" : "图片生成服务暂未启用，当前仅可预览方案。"}</small>
           </aside>
         </div>
       </div>

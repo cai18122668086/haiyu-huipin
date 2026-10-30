@@ -3,8 +3,8 @@ import { useCallback, useSyncExternalStore } from "react";
 export type MainImageSpeed = "standard" | "native_fast";
 
 export const MAIN_IMAGE_SPEED_OPTIONS = [
-  ["standard", "原版", "按现有流程规划、生成与审核"],
-  ["native_fast", "快速·原生精简", "保留原生风格与六图方案，精简生成流程"],
+  ["native_fast", "快速版（约5分钟）"],
+  ["standard", "精致版（约40分钟）"],
 ] as const;
 
 export function mainImageSpeed(value: unknown): MainImageSpeed {

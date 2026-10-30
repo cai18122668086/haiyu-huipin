@@ -4,9 +4,9 @@ import { DETAIL_SPEED_OPTIONS, detailSpeedSettings, savedDetailSpeed } from "../
 import { detailSkillSettings, savedDetailSkill } from "../lib/detail-skills.ts";
 import { intentSignature } from "../lib/api/idempotency.ts";
 
-test("domestic detail offers original first and an independent fast option", () => {
-  assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.value), ["standard", "fast"]);
-  assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.title), ["原版", "快速"]);
+test("domestic detail offers fast first with estimated durations", () => {
+  assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.value), ["fast", "standard"]);
+  assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.title), ["快速版（约5分钟）", "精致版（约40分钟）"]);
 });
 
 test("default keeps the original request identity while fast selects a new intent", () => {

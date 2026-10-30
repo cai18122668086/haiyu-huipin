@@ -2228,7 +2228,9 @@ async def retry_job(
         )
     from .aurora_main_image_fast import require_recoverable_plan
 
-    require_recoverable_plan(session, source)
+    replan_main_image = require_recoverable_plan(
+        session, source, allow_replanning=payload.scope == RetryScope.FAILED
+    )
     replica_document = None
     document_id = source.configuration.get("replica_session_id")
     if source.type == JobType.REFERENCE_REMIX.value and document_id:
@@ -2289,6 +2291,15 @@ async def retry_job(
         )
     _validate_domestic_detail_retry(session, source, selected)
     retried = _copy_job_for_retry(session, source, payload.scope, selected)
+    if replan_main_image:
+        # 新规划只继承用户输入，不能携带会阻止规划的旧调用标记。
+        retried.configuration = {
+            "input": source.configuration["input"],
+            "settings": source.configuration["settings"],
+        }
+        from .main_image_auto_start import bind_submission
+
+        bind_submission(retried, workspace.principal.user_id)
     session.add(retried)
     session.flush()
     _copy_job_relations_for_retry(session, source, retried, selected)
