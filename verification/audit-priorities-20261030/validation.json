@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-30",
+  "baseline": "78d9809",
+  "production_deployed": false,
+  "checks": {
+    "frontend_tests": {
+      "passed": 244,
+      "failed": 0
+    },
+    "backend_targeted_tests": {
+      "passed": 216,
+      "failed": 0,
+      "database": "isolated SQLite with mock providers"
+    },
+    "typecheck": "passed",
+    "production_build": "passed",
+    "ruff": "passed",
+    "mypy": {
+      "passed": true,
+      "source_files": 376
+    },
+    "npm_audit": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 0,
+      "low": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 2
+    },
+    "responsive_widths": [
+      320,
+      375,
+      390,
+      430,
+      768
+    ],
+    "image_original_integrity": "74 sources verified"
+  },
+  "limits": [
+    "Local Docker daemon unavailable; PostgreSQL/container validation delegated to repository CI",
+    "No production migration/activation",
+    "No paid generation, collection, SMS, payment or refund calls",
+    "No field Core Web Vitals or real-device results claimed"
+  ],
+  "release_requirements": {
+    "migration": "20261030_0037",
+    "coordinated_frontend_backend": true,
+    "keep_previous_static_assets": true
+  }
+}

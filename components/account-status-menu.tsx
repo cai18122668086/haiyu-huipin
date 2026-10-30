@@ -31,7 +31,7 @@ export function AccountStatusMenu() {
   const pending = member.data?.next_plan_name;
   const identity = plan ? `${plan}会员` : pending ? "会员待生效" : member.data?.membership_status === "expired" ? "会员已到期" : "创作账户";
   return <div ref={ref} className={styles.root}>
-    <button ref={trigger} type="button" className={styles.trigger} data-member={Boolean(plan) || undefined} aria-expanded={open} aria-controls="huipin-account-summary" onClick={() => setOpen(value => !value)}>
+    <button ref={trigger} type="button" className={styles.trigger} data-member={Boolean(plan) || undefined} aria-label={`账户与积分：${identity}${wallet.data ? `，可用 ${number(wallet.data.available_credits)} 积分` : ""}`} aria-expanded={open} aria-controls="huipin-account-summary" onClick={() => setOpen(value => !value)}>
       <span className={styles.identity}>{plan ? <Crown size={14} /> : <UserRound size={14} />}<span>{identity}</span></span>
       <span className={styles.balance}><Coins size={14} />{wallet.data ? <><b>{number(wallet.data.available_credits)}</b><span>积分</span></> : wallet.isError ? "待同步" : "同步中"}</span><ChevronDown size={12} />
     </button>

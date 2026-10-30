@@ -293,8 +293,10 @@ def test_passwordless_consent_linking_and_delivery_errors() -> None:
     )
     api = override_sms_apis(implementation)
 
+    payload: dict[str, Any] = {}
+
     async def body() -> Any:
-        return {}
+        return payload
 
     options = SimpleNamespace(request=SimpleNamespace(json=body))
     result = asyncio.run(api.consume_code_post(options))
@@ -303,6 +305,17 @@ def test_passwordless_consent_linking_and_delivery_errors() -> None:
     result = asyncio.run(api.create_code_post(options, True))
     assert "退出当前账号" in result.to_json()["message"]
     assert not called
+    from app.processing_consent import POLICY_VERSION
+
+    payload.update(
+        acceptedAgreements=True,
+        flow="login",
+        processingConsent={
+            "policyVersion": POLICY_VERSION,
+            "hongKongProcessing": True,
+            "aiTraining": True,
+        },
+    )
     result = asyncio.run(api.create_code_post(options))
     assert result.to_json()["status"] == "GENERAL_ERROR"
     assert len(called) == 1

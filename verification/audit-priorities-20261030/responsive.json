@@ -1,0 +1,45 @@
+{
+  "synthetic_balance": 999999999,
+  "checks": [
+    {
+      "viewport_width": 320,
+      "all_header_controls_inside": true,
+      "brand_artwork_inside_link": true,
+      "client_width": 312,
+      "controls_do_not_overlap": true,
+      "overlap": []
+    },
+    {
+      "viewport_width": 375,
+      "all_header_controls_inside": true,
+      "brand_artwork_inside_link": true,
+      "client_width": 367,
+      "controls_do_not_overlap": true,
+      "overlap": []
+    },
+    {
+      "viewport_width": 390,
+      "all_header_controls_inside": true,
+      "brand_artwork_inside_link": true,
+      "client_width": 382,
+      "controls_do_not_overlap": true,
+      "overlap": []
+    },
+    {
+      "viewport_width": 430,
+      "all_header_controls_inside": true,
+      "brand_artwork_inside_link": true,
+      "client_width": 422,
+      "controls_do_not_overlap": true,
+      "overlap": []
+    },
+    {
+      "viewport_width": 768,
+      "all_header_controls_inside": true,
+      "brand_artwork_inside_link": true,
+      "client_width": 760,
+      "controls_do_not_overlap": true,
+      "overlap": []
+    }
+  ]
+}

@@ -44,10 +44,11 @@
 .footer a { color: var(--ink-500); font-size: 10px; text-decoration: none; }
 .footer a:hover { color: var(--violet-700); }
 .retry { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; border: 0; color: var(--violet-600); background: transparent; font-size: 11px; cursor: pointer; }
-@media(max-width:640px) {
-  .trigger { gap: 7px; padding-right: 7px; }
-  .identity { padding-inline: 6px; font-size: 10px; }
-  .identity>svg { width: 12px; }
+@media(max-width:960px) {
+  .trigger { width:36px; height:36px; justify-content:center; gap:0; padding:0; }
+  .identity { min-height:0; padding:0; background:transparent; }
+  .identity>span,.balance { display:none; }
+  .identity>svg { width:17px; height:17px; }
   .balance>svg,.balance>span,.trigger>svg { display: none; }
   .balance b { font-size: 11px; }
   .panel { position: fixed; top: 66px; right: 12px; max-height: calc(100dvh - 82px); overflow: auto; }

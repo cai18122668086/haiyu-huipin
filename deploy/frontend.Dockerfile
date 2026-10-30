@@ -12,6 +12,7 @@ COPY db db
 COPY drizzle drizzle
 COPY features features
 COPY lib lib
+COPY backend/app/processing_notice.json backend/app/processing_notice.json
 COPY public public
 COPY worker worker
 COPY drizzle.config.ts eslint.config.mjs next.config.ts ./

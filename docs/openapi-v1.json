@@ -1223,6 +1223,44 @@
         "title": "ConfirmRequest",
         "type": "object"
       },
+      "ConsentStatus": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "accepted_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
+          "notice": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Notice",
+            "type": "object"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_version",
+          "accepted",
+          "accepted_at",
+          "notice"
+        ],
+        "title": "ConsentStatus",
+        "type": "object"
+      },
       "CostSummary": {
         "properties": {
           "actual": {
@@ -6178,6 +6216,30 @@
           "payload"
         ],
         "title": "PlanUpdateRequest",
+        "type": "object"
+      },
+      "ProcessingConsentChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "aiTraining": {
+            "title": "Aitraining",
+            "type": "boolean"
+          },
+          "hongKongProcessing": {
+            "title": "Hongkongprocessing",
+            "type": "boolean"
+          },
+          "policyVersion": {
+            "title": "Policyversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policyVersion",
+          "hongKongProcessing",
+          "aiTraining"
+        ],
+        "title": "ProcessingConsentChoice",
         "type": "object"
       },
       "ProductGroupInput": {
@@ -14337,6 +14399,100 @@
           }
         ],
         "summary": "Current User",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/me/processing-consent": {
+      "delete": {
+        "operationId": "withdraw_api_v1_me_processing_consent_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Withdraw",
+        "tags": [
+          "identity"
+        ]
+      },
+      "get": {
+        "operationId": "status_api_v1_me_processing_consent_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Status",
+        "tags": [
+          "identity"
+        ]
+      },
+      "post": {
+        "operationId": "accept_api_v1_me_processing_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessingConsentChoice"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Accept",
         "tags": [
           "identity"
         ]

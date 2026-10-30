@@ -1,0 +1,62 @@
+Audit priorities implementation, 2026-10-30
+
+Source baseline: origin/main 78d9809. All changes are isolated from the original
+development checkout and its unpublished work. No production change has been made.
+
+1. Explicit processing choices
+The registration/SMS login form separately presents Hong Kong processing and AI
+training notices, unchecked by default. The same versioned notice JSON is used by
+frontend and backend. The registration flow validates choices before SMS/OTP;
+SMS auto-registration validates again after phone proof and before provisioning
+the application account. Existing users can sign in to read/download without
+regranting withdrawn AI training. Password recovery also remains available
+without granting AI training. Authenticated users may accept or withdraw through
+account settings. Reads, downloads and cancellation remain available; new workspace
+writes require the current recorded choice. Existing accepted background jobs retain
+their submission authority and are not automatically cancelled by withdrawal.
+
+Additive Alembic migration 20261030_0037 creates processing_consents. It does not
+assume consent for existing users or alter their wallets, credentials or jobs.
+Records contain purpose choices, policy version, notice hash/snapshot, source and
+acceptance/withdrawal timestamps. Reacceptance preserves the previous receipt.
+This implements the site's existing declared processing policy; it does not change
+the provider's actual processing or training behavior.
+
+2. Dependencies
+Next 16.4.3, React/React DOM/RSC 19.2.8, Vite 8.3.5, plugin-rsc 0.5.38,
+Cloudflare Vite plugin 1.66.0 and Wrangler 4.156.0 are pinned in the lockfile.
+Vinext remains 0.0.50 so the existing reviewed production static compatibility
+patch remains applicable. Narrow overrides replace image-size, @vercel/og,
+the legacy esbuild loader's esbuild, and Satori's fflate. Compatible transitive
+patches are refreshed. npm audit reports zero findings for the complete lockfile,
+including development dependencies. This is not an OS/container vulnerability scan.
+
+3. Display images
+build/generate-display-images.py creates content-addressed WebP display derivatives
+and lib/display-images.json. Run it using the project's Pillow environment when
+approved public example art changes. Original source/delivery files remain intact;
+the frontend maps only registered public showcase art. User images, task outputs
+and download URLs do not pass through this derivative map. srcset/sizes allow
+smaller views to select smaller files. Display hashes are immutable-cache safe.
+The largest variants of logo plus three hero images total 295356 bytes, compared
+with 6157812 bytes for their previous originals (95.2% fewer bytes). Actual network
+selection depends on viewport and device pixel ratio; no new LCP claim is made.
+
+4. Compact account navigation
+At widths up to 960px, the account trigger is a fixed-width named icon; full
+membership and balance remain in its popover. Small-screen navigation spacing is
+adjusted. Local synthetic balance 999999999 is used for UI verification only.
+
+Release requirements
+This change is not suitable for the previous frontend-only showcase release path.
+Build updated frontend dependencies and backend source, back up the database,
+apply additive migration 0037 before routing requests to the new application,
+retain previous hashed frontend assets, and verify new/old-account consent paths.
+Preserve the current payment/SMS credentials, three queues, 3000 configured slots,
+resource limits, original provider protocols, unrelated services and rollback images.
+On application rollback retain the additive consent table and its audit history.
+Never deploy the synthetic local preview configuration or data.
+
+Local validation and sanitized evidence are recorded under
+verification/audit-priorities-20261030/. Production activation and real payment,
+SMS, paid image generation and collection are outside the completed local checks.

@@ -1,0 +1,1852 @@
+{
+  "/images/cases/history-20261030/asset_059495f98f8c4da788a8073d5d29d66e.png": {
+    "src": "/images/display/975b83dc4ec8e58b-640.webp",
+    "srcSet": "/images/display/975b83dc4ec8e58b-320.webp 320w, /images/display/975b83dc4ec8e58b-640.webp 640w, /images/display/975b83dc4ec8e58b-960.webp 960w",
+    "originalSha256": "cf7b8582afbe2ef3b60c72716977b8c9db655241d6c0a4fb7fab39e630a53030",
+    "variants": [
+      {
+        "src": "/images/display/975b83dc4ec8e58b-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 23976
+      },
+      {
+        "src": "/images/display/975b83dc4ec8e58b-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 67078
+      },
+      {
+        "src": "/images/display/975b83dc4ec8e58b-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 123268
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_08f3285da274465f83107e7894c0f6df.png": {
+    "src": "/images/display/f26129e1e47162d7-640.webp",
+    "srcSet": "/images/display/f26129e1e47162d7-320.webp 320w, /images/display/f26129e1e47162d7-640.webp 640w, /images/display/f26129e1e47162d7-960.webp 960w",
+    "originalSha256": "8cfee6ec3347eb9e43d7d36c85d3d7af0b6f95d9b2da0c44ab4caab4ef742b84",
+    "variants": [
+      {
+        "src": "/images/display/f26129e1e47162d7-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 15822
+      },
+      {
+        "src": "/images/display/f26129e1e47162d7-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 45978
+      },
+      {
+        "src": "/images/display/f26129e1e47162d7-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 86926
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_09a620ea0cac4910b323579e1f832ceb.png": {
+    "src": "/images/display/fed3140accf7a32d-640.webp",
+    "srcSet": "/images/display/fed3140accf7a32d-320.webp 320w, /images/display/fed3140accf7a32d-640.webp 640w, /images/display/fed3140accf7a32d-960.webp 960w",
+    "originalSha256": "72197c8aea32a8035427a3c25f22abd6efac02209ffe5b3565d4973d99ead39c",
+    "variants": [
+      {
+        "src": "/images/display/fed3140accf7a32d-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 30376
+      },
+      {
+        "src": "/images/display/fed3140accf7a32d-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 86810
+      },
+      {
+        "src": "/images/display/fed3140accf7a32d-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 153340
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_0c79e18bcff84fb2bd8b52f118e536e0.webp": {
+    "src": "/images/display/743d7dd44df53df8-640.webp",
+    "srcSet": "/images/display/743d7dd44df53df8-320.webp 320w, /images/display/743d7dd44df53df8-640.webp 640w, /images/display/743d7dd44df53df8-720.webp 720w",
+    "originalSha256": "4871cc87149e4433acb7fed2f8e01d97a6f965b1d4f691be36f404caf98186c3",
+    "variants": [
+      {
+        "src": "/images/display/743d7dd44df53df8-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 24532
+      },
+      {
+        "src": "/images/display/743d7dd44df53df8-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 80150
+      },
+      {
+        "src": "/images/display/743d7dd44df53df8-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 105372
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_0ce8d0527b7244e4930dca5ff5e29692.png": {
+    "src": "/images/display/e18d08fd525d9728-640.webp",
+    "srcSet": "/images/display/e18d08fd525d9728-320.webp 320w, /images/display/e18d08fd525d9728-640.webp 640w, /images/display/e18d08fd525d9728-960.webp 960w",
+    "originalSha256": "c2bd662d12336c81c708c3f61e960f4eac466840ab2524bd2eb66bbe9489ec8f",
+    "variants": [
+      {
+        "src": "/images/display/e18d08fd525d9728-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 26020
+      },
+      {
+        "src": "/images/display/e18d08fd525d9728-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 75416
+      },
+      {
+        "src": "/images/display/e18d08fd525d9728-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 138636
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_161a79b681c04d908d7acf3e3f083a64.png": {
+    "src": "/images/display/eb67cc32f43a29e6-640.webp",
+    "srcSet": "/images/display/eb67cc32f43a29e6-320.webp 320w, /images/display/eb67cc32f43a29e6-640.webp 640w, /images/display/eb67cc32f43a29e6-960.webp 960w",
+    "originalSha256": "ab61e0f1f982efcd0297fce9db846d27d90fa8ee9e968320ad22e48e1710047e",
+    "variants": [
+      {
+        "src": "/images/display/eb67cc32f43a29e6-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 25058
+      },
+      {
+        "src": "/images/display/eb67cc32f43a29e6-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 69790
+      },
+      {
+        "src": "/images/display/eb67cc32f43a29e6-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 120000
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_165523cd422d4b37ba1fe6d73ce0a960.png": {
+    "src": "/images/display/048451c1a6385c62-640.webp",
+    "srcSet": "/images/display/048451c1a6385c62-320.webp 320w, /images/display/048451c1a6385c62-640.webp 640w, /images/display/048451c1a6385c62-960.webp 960w",
+    "originalSha256": "bd4910ef261759ee4b2e6d6cefd50552e4d64eaf216e5246da32240ba6f4f71f",
+    "variants": [
+      {
+        "src": "/images/display/048451c1a6385c62-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 8968
+      },
+      {
+        "src": "/images/display/048451c1a6385c62-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 24908
+      },
+      {
+        "src": "/images/display/048451c1a6385c62-960.webp",
+        "width": 960,
+        "height": 393,
+        "bytes": 43386
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_18546d61a37b4ea8a6b318a854d81daa.webp": {
+    "src": "/images/display/4534a272a3fc9d93-640.webp",
+    "srcSet": "/images/display/4534a272a3fc9d93-320.webp 320w, /images/display/4534a272a3fc9d93-640.webp 640w, /images/display/4534a272a3fc9d93-720.webp 720w",
+    "originalSha256": "8fff22d1d1c16e35757850d5f8f178280986f4a0ea65ac2f6747e7f1e93b815f",
+    "variants": [
+      {
+        "src": "/images/display/4534a272a3fc9d93-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 22724
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 63664
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 76296
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_20b9cb76cf2e4be2b84475b3ce21cd71.png": {
+    "src": "/images/display/1d426dffed166235-640.webp",
+    "srcSet": "/images/display/1d426dffed166235-320.webp 320w, /images/display/1d426dffed166235-640.webp 640w, /images/display/1d426dffed166235-960.webp 960w",
+    "originalSha256": "c8a3215775cafe6a6ff1a74f7dd2a2e5645ea4df80ddd7901578342feb5d36c1",
+    "variants": [
+      {
+        "src": "/images/display/1d426dffed166235-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 13880
+      },
+      {
+        "src": "/images/display/1d426dffed166235-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 37308
+      },
+      {
+        "src": "/images/display/1d426dffed166235-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 65274
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_2d26096fab23449f9e7dc7b7158f4481.png": {
+    "src": "/images/display/ccb628bbb98bd954-640.webp",
+    "srcSet": "/images/display/ccb628bbb98bd954-320.webp 320w, /images/display/ccb628bbb98bd954-640.webp 640w, /images/display/ccb628bbb98bd954-960.webp 960w",
+    "originalSha256": "aabeeb0c22f9707f240904204199cd9e97177130204bb9a78d67a1e17e2f7cf3",
+    "variants": [
+      {
+        "src": "/images/display/ccb628bbb98bd954-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 14650
+      },
+      {
+        "src": "/images/display/ccb628bbb98bd954-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 38428
+      },
+      {
+        "src": "/images/display/ccb628bbb98bd954-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 64348
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_2ff03b4f5f0e44caa4482ed4fbd7bbe2.webp": {
+    "src": "/images/display/4534a272a3fc9d93-640.webp",
+    "srcSet": "/images/display/4534a272a3fc9d93-320.webp 320w, /images/display/4534a272a3fc9d93-640.webp 640w, /images/display/4534a272a3fc9d93-720.webp 720w",
+    "originalSha256": "8fff22d1d1c16e35757850d5f8f178280986f4a0ea65ac2f6747e7f1e93b815f",
+    "variants": [
+      {
+        "src": "/images/display/4534a272a3fc9d93-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 22724
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 63664
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 76296
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_42ac4ec335ba4e1791a3b6a032ab44b2.png": {
+    "src": "/images/display/45619183c5f741ce-640.webp",
+    "srcSet": "/images/display/45619183c5f741ce-320.webp 320w, /images/display/45619183c5f741ce-640.webp 640w, /images/display/45619183c5f741ce-960.webp 960w",
+    "originalSha256": "952010275564f03c2d760f0c66ab648996a178d5815181492d754287c274ec24",
+    "variants": [
+      {
+        "src": "/images/display/45619183c5f741ce-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 9332
+      },
+      {
+        "src": "/images/display/45619183c5f741ce-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 26248
+      },
+      {
+        "src": "/images/display/45619183c5f741ce-960.webp",
+        "width": 960,
+        "height": 394,
+        "bytes": 48250
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_4fa4d0cb36f54bcea06b9c54941902e2.png": {
+    "src": "/images/display/4bdfa46a26a922c3-640.webp",
+    "srcSet": "/images/display/4bdfa46a26a922c3-320.webp 320w, /images/display/4bdfa46a26a922c3-640.webp 640w, /images/display/4bdfa46a26a922c3-960.webp 960w",
+    "originalSha256": "4db6df98a4baca542d0ca19ffdf52a0dad27d074727096ea17d11b5158183a04",
+    "variants": [
+      {
+        "src": "/images/display/4bdfa46a26a922c3-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 16092
+      },
+      {
+        "src": "/images/display/4bdfa46a26a922c3-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 43088
+      },
+      {
+        "src": "/images/display/4bdfa46a26a922c3-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 75510
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_50341d648b31488eaa8f7696c34a3719.webp": {
+    "src": "/images/display/4534a272a3fc9d93-640.webp",
+    "srcSet": "/images/display/4534a272a3fc9d93-320.webp 320w, /images/display/4534a272a3fc9d93-640.webp 640w, /images/display/4534a272a3fc9d93-720.webp 720w",
+    "originalSha256": "8fff22d1d1c16e35757850d5f8f178280986f4a0ea65ac2f6747e7f1e93b815f",
+    "variants": [
+      {
+        "src": "/images/display/4534a272a3fc9d93-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 22724
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 63664
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 76296
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_53592324df9442428217f27ee72fc9a2.png": {
+    "src": "/images/display/d7f66adb920c7737-640.webp",
+    "srcSet": "/images/display/d7f66adb920c7737-320.webp 320w, /images/display/d7f66adb920c7737-640.webp 640w, /images/display/d7f66adb920c7737-960.webp 960w",
+    "originalSha256": "55fb5b3c262942c6c8156119ab53bbf15897e9e0198dd0673001f69aebf701d3",
+    "variants": [
+      {
+        "src": "/images/display/d7f66adb920c7737-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 16248
+      },
+      {
+        "src": "/images/display/d7f66adb920c7737-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 43370
+      },
+      {
+        "src": "/images/display/d7f66adb920c7737-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 75120
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_546c7ae776444cb1a788f0398159c69d.webp": {
+    "src": "/images/display/743d7dd44df53df8-640.webp",
+    "srcSet": "/images/display/743d7dd44df53df8-320.webp 320w, /images/display/743d7dd44df53df8-640.webp 640w, /images/display/743d7dd44df53df8-720.webp 720w",
+    "originalSha256": "4871cc87149e4433acb7fed2f8e01d97a6f965b1d4f691be36f404caf98186c3",
+    "variants": [
+      {
+        "src": "/images/display/743d7dd44df53df8-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 24532
+      },
+      {
+        "src": "/images/display/743d7dd44df53df8-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 80150
+      },
+      {
+        "src": "/images/display/743d7dd44df53df8-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 105372
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_60006fea30c54be8814f04f80faefa5b.webp": {
+    "src": "/images/display/743d7dd44df53df8-640.webp",
+    "srcSet": "/images/display/743d7dd44df53df8-320.webp 320w, /images/display/743d7dd44df53df8-640.webp 640w, /images/display/743d7dd44df53df8-720.webp 720w",
+    "originalSha256": "4871cc87149e4433acb7fed2f8e01d97a6f965b1d4f691be36f404caf98186c3",
+    "variants": [
+      {
+        "src": "/images/display/743d7dd44df53df8-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 24532
+      },
+      {
+        "src": "/images/display/743d7dd44df53df8-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 80150
+      },
+      {
+        "src": "/images/display/743d7dd44df53df8-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 105372
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_6be242c1fc7047e89bc0883a6b856ee3.png": {
+    "src": "/images/display/e52a637c7cdc51bc-640.webp",
+    "srcSet": "/images/display/e52a637c7cdc51bc-320.webp 320w, /images/display/e52a637c7cdc51bc-640.webp 640w, /images/display/e52a637c7cdc51bc-960.webp 960w",
+    "originalSha256": "999d188a801164bc1665ca5ec9407f8e15df9ab066875007bc5731fee926dbba",
+    "variants": [
+      {
+        "src": "/images/display/e52a637c7cdc51bc-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 19834
+      },
+      {
+        "src": "/images/display/e52a637c7cdc51bc-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 55074
+      },
+      {
+        "src": "/images/display/e52a637c7cdc51bc-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 94570
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_6f416209332b45b285e07c3f91a6124b.png": {
+    "src": "/images/display/8344f73a9126e303-640.webp",
+    "srcSet": "/images/display/8344f73a9126e303-320.webp 320w, /images/display/8344f73a9126e303-640.webp 640w, /images/display/8344f73a9126e303-960.webp 960w",
+    "originalSha256": "fd07caf25c96a323f5e052a2d1fffb452b364b92f800a69ff6299438fb061d0f",
+    "variants": [
+      {
+        "src": "/images/display/8344f73a9126e303-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 25846
+      },
+      {
+        "src": "/images/display/8344f73a9126e303-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 68050
+      },
+      {
+        "src": "/images/display/8344f73a9126e303-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 117154
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_73224ae7eaf54473ab8f2744f3128968.png": {
+    "src": "/images/display/dab56eef29e85a6a-640.webp",
+    "srcSet": "/images/display/dab56eef29e85a6a-320.webp 320w, /images/display/dab56eef29e85a6a-640.webp 640w, /images/display/dab56eef29e85a6a-960.webp 960w",
+    "originalSha256": "6b98ea2b7955af5e65ff7550b7d824aa1293ba547b5c84e789d426968ec25d42",
+    "variants": [
+      {
+        "src": "/images/display/dab56eef29e85a6a-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 10064
+      },
+      {
+        "src": "/images/display/dab56eef29e85a6a-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 27938
+      },
+      {
+        "src": "/images/display/dab56eef29e85a6a-960.webp",
+        "width": 960,
+        "height": 393,
+        "bytes": 49558
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_75ffa036f7c54cb9b370efd100383d1d.png": {
+    "src": "/images/display/69de64e76468df57-640.webp",
+    "srcSet": "/images/display/69de64e76468df57-320.webp 320w, /images/display/69de64e76468df57-640.webp 640w, /images/display/69de64e76468df57-960.webp 960w",
+    "originalSha256": "f43225e0cd95517296564a206b5220e4dc9f6204559e73abda2e3284125cbfe1",
+    "variants": [
+      {
+        "src": "/images/display/69de64e76468df57-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 28610
+      },
+      {
+        "src": "/images/display/69de64e76468df57-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 79398
+      },
+      {
+        "src": "/images/display/69de64e76468df57-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 138002
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_781879952f0940ad9e896c54592ed612.png": {
+    "src": "/images/display/e6d4c538849a8c57-640.webp",
+    "srcSet": "/images/display/e6d4c538849a8c57-320.webp 320w, /images/display/e6d4c538849a8c57-640.webp 640w, /images/display/e6d4c538849a8c57-960.webp 960w",
+    "originalSha256": "4ba222fe5c5a94a264da8934ed54839887c8f7517bc8be5de0cd58ab2b4d1fdb",
+    "variants": [
+      {
+        "src": "/images/display/e6d4c538849a8c57-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 10360
+      },
+      {
+        "src": "/images/display/e6d4c538849a8c57-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 28382
+      },
+      {
+        "src": "/images/display/e6d4c538849a8c57-960.webp",
+        "width": 960,
+        "height": 394,
+        "bytes": 49204
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_796e4b4646c942299b63ceb2ed373cd6.png": {
+    "src": "/images/display/bd96492313d5f382-640.webp",
+    "srcSet": "/images/display/bd96492313d5f382-320.webp 320w, /images/display/bd96492313d5f382-640.webp 640w, /images/display/bd96492313d5f382-960.webp 960w",
+    "originalSha256": "c283ffd0e4e29ba0594a6deeec76dd90a4cad414332673707333605c4a7e897a",
+    "variants": [
+      {
+        "src": "/images/display/bd96492313d5f382-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 26908
+      },
+      {
+        "src": "/images/display/bd96492313d5f382-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 74216
+      },
+      {
+        "src": "/images/display/bd96492313d5f382-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 130626
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_7b6a6e06a65d458fbd4d227a4f02a9aa.png": {
+    "src": "/images/display/32cf3c807563368d-640.webp",
+    "srcSet": "/images/display/32cf3c807563368d-320.webp 320w, /images/display/32cf3c807563368d-640.webp 640w, /images/display/32cf3c807563368d-960.webp 960w",
+    "originalSha256": "d968345316bd4df42ce94083aed13c468e26e19b919b14591c9ca3e5f9671843",
+    "variants": [
+      {
+        "src": "/images/display/32cf3c807563368d-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 25526
+      },
+      {
+        "src": "/images/display/32cf3c807563368d-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 71996
+      },
+      {
+        "src": "/images/display/32cf3c807563368d-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 131896
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_7b6f4730d64b4605beadc82ac38d2aed.png": {
+    "src": "/images/display/bb0f0d7be628acbb-640.webp",
+    "srcSet": "/images/display/bb0f0d7be628acbb-320.webp 320w, /images/display/bb0f0d7be628acbb-640.webp 640w, /images/display/bb0f0d7be628acbb-960.webp 960w",
+    "originalSha256": "943f31cb22148b60ffc7e85bf4ab01a6e87e875f9495088e104021c714a3184d",
+    "variants": [
+      {
+        "src": "/images/display/bb0f0d7be628acbb-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 28098
+      },
+      {
+        "src": "/images/display/bb0f0d7be628acbb-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 77268
+      },
+      {
+        "src": "/images/display/bb0f0d7be628acbb-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 137284
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_81403ceb4b3641ba89b34f25e8aa6735.png": {
+    "src": "/images/display/a38f8ff7f516929e-640.webp",
+    "srcSet": "/images/display/a38f8ff7f516929e-320.webp 320w, /images/display/a38f8ff7f516929e-640.webp 640w, /images/display/a38f8ff7f516929e-960.webp 960w",
+    "originalSha256": "2bd8e5b73b6a57da7f59dbfdaae8decd7aef99cc1a957caae7fb594440af73ff",
+    "variants": [
+      {
+        "src": "/images/display/a38f8ff7f516929e-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 20636
+      },
+      {
+        "src": "/images/display/a38f8ff7f516929e-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 53898
+      },
+      {
+        "src": "/images/display/a38f8ff7f516929e-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 91970
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_826bfc9ab752412d86b537e4c73a2f3d.png": {
+    "src": "/images/display/6f7002b2f78f481e-640.webp",
+    "srcSet": "/images/display/6f7002b2f78f481e-320.webp 320w, /images/display/6f7002b2f78f481e-640.webp 640w, /images/display/6f7002b2f78f481e-960.webp 960w",
+    "originalSha256": "ec01b51fa578a0f678d7c0e0db98ab607e7fa0bda05efd29fae578b506f6f76f",
+    "variants": [
+      {
+        "src": "/images/display/6f7002b2f78f481e-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 15842
+      },
+      {
+        "src": "/images/display/6f7002b2f78f481e-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 46660
+      },
+      {
+        "src": "/images/display/6f7002b2f78f481e-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 86690
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_84b0381b6cef439c8486c09ded379678.png": {
+    "src": "/images/display/bda626a779103094-640.webp",
+    "srcSet": "/images/display/bda626a779103094-320.webp 320w, /images/display/bda626a779103094-640.webp 640w, /images/display/bda626a779103094-960.webp 960w",
+    "originalSha256": "d460dee9d35e53462423e6bf4d735b590235638c4694166e31f8100e58b28936",
+    "variants": [
+      {
+        "src": "/images/display/bda626a779103094-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 27976
+      },
+      {
+        "src": "/images/display/bda626a779103094-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 77420
+      },
+      {
+        "src": "/images/display/bda626a779103094-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 133454
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_8abceec820494f9ebd90a3eca9360b6d.png": {
+    "src": "/images/display/aeba7ad007c60a22-640.webp",
+    "srcSet": "/images/display/aeba7ad007c60a22-320.webp 320w, /images/display/aeba7ad007c60a22-640.webp 640w, /images/display/aeba7ad007c60a22-960.webp 960w",
+    "originalSha256": "5c18287d8037c76c99276d68357376087a002acef105e24d512af979c928ca0a",
+    "variants": [
+      {
+        "src": "/images/display/aeba7ad007c60a22-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 23132
+      },
+      {
+        "src": "/images/display/aeba7ad007c60a22-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 63740
+      },
+      {
+        "src": "/images/display/aeba7ad007c60a22-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 111864
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_95651d0b3a474881b7d993aab7fc074d.png": {
+    "src": "/images/display/d4c13820fbc3f688-640.webp",
+    "srcSet": "/images/display/d4c13820fbc3f688-320.webp 320w, /images/display/d4c13820fbc3f688-640.webp 640w, /images/display/d4c13820fbc3f688-960.webp 960w",
+    "originalSha256": "339f98543d57348759a218b9dadeccdf34b3895f1390ce1bd5f92a4f43d5cf91",
+    "variants": [
+      {
+        "src": "/images/display/d4c13820fbc3f688-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 14818
+      },
+      {
+        "src": "/images/display/d4c13820fbc3f688-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 41060
+      },
+      {
+        "src": "/images/display/d4c13820fbc3f688-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 73764
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_9bf5729d308b424ca01820f0d02aa004.png": {
+    "src": "/images/display/e99cd39ec3d637ac-640.webp",
+    "srcSet": "/images/display/e99cd39ec3d637ac-320.webp 320w, /images/display/e99cd39ec3d637ac-640.webp 640w, /images/display/e99cd39ec3d637ac-960.webp 960w",
+    "originalSha256": "c8932fdd1ceb5aea623d6cb2f6ac57f29ef5ddc4c09ddc9aad3782a217420b02",
+    "variants": [
+      {
+        "src": "/images/display/e99cd39ec3d637ac-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 11774
+      },
+      {
+        "src": "/images/display/e99cd39ec3d637ac-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 33212
+      },
+      {
+        "src": "/images/display/e99cd39ec3d637ac-960.webp",
+        "width": 960,
+        "height": 394,
+        "bytes": 60090
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_a0860c2108244b5abef3825dac9bac6b.png": {
+    "src": "/images/display/faa800b368e5d1b1-640.webp",
+    "srcSet": "/images/display/faa800b368e5d1b1-320.webp 320w, /images/display/faa800b368e5d1b1-640.webp 640w, /images/display/faa800b368e5d1b1-960.webp 960w",
+    "originalSha256": "a56a3d5e80cd649738cbf4d5e008b92b174104b8962fc7a6c89637e0e3ea6ced",
+    "variants": [
+      {
+        "src": "/images/display/faa800b368e5d1b1-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 27020
+      },
+      {
+        "src": "/images/display/faa800b368e5d1b1-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 73782
+      },
+      {
+        "src": "/images/display/faa800b368e5d1b1-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 128494
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_a47a47f308464d7ea2e928e8cc9f5c0c.png": {
+    "src": "/images/display/8b5507c690999868-640.webp",
+    "srcSet": "/images/display/8b5507c690999868-320.webp 320w, /images/display/8b5507c690999868-640.webp 640w, /images/display/8b5507c690999868-960.webp 960w",
+    "originalSha256": "9d8474864f5e25f60aaa93da64f4308b3b55a74758a5dbd50e587cb748182de8",
+    "variants": [
+      {
+        "src": "/images/display/8b5507c690999868-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 24792
+      },
+      {
+        "src": "/images/display/8b5507c690999868-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 68740
+      },
+      {
+        "src": "/images/display/8b5507c690999868-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 122538
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_a4f5437b884645d9bf65c88dccaebad8.webp": {
+    "src": "/images/display/4534a272a3fc9d93-640.webp",
+    "srcSet": "/images/display/4534a272a3fc9d93-320.webp 320w, /images/display/4534a272a3fc9d93-640.webp 640w, /images/display/4534a272a3fc9d93-720.webp 720w",
+    "originalSha256": "8fff22d1d1c16e35757850d5f8f178280986f4a0ea65ac2f6747e7f1e93b815f",
+    "variants": [
+      {
+        "src": "/images/display/4534a272a3fc9d93-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 22724
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 63664
+      },
+      {
+        "src": "/images/display/4534a272a3fc9d93-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 76296
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_b13b3580fbdb4fbb8cd586b0752c5a0c.png": {
+    "src": "/images/display/a31c302a264fc654-640.webp",
+    "srcSet": "/images/display/a31c302a264fc654-320.webp 320w, /images/display/a31c302a264fc654-640.webp 640w, /images/display/a31c302a264fc654-960.webp 960w",
+    "originalSha256": "7893010d1ed82cacc669407cdcdd2127c0e5c370b94adb88f0ee5cd51fc2284d",
+    "variants": [
+      {
+        "src": "/images/display/a31c302a264fc654-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 8458
+      },
+      {
+        "src": "/images/display/a31c302a264fc654-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 23686
+      },
+      {
+        "src": "/images/display/a31c302a264fc654-960.webp",
+        "width": 960,
+        "height": 393,
+        "bytes": 43682
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_b4824b3345894565bd3812b697235d68.png": {
+    "src": "/images/display/540d8a229e9e349e-640.webp",
+    "srcSet": "/images/display/540d8a229e9e349e-320.webp 320w, /images/display/540d8a229e9e349e-640.webp 640w, /images/display/540d8a229e9e349e-960.webp 960w",
+    "originalSha256": "beb15a5e667c0b8fec1313f59ad1befc1d6a27757b3352892245fbf2c53d8e5f",
+    "variants": [
+      {
+        "src": "/images/display/540d8a229e9e349e-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 24676
+      },
+      {
+        "src": "/images/display/540d8a229e9e349e-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 76834
+      },
+      {
+        "src": "/images/display/540d8a229e9e349e-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 139212
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_c1c0ef252b6a49e4b58d641ed6d5fca3.webp": {
+    "src": "/images/display/59b49ffc69fe6957-640.webp",
+    "srcSet": "/images/display/59b49ffc69fe6957-320.webp 320w, /images/display/59b49ffc69fe6957-640.webp 640w, /images/display/59b49ffc69fe6957-960.webp 960w",
+    "originalSha256": "3fb2991026dcb35bf5657d5c6f4c0f09c7a43ae55ef03e41cc45b93097a3ab5b",
+    "variants": [
+      {
+        "src": "/images/display/59b49ffc69fe6957-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 20082
+      },
+      {
+        "src": "/images/display/59b49ffc69fe6957-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 52016
+      },
+      {
+        "src": "/images/display/59b49ffc69fe6957-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 88628
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_cfbafadf11ff473595c02a8456c1f3fb.png": {
+    "src": "/images/display/ea7bec114892134f-640.webp",
+    "srcSet": "/images/display/ea7bec114892134f-320.webp 320w, /images/display/ea7bec114892134f-640.webp 640w, /images/display/ea7bec114892134f-960.webp 960w",
+    "originalSha256": "9f3cf146c1cc7855591376e1b19e807f6e2119bea0671f876040cb57fbea3b05",
+    "variants": [
+      {
+        "src": "/images/display/ea7bec114892134f-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 27728
+      },
+      {
+        "src": "/images/display/ea7bec114892134f-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 75708
+      },
+      {
+        "src": "/images/display/ea7bec114892134f-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 132432
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_dd7dc64e31af4a0cad5a46ea34ea14f0.png": {
+    "src": "/images/display/97f103b685aa1d23-640.webp",
+    "srcSet": "/images/display/97f103b685aa1d23-320.webp 320w, /images/display/97f103b685aa1d23-640.webp 640w, /images/display/97f103b685aa1d23-960.webp 960w",
+    "originalSha256": "0ea5c40284b41a869f151f7866bed77e2b97bc9b5038b0b173c0e1ec3f2e4c52",
+    "variants": [
+      {
+        "src": "/images/display/97f103b685aa1d23-320.webp",
+        "width": 320,
+        "height": 240,
+        "bytes": 19114
+      },
+      {
+        "src": "/images/display/97f103b685aa1d23-640.webp",
+        "width": 640,
+        "height": 480,
+        "bytes": 54778
+      },
+      {
+        "src": "/images/display/97f103b685aa1d23-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 97422
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_e2436a3793f04c8ea83f548b261e3f5b.png": {
+    "src": "/images/display/f717f7e75fd9b28f-640.webp",
+    "srcSet": "/images/display/f717f7e75fd9b28f-320.webp 320w, /images/display/f717f7e75fd9b28f-640.webp 640w, /images/display/f717f7e75fd9b28f-960.webp 960w",
+    "originalSha256": "e5822b88da643f39c9aebd931876bfd8d63d5f688714900a1597ed961631e45b",
+    "variants": [
+      {
+        "src": "/images/display/f717f7e75fd9b28f-320.webp",
+        "width": 320,
+        "height": 131,
+        "bytes": 7072
+      },
+      {
+        "src": "/images/display/f717f7e75fd9b28f-640.webp",
+        "width": 640,
+        "height": 262,
+        "bytes": 19924
+      },
+      {
+        "src": "/images/display/f717f7e75fd9b28f-960.webp",
+        "width": 960,
+        "height": 393,
+        "bytes": 36488
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_ed9ed9ac9e48459ca3914436259154a2.png": {
+    "src": "/images/display/66171fae0e85e16b-640.webp",
+    "srcSet": "/images/display/66171fae0e85e16b-320.webp 320w, /images/display/66171fae0e85e16b-640.webp 640w, /images/display/66171fae0e85e16b-960.webp 960w",
+    "originalSha256": "d26b53db0ce7934b9e432f90bbac0967859252ecf06867286774b028d5f64393",
+    "variants": [
+      {
+        "src": "/images/display/66171fae0e85e16b-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 25070
+      },
+      {
+        "src": "/images/display/66171fae0e85e16b-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 70708
+      },
+      {
+        "src": "/images/display/66171fae0e85e16b-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 128086
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_f82998bb1a5c4b5685637cbe7ed89b47.png": {
+    "src": "/images/display/943b94719f915134-640.webp",
+    "srcSet": "/images/display/943b94719f915134-320.webp 320w, /images/display/943b94719f915134-640.webp 640w, /images/display/943b94719f915134-960.webp 960w",
+    "originalSha256": "a65ca85a575c1d1176e1cad586ac871fda480697738a06ab3dca8d65fe06d068",
+    "variants": [
+      {
+        "src": "/images/display/943b94719f915134-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 29496
+      },
+      {
+        "src": "/images/display/943b94719f915134-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 80912
+      },
+      {
+        "src": "/images/display/943b94719f915134-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 138642
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_f99178eda6aa4cc8a9b275dd4de80c0d.png": {
+    "src": "/images/display/54aa0fb7543717ed-640.webp",
+    "srcSet": "/images/display/54aa0fb7543717ed-320.webp 320w, /images/display/54aa0fb7543717ed-640.webp 640w, /images/display/54aa0fb7543717ed-960.webp 960w",
+    "originalSha256": "68d84ea0fd4dbadecbd43c099e88a5663f2829944b372d4fd8388772c83455dc",
+    "variants": [
+      {
+        "src": "/images/display/54aa0fb7543717ed-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 21628
+      },
+      {
+        "src": "/images/display/54aa0fb7543717ed-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 59502
+      },
+      {
+        "src": "/images/display/54aa0fb7543717ed-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 108550
+      }
+    ]
+  },
+  "/images/cases/history-20261030/asset_fd14677482fa416496dd4a6f716f5949.png": {
+    "src": "/images/display/f932dedd7888a61a-640.webp",
+    "srcSet": "/images/display/f932dedd7888a61a-320.webp 320w, /images/display/f932dedd7888a61a-640.webp 640w, /images/display/f932dedd7888a61a-960.webp 960w",
+    "originalSha256": "e0ea8a9d6c24bfd6b8bb1fb2da78ad3dde164d0d206525d06e9fc2721e7dffa3",
+    "variants": [
+      {
+        "src": "/images/display/f932dedd7888a61a-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 32900
+      },
+      {
+        "src": "/images/display/f932dedd7888a61a-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 89172
+      },
+      {
+        "src": "/images/display/f932dedd7888a61a-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 150062
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/product-01.webp": {
+    "src": "/images/display/5e4631b5f52e5fe3-640.webp",
+    "srcSet": "/images/display/5e4631b5f52e5fe3-320.webp 320w, /images/display/5e4631b5f52e5fe3-640.webp 640w, /images/display/5e4631b5f52e5fe3-720.webp 720w",
+    "originalSha256": "08f5987cdc995504b545f57777812b5c819abb0a6ace27ae49aec819c2ea2b8f",
+    "variants": [
+      {
+        "src": "/images/display/5e4631b5f52e5fe3-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 11212
+      },
+      {
+        "src": "/images/display/5e4631b5f52e5fe3-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 37472
+      },
+      {
+        "src": "/images/display/5e4631b5f52e5fe3-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 43688
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/product-02.webp": {
+    "src": "/images/display/c8021c48f8419b8c-640.webp",
+    "srcSet": "/images/display/c8021c48f8419b8c-320.webp 320w, /images/display/c8021c48f8419b8c-640.webp 640w, /images/display/c8021c48f8419b8c-720.webp 720w",
+    "originalSha256": "cb1b54d326b36820f674e4521907421def892b726befce98395cc99e3d02f9d1",
+    "variants": [
+      {
+        "src": "/images/display/c8021c48f8419b8c-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 19930
+      },
+      {
+        "src": "/images/display/c8021c48f8419b8c-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 55082
+      },
+      {
+        "src": "/images/display/c8021c48f8419b8c-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 65866
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/product-03.webp": {
+    "src": "/images/display/4de5a707b3ab483a-640.webp",
+    "srcSet": "/images/display/4de5a707b3ab483a-320.webp 320w, /images/display/4de5a707b3ab483a-640.webp 640w, /images/display/4de5a707b3ab483a-720.webp 720w",
+    "originalSha256": "cc034480e025c50442a50a86399dea6d5936772652459e8cbd630839d6381122",
+    "variants": [
+      {
+        "src": "/images/display/4de5a707b3ab483a-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 8518
+      },
+      {
+        "src": "/images/display/4de5a707b3ab483a-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 21340
+      },
+      {
+        "src": "/images/display/4de5a707b3ab483a-720.webp",
+        "width": 720,
+        "height": 960,
+        "bytes": 25364
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-01.jpg": {
+    "src": "/images/display/db05137aa537773d-640.webp",
+    "srcSet": "/images/display/db05137aa537773d-320.webp 320w, /images/display/db05137aa537773d-640.webp 640w, /images/display/db05137aa537773d-800.webp 800w",
+    "originalSha256": "f7372083ce923320793cfcf924ad2855d7367c6bae462d5826e2e5f384a530a4",
+    "variants": [
+      {
+        "src": "/images/display/db05137aa537773d-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 21058
+      },
+      {
+        "src": "/images/display/db05137aa537773d-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 55694
+      },
+      {
+        "src": "/images/display/db05137aa537773d-800.webp",
+        "width": 800,
+        "height": 800,
+        "bytes": 76546
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-02.webp": {
+    "src": "/images/display/74c3d007fbf3dcb3-640.webp",
+    "srcSet": "/images/display/74c3d007fbf3dcb3-320.webp 320w, /images/display/74c3d007fbf3dcb3-640.webp 640w, /images/display/74c3d007fbf3dcb3-800.webp 800w",
+    "originalSha256": "832c46c9d0dac26ef710246488187250a5815fb3edfa17e0bb2e0a2fef421b8d",
+    "variants": [
+      {
+        "src": "/images/display/74c3d007fbf3dcb3-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 11664
+      },
+      {
+        "src": "/images/display/74c3d007fbf3dcb3-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 29632
+      },
+      {
+        "src": "/images/display/74c3d007fbf3dcb3-800.webp",
+        "width": 800,
+        "height": 800,
+        "bytes": 39722
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-03.webp": {
+    "src": "/images/display/c74904e30ab04d5a-640.webp",
+    "srcSet": "/images/display/c74904e30ab04d5a-320.webp 320w, /images/display/c74904e30ab04d5a-640.webp 640w, /images/display/c74904e30ab04d5a-790.webp 790w",
+    "originalSha256": "49c900c187ff05f081a8852cbcfb463dd32032126aef316dd8fde656a3576974",
+    "variants": [
+      {
+        "src": "/images/display/c74904e30ab04d5a-320.webp",
+        "width": 320,
+        "height": 546,
+        "bytes": 19616
+      },
+      {
+        "src": "/images/display/c74904e30ab04d5a-640.webp",
+        "width": 640,
+        "height": 1092,
+        "bytes": 47384
+      },
+      {
+        "src": "/images/display/c74904e30ab04d5a-790.webp",
+        "width": 790,
+        "height": 1348,
+        "bytes": 67506
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-04.webp": {
+    "src": "/images/display/1c1f02aa625b378b-640.webp",
+    "srcSet": "/images/display/1c1f02aa625b378b-320.webp 320w, /images/display/1c1f02aa625b378b-640.webp 640w, /images/display/1c1f02aa625b378b-790.webp 790w",
+    "originalSha256": "8b0c2ef1d01f4874ec45976b167df3f611993381bee031c146331bd9f63aef77",
+    "variants": [
+      {
+        "src": "/images/display/1c1f02aa625b378b-320.webp",
+        "width": 320,
+        "height": 548,
+        "bytes": 17314
+      },
+      {
+        "src": "/images/display/1c1f02aa625b378b-640.webp",
+        "width": 640,
+        "height": 1095,
+        "bytes": 49782
+      },
+      {
+        "src": "/images/display/1c1f02aa625b378b-790.webp",
+        "width": 790,
+        "height": 1352,
+        "bytes": 76882
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-05.webp": {
+    "src": "/images/display/d3802df53f9f80e1-640.webp",
+    "srcSet": "/images/display/d3802df53f9f80e1-320.webp 320w, /images/display/d3802df53f9f80e1-640.webp 640w, /images/display/d3802df53f9f80e1-790.webp 790w",
+    "originalSha256": "2583a80e1e9601fff507f822c5207bdc03c2a9ddd0ebf8e02c3578e1aa32d780",
+    "variants": [
+      {
+        "src": "/images/display/d3802df53f9f80e1-320.webp",
+        "width": 320,
+        "height": 640,
+        "bytes": 18938
+      },
+      {
+        "src": "/images/display/d3802df53f9f80e1-640.webp",
+        "width": 640,
+        "height": 1280,
+        "bytes": 49238
+      },
+      {
+        "src": "/images/display/d3802df53f9f80e1-790.webp",
+        "width": 790,
+        "height": 1580,
+        "bytes": 65110
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-06.webp": {
+    "src": "/images/display/064862e5c7ec84fe-640.webp",
+    "srcSet": "/images/display/064862e5c7ec84fe-320.webp 320w, /images/display/064862e5c7ec84fe-640.webp 640w, /images/display/064862e5c7ec84fe-790.webp 790w",
+    "originalSha256": "7bea12acbaf3e854d007387e4912e97579e9d137bf4bb8974a25312fd3c9cbd3",
+    "variants": [
+      {
+        "src": "/images/display/064862e5c7ec84fe-320.webp",
+        "width": 320,
+        "height": 452,
+        "bytes": 18070
+      },
+      {
+        "src": "/images/display/064862e5c7ec84fe-640.webp",
+        "width": 640,
+        "height": 904,
+        "bytes": 57942
+      },
+      {
+        "src": "/images/display/064862e5c7ec84fe-790.webp",
+        "width": 790,
+        "height": 1116,
+        "bytes": 76312
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/reference-07.webp": {
+    "src": "/images/display/7dbc5f438254194a-640.webp",
+    "srcSet": "/images/display/7dbc5f438254194a-320.webp 320w, /images/display/7dbc5f438254194a-640.webp 640w, /images/display/7dbc5f438254194a-790.webp 790w",
+    "originalSha256": "da8eeab4ad3571eee1b56f6c2596dac6494d8c47b6e66a8d5a233f44f437ea8d",
+    "variants": [
+      {
+        "src": "/images/display/7dbc5f438254194a-320.webp",
+        "width": 320,
+        "height": 407,
+        "bytes": 12062
+      },
+      {
+        "src": "/images/display/7dbc5f438254194a-640.webp",
+        "width": 640,
+        "height": 814,
+        "bytes": 32852
+      },
+      {
+        "src": "/images/display/7dbc5f438254194a-790.webp",
+        "width": 790,
+        "height": 1005,
+        "bytes": 46186
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-01.png": {
+    "src": "/images/display/af607b851a9bbe44-640.webp",
+    "srcSet": "/images/display/af607b851a9bbe44-320.webp 320w, /images/display/af607b851a9bbe44-640.webp 640w, /images/display/af607b851a9bbe44-960.webp 960w",
+    "originalSha256": "c2702631edce7fbe32abbf0aa181b8edb6abab46dfd3e3e0f9d93d73dd1710be",
+    "variants": [
+      {
+        "src": "/images/display/af607b851a9bbe44-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 12210
+      },
+      {
+        "src": "/images/display/af607b851a9bbe44-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 30708
+      },
+      {
+        "src": "/images/display/af607b851a9bbe44-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 51026
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-02.png": {
+    "src": "/images/display/9d3886426d0b373b-640.webp",
+    "srcSet": "/images/display/9d3886426d0b373b-320.webp 320w, /images/display/9d3886426d0b373b-640.webp 640w, /images/display/9d3886426d0b373b-960.webp 960w",
+    "originalSha256": "3846b7c362cd1d15a904f15ca5ff0cd8e43ae7034285de017e863d00f53ad242",
+    "variants": [
+      {
+        "src": "/images/display/9d3886426d0b373b-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 10492
+      },
+      {
+        "src": "/images/display/9d3886426d0b373b-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 25834
+      },
+      {
+        "src": "/images/display/9d3886426d0b373b-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 41700
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-03.png": {
+    "src": "/images/display/f842e74ef414b62b-640.webp",
+    "srcSet": "/images/display/f842e74ef414b62b-320.webp 320w, /images/display/f842e74ef414b62b-640.webp 640w, /images/display/f842e74ef414b62b-959.webp 959w",
+    "originalSha256": "9b6a3e4c4c3985f836663fc06eca2db2d21ab71ec2d12f0256153b2f93c27fe3",
+    "variants": [
+      {
+        "src": "/images/display/f842e74ef414b62b-320.webp",
+        "width": 320,
+        "height": 547,
+        "bytes": 20940
+      },
+      {
+        "src": "/images/display/f842e74ef414b62b-640.webp",
+        "width": 640,
+        "height": 1094,
+        "bytes": 50784
+      },
+      {
+        "src": "/images/display/f842e74ef414b62b-959.webp",
+        "width": 959,
+        "height": 1640,
+        "bytes": 83206
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-04.png": {
+    "src": "/images/display/abe682e8438699ba-640.webp",
+    "srcSet": "/images/display/abe682e8438699ba-320.webp 320w, /images/display/abe682e8438699ba-640.webp 640w, /images/display/abe682e8438699ba-958.webp 958w",
+    "originalSha256": "95559a5e2ec4dcf487fd4c2c9cabf32db7e59399d67d6333c584dbf8031a81ae",
+    "variants": [
+      {
+        "src": "/images/display/abe682e8438699ba-320.webp",
+        "width": 320,
+        "height": 548,
+        "bytes": 14208
+      },
+      {
+        "src": "/images/display/abe682e8438699ba-640.webp",
+        "width": 640,
+        "height": 1097,
+        "bytes": 37460
+      },
+      {
+        "src": "/images/display/abe682e8438699ba-958.webp",
+        "width": 958,
+        "height": 1642,
+        "bytes": 64708
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-05.png": {
+    "src": "/images/display/66b873248e8f3791-640.webp",
+    "srcSet": "/images/display/66b873248e8f3791-320.webp 320w, /images/display/66b873248e8f3791-640.webp 640w, /images/display/66b873248e8f3791-960.webp 960w",
+    "originalSha256": "bffa4327c0e03b85e9310cdc03d5bb7dd2a4fd5527adc99ecd6a0f63020ca52e",
+    "variants": [
+      {
+        "src": "/images/display/66b873248e8f3791-320.webp",
+        "width": 320,
+        "height": 438,
+        "bytes": 12418
+      },
+      {
+        "src": "/images/display/66b873248e8f3791-640.webp",
+        "width": 640,
+        "height": 876,
+        "bytes": 30444
+      },
+      {
+        "src": "/images/display/66b873248e8f3791-960.webp",
+        "width": 960,
+        "height": 1314,
+        "bytes": 49358
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-06.png": {
+    "src": "/images/display/7f68c98462e24208-640.webp",
+    "srcSet": "/images/display/7f68c98462e24208-320.webp 320w, /images/display/7f68c98462e24208-640.webp 640w, /images/display/7f68c98462e24208-960.webp 960w",
+    "originalSha256": "748da8a8fe45cfee48ef9aaf715cfac728e340d2bdb9cc9d274ce5e20990bb47",
+    "variants": [
+      {
+        "src": "/images/display/7f68c98462e24208-320.webp",
+        "width": 320,
+        "height": 202,
+        "bytes": 8200
+      },
+      {
+        "src": "/images/display/7f68c98462e24208-640.webp",
+        "width": 640,
+        "height": 404,
+        "bytes": 21202
+      },
+      {
+        "src": "/images/display/7f68c98462e24208-960.webp",
+        "width": 960,
+        "height": 606,
+        "bytes": 36510
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-07.png": {
+    "src": "/images/display/0b55e03e625afdb8-640.webp",
+    "srcSet": "/images/display/0b55e03e625afdb8-320.webp 320w, /images/display/0b55e03e625afdb8-640.webp 640w, /images/display/0b55e03e625afdb8-960.webp 960w",
+    "originalSha256": "51dc5cdf605a35302a24d662043dc81019c75a441089d25523206f0d7e733089",
+    "variants": [
+      {
+        "src": "/images/display/0b55e03e625afdb8-320.webp",
+        "width": 320,
+        "height": 452,
+        "bytes": 17106
+      },
+      {
+        "src": "/images/display/0b55e03e625afdb8-640.webp",
+        "width": 640,
+        "height": 904,
+        "bytes": 48032
+      },
+      {
+        "src": "/images/display/0b55e03e625afdb8-960.webp",
+        "width": 960,
+        "height": 1357,
+        "bytes": 92262
+      }
+    ]
+  },
+  "/images/cases/olay-20261030/replica-08.png": {
+    "src": "/images/display/715ace4f51fa70e9-640.webp",
+    "srcSet": "/images/display/715ace4f51fa70e9-320.webp 320w, /images/display/715ace4f51fa70e9-640.webp 640w, /images/display/715ace4f51fa70e9-960.webp 960w",
+    "originalSha256": "4806921ecdc424b60900fc26a0603cb936cbdbee079508b658c2e24ac6b94672",
+    "variants": [
+      {
+        "src": "/images/display/715ace4f51fa70e9-320.webp",
+        "width": 320,
+        "height": 407,
+        "bytes": 13712
+      },
+      {
+        "src": "/images/display/715ace4f51fa70e9-640.webp",
+        "width": 640,
+        "height": 814,
+        "bytes": 33194
+      },
+      {
+        "src": "/images/display/715ace4f51fa70e9-960.webp",
+        "width": 960,
+        "height": 1222,
+        "bytes": 54202
+      }
+    ]
+  },
+  "/images/cases/platform-v2/03-cardigan.png": {
+    "src": "/images/display/f7df8d5207bad40e-640.webp",
+    "srcSet": "/images/display/f7df8d5207bad40e-320.webp 320w, /images/display/f7df8d5207bad40e-640.webp 640w, /images/display/f7df8d5207bad40e-960.webp 960w",
+    "originalSha256": "7e21b1c00167e9222a0e0fc3471bed20d7b52550eb245cd5dacebe799509ba1d",
+    "variants": [
+      {
+        "src": "/images/display/f7df8d5207bad40e-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 23658
+      },
+      {
+        "src": "/images/display/f7df8d5207bad40e-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 98802
+      },
+      {
+        "src": "/images/display/f7df8d5207bad40e-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 214378
+      }
+    ]
+  },
+  "/images/cases/platform-v2/04-model.png": {
+    "src": "/images/display/159bbce79587aa45-640.webp",
+    "srcSet": "/images/display/159bbce79587aa45-320.webp 320w, /images/display/159bbce79587aa45-640.webp 640w, /images/display/159bbce79587aa45-960.webp 960w",
+    "originalSha256": "7b1fbb2c4ca0ff5a8db1f9dd009cf360df1fb3f10ba5a20e3ad94094c9fd6e74",
+    "variants": [
+      {
+        "src": "/images/display/159bbce79587aa45-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 25900
+      },
+      {
+        "src": "/images/display/159bbce79587aa45-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 84430
+      },
+      {
+        "src": "/images/display/159bbce79587aa45-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 147406
+      }
+    ]
+  },
+  "/images/cases/platform-v2/try-on-result.png": {
+    "src": "/images/display/4bb0e524827debef-640.webp",
+    "srcSet": "/images/display/4bb0e524827debef-320.webp 320w, /images/display/4bb0e524827debef-640.webp 640w, /images/display/4bb0e524827debef-768.webp 768w",
+    "originalSha256": "578ecffddad907788ac8a8e38d1adb71b4a12b79e15f034a7863e2ce80a4624c",
+    "variants": [
+      {
+        "src": "/images/display/4bb0e524827debef-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 24462
+      },
+      {
+        "src": "/images/display/4bb0e524827debef-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 76852
+      },
+      {
+        "src": "/images/display/4bb0e524827debef-768.webp",
+        "width": 768,
+        "height": 1024,
+        "bytes": 106084
+      }
+    ]
+  },
+  "/images/cases/platform-v3/01-bag-white.png": {
+    "src": "/images/display/bdc41204ba5e6601-640.webp",
+    "srcSet": "/images/display/bdc41204ba5e6601-320.webp 320w, /images/display/bdc41204ba5e6601-640.webp 640w, /images/display/bdc41204ba5e6601-960.webp 960w",
+    "originalSha256": "c07bb4905919638b510a7df18dcf4f3bfb96186df2724c032bd492b41688b3ef",
+    "variants": [
+      {
+        "src": "/images/display/bdc41204ba5e6601-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 9532
+      },
+      {
+        "src": "/images/display/bdc41204ba5e6601-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 43062
+      },
+      {
+        "src": "/images/display/bdc41204ba5e6601-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 95200
+      }
+    ]
+  },
+  "/images/cases/platform-v3/02-headphones-messy.png": {
+    "src": "/images/display/355507b221b767c2-640.webp",
+    "srcSet": "/images/display/355507b221b767c2-320.webp 320w, /images/display/355507b221b767c2-640.webp 640w, /images/display/355507b221b767c2-960.webp 960w",
+    "originalSha256": "cd53c4b460109905d33005a424155ae915294874418a0e913b94eec8b064e194",
+    "variants": [
+      {
+        "src": "/images/display/355507b221b767c2-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 22756
+      },
+      {
+        "src": "/images/display/355507b221b767c2-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 74204
+      },
+      {
+        "src": "/images/display/355507b221b767c2-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 138356
+      }
+    ]
+  },
+  "/images/cases/platform-v3/background-result.png": {
+    "src": "/images/display/682b247002c8172b-640.webp",
+    "srcSet": "/images/display/682b247002c8172b-320.webp 320w, /images/display/682b247002c8172b-640.webp 640w, /images/display/682b247002c8172b-768.webp 768w",
+    "originalSha256": "936b295eb2132a42ae2a9a0deb7265d1a47355522d6c68fe5eb06a448d68fb91",
+    "variants": [
+      {
+        "src": "/images/display/682b247002c8172b-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 17176
+      },
+      {
+        "src": "/images/display/682b247002c8172b-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 51194
+      },
+      {
+        "src": "/images/display/682b247002c8172b-768.webp",
+        "width": 768,
+        "height": 1024,
+        "bytes": 67684
+      }
+    ]
+  },
+  "/images/cases/platform-v3/color-result.png": {
+    "src": "/images/display/1c3d494f91854e85-640.webp",
+    "srcSet": "/images/display/1c3d494f91854e85-320.webp 320w, /images/display/1c3d494f91854e85-640.webp 640w, /images/display/1c3d494f91854e85-768.webp 768w",
+    "originalSha256": "cfdae0d41f332209c843304799baa801d0350b0cc37c81084581889b45288e1d",
+    "variants": [
+      {
+        "src": "/images/display/1c3d494f91854e85-320.webp",
+        "width": 320,
+        "height": 427,
+        "bytes": 9654
+      },
+      {
+        "src": "/images/display/1c3d494f91854e85-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 39408
+      },
+      {
+        "src": "/images/display/1c3d494f91854e85-768.webp",
+        "width": 768,
+        "height": 1024,
+        "bytes": 57986
+      }
+    ]
+  },
+  "/images/homepage-features/card-03-remix-result-serum-landscape-v1.png": {
+    "src": "/images/display/7164186a2fcf1800-640.webp",
+    "srcSet": "/images/display/7164186a2fcf1800-320.webp 320w, /images/display/7164186a2fcf1800-640.webp 640w, /images/display/7164186a2fcf1800-960.webp 960w",
+    "originalSha256": "7b2c22d69cde5c447905516c9feffc1750b84a1662edb1fa1ebe0340804d185e",
+    "variants": [
+      {
+        "src": "/images/display/7164186a2fcf1800-320.webp",
+        "width": 320,
+        "height": 213,
+        "bytes": 4970
+      },
+      {
+        "src": "/images/display/7164186a2fcf1800-640.webp",
+        "width": 640,
+        "height": 427,
+        "bytes": 15266
+      },
+      {
+        "src": "/images/display/7164186a2fcf1800-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 31918
+      }
+    ]
+  },
+  "/images/homepage-features/card-03-remix-result-serum-v2.png": {
+    "src": "/images/display/c138429a587005d8-640.webp",
+    "srcSet": "/images/display/c138429a587005d8-320.webp 320w, /images/display/c138429a587005d8-640.webp 640w, /images/display/c138429a587005d8-960.webp 960w",
+    "originalSha256": "dca7acfabf4493b4446c5c1474e3a6d2b82e5c5e0406a81b36b461308160dd69",
+    "variants": [
+      {
+        "src": "/images/display/c138429a587005d8-320.webp",
+        "width": 320,
+        "height": 400,
+        "bytes": 8448
+      },
+      {
+        "src": "/images/display/c138429a587005d8-640.webp",
+        "width": 640,
+        "height": 800,
+        "bytes": 28858
+      },
+      {
+        "src": "/images/display/c138429a587005d8-960.webp",
+        "width": 960,
+        "height": 1200,
+        "bytes": 54528
+      }
+    ]
+  },
+  "/images/homepage-features/card-05-amazon-hero-v2.png": {
+    "src": "/images/display/10d9471deecd5fbc-640.webp",
+    "srcSet": "/images/display/10d9471deecd5fbc-320.webp 320w, /images/display/10d9471deecd5fbc-640.webp 640w, /images/display/10d9471deecd5fbc-960.webp 960w",
+    "originalSha256": "70d90b2c3bcb17e27951a80fd2a3c959e977bbe0e04e9cabe4b73638b0ff550b",
+    "variants": [
+      {
+        "src": "/images/display/10d9471deecd5fbc-320.webp",
+        "width": 320,
+        "height": 213,
+        "bytes": 11764
+      },
+      {
+        "src": "/images/display/10d9471deecd5fbc-640.webp",
+        "width": 640,
+        "height": 427,
+        "bytes": 37442
+      },
+      {
+        "src": "/images/display/10d9471deecd5fbc-960.webp",
+        "width": 960,
+        "height": 640,
+        "bytes": 82490
+      }
+    ]
+  },
+  "/brand/haiyu-logo-folded-h.png": {
+    "src": "/images/display/b59973a1e1db6c05-426.webp",
+    "srcSet": "/images/display/b59973a1e1db6c05-142.webp 142w, /images/display/b59973a1e1db6c05-284.webp 284w, /images/display/b59973a1e1db6c05-426.webp 426w",
+    "originalSha256": "3ae562003977ba8a4f60b98b5c0e44b443c02803619215e336d60e205b008652",
+    "variants": [
+      {
+        "src": "/images/display/b59973a1e1db6c05-142.webp",
+        "width": 142,
+        "height": 46,
+        "bytes": 3570
+      },
+      {
+        "src": "/images/display/b59973a1e1db6c05-284.webp",
+        "width": 284,
+        "height": 92,
+        "bytes": 8024
+      },
+      {
+        "src": "/images/display/b59973a1e1db6c05-426.webp",
+        "width": 426,
+        "height": 138,
+        "bytes": 12872
+      }
+    ]
+  },
+  "/brand/haiyu-icon-folded-h.png": {
+    "src": "/images/display/5069340f2a31d2ba-640.webp",
+    "srcSet": "/images/display/5069340f2a31d2ba-320.webp 320w, /images/display/5069340f2a31d2ba-640.webp 640w, /images/display/5069340f2a31d2ba-960.webp 960w",
+    "originalSha256": "738d706aa0bc2b05c18465b7bbfbacb4690a79f2fd33405410ed92159fa91e78",
+    "variants": [
+      {
+        "src": "/images/display/5069340f2a31d2ba-320.webp",
+        "width": 320,
+        "height": 320,
+        "bytes": 15116
+      },
+      {
+        "src": "/images/display/5069340f2a31d2ba-640.webp",
+        "width": 640,
+        "height": 640,
+        "bytes": 35678
+      },
+      {
+        "src": "/images/display/5069340f2a31d2ba-960.webp",
+        "width": 960,
+        "height": 960,
+        "bytes": 63912
+      }
+    ]
+  }
+}

@@ -1604,6 +1604,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/processing-consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_v1_me_processing_consent_get"];
+        put?: never;
+        /** Accept */
+        post: operations["accept_api_v1_me_processing_consent_post"];
+        /** Withdraw */
+        delete: operations["withdraw_api_v1_me_processing_consent_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/alipay/notify": {
         parameters: {
             query?: never;
@@ -3094,6 +3113,19 @@ export interface components {
             instructions?: string[];
             /** Plan Hash */
             plan_hash: string;
+        };
+        /** ConsentStatus */
+        ConsentStatus: {
+            /** Accepted */
+            accepted: boolean;
+            /** Accepted At */
+            accepted_at: string | null;
+            /** Notice */
+            notice: {
+                [key: string]: string;
+            };
+            /** Policy Version */
+            policy_version: string;
         };
         /** CostSummary */
         CostSummary: {
@@ -4931,6 +4963,15 @@ export interface components {
             payload: {
                 [key: string]: unknown;
             };
+        };
+        /** ProcessingConsentChoice */
+        ProcessingConsentChoice: {
+            /** Aitraining */
+            aiTraining: boolean;
+            /** Hongkongprocessing */
+            hongKongProcessing: boolean;
+            /** Policyversion */
+            policyVersion: string;
         };
         /** ProductGroupInput */
         ProductGroupInput: {
@@ -8913,6 +8954,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentUserResponse"];
+                };
+            };
+        };
+    };
+    status_api_v1_me_processing_consent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentStatus"];
+                };
+            };
+        };
+    };
+    accept_api_v1_me_processing_consent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProcessingConsentChoice"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_api_v1_me_processing_consent_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentStatus"];
                 };
             };
         };

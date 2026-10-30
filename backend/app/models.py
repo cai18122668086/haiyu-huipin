@@ -100,6 +100,24 @@ class UserRecord(TimestampMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ProcessingConsentRecord(Base):
+    __tablename__ = "processing_consents"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    policy_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    notice_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    notice: Mapped[dict] = mapped_column(json_type(), nullable=False)
+    choices: Mapped[dict] = mapped_column(json_type(), nullable=False)
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
+    accepted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class AdminUserRecord(TimestampMixin, Base):
     __tablename__ = "admin_users"
     __table_args__ = (

@@ -25,7 +25,7 @@
 	}
 	header @api Cache-Control "no-store"
 
-	@immutable path /_polaris-static/* /assets/*
+	@immutable path /_polaris-static/* /assets/* /images/display/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
 
 	@private_asset path /api/v1/workspaces/*/assets/*/content

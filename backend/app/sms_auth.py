@@ -251,31 +251,35 @@ def override_sms_apis(original: Any, limiter: SmsRateLimiter | None = None) -> A
             arguments = signature.bind(*args, **kwargs).arguments
             if arguments.get("should_try_linking_with_session_user"):
                 return GeneralErrorResponse("请退出当前账号后再使用手机号登录。")
-            if consent:
-                body = await arguments["api_options"].request.json()
-                if (
-                    not isinstance(body, dict)
-                    or body.get("acceptedAgreements") is not True
-                ):
-                    return GeneralErrorResponse("请先阅读并同意用户协议和隐私政策。")
-                flow = body.get("flow", "login")
-                if not isinstance(flow, str) or flow not in {
-                    "login",
-                    "register",
-                    "reset",
-                }:
-                    return GeneralErrorResponse("无效的手机号验证用途。")
-                if body.get("flow") in {"register", "reset"}:
-                    from .errors import ApiError
-                    from .phone_accounts import validate_password
+            body = await arguments["api_options"].request.json()
+            if not isinstance(body, dict) or body.get("acceptedAgreements") is not True:
+                return GeneralErrorResponse("请先阅读并同意用户协议和隐私政策。")
+            flow = body.get("flow", "login")
+            if not isinstance(flow, str) or flow not in {
+                "login",
+                "register",
+                "reset",
+            }:
+                return GeneralErrorResponse("无效的手机号验证用途。")
+            if flow == "register":
+                from .errors import ApiError
+                from .processing_consent import validate_choice
 
-                    password = body.get("password")
-                    if not isinstance(password, str):
-                        return GeneralErrorResponse("请设置登录密码。")
-                    try:
-                        validate_password(password)
-                    except ApiError as exc:
-                        return GeneralErrorResponse(exc.message)
+                try:
+                    validate_choice(body.get("processingConsent"))
+                except ApiError as exc:
+                    return GeneralErrorResponse(exc.message)
+            if consent and body.get("flow") in {"register", "reset"}:
+                from .errors import ApiError
+                from .phone_accounts import validate_password
+
+                password = body.get("password")
+                if not isinstance(password, str):
+                    return GeneralErrorResponse("请设置登录密码。")
+                try:
+                    validate_password(password)
+                except ApiError as exc:
+                    return GeneralErrorResponse(exc.message)
             try:
                 if consent and limiter is not None:
                     await run_in_threadpool(
