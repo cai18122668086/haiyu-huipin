@@ -34,6 +34,28 @@ async def submit_automatic(app: Any, document_id: str, attempt_id: str) -> None:
                 or authority.get("version") != "replica-submission-v1"
             ):
                 return
+            budget = values.get("credit_budget")
+            units = (
+                (values.get("_fast_plan") or {}).get("units")
+                or values.get("plans")
+                or []
+            )
+            estimate = len(units) * (8 if values.get("replica_speed") == "fast" else 15)
+            if budget is not None and estimate > budget:
+                # Materializing a longer reference is not permission to spend
+                # beyond the amount shown at the original submission.
+                row.payload = {
+                    **values,
+                    "auto_start_after_plan": False,
+                    "credit_budget_exceeded": True,
+                    "credit_quote": {
+                        "image_count": len(units),
+                        "estimated_credits": estimate,
+                    },
+                }
+                row.updated_at = utc_now()
+                session.commit()
+                return
             user = session.get(UserRecord, authority.get("actor_user_id"))
             if user is None or user.status != "active":
                 raise ValueError("The submitting account is no longer active")

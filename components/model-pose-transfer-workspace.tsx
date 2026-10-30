@@ -1,4 +1,6 @@
 "use client";
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -298,7 +300,7 @@ export function ModelPoseTransferWorkspace() {
   const [draftSelectedPoseSlug, setSelectedPoseSlug] = useState<string>();
   const [draftCustomPose, setCustomPose] = useState<Asset>();
   const [materializedPose, setMaterializedPose] = useState<MaterializedPose>();
-  const [draftInstruction, setInstruction] = useState("");
+  const [draftInstruction, setInstruction] = useDraftState(workspace?.id, "model-pose-transfer", "instruction", "");
   const [uiError, setUiError] = useState<string>();
   const [humanReviewComplete, setHumanReviewComplete] = useWorkspaceJobReview(jobId);
   const submissionLock = useRef(false);
@@ -636,12 +638,12 @@ export function ModelPoseTransferWorkspace() {
                 <div><span>03</span><div><h2>补充要求</h2><p>可选。仅补充服装保真、表情或背景要求，不要改写目标姿势。</p></div></div>
                 <strong>可选</strong>
               </div>
-              <textarea
+              <ProductFactsGuidance editing /><textarea
                 className={styles.instruction}
                 value={instruction}
                 maxLength={500}
                 disabled={Boolean(jobId) || isSubmitting}
-                placeholder="例如：保持服装版型、花纹和配饰不变，人物表情自然。"
+                placeholder="请详细描述需保留的服装版型、花纹、配饰、表情和背景要求。"
                 onChange={(event) => setInstruction(event.currentTarget.value)}
               />
               <div className={styles.textareaMeta}><span>源图画布优先，默认输出 PNG</span><span>{instruction.length} / 500</span></div>

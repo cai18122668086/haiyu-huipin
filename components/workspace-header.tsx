@@ -1,3 +1,7 @@
+"use client";
+import { clearCreationDraft } from "@/lib/hooks/use-creation-draft";
+import { useWorkspace } from "@/features/workspaces/api/workspaces";
+import { getFeatureByRoute } from "@/lib/feature-registry";
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
 import styles from "./workspace-header.module.css";
@@ -15,8 +19,11 @@ export function WorkspaceHeader({
   meta?: React.ReactNode;
   jobId?: string;
 }) {
+  const { workspace } = useWorkspace();
   function startNewTask() {
     if (typeof window !== "undefined") {
+      const feature = getFeatureByRoute(window.location.pathname);
+      if (workspace && feature) clearCreationDraft(workspace.id, feature.id);
       window.location.replace(window.location.pathname);
     }
   }

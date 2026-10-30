@@ -1,4 +1,6 @@
 "use client";
+import { AdminSupportCases } from "@/components/support-cases";
+import { useSearchParams } from "next/navigation";
 
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +28,7 @@ export default function BillingAdminPage() {
 
 function SupportConsole() {
   const client = useQueryClient();
+  const params = useSearchParams();
   const [tab, setTab] = useState<"users" | "orders" | "audit" | "refunds">("users");
   const [refundOrder, setRefundOrder] = useState<Order | null>(null);
   const [draft, setDraft] = useState("");
@@ -33,10 +36,10 @@ function SupportConsole() {
   const [offset, setOffset] = useState(0);
   const [needsReview, setNeedsReview] = useState(false);
   const [status, setStatus] = useState("");
-  const [workspace, setWorkspace] = useState<string | null>(null);
+  const [workspace, setWorkspace] = useState<string | null>(params.get("workspaceId"));
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [delta, setDelta] = useState("");
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState(params.get("supportCaseId") ? `售后补偿 · ${params.get("supportCaseId")} · 任务 ${params.get("jobId") ?? "未关联"}` : "");
   const [confirm, setConfirm] = useState<"adjust" | "status" | null>(null);
   const intent = useRef<{ fingerprint: string; key: string } | null>(null);
   const capability = useQuery({ queryKey: ["support", "access"], queryFn: () => request<{ can_adjust: boolean; user_id: string }>("/access"), retry: false });
@@ -80,6 +83,7 @@ function SupportConsole() {
     {reconcile.isSuccess && <p role="status">{reconcile.data.status === "paid" ? "渠道已确认，积分与会员已到账。" : "渠道尚未确认付款，请勿手工标记已支付。"}</p>}
     <footer className={styles.toolbar}><button disabled={!offset} onClick={() => setOffset(Math.max(0, offset - 30))}>上一页</button><span>第 {Math.floor(offset / 30) + 1} 页</span><button disabled={offset + 30 >= (count ?? 0)} onClick={() => setOffset(offset + 30)}>下一页</button></footer>
     </>}
+    <AdminSupportCases />
     {refundOrder && <RefundDialog key={refundOrder.id} order={refundOrder} close={() => setRefundOrder(null)} refresh={refresh} />}
     {workspace && <div className={styles.overlay}><section className={styles.dialog} role="dialog" aria-modal="true" aria-label="用户账户详情"><header className={styles.heading}><h2>用户账户详情</h2><button onClick={() => { setWorkspace(null); setConfirm(null); }}>关闭</button></header>
       <p>{selectedUser?.name} · {selectedUser?.phone_hint}<small className={styles.id}>{workspace}</small></p>

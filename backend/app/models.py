@@ -1335,6 +1335,28 @@ class CreditLedgerEntryRecord(Base):
     )
 
 
+class SupportCaseRecord(TimestampMixin, Base):
+    __tablename__ = "support_cases"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "request_key", name="uq_support_case_request"),
+        CheckConstraint(
+            "status IN ('open','in_progress','resolved')", name="ck_support_case_status"
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    workspace_id: Mapped[str] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), index=True
+    )
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    job_id: Mapped[str | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="RESTRICT"), index=True
+    )
+    request_key: Mapped[str] = mapped_column(String(128))
+    issue: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24), default="open")
+    resolution: Mapped[str] = mapped_column(Text, default="")
+
+
 class AuditEventRecord(Base):
     __tablename__ = "audit_events"
 

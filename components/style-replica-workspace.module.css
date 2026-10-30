@@ -16,8 +16,9 @@
   min-height: 44px;
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--accent);
-  color: #fff;
+  background: #fff;
+  color: #51445f;
+  border: 1px solid #e1dbe8;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;

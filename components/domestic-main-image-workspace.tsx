@@ -1,4 +1,8 @@
 "use client";
+import { splitProductFacts } from "@/lib/product-facts";
+
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -11,6 +15,8 @@ import { AppShell } from "@/components/app-shell";
 import { JobDeliverablesDownload } from "@/components/job-deliverables-download";
 import { JobResultImage } from "@/components/job-result-image";
 import { StatusBadge } from "@/components/status-badge";
+import { useAssetHandoff } from "@/features/assets/hooks/use-asset-handoff";
+import { AssetLibraryDialog } from "@/components/asset-library-picker";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { FormDisclosure } from "@/components/form-disclosure";
 import { usePreviewVisibility } from "@/features/assets/hooks/use-preview-visibility";
@@ -106,9 +112,7 @@ function domesticFailureMessage(message?: string | null) {
   return message;
 }
 
-function lines(value: string, limit: number) {
-  return value.split(/[，,\n]/).map((item) => item.trim()).filter(Boolean).slice(0, limit);
-}
+function lines(value: string, limit: number) { return splitProductFacts(value, limit); }
 
 function readPlan(payload?: Record<string, unknown>): PlanPage[] {
   if (!payload || !Array.isArray(payload.pages)) return [];
@@ -138,6 +142,8 @@ export function DomesticMainImageWorkspace() {
   const dragDepth = useRef(0);
   const sourcesRef = useRef<Source[]>([]);
   const { workspace } = useWorkspace();
+  const handoff = useAssetHandoff(workspace?.id, 8, requestedJobId);
+  const handoffApplied = useRef("");
   const upload = useUploadAsset(workspace?.id);
   const createJob = useCreateJob(workspace?.id);
   const confirmPlan = useConfirmPlan(workspace?.id);
@@ -147,17 +153,23 @@ export function DomesticMainImageWorkspace() {
   const workflow = presentWorkflow(
     runtime.data?.capabilities.features?.domestic_main_image,
   );
-  const [sources, setSources] = useState<Source[]>([]);
+  const [sources, setSources] = useDraftState<Source[]>(workspace?.id, "domestic-main-image", "sources", []);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  useEffect(() => {
+    if (!handoff.data || handoffApplied.current === handoff.key) return;
+    handoffApplied.current = handoff.key;
+    setSources(handoff.data.sources.map(source => ({ asset: source.asset, previewUrl: source.previewUrl, fileKey: source.asset.id })));
+  }, [handoff.data, handoff.key, setSources]);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
-  const [productName, setProductName] = useState("");
-  const [category, setCategory] = useState("");
-  const [sellingPoints, setSellingPoints] = useState("");
-  const [displayFacts, setDisplayFacts] = useState("");
-  const [scenes, setScenes] = useState("");
-  const [offers, setOffers] = useState("");
-  const [trustFacts, setTrustFacts] = useState("");
-  const [style, setStyle] = useState("");
-  const [instruction, setInstruction] = useState("");
+  const [productName, setProductName] = useDraftState(workspace?.id, "domestic-main-image", "productName", "");
+  const [category, setCategory] = useDraftState(workspace?.id, "domestic-main-image", "category", "");
+  const [sellingPoints, setSellingPoints] = useDraftState(workspace?.id, "domestic-main-image", "sellingPoints", "");
+  const [displayFacts, setDisplayFacts] = useDraftState(workspace?.id, "domestic-main-image", "displayFacts", "");
+  const [scenes, setScenes] = useDraftState(workspace?.id, "domestic-main-image", "scenes", "");
+  const [offers, setOffers] = useDraftState(workspace?.id, "domestic-main-image", "offers", "");
+  const [trustFacts, setTrustFacts] = useDraftState(workspace?.id, "domestic-main-image", "trustFacts", "");
+  const [style, setStyle] = useDraftState(workspace?.id, "domestic-main-image", "style", "");
+  const [instruction, setInstruction] = useDraftState(workspace?.id, "domestic-main-image", "instruction", "");
   const [speed, setSpeed] = useMainImageSpeedDraft(workspace?.id);
   const [shadowMode, setShadowMode] = useState<AuroraShadowMode>("off");
   const [createdJobId, setCreatedJobId] = useState<string>();
@@ -347,7 +359,7 @@ export function DomesticMainImageWorkspace() {
       <div className={styles.page}>
         <WorkspaceHeader
           eyebrow="海宇绘品 · 国内电商主图"
-          title="国内电商主图"
+          title="主图套图"
           description="上传商品素材，生成完整六张主图，完成后可查看与下载。"
           meta={<span className={styles.secure}><ShieldCheck size={15} />连续创作流程</span>}
         />
@@ -364,6 +376,7 @@ export function DomesticMainImageWorkspace() {
           <main>
             <section className={styles.card}>
               <div className={styles.heading}><span>01</span><div><h2>上传商品原图</h2><p>清晰展示外观与细节，多角度图片有助于保持商品一致。</p></div></div>
+              {!jobId && <button type="button" className="secondary-button" disabled={busy} onClick={() => setLibraryOpen(true)}>从素材库选择商品原图</button>}
               {jobId ? <div className={styles.uploads}>{restoredAssetIds.map((assetId, index) => <RestoredSource key={assetId} workspaceId={workspace?.id} assetId={assetId} index={index} />)}</div> : <>
                 {sources.length < MAX_SOURCE_IMAGES && <div
                   className={styles.dropZone}
@@ -381,17 +394,17 @@ export function DomesticMainImageWorkspace() {
                     <em>{sources.length} / {MAX_SOURCE_IMAGES}</em>
                   </button>
                 </div>}
-                {sources.length > 0 && <div className={styles.uploads} aria-live="polite">{sources.map((source, index) => <figure key={source.asset.id}><img src={source.previewUrl} alt={`商品素材 ${index + 1}`} /><figcaption>证据 {String(index + 1).padStart(2, "0")}</figcaption><button type="button" onClick={() => removeSource(source.asset.id)} aria-label={`移除商品素材 ${index + 1}`}><X size={14} /></button></figure>)}</div>}
+                {sources.length > 0 && <div className={styles.uploads} aria-live="polite">{sources.map((source, index) => <figure key={source.asset.id}><RestoredSource assetId={source.asset.id} workspaceId={workspace?.id} index={index} /><button type="button" onClick={() => removeSource(source.asset.id)} aria-label={`移除商品素材 ${index + 1}`}><X size={14} /></button></figure>)}</div>}
               </>}
             </section>
 
             <section className={styles.card}>
-              <div className={styles.heading}><span>02</span><div><h2>告诉我们商品的亮点</h2><p>先填写名称、类目和核心卖点，其他信息可以按需补充。</p></div></div>
+              <div className={styles.heading}><span>02</span><div><h2>告诉我们商品的亮点</h2><p>填写商品基本信息，真实卖点和资料越完整，越有助于规划整套图片。</p></div></div>
               <fieldset className={styles.speedChoice} disabled={Boolean(jobId) || busy}>
                 <legend>生成版本</legend>
                 {MAIN_IMAGE_SPEED_OPTIONS.map(([value, title]) => <label key={value} data-selected={activeSpeed === value || undefined}><input type="radio" name="main-image-speed" value={value} checked={activeSpeed === value} onChange={() => setSpeed(value)} /><span><strong>{title}{value === "native_fast" && <GenerationRecommendation />}</strong></span></label>)}
               </fieldset>
-              <div className={styles.form}>
+              <ProductFactsGuidance /><div className={styles.form}>
                 <label><span>商品名称 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("product_name") : productName} onChange={(event) => setProductName(event.target.value)} placeholder="例如：轻量保温随行杯" /></label>
                 <label><span>商品类目 *</span><input disabled={Boolean(jobId)} value={jobId ? restoredString("category") : category} onChange={(event) => setCategory(event.target.value)} placeholder="例如：杯壶 / 保温杯" /></label>
                 <label className={styles.full}><span>核心卖点 * <small>换行分隔</small></span><textarea disabled={Boolean(jobId)} value={jobId ? restoredLines("selling_points") : sellingPoints} onChange={(event) => setSellingPoints(event.target.value)} placeholder={'轻量便携\n杯盖防误开\n食品接触级内胆'} /></label>
@@ -457,13 +470,15 @@ export function DomesticMainImageWorkspace() {
           </main>
 
           <aside className={styles.side}>
+            {handoff.error && <p className={styles.error} role="alert">{errorMessage(handoff.error)}</p>}
             {localError || createJob.error || confirmPlan.error || finalizeJob.error || retryJob.error ? <p className={styles.error}>{localError ?? errorMessage(createJob.error ?? confirmPlan.error ?? finalizeJob.error ?? retryJob.error)}</p> : null}
-            {!jobId && <CreditCostHint jobType="domestic_main_image" count={6} />}
+            {!jobId && <CreditCostHint jobType="domestic_main_image" count={6} variant={fastMode ? "fast" : undefined} />}
             {!jobId ? <button className={styles.primary} disabled={!canCreate || busy} onClick={() => void createPlan()}>{busy ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}生成主图六件套<ArrowRight size={17} /></button> : job.data && !automaticPlan && allowsJobAction(job.data.allowed_actions, "finalize") ? <button className={styles.primary} disabled={finalizeJob.isPending} onClick={() => finalizeJob.mutate({ jobId: job.data!.id, allowedActions: job.data!.allowed_actions, approvalText: "我已审阅六张成图，确认整组结果并批准按 Aurora Skill 完成交付。" })}>{finalizeJob.isPending ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}确认整组并完成交付<ArrowRight size={17} /></button> : job.data && recoveryMode && !hasCompleteSet && providerReady ? <button className={styles.primary} disabled={retryJob.isPending} onClick={() => void retryFailedPages()}>{retryJob.isPending ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}{recoveryMode === "replan" ? "重新规划并生成" : "按原方案重新生成"}<ArrowRight size={17} /></button> : !automaticPlan && job.data?.plan && allowsJobAction(job.data.allowed_actions, "confirm_plan") && providerReady ? <button className={styles.primary} disabled={confirmPlan.isPending} onClick={() => confirmPlan.mutate({ jobId: job.data!.id, revision: job.data!.plan!.revision, allowedActions: job.data!.allowed_actions, approvalText: fastMode ? "我确认当前快速六图规划，授权独立生成并直接交付，成图未经独立 AI 复审。" : "我确认当前六图规划，并授权按 Aurora Skill 逐张生成、审图及执行每页至多一次自动修复。" })}>{confirmPlan.isPending ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}确认方案并开始<ArrowRight size={17} /></button> : <button className={styles.primary} disabled><LoaderCircle className={job.data && ["queued", "planning", "processing"].includes(job.data.status) ? "spin" : ""} size={17} />{terminalIncomplete ? "任务已终止" : automaticPlan && job.data?.status === "awaiting_final_review" ? "正在整理交付" : job.data?.status === "completed" && hasCompleteSet ? "整组已完成" : job.data?.status === "completed" ? "未生成真实图片" : workflow.mode === "mock" && job.data?.status === "awaiting_confirmation" ? "真实生成服务未启用" : "任务处理中"}</button>}
-            <small className={styles.note}>{providerReady ? "图片完成后可逐张查看与下载。" : "图片生成服务暂未启用，当前仅可预览方案。"}</small>
+            <small className={styles.note}>{providerReady ? !sources.length ? "请先上传或选择商品原图。" : !productName.trim() ? "请填写商品名称。" : !category.trim() ? "请填写商品类目。" : !sellingPoints.trim() ? "请填写真实卖点与商品资料，帮助规划整套图片。" : "已准备好，图片完成后可逐张查看与下载。" : "图片生成服务暂未启用，当前仅可预览方案。"}</small>
           </aside>
         </div>
       </div>
+    {libraryOpen && <AssetLibraryDialog workspaceId={workspace?.id} title="选择商品原图" description="复用同一商品的清晰素材，最多 8 张。" selectedIds={sources.map(source => source.asset.id)} maxItems={8} onClose={() => setLibraryOpen(false)} onConfirm={(ids, assets) => { setSources(ids.map(id => sources.find(source => source.asset.id === id) ?? { asset: assets.find(asset => asset.id === id)!, previewUrl: "", fileKey: id }).filter(source => Boolean(source.asset))); setLibraryOpen(false); }} />}
     </AppShell>
   );
 }

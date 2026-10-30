@@ -6,7 +6,7 @@ import { intentSignature } from "../lib/api/idempotency.ts";
 
 test("domestic detail offers fast first with estimated durations", () => {
   assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.value), ["fast", "standard"]);
-  assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.title), ["快速版（约5分钟）", "精致版（约40分钟）"]);
+  assert.deepEqual(DETAIL_SPEED_OPTIONS.map(option => option.title), ["快速版（约5分钟 · 8积分/张）", "精致版（约40分钟 · 15积分/张）"]);
 });
 
 test("default keeps the original request identity while fast selects a new intent", () => {

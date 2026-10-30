@@ -1,4 +1,5 @@
 "use client";
+import { JobCreditSettlement } from "@/components/job-credit-settlement";
 
 import {
   Ban,
@@ -110,7 +111,7 @@ export function JobDetailPanel({
               </button>
             </div>
             <JobProgress job={job} error={detail.error} lastSyncedAt={detail.dataUpdatedAt} refreshing={detail.isFetching} onRefresh={() => void detail.refetch()} />
-            <Link className="secondary-button" href={jobWorkspaceHref(job)}>打开对应工作台</Link>
+            <Link className="secondary-button" href={jobWorkspaceHref(job)}>打开对应工作台</Link><JobCreditSettlement workspaceId={workspaceId} jobId={job.id} />
 
             <section className="job-detail-section">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">任务信息</span><h3>任务概况</h3></div><small>{detail.isFetching ? "更新中…" : "实时更新"}</small></div>
@@ -179,7 +180,7 @@ export function JobDetailPanel({
 
             <section className="job-detail-actions" aria-label="任务操作">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">可用操作</span><h3>继续处理</h3></div></div>
-              <div className="job-action-buttons">
+              <div className="job-action-buttons"><Link className="secondary-button" href={`/account?jobId=${encodeURIComponent(job.id)}#help`}>联系帮助，关联此任务</Link>
                 {allowsJobAction(permittedActions, "retry") && <button type="button" className="secondary-button" onClick={() => onRetry(job)} disabled={retryPending}><RotateCcw size={15} />重试失败项</button>}
                 {allowsJobAction(permittedActions, "cancel") && <button type="button" className="secondary-button danger-button" onClick={() => onCancel(job)} disabled={cancelPending}><Ban size={15} />取消任务</button>}
                 {allowsJobAction(permittedActions, "confirm_plan") && job.plan && <button type="button" className="primary-button" onClick={() => onConfirmPlan(job)} disabled={confirmPending}><Check size={15} />确认方案</button>}

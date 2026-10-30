@@ -241,7 +241,20 @@ def test_credit_endpoints_are_workspace_scoped(client):
     response = client.get(f"/api/v1/workspaces/{WORKSPACE}/credits")
     assert response.status_code == 200
     assert response.json()["enforcement_enabled"] is True
-    assert len(response.json()["pricing"]) == 16
+    assert (
+        len([rule for rule in response.json()["pricing"] if rule["variant"] is None])
+        == 16
+    )
+    assert (
+        len(
+            [
+                rule
+                for rule in response.json()["pricing"]
+                if rule["variant"] == "fast" and rule["credits_per_image"] == 8
+            ]
+        )
+        == 4
+    )
     assert client.get("/api/v1/workspaces/not-mine/credits").status_code in {403, 404}
     assert client.get("/api/v1/workspaces/not-mine/credits/ledger").status_code in {
         403,

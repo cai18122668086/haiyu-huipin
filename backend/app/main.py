@@ -25,6 +25,7 @@ from .announcement_routes import router as announcement_router
 from .auth import ensure_development_identity
 from .brand_resume_routes import router as brand_resume_router
 from .config import Settings
+from .creation_summary import router as creation_summary_router
 from .credit_payment_routes import router as credit_payment_router
 from .credit_refund_routes import router as credit_refund_router
 from .credit_routes import router as credit_router
@@ -63,6 +64,7 @@ from .storage import (
     build_image_storage,
 )
 from .supertokens_auth import ExternalAuthBackend, SuperTokensAuthAdapter
+from .support_routes import router as support_router
 from .task_runner import build_task_runner, validate_task_runner_settings
 from .thumbnails import ThumbnailCache
 
@@ -531,6 +533,8 @@ def create_app(
     application.include_router(admin_billing_router)
     application.include_router(credit_refund_router)
     application.include_router(credit_router)
+    application.include_router(creation_summary_router)
+    application.include_router(support_router)
     application.include_router(credit_payment_router)
     application.include_router(brand_resume_router)
     application.include_router(announcement_router)

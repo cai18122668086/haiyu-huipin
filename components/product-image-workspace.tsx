@@ -1,5 +1,9 @@
 "use client";
 
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { FormDisclosure } from "@/components/form-disclosure";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
+
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
 import {
@@ -135,15 +139,15 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
   const [jobId, setJobId] = useWorkspaceJobId(feature?.route ?? `/workspace/product-image/${preset}`);
   const { workspace, isPending: workspacePending, error: workspaceError } = useWorkspace();
   const upload = useUploadAsset(workspace?.id);
-  const [draftProductAssetIds, setProductAssetIds] = useState<string[]>([]);
-  const [draftReferenceAssetIds, setReferenceAssetIds] = useState<string[]>([]);
+  const [draftProductAssetIds, setProductAssetIds] = useDraftState<string[]>(workspace?.id, feature?.id ?? "product-image", "draftProductAssetIds", []);
+  const [draftReferenceAssetIds, setReferenceAssetIds] = useDraftState<string[]>(workspace?.id, feature?.id ?? "product-image", "draftReferenceAssetIds", []);
   const [productLibraryOpen, setProductLibraryOpen] = useState(false);
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false);
-  const [draftPlatformCode, setPlatformCode] = useState("tmall");
-  const [draftAspectRatio, setAspectRatio] = useState<AspectRatio>("1:1");
-  const [draftImageCount, setImageCount] = useState(1);
-  const [draftInstruction, setInstruction] = useState("");
-  const [draftTargetColor, setTargetColor] = useState("");
+  const [draftPlatformCode, setPlatformCode] = useDraftState(workspace?.id, feature?.id ?? "product-image", "draftPlatformCode", "tmall");
+  const [draftAspectRatio, setAspectRatio] = useDraftState<AspectRatio>(workspace?.id, feature?.id ?? "product-image", "draftAspectRatio", "1:1");
+  const [draftImageCount, setImageCount] = useDraftState(workspace?.id, feature?.id ?? "product-image", "draftImageCount", 1);
+  const [draftInstruction, setInstruction] = useDraftState(workspace?.id, feature?.id ?? "product-image", "draftInstruction", "");
+  const [draftTargetColor, setTargetColor] = useDraftState(workspace?.id, feature?.id ?? "product-image", "draftTargetColor", "");
   const [uiError, setUiError] = useState<string>();
   const [humanReviewComplete, setHumanReviewComplete] = useWorkspaceJobReview(jobId);
   const runtime = useRuntimeStatus();
@@ -352,6 +356,7 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
                 <strong>{feature.shortTitle}</strong>
               </div>
 
+              <FormDisclosure title="输出设置" summary={`${platforms.find(item => item.value === platformCode)?.label ?? "目标平台"} · ${aspectRatio} · ${imageCount} 张`} defaultOpen={Boolean(jobId)}>
               <div className={styles.formGrid}>
                 <label>
                   <span>创作功能</span>
@@ -401,6 +406,7 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
                 </div>
               </fieldset>
 
+              </FormDisclosure>
               {feature.taskPreset === "change_color" ? (
                 <label className={styles.colorField}>
                   <span><Palette size={16} />目标颜色 <i>必填</i></span>
@@ -416,7 +422,7 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
               ) : null}
 
               <label className={styles.instructionField}>
-                <span>补充要求</span>
+                <span>详细描述你的要求</span><ProductFactsGuidance editing />
                 <textarea
                   value={instruction}
                   onChange={(event) => setInstruction(event.target.value)}

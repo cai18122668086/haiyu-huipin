@@ -29,6 +29,6 @@ test("Amazon UI restores saved version and shows fast first without internal pro
   assert.match(source, /jobId \? readAmazonSuiteSpeed\(saved.text\("amazon_speed"\)\) : draftAmazonSpeed/);
   assert.match(source, /\.\.\.amazonSuiteSpeedConfiguration\(amazonSpeed\)/);
   assert.match(source, /className=\{amazonStyles.speedOptions\} disabled=\{Boolean\(jobId\)\}/);
-  assert.match(source, /\["fast", "快速版（约5分钟）"\],\s*\["standard", "精致版（约40分钟）"\]/);
+  assert.match(source, /\["fast", "快速版（约5分钟 · 8积分\/张）"\],\s*\["standard", "精致版（约40分钟 · 15积分\/张）"\]/);
   assert.doesNotMatch(source, /技术校验完成，未进行 AI 视觉审核|不进行 AI 视觉审核或自动审美重绘/);
 });

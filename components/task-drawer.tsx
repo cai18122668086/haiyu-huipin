@@ -61,7 +61,7 @@ export function TaskDrawer({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef(false);
   const { workspace, error: workspaceError } = useWorkspace();
-  const jobs = useCreationRecords(workspace?.id);
+  const jobs = useCreationRecords(open ? workspace?.id : undefined);
   const runtime = useRuntimeStatus();
   const cancel = useCancelJob(workspace?.id);
   const retry = useRetryJob(workspace?.id);

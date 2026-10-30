@@ -12,6 +12,10 @@ export type ReplicaCreationRecord = {
   stage: string | null;
   expected: number;
   generated: number;
+  failed?: number;
+  delivered?: number;
+  estimated_credits?: number | null;
+  actual_credits?: number | null;
 };
 
 export function mergeCreationRecords(jobs: Job[], replicas: ReplicaCreationRecord[], workspaceId: string): Job[] {
@@ -28,13 +32,13 @@ export function mergeCreationRecords(jobs: Job[], replicas: ReplicaCreationRecor
       status,
       stage: job?.stage ?? record.stage, progress: record.current_job_ids ? record.progress : job?.progress ?? record.progress,
       expected_item_count: record.expected || job?.expected_item_count || 0,
-      succeeded_item_count: status === "completed" ? record.expected : job?.succeeded_item_count ?? 0,
-      failed_item_count: job?.failed_item_count ?? 0,
+      succeeded_item_count: status === "completed" ? record.expected : record.delivered ?? (record.current_job_ids ? record.generated : record.generated || job?.succeeded_item_count || 0),
+      failed_item_count: record.failed ?? job?.failed_item_count ?? 0,
       output_asset_count: job?.output_asset_count ?? 0,
       primary_output_asset_id: job?.primary_output_asset_id ?? null,
       history_expires_at: job?.history_expires_at ?? null,
       allowed_actions: [],
-      cost: job?.cost ?? { actual: null, actual_credits: null, estimated_credits: null, estimated_max: null, estimated_min: null, usage_completeness: "none" },
+      cost: { ...(job?.cost ?? { actual: null, estimated_max: null, estimated_min: null, usage_completeness: "none" }), actual_credits: record.actual_credits ?? null, estimated_credits: record.estimated_credits ?? null },
     };
   });
   return [...jobs.filter(job => !replicaJobs.has(job.id)), ...records]

@@ -13,7 +13,8 @@ def test_membership_migrations_follow_existing_phone_identity_and_preserve_data(
     config = Config()
     config.set_main_option("script_location", str(root / "migrations"))
     scripts = ScriptDirectory.from_config(config)
-    assert scripts.get_heads() == ["20261030_0035"]
+    assert scripts.get_heads() == ["20261030_0036"]
+    assert scripts.get_revision("20261030_0036").down_revision == "20261030_0035"
     assert scripts.get_revision("20261030_0035").down_revision == "20261029_0034"
     assert scripts.get_revision("20261028_0029").down_revision == "20261027_0028"
     engine = create_engine("sqlite://")
@@ -41,6 +42,7 @@ def test_membership_migrations_follow_existing_phone_identity_and_preserve_data(
             "20261028_0032_credit_refunds.py",
             "20261028_0033_admin_entitlements.py",
             "20261029_0034_payment_reconciliation.py",
+            "20261030_0036_support_cases.py",
         ]:
             spec = spec_from_file_location(
                 "credit_migration", root / "migrations/versions" / name

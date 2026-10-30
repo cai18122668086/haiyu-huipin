@@ -64,7 +64,7 @@ test("standalone workspaces submit the exact backend job families", async () => 
 });
 test("creative and reference workspaces preserve the full count and aspect-ratio controls", async () => {
   const workspace = await utf8("components/commerce-skill-workspace.tsx");
-  assert.match(workspace, /const \[draftImageCount, setImageCount\] = useState\(1\)/);
+  assert.match(workspace, /const \[draftImageCount, setImageCount\] = useDraftState\(workspace\?\.id, featureId, "draftImageCount", 1\)/);
   assert.match(workspace, /const imageCount = jobId \? saved\.number\("image_count"/);
   assert.match(workspace, /image_count: imageCount/);
   assert.doesNotMatch(workspace, /image_count: Math\.min/);

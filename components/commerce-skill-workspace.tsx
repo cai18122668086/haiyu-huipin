@@ -1,4 +1,8 @@
 "use client";
+import { splitProductFacts } from "@/lib/product-facts";
+
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -160,13 +164,7 @@ const emptySelections: Record<RoleKey, string[]> = {
   brand: [],
 };
 
-function splitList(value: string, maxItems = 12): string[] {
-  return value
-    .split(/[\n,，;；]+/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, maxItems);
-}
+function splitList(value: string, maxItems = 12) { return splitProductFacts(value, maxItems); }
 
 function readAmazonPlanPages(payload: Record<string, unknown> | undefined): AmazonPlanPage[] {
   if (!payload || !Array.isArray(payload.pages)) return [];
@@ -395,22 +393,16 @@ export function CommerceSkillWorkspace({
   const job = useJob(workspace?.id, jobId);
   const saved = workspaceJobSnapshot(job.data);
 
-  const [draftSelections, setSelections] = useState(emptySelections);
-  const [draftPlatformCode, setPlatformCode] = useState(
-    featureId === "amazon-visual-suite" ? "amazon-us" : "tmall",
-  );
-  const [draftLanguage, setLanguage] = useState(
-    featureId === "amazon-visual-suite" ? "en-US" : "zh-CN",
-  );
-  const [draftAspectRatio, setAspectRatio] = useState<AspectRatio>(
-    featureId === "reference-remix" ? "follow-reference" : "1:1",
-  );
-  const [draftImageCount, setImageCount] = useState(1);
+  const [draftSelections, setSelections] = useDraftState(workspace?.id, featureId, "selections", emptySelections);
+  const [draftPlatformCode, setPlatformCode] = useDraftState(workspace?.id, featureId, "draftPlatformCode", featureId === "amazon-visual-suite" ? "amazon-us" : "tmall",);
+  const [draftLanguage, setLanguage] = useDraftState(workspace?.id, featureId, "draftLanguage", featureId === "amazon-visual-suite" ? "en-US" : "zh-CN",);
+  const [draftAspectRatio, setAspectRatio] = useDraftState<AspectRatio>(workspace?.id, featureId, "draftAspectRatio", featureId === "reference-remix" ? "follow-reference" : "1:1",);
+  const [draftImageCount, setImageCount] = useDraftState(workspace?.id, featureId, "draftImageCount", 1);
   const [draftCreativeDirection, setCreativeDirection] =
-    useState<CreativeDirection>("selling_point");
-  const [draftInstruction, setInstruction] = useState("");
-  const [draftSellingPoints, setSellingPoints] = useState("");
-  const [draftProductName, setProductName] = useState("");
+    useDraftState<CreativeDirection>(workspace?.id, featureId, "draftCreativeDirection", "selling_point");
+  const [draftInstruction, setInstruction] = useDraftState(workspace?.id, featureId, "draftInstruction", "");
+  const [draftSellingPoints, setSellingPoints] = useDraftState(workspace?.id, featureId, "draftSellingPoints", "");
+  const [draftProductName, setProductName] = useDraftState(workspace?.id, featureId, "draftProductName", "");
   const [draftAmazonSpeed, setAmazonSpeed] = useState<AmazonSuiteSpeed>("standard");
   const hydratedAmazonSpeedWorkspace = useRef<string | undefined>(undefined);
   // Keep the full backend contract while the simplified Amazon form leaves legacy optional fields blank.
@@ -419,7 +411,7 @@ export function CommerceSkillWorkspace({
   const listingTitle = "";
   const listingDescription = "";
   const aPlusCopy = "";
-  const [draftProductFacts, setProductFacts] = useState("");
+  const [draftProductFacts, setProductFacts] = useDraftState(workspace?.id, featureId, "draftProductFacts", "");
   const parameters = "";
   const certificationsOrEvidence = "";
   const forbiddenClaims = "";
@@ -483,7 +475,6 @@ export function CommerceSkillWorkspace({
           const compose = JSON.parse(rawCompose) as { instruction?: string };
           if (compose.instruction) {
             // Hydrate the one-time handoff payload into the existing composer.
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setInstruction((current) => current || compose.instruction!);
           }
           window.localStorage.removeItem("polaris-inspiration-compose");
@@ -508,12 +499,14 @@ export function CommerceSkillWorkspace({
         setInstruction((current) => current || handoffInstruction);
       }
 
+      // A one-time handoff from browser storage may request the existing submit flow.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (strategy.autoStart) setAutoStart(true);
       window.localStorage.removeItem("polaris-inspiration-strategy");
     } catch {
       // Ignore malformed handoff data and keep the normal workspace flow intact.
     }
-  }, [featureId, jobId]);
+  }, [featureId, jobId, setInstruction, setSelections]);
 
   const resultAssets = selectJobResultAssets(job.data);
   const requestError = workspaceError ?? upload.error ?? confirmPlan.error ?? job.error;
@@ -948,8 +941,8 @@ export function CommerceSkillWorkspace({
                     <legend>生成版本</legend>
                     <div className={amazonStyles.speedChoices}>
                       {([
-                        ["fast", "快速版（约5分钟）"],
-                        ["standard", "精致版（约40分钟）"],
+                        ["fast", "快速版（约5分钟 · 8积分/张）"],
+                        ["standard", "精致版（约40分钟 · 15积分/张）"],
                       ] as const).map(([value, title]) => (
                         <label key={value} data-selected={amazonSpeed === value || undefined}>
                           <input type="radio" name="amazon-suite-speed" value={value} checked={amazonSpeed === value} onChange={() => selectAmazonSpeed(value)} />
@@ -971,7 +964,7 @@ export function CommerceSkillWorkspace({
                   </label>
 
                   <label className={amazonStyles.simpleField}>
-                    <span>商品卖点与参数</span>
+                    <span>商品卖点与参数</span><ProductFactsGuidance />
                     <textarea
                       value={productFacts}
                       onChange={(event) => setProductFacts(event.target.value)}
@@ -1053,15 +1046,15 @@ export function CommerceSkillWorkspace({
                   </fieldset>
 
                   <label className={styles.instructionField}>
-                    <span>{featureId === "reference-remix" ? "商品事实与不可变特征 *" : "商品卖点"}</span>
+                    <span>{featureId === "reference-remix" ? "商品事实与不可变特征 *" : "商品卖点"}</span><ProductFactsGuidance />
                     <textarea
                       value={sellingPoints}
                       onChange={(event) => setSellingPoints(event.target.value)}
                       rows={4}
-                      placeholder={featureId === "reference-remix" ? "请填写真实商品事实、结构特征或纹样方向，每行一项" : "每行一项，最多 12 项"}
+                      placeholder={featureId === "reference-remix" ? "请填写真实商品事实、结构特征或纹样方向，每行一项" : "可粘贴完整商品介绍，分行填写便于阅读"}
                       disabled={Boolean(jobId)}
                     />
-                    <small>按换行或逗号拆分，最多提交 12 项。</small>
+                    <small>真实资料越完整，越有助于规划内容；较多条目会合并整理，保留全部内容。</small>
                   </label>
 
                   <label className={styles.instructionField}>
@@ -1260,7 +1253,7 @@ export function CommerceSkillWorkspace({
             <p>
               <strong>{workspace?.name ?? "正在连接工作区"}</strong>
               <small>{jobId ? progressText : isAmazon ? "预计生成 21 张套图" : `预计生成 ${imageCount} 张图片`}</small>
-              {!jobId && <CreditCostHint jobType={feature.jobType} count={expectedCount} />}
+              {!jobId && <CreditCostHint jobType={feature.jobType} count={expectedCount} variant={(isAmazon && amazonSpeed === "fast") || featureId === "reference-remix" ? "fast" : undefined} />}
             </p>
           </div>
           <div className={styles.stickyActions}>

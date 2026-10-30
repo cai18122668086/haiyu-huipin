@@ -29,7 +29,6 @@ def creation_rows(session: Session, workspace_id: str) -> list[dict[str, Any]]:
                 R.updated_at >= utc_now() - timedelta(days=30),
             )
             .order_by(R.created_at.desc(), R.id.desc())
-            .limit(100)
         )
         .mappings()
         .all()
