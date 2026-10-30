@@ -64,12 +64,12 @@ test("standalone workspaces submit the exact backend job families", async () => 
 });
 test("creative and reference workspaces preserve the full count and aspect-ratio controls", async () => {
   const workspace = await utf8("components/commerce-skill-workspace.tsx");
-  assert.match(workspace, /const \[draftImageCount, setImageCount\] = useState\(1\)/);
+  assert.match(workspace, /const \[draftImageCount, setImageCount\] = useDraftState\(workspace\?\.id, featureId, "draftImageCount", 1\)/);
   assert.match(workspace, /const imageCount = jobId \? saved\.number\("image_count"/);
   assert.match(workspace, /image_count: imageCount/);
   assert.doesNotMatch(workspace, /image_count: Math\.min/);
   assert.match(workspace, /Array\.from\(\{ length: 12 \}/);
-  assert.match(workspace, /setImageCount\(count\)/);
+  assert.match(workspace, /QuantityControl[^>]*onChange=\{setImageCount\}[^>]*allowedValues=\{imageCountOptions\}/);
   assert.match(workspace, /value: "4:5"/);
   assert.match(workspace, /value: "follow-reference"/);
   assert.match(workspace, /featureId === "reference-remix" \? "follow-reference" : "1:1"/);
@@ -83,11 +83,8 @@ test("creative and reference workspaces preserve the full count and aspect-ratio
   ]) {
     assert.match(workspace, new RegExp(size));
   }
-  assert.match(workspace, /图片尺寸：\{selectedSizeLabel\}/);
-  assert.match(
-    workspace,
-    /主图 2000 × 2000；副图 1200 × 1600；桌面 A\+ 1464 × 600；移动 A\+ 1600 × 1200/,
-  );
+  assert.match(workspace, /RatioControl[^\n]*options=\{featureId === "reference-remix"/);
+  assert.match(workspace, /GenerationVersionField name="amazon-suite-speed"/);
 });
 
 test("inspiration automatic ratio remains dynamic instead of silently becoming square", async () => {

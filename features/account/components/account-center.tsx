@@ -1,4 +1,7 @@
 "use client";
+import { SupportCases } from "@/components/support-cases";
+import { AccountStatusMenu } from "@/components/account-status-menu";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { QRCodeSVG } from "qrcode.react";
 
@@ -34,7 +37,6 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
-  UserRound,
   X,
   Zap,
   type LucideIcon,
@@ -297,17 +299,12 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
     },
     () => "overview" as Page,
   );
-  const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [purchaseTab, setPurchaseTab] = useState<"member" | "pack">("member");
   const [orderId, setOrderId] = useState<string | null>(null);
-  const accountRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const user = useCurrentAuthUser();
-  const credits = useCreditAccount(workspaceId);
-  const member = useMembership(workspaceId);
   const name = authUserLabel(user.data);
-  const balance = credits.data?.available_credits;
   useEffect(() => {
     const returned = new URLSearchParams(window.location.search).get(
       "purchase",
@@ -321,27 +318,19 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
     return () => window.clearTimeout(returnSync);
   }, []);
   useEffect(() => {
-    function outside(event: MouseEvent) {
-      if (!accountRef.current?.contains(event.target as Node))
-        setAccountOpen(false);
-    }
     function key(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setAccountOpen(false);
         setMobileOpen(false);
         menuRef.current?.focus();
       }
     }
-    document.addEventListener("click", outside);
     document.addEventListener("keydown", key);
     return () => {
-      document.removeEventListener("click", outside);
       document.removeEventListener("keydown", key);
     };
   }, []);
   function navigate(next: Page) {
-    window.location.hash = next;
-    setAccountOpen(false);
+    window.location.assign(`#${next}`);
     setMobileOpen(false);
     window.scrollTo({ top: 0 });
   }
@@ -360,60 +349,14 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
               海宇绘品<small>HAIYU HUIPIN</small>
             </span>
           </Link>
-          <div className="topbar-right">
+          <div className="topbar-right"><Link className="account-button" href="/jobs">任务中心</Link><AccountStatusMenu />
             {process.env.NODE_ENV !== "production" && (
               <span className="local-badge">
                 <span />
                 本地联调 · 测试数据
               </span>
             )}
-            <div className="account-wrap" ref={accountRef}>
-              <button
-                className="account-button"
-                aria-expanded={accountOpen}
-                aria-controls="account-dropdown"
-                onClick={() => setAccountOpen((value) => !value)}
-              >
-                <span className="avatar small">{name.slice(0, 1)}</span>
-                <span className="account-label">个人中心</span>
-                <ChevronDown size={14} />
-              </button>
-              {accountOpen && (
-                <div className="account-dropdown" id="account-dropdown">
-                  <div className="dropdown-profile">
-                    <span className="avatar">
-                      <UserRound size={20} />
-                    </span>
-                    <div>
-                      <strong>{name}</strong>
-                      <span>{member.data?.plan_name ?? "创作账户"}</span>
-                    </div>
-                  </div>
-                  <div className="dropdown-balance">
-                    <span>
-                      可用积分
-                      <strong>
-                        {balance === undefined ? "—" : fmt(balance)}
-                      </strong>
-                    </span>
-                    <button onClick={recharge}>
-                      充值
-                      <ArrowUpRight size={13} />
-                    </button>
-                  </div>
-                  {pages.map((item) => (
-                    <button
-                      className="dropdown-link"
-                      key={item.id}
-                      onClick={() => navigate(item.id)}
-                    >
-                      <item.icon size={16} />
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+
             <button
               ref={menuRef}
               className="icon-button mobile-menu"
@@ -494,7 +437,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
           )}
           {page === "creations" && <Creations workspaceId={workspaceId} />}
           {page === "assets" && <Assets workspaceId={workspaceId} />}
-          {page === "help" && <Help />}
+          {page === "help" && <><SupportCases workspaceId={workspaceId} /><Help /></>}
           {page === "settings" && (
             <div className="settings-integration">
               <AccountPanel />
@@ -759,6 +702,7 @@ function Membership({
   const catalog = useCreditProducts(workspaceId),
     credits = useCreditAccount(workspaceId),
     create = useCreatePurchase(workspaceId);
+  const currentMembership = useMembership(workspaceId);
   const products =
     catalog.data?.packages.filter((pack) =>
       tab === "pack"
@@ -882,7 +826,7 @@ function Membership({
                     <Layers3 size={24} />
                   )}
                 </div>
-                <h3>{copy?.name ?? "创作积分包"}</h3>
+                <h3 className={styles.planTitle}>{copy?.name ?? "创作积分包"}{product.plan_id && currentMembership.data?.plan_id === product.plan_id && <span className={styles.currentPlan} title={`有效至 ${date(currentMembership.data.ends_at)}`}><Check size={11} />当前套餐</span>}</h3>
                 <p className="plan-desc">
                   {copy?.description ?? "备好额度，随时上新"}
                 </p>
@@ -902,13 +846,9 @@ function Membership({
                   <strong>{fmt(product.credits)}</strong>
                   <span>创作积分{tab === "member" ? " / 月" : ""}</span>
                 </div>
-                <div className="plan-output">
-                  <ImageIcon size={14} />
-                  <span>
-                    {tab === "member" ? "每月约可创作" : "约可创作"}{" "}
-                    <strong>{fmt(Math.floor(product.credits / 5))}</strong>{" "}
-                    张图片
-                  </span>
+                <div className={styles.outputEstimates}>
+                  <span>{tab === "member" ? "每月预计出图" : "预计出图"}</span>
+                  <dl>{([["灵感", 5], ["快速", 8], ["精致", 15]] as const).map(([label, unit]) => <div key={label}><dt>{label}<small>{unit} 积分/张</small></dt><dd><b>{fmt(Math.floor(product.credits / unit))}</b><span>张</span></dd></div>)}</dl>
                 </div>
                 <Button
                   variant={featured ? "lime-button" : "outline"}
@@ -917,7 +857,7 @@ function Membership({
                 >
                   {tab === "pack"
                     ? "购买积分包"
-                    : `选择${copy?.name ?? "会员"}`}
+                    : currentMembership.data?.plan_id === product.plan_id ? `续费${copy?.name ?? "会员"}` : `选择${copy?.name ?? "会员"}`}
                   <ArrowUpRight size={15} />
                 </Button>
                 <div className="plan-features">
@@ -950,7 +890,7 @@ function Membership({
       {!catalog.data?.enabled && <p role="status" className="checkout-note">会员方案已同步，在线购买尚未开放。</p>}
       <div className="pricing-disclaimer">
         <p>
-          图片数量按普通单图估算，不同功能消耗不同，以生成前展示为准。已有会员时，新购会员在已购买周期结束后生效。
+          数量为各版本单独使用时的估算，以生成前报价为准。续费会员顺延生效。
         </p>
       </div>
       <Faqs />
@@ -1033,6 +973,12 @@ function Membership({
 
 const purchaseStatus = (status: string) => ({ paid: "已支付", pending: "待付款", partially_refunded: "部分退款", refunded: "已退款", closed: "已关闭" })[status] ?? status;
 
+function safeCreationReturn() {
+  if (typeof window === "undefined") return "/#start";
+  const value = new URLSearchParams(window.location.search).get("returnTo") ?? "";
+  return /^\/(?:workspace\/|style-replica(?:[?]|$)|inspiration(?:[?]|$))/.test(value) && !value.includes("\\") ? value : "/#start";
+}
+
 function OrderDialog({
   workspaceId,
   orderId,
@@ -1043,6 +989,13 @@ function OrderDialog({
   onClose: () => void;
 }) {
   const order = usePurchaseOrder(workspaceId, orderId);
+  const client = useQueryClient();
+  const wallet = useCreditAccount(workspaceId);
+  const member = useMembership(workspaceId);
+  useEffect(() => {
+    if (order.data?.status !== "paid") return;
+    for (const key of ["credits", "credit-membership", "credit-ledger-history", "credit-orders"]) void client.invalidateQueries({ queryKey: [key, workspaceId] });
+  }, [order.data?.status, client, workspaceId]);
   const reconcile = useReconcilePurchase(workspaceId, orderId);
   const refunds = useRefundHistory(workspaceId, orderId);
   return (
@@ -1103,6 +1056,7 @@ function OrderDialog({
               </div>
             )}
           </div>
+          {order.data.status === "paid" && <section className="payment-success" aria-live="polite"><h3>{order.data.product_kind === "membership" ? "会员购买已确认" : "积分充值已到账"}</h3><p>{order.data.package_name}</p>{wallet.data && <p>当前可用 {fmt(wallet.data.available_credits)} 积分</p>}{member.data?.plan_name && <p>当前会员：{member.data.plan_name} · 有效至 {date(member.data.ends_at)}</p>}{member.data?.next_plan_name && <p>{member.data.next_plan_name}将于 {date(member.data.next_plan_starts_at)} 生效</p>}<Link className="account-button" href={safeCreationReturn()}>返回创作，继续操作</Link><Link className="account-button" href="/account#membership" onClick={onClose}>查看会员与权益</Link></section>}
           {order.data.status !== "pending" ? (
             <p className="checkout-note" role="status">
               {order.data.status === "closed" ? "该支付订单已关闭，如需购买，请重新选择套餐创建订单。" : order.data.refunded_amount_fen > 0 ? `已原路退款 ¥${money(order.data.refunded_amount_fen)}。退款对应的积分与会员权益已回收。` : order.data.product_kind === "membership"
@@ -1679,8 +1633,8 @@ function AssetDialog({
 
 const faqs = [
   [
-    "普通单图与规划创作怎样扣积分？",
-    "普通单图 5 积分/张；需要规划流程的详情图、主图、套图和一键复刻统一 15 积分/张。确认生成前会展示本次总消耗。例如，6 张套图共 90 积分，8 张套图共 120 积分。",
+    "灵感、快速版与精致版怎样扣积分？",
+    "灵感专区 5 积分/张、快速版 8 积分/张、精致版 15 积分/张；其他单图工具以生成前报价为准。例如六张主图快速版 48 积分、精致版 90 积分。提交时预留，按成功交付结算；历史任务按原预留价格结算。",
   ],
   [
     "月卡积分与充值积分有什么区别？",

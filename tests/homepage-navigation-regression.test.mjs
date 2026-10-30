@@ -334,8 +334,8 @@ test("homepage and navigation public copy no longer exposes internal implementat
 
   const topNavigation = await utf8("components/top-navigation.tsx");
   assert.doesNotMatch(topNavigation, /workspace\?\.role/);
-  assert.match(topNavigation, /个人控制台/);
-  assert.match(topNavigation, /个人中心/);
+  assert.match(topNavigation, /AccountStatusMenu/);
+  assert.match(await utf8("components/account-status-menu.tsx"), /会员与积分摘要/);
 });
 
 test("the exact two desktop and two mobile homepage banners are present", async () => {

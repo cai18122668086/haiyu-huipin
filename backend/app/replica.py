@@ -90,10 +90,11 @@ class AnalysisRequest(BaseModel):
     references: list[ReferenceChoice] = Field(min_length=1, max_length=20)
     platform_code: str = Field(default="tmall", min_length=1, max_length=32)
     language: str = Field(default="zh-CN", min_length=2, max_length=16)
-    facts: str = Field(default="", max_length=4000)
+    facts: str = Field(default="", max_length=20000)
     replication_method: Literal["exact", "style"] | None = None
     replica_speed: Literal["standard", "fast"] = "standard"
     auto_start_after_plan: bool = False
+    credit_budget: int | None = Field(default=None, ge=0, le=1000000)
 
     @model_validator(mode="after")
     def validate_roles(self) -> AnalysisRequest:
@@ -128,6 +129,10 @@ class ReplicaCreationRecordResponse(BaseModel):
     stage: str | None
     expected: int
     generated: int
+    failed: int = 0
+    delivered: int = 0
+    estimated_credits: int | None = None
+    actual_credits: int | None = None
 
 
 def _hash(value: Any) -> str:
@@ -219,7 +224,8 @@ def _wire(row: ReplicaDocumentRecord) -> dict:
                     "exact-compact-v12",
                     "exact-compact-v13",
                     "exact-compact-v14",
-                    "exact-compact-v15", "exact-compact-v16",
+                    "exact-compact-v15",
+                    "exact-compact-v16",
                 }
             )
         )
@@ -655,6 +661,9 @@ def creation_records(
                     JobRecord.progress,
                     JobRecord.expected_item_count,
                     JobRecord.succeeded_item_count,
+                    JobRecord.failed_item_count,
+                    JobRecord.estimated_credits,
+                    JobRecord.actual_credits,
                 ).where(
                     JobRecord.workspace_id == workspace.workspace_id,
                     JobRecord.id.in_(linked_ids),
@@ -696,8 +705,19 @@ def creation_records(
                 )
             else:
                 record["status"] = "generating"
-            record["progress"] = min(j.progress for j in linked)
+            record["progress"] = round(
+                sum(j.progress * max(1, j.expected_item_count) for j in linked)
+                / sum(max(1, j.expected_item_count) for j in linked)
+            )
             record["expected"] = sum(j.expected_item_count for j in linked)
+            record["failed"] = sum(j.failed_item_count for j in linked)
+            record["delivered"] = sum(j.succeeded_item_count for j in linked)
+            record["estimated_credits"] = sum(j.estimated_credits or 0 for j in linked)
+            record["actual_credits"] = (
+                sum(j.actual_credits or 0 for j in linked)
+                if all(j.actual_credits is not None for j in linked)
+                else None
+            )
             record["generated"] = max(
                 record["generated"], sum(j.succeeded_item_count for j in linked)
             )
@@ -1360,6 +1380,8 @@ def analyse(
     if not request.app.state.settings.reference_remix_provider_enabled:
         raise ApiError(503, "REPLICA_DISABLED", "复刻生成服务暂未开放，请稍后再试。")
     values = payload.model_dump(mode="json")
+    if payload.credit_budget is None:
+        values.pop("credit_budget", None)
     if payload.replica_speed == "standard":
         # Keep original-edition request identities byte-compatible with old clients.
         values.pop("replica_speed")

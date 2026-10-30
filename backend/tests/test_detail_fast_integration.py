@@ -186,7 +186,7 @@ def test_fast_route_preserves_all_pages_with_one_plan_and_original_downloads(
                 CreditReservationRecord.job_id == job["id"]
             )
         )
-        assert reservation.reserved_credits == reservation.settled_credits == 15 * count
+        assert reservation.reserved_credits == reservation.settled_credits == 8 * count
         assert db.get(WorkspaceCreditAccountRecord, WORKSPACE_ID).reserved_credits == 0
 
 
@@ -443,7 +443,7 @@ def test_completed_selected_revision_requires_new_approval_and_only_redraws_sele
                 CreditReservationRecord.job_id == revision["id"]
             )
         )
-        assert reservation.reserved_credits == reservation.settled_credits == 15
+        assert reservation.reserved_credits == reservation.settled_credits == 8
 
 
 @pytest.mark.parametrize("size", [(1440, 1920), (1086, 1448)])

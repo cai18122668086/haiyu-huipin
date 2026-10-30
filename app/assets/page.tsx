@@ -100,11 +100,23 @@ export default function AssetsPage() {
   );
   const requestError = workspaceError ?? assetsQuery.error ?? upload.error;
 
+  const [batchStatus, setBatchStatus] = useState("");
+  const [failedFiles, setFailedFiles] = useState<File[]>([]);
+  const batchLock = useRef(false);
+  const [batchBusy, setBatchBusy] = useState(false);
   const chooseFile = () => fileInput.current?.click();
-  const onFile = async (file?: File) => {
-    if (!file) return;
-    try { await upload.mutateAsync({ file }); }
-    catch { /* The mutation error is rendered above the asset grid. */ }
+  const onFiles = async (files: File[]) => {
+    if (batchLock.current || !files.length) return;
+    batchLock.current = true; setBatchBusy(true);
+    const failed: File[] = [];
+    let completed = 0;
+    try {
+      for (const file of files) {
+        try { await upload.mutateAsync({ file }); completed += 1; } catch { failed.push(file); }
+        setBatchStatus(`已上传 ${completed} / ${files.length} 张${failed.length ? `，${failed.length} 张未完成` : ""}`);
+      }
+      setFailedFiles(failed);
+    } finally { batchLock.current = false; setBatchBusy(false); }
   };
   const toggleSelected = (id: string) =>
     setSelected((items) => (items.includes(id) ? items.filter((item) => item !== id) : [...items, id]));
@@ -171,15 +183,16 @@ export default function AssetsPage() {
               <span><i><Check size={13} /></i>已选择 {selected.length} 项</span>
               <button disabled={!workspace || selected.length !== 1} title="选择 1 张图片进行局部修改" onClick={() => router.push(assetCreationHref("/workspace/local-edit", workspace!.id, selected))}><Paintbrush2 size={15} />带入一句话改图</button>
               <button disabled={!workspace || selected.length > 8} title="选择 1–8 张商品图片" onClick={() => router.push(assetCreationHref("/workspace/detail-pack", workspace!.id, selected))}><Sparkles size={15} />创建商品详情图</button>
-              <button onClick={() => setSelected([])}>取消选择</button>
+              <button disabled={!workspace || selected.length > 8} onClick={() => router.push(assetCreationHref("/workspace/domestic-main-image", workspace!.id, selected))}>制作主图套图</button><button disabled={!workspace || selected.length > 6} onClick={() => router.push(assetCreationHref("/style-replica", workspace!.id, selected))}>开始一键复刻</button><button onClick={() => setSelected([])}>取消选择</button>
             </div>
           )}
+          {batchStatus && <p role="status">{batchStatus}</p>}{failedFiles.length > 0 && <button className="secondary-button" disabled={batchBusy} onClick={() => void onFiles(failedFiles)}>仅重试未完成的 {failedFiles.length} 张</button>}
           <div className="asset-grid" data-empty={assets.length === 0 || undefined}>
             <ImageDropZone label="素材中心" className={dropStyles.assetTile} inputRef={fileInput}
-              disabled={!workspace} busy={upload.isPending} showHint={false} onFiles={(files) => onFile(files[0])}>
+              multiple maxFiles={20} disabled={!workspace || batchBusy} busy={batchBusy} showHint={false} onFiles={files => void onFiles(files)}>
               {({ openFileDialog, disabled: uploadDisabled, busy: uploadingFile }) => <button type="button" className="upload-asset-card" onClick={openFileDialog} disabled={uploadDisabled}>
                 <span>{uploadingFile ? <LoaderCircle className="spin" size={24} /> : <Upload size={24} />}</span><strong>{uploadingFile ? "正在上传" : "上传新素材"}</strong>
-                <p>点击选择，或将图片拖到此处</p><small>{IMAGE_UPLOAD_FORMAT_HINT} · 每次 1 张</small>
+                <p>点击选择，或将图片拖到此处</p><small>{IMAGE_UPLOAD_FORMAT_HINT} · 每批最多 20 张</small>
               </button>}
             </ImageDropZone>
             {assets.map((asset) => (

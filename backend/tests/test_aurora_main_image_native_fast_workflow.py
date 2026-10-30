@@ -187,14 +187,14 @@ def test_native_fast_native_plan_six_downloads_billing_and_exact_prompts(
         assert request.quality == "high" and request.size == "1024x1024"
         assert request.preserve_provider_artifact and request.single_dispatch
     assert current["api_request_count"] == 7
-    assert current["cost"]["actual_credits"] == 90
+    assert current["cost"]["actual_credits"] == 48
     with client.app.state.session_factory() as db:
         reservation = db.scalar(
             select(CreditReservationRecord).where(
                 CreditReservationRecord.job_id == job_id
             )
         )
-        assert reservation.status == "settled" and reservation.settled_credits == 90
+        assert reservation.status == "settled" and reservation.settled_credits == 48
         assert db.get(WorkspaceCreditAccountRecord, "ws_test").reserved_credits == 0
     writes, commands = [], []
 
@@ -264,7 +264,7 @@ def test_native_fast_failed_page_retry_uses_frozen_native_prompt_only(client, tm
     assert len(gateway.planner_calls) == 1 and len(gateway.image_calls) == 7
     assert gateway.image_calls[-1].page_number == 3
     assert gateway.image_calls[-1].prompt == original["pages"][2]["prompt"]
-    assert current["cost"]["actual_credits"] == 15
+    assert current["cost"]["actual_credits"] == 8
     assert sum(item["status"] == "reused" for item in current["items"]) == 5
     assert assert_native_closure(client, child_id)["pages"] == original["pages"]
     assert_no_native_closure(private_plan(client, job_id))
@@ -285,7 +285,7 @@ def test_native_fast_clone_generates_six_without_identity_replanning(client, tmp
     current = assert_delivery(client, child_id)
     assert len(gateway.planner_calls) == 1 and len(gateway.image_calls) == 12
     assert current["api_request_count"] == 6
-    assert current["cost"]["actual_credits"] == 90
+    assert current["cost"]["actual_credits"] == 48
     assert assert_native_closure(client, child_id)["pages"] == frozen["pages"]
     assert private_plan(client, job_id)["_native_final_job_id"] == job_id
     assert all(request.job_id == child_id for request in gateway.image_calls[6:])
@@ -368,7 +368,7 @@ def test_native_fast_plan_save_failure_can_replan_with_original_inputs(
     dispatch_pending(client)
     current = assert_delivery(client, child["id"])
     assert len(gateway.planner_calls) == 2 and len(gateway.image_calls) == 6
-    assert current["cost"]["actual_credits"] == 90
+    assert current["cost"]["actual_credits"] == 48
     assert detail(client, job_id)["stage"] == "planning_failed"
     assert detail(client, job_id)["plan"] is None
 

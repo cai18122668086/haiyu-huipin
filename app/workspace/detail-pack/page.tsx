@@ -1,4 +1,10 @@
 "use client";
+import { CreationSettings, SettingField, ChoiceControl, GenerationVersionField, QuantityControl } from "@/components/creation-settings";
+import { splitProductFacts } from "@/lib/product-facts";
+
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
+import { FormDisclosure } from "@/components/form-disclosure";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -13,8 +19,6 @@ import {
 import { ImageDropZone } from "@/components/image-drop-zone";
 import { assetHandoffKey } from "@/lib/assets/creation-handoff";
 import { useAssetHandoff } from "@/features/assets/hooks/use-asset-handoff";
-import { ReplicaSelect } from "@/components/replica-select";
-import { GenerationRecommendation } from "@/components/generation-recommendation";
 import { AppShell } from "@/components/app-shell";
 import { DomesticDetailIntakeQuestion } from "@/components/domestic-detail-intake-question";
 import { DomesticDetailApproval, NATIVE_DETAIL_APPROVAL_TEXT } from "@/components/domestic-detail-approval";
@@ -36,7 +40,7 @@ import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { errorMessage } from "@/lib/api/request";
 import { validateImageUpload } from "@/lib/image-upload";
 import { detailSkillSettings, savedDetailSkill } from "@/lib/detail-skills";
-import { DETAIL_SPEED_OPTIONS, detailSpeedSettings, savedDetailSpeed, type DetailSpeed } from "@/lib/detail-speed";
+import { detailSpeedSettings, savedDetailSpeed, type DetailSpeed } from "@/lib/detail-speed";
 import type { Asset } from "@/lib/api/types";
 import { allowsJobAction } from "@/lib/jobs/actions";
 import { jobNote } from "@/lib/jobs/presentation";
@@ -121,32 +125,32 @@ export default function DetailPackPage() {
 }
 
 function DetailPackWorkspace() {
+  const { workspace } = useWorkspace();
   const uploadBatchLock = useRef(false);
   const [uploadingSources, setUploadingSources] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [draftPageCount, setPageCount] = useState(8);
-  const [draftDetailSpeed, setDetailSpeed] = useState<DetailSpeed>("standard");
-  const [draftMarketRegion, setMarketRegion] = useState<MarketRegion>("domestic");
-  const [draftMarketplaceId, setMarketplaceId] = useState("tmall");
-  const [draftImageSize, setImageSize] = useState<MarketplaceImageSize>(DOMESTIC_DETAIL_SIZE);
-  const [draftLanguage, setLanguage] = useState<"zh-CN" | "en-US">("zh-CN");
-  const [draftProductName, setProductName] = useState("");
-  const [draftCategory, setCategory] = useState("");
-  const [draftTargetBuyer, setTargetBuyer] = useState("");
-  const [draftSellingPoints, setSellingPoints] = useState("");
+  const [draftPageCount, setPageCount] = useDraftState(workspace?.id, "detail-pack", "draftPageCount", 8);
+  const [draftDetailSpeed, setDetailSpeed] = useDraftState<DetailSpeed>(workspace?.id, "detail-pack", "draftDetailSpeed", "standard");
+  const [draftMarketRegion, setMarketRegion] = useDraftState<MarketRegion>(workspace?.id, "detail-pack", "draftMarketRegion", "domestic");
+  const [draftMarketplaceId, setMarketplaceId] = useDraftState(workspace?.id, "detail-pack", "draftMarketplaceId", "tmall");
+  const [draftImageSize, setImageSize] = useDraftState<MarketplaceImageSize>(workspace?.id, "detail-pack", "draftImageSize", DOMESTIC_DETAIL_SIZE);
+  const [draftLanguage, setLanguage] = useDraftState<"zh-CN" | "en-US">(workspace?.id, "detail-pack", "draftLanguage", "zh-CN");
+  const [draftProductName, setProductName] = useDraftState(workspace?.id, "detail-pack", "draftProductName", "");
+  const [draftCategory, setCategory] = useDraftState(workspace?.id, "detail-pack", "draftCategory", "");
+  const [draftTargetBuyer, setTargetBuyer] = useDraftState(workspace?.id, "detail-pack", "draftTargetBuyer", "");
+  const [draftSellingPoints, setSellingPoints] = useDraftState(workspace?.id, "detail-pack", "draftSellingPoints", "");
   const [reviewedApprovalKey, setReviewedApprovalKey] = useState("");
   const [automaticChoice, setAutomaticChoice] = useState<{ scope: string; requested: boolean; authorization?: AutomaticDeliveryAuthorization }>();
   const [reviewedFinalKey, setReviewedFinalKey] = useState("");
   const [campaignChoice, setCampaignChoice] = useState<{ workspaceId?: string; sourceId: string; selection: CampaignSelection }>();
-  const [sourceOverrides, setSourceOverrides] = useState<UploadedSource[]>();
+  const [sourceOverrides, setSourceOverrides] = useDraftState<UploadedSource[] | undefined>(workspace?.id, "detail-pack", "sources", undefined);
   const [uploadError, setUploadError] = useState<string>();
   // Prefer the task-center URL when present; the local value covers jobs
   // created or retried from this form. Deriving this value also handles SPA
   // navigation between task links without an effect-driven state update.
   const [localJobId, setLocalJobId] = useState<string>();
   const jobId = searchParams.get("jobId") ?? localJobId ?? "";
-  const { workspace } = useWorkspace();
   const handoff = useAssetHandoff(workspace?.id, 8, jobId);
   const sources = useMemo(() => sourceOverrides ?? handoff.data?.sources ?? [], [sourceOverrides, handoff.data]);
   const setSources = (next: UploadedSource[] | ((current: UploadedSource[]) => UploadedSource[])) =>
@@ -294,7 +298,7 @@ function DetailPackWorkspace() {
       category: category.trim() || undefined,
       target_buyer: targetBuyer.trim() || undefined,
       auto_start_after_plan: true,
-      selling_points: sellingPoints.split(/[；;\n]/).map((item) => item.trim()).filter(Boolean).slice(0, 12),
+      selling_points: splitProductFacts(sellingPoints),
       verified_facts: marketRegion === "domestic" ? [] : sellingPoints.split(/[；;\n]/).map((item) => item.trim()).filter(Boolean).slice(0, 24),
       conflict_scan: marketRegion === "domestic" ? {} : { status: "NO_MATERIAL_CONFLICTS_REPORTED" },
       source_conflicts: [],
@@ -338,11 +342,30 @@ function DetailPackWorkspace() {
         <div className="workspace-main">
           <WorkspaceHeader
             eyebrow={workflow.mode === "provider" ? "电商套图 · 在线生成" : workflow.mode === "mock" ? "电商套图 · 基础流程" : "电商套图 · 服务状态确认中"}
-            title="商品详情图"
+            title="详情图套图"
             description={workflow.mode === "provider" ? "提交后由后台规划并自动生成整套图片。" : workflow.mode === "mock" ? "当前支持素材上传、方案规划和任务保存，图片生成服务暂不可用。" : "当前无法确认生成服务状态，方案规划与图片生成入口暂时关闭。"}
             meta={<span className="autosave-state"><ShieldCheck size={15} />{workflow.mode === "provider" ? "生成服务可用" : "生成服务暂不可用"}</span>}
           />
 
+          <div className="workflow-steps detail-steps">
+            {["商品素材", "商品信息", "输出设置", "后台规划", workflow.mode === "provider" ? "图片生成" : workflow.mode === "mock" ? "保存任务" : "服务确认中"].map((label, index) => <div key={label} className={index < step ? "done" : index === step ? "active" : ""}><i>{index < step ? <Check size={14} /> : index + 1}</i><span>{label}</span>{index < 4 && <em />}</div>)}
+          </div>
+
+          <section className="detail-form-card">
+            <div className="form-section-head"><span className="number-chip">1</span><div><h2>商品素材</h2><p>每张图片都会先保存到当前工作区。</p></div>{sourceCount > 0 && <span className="validation-chip"><CheckCircle2 size={15} />已上传 {sourceCount} 张</span>}</div>
+            <ImageDropZone label="详情商品素材" multiple maxFiles={Math.max(0, 8 - sources.length)}
+              disabled={Boolean(jobId) || !workspace?.id || createJob.isPending} busy={uploadingSources || handoff.loading} onFiles={addFiles}>
+              {({ openFileDialog, disabled: uploadDisabled, busy }) => <div className="multi-uploader" data-empty={sourceCount === 0 || undefined}>
+                {jobId ? savedAssetIds.map((assetId, index) => <SavedSource key={assetId} workspaceId={workspace?.id} assetId={assetId} index={index} />) : sources.map((source, index) => <div key={source.asset.id} className="upload-thumb"><SavedSource workspaceId={workspace?.id} assetId={source.asset.id} index={index} /><span>{source.role === "style_reference" ? "风格参考" : `商品图 ${index + 1}`}</span>{marketRegion === "domestic" && <select aria-label={`第 ${index + 1} 张图片用途`} value={source.role} disabled={uploadingSources || createJob.isPending} onChange={event => {
+                  const role = event.target.value as UploadedSource["role"]; setSources(items => items.map(item => item.asset.id === source.asset.id ? { ...item, role } : item));
+                }}><option value="product_reference">商品图</option><option value="style_reference">风格参考</option></select>}<button type="button" disabled={uploadingSources || createJob.isPending} aria-label={`移除第 ${index + 1} 张图片`} onClick={() => removeSource(source.asset.id)}><X size={13} /></button></div>)}
+                {!jobId && sources.length < 8 && <button type="button" className="upload-more" onClick={openFileDialog} disabled={uploadDisabled}>{busy ? <LoaderCircle className="spin" size={23} /> : <ImagePlus size={23} />}<strong>{busy ? "上传中" : "添加素材"}</strong><small>最多 8 张</small></button>}
+              </div>}
+            </ImageDropZone>
+            {uploadError && <div className="api-state api-state--error" role="alert"><AlertCircle size={20} /><div><strong>部分素材未能上传</strong><p>{uploadError}</p></div></div>}
+          </section>
+
+          <FormDisclosure title="目标渠道" summary={`${selectedMarketplace.name} · ${isRefinedDetail ? "3:4 原图交付" : imageSize}`}>
           <section className="marketplace-selector">
             <div className="marketplace-selector__head"><span className="number-chip">0</span><div><h2>选择目标电商渠道</h2><p>所选渠道会影响图片尺寸、构图和文案规范。</p></div><span className="platform-selected-state"><CheckCircle2 size={15} />{selectedMarketplace.name} · {isRefinedDetail ? "3:4 原图交付" : `严格交付 ${imageSize}`}</span></div>
             <div className="market-region-switch" aria-label="电商地区">
@@ -354,24 +377,7 @@ function DetailPackWorkspace() {
             </div>
           </section>
 
-          <div className="workflow-steps detail-steps">
-            {["商品素材", "商品信息", "输出设置", "后台规划", workflow.mode === "provider" ? "图片生成" : workflow.mode === "mock" ? "保存任务" : "服务确认中"].map((label, index) => <div key={label} className={index < step ? "done" : index === step ? "active" : ""}><i>{index < step ? <Check size={14} /> : index + 1}</i><span>{label}</span>{index < 4 && <em />}</div>)}
-          </div>
-
-          <section className="detail-form-card">
-            <div className="form-section-head"><span className="number-chip">1</span><div><h2>商品素材</h2><p>每张图片都会先保存到当前工作区。</p></div>{sourceCount > 0 && <span className="validation-chip"><CheckCircle2 size={15} />已上传 {sourceCount} 张</span>}</div>
-            <ImageDropZone label="详情商品素材" multiple maxFiles={Math.max(0, 8 - sources.length)}
-              disabled={Boolean(jobId) || !workspace?.id || createJob.isPending} busy={uploadingSources || handoff.loading} onFiles={addFiles}>
-              {({ openFileDialog, disabled: uploadDisabled, busy }) => <div className="multi-uploader" data-empty={sourceCount === 0 || undefined}>
-                {jobId ? savedAssetIds.map((assetId, index) => <SavedSource key={assetId} workspaceId={workspace?.id} assetId={assetId} index={index} />) : sources.map((source, index) => <div key={source.asset.id} className="upload-thumb"><img src={source.previewUrl} alt={`商品角度 ${index + 1}`} /><span>{source.role === "style_reference" ? "风格参考" : `商品图 ${index + 1}`}</span>{marketRegion === "domestic" && <select aria-label={`第 ${index + 1} 张图片用途`} value={source.role} disabled={uploadingSources || createJob.isPending} onChange={event => {
-                  const role = event.target.value as UploadedSource["role"]; setSources(items => items.map(item => item.asset.id === source.asset.id ? { ...item, role } : item));
-                }}><option value="product_reference">商品图</option><option value="style_reference">风格参考</option></select>}<button type="button" disabled={uploadingSources || createJob.isPending} aria-label={`移除第 ${index + 1} 张图片`} onClick={() => removeSource(source.asset.id)}><X size={13} /></button></div>)}
-                {!jobId && sources.length < 8 && <button type="button" className="upload-more" onClick={openFileDialog} disabled={uploadDisabled}>{busy ? <LoaderCircle className="spin" size={23} /> : <ImagePlus size={23} />}<strong>{busy ? "上传中" : "添加素材"}</strong><small>最多 8 张</small></button>}
-              </div>}
-            </ImageDropZone>
-            {uploadError && <div className="api-state api-state--error" role="alert"><AlertCircle size={20} /><div><strong>部分素材未能上传</strong><p>{uploadError}</p></div></div>}
-          </section>
-
+          </FormDisclosure>
           <section className="detail-form-card">
             <div className="form-section-head"><span className="number-chip">2</span><div><h2>商品信息</h2><p>请填写商品名称与核心卖点，用于生成页面方案。</p></div></div>
             <div className="form-grid">
@@ -379,17 +385,20 @@ function DetailPackWorkspace() {
               <label><span>商品类目</span><input disabled={Boolean(jobId)} value={category} onChange={(event) => setCategory(event.target.value)} placeholder="例如：护肤 / 家居 / 3C" /></label>
               <label><span>目标买家</span><input disabled={Boolean(jobId)} value={targetBuyer} onChange={(event) => setTargetBuyer(event.target.value)} placeholder="例如：关注成分与肤感的通勤人群" /></label>
               <label><span>平台规格</span><div className="selected-output-platform"><Store size={16} /><strong>{selectedMarketplace.name} · {isRefinedDetail ? "3:4 · 实际尺寸见结果" : imageSize}</strong></div></label>
-              <label className="full"><span>核心卖点</span><textarea disabled={Boolean(jobId)} value={sellingPoints} onChange={(event) => setSellingPoints(event.target.value)} placeholder="用分号或换行分隔，最多 12 条" /></label>
+              <label className="full"><span>真实卖点与商品资料</span><ProductFactsGuidance /><textarea disabled={Boolean(jobId)} value={sellingPoints} onChange={(event) => setSellingPoints(event.target.value)} placeholder="可直接粘贴完整商品介绍，或逐行填写真实卖点和规格" /></label>
             </div>
-          <div className="creation-output-settings">
-            <div className="creation-output-heading"><h3>输出设置</h3><span>{selectedMarketplace.name} · {language === "zh-CN" ? "简体中文" : "English"} · {pageCount} 页</span></div>
-            <div className="output-options">
-              {isRefinedDetail && <div className="option-field"><span><Sparkles size={16} />生成版本</span><div className="segmented-control" role="group" aria-label="详情图生成版本">{DETAIL_SPEED_OPTIONS.map(option => <button key={option.value} type="button" aria-pressed={detailSpeed === option.value} className={detailSpeed === option.value ? "active" : ""} disabled={Boolean(jobId) || createJob.isPending} onClick={() => setDetailSpeed(option.value)}>{detailSpeed === option.value && <Check size={14} aria-hidden="true" />}{option.title}{option.value === "fast" && <GenerationRecommendation />}</button>)}</div></div>}
-              <div className="option-field"><span><Languages size={16} />内容语言</span><div className="segmented-control"><button type="button" aria-pressed={language === "zh-CN"} className={language === "zh-CN" ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setLanguage("zh-CN")}>{language === "zh-CN" && <Check size={14} aria-hidden="true" />}简体中文</button><button type="button" aria-pressed={language === "en-US"} className={language === "en-US" ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setLanguage("en-US")}>{language === "en-US" && <Check size={14} aria-hidden="true" />}English</button></div></div>
-              <div className="option-field"><span><FileCheck2 size={16} />详情页数</span>{isRefinedDetail ? <ReplicaSelect label="详情页数" layout="grid" disabled={Boolean(jobId)} value={String(pageCount)} onChange={value => setPageCount(Number(value))} options={Array.from({ length: 12 }, (_, index) => [String(index + 1), `${index + 1} 页`] as const)} /> : <div className="page-count-control">{[8, 10, 12].map((count) => <button key={count} className={pageCount === count ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setPageCount(count)}>{count} 页</button>)}</div>}</div>
-              {marketRegion === "international" && <div className="option-field"><span><Globe2 size={16} />图片尺寸</span><div className="page-count-control">{selectedMarketplace.sizePresets?.map((preset) => <button key={preset.value} className={imageSize === preset.value ? "active" : ""} disabled={Boolean(jobId)} onClick={() => setImageSize(preset.value)}>{preset.label}</button>)}</div></div>}
-            </div>
-          </div>
+          <CreationSettings balanced={isRefinedDetail} summary={`${selectedMarketplace.name} · ${language === "zh-CN" ? "简体中文" : "English"} · ${pageCount} 页`}>
+            {isRefinedDetail && <GenerationVersionField name="detail-speed" span="half" value={detailSpeed} onChange={setDetailSpeed} disabled={Boolean(jobId) || createJob.isPending} />}
+            <SettingField label="内容语言" icon={<Languages size={15} />} span={isRefinedDetail ? "quarter" : "half"}>
+              <ChoiceControl name="detail-language" label="内容语言" value={language} onChange={setLanguage} disabled={Boolean(jobId)} options={[{ value:"zh-CN", label:"简体中文" }, { value:"en-US", label:"English" }]} />
+            </SettingField>
+            <SettingField label="详情页数" icon={<FileCheck2 size={15} />} span={isRefinedDetail ? "quarter" : "half"}>
+              <QuantityControl label="详情页数" unit="页" value={pageCount} onChange={setPageCount} allowedValues={isRefinedDetail ? Array.from({ length:12 }, (_, i) => i + 1) : [8,10,12]} disabled={Boolean(jobId)} />
+            </SettingField>
+            {marketRegion === "international" && <SettingField label="图片尺寸" icon={<Globe2 size={15} />} span="full">
+              <ChoiceControl label="图片尺寸" name="detail-image-size" value={imageSize ?? ""} onChange={value => setImageSize(value as MarketplaceImageSize)} disabled={Boolean(jobId)} options={(selectedMarketplace.sizePresets ?? []).filter(preset => preset.value).map(preset => ({value:preset.value!,label:preset.label}))} />
+            </SettingField>}
+          </CreationSettings>
           </section>
 
           {requestError && <div className="api-state api-state--error" role="alert"><AlertCircle size={24} /><div><strong>请求未完成</strong><p>{errorMessage(requestError)}</p></div></div>}
@@ -444,7 +453,7 @@ function DetailPackWorkspace() {
               <span><ShieldCheck size={18} /><div><p>图片产物</p><strong>{resultAssets.length > 0 ? `${resultAssets.length} 张已生成` : "暂无图片结果"}</strong></div></span>
             </div>
             <div className="generation-actions">
-              {!jobId && <CreditCostHint jobType="detail_pack" count={pageCount} />}
+              {!jobId && <CreditCostHint jobType="detail_pack" count={pageCount} variant={isFastDetail ? "fast" : undefined} />}
               <p><Info size={14} />{workflow.mode === "provider" ? marketRegion === "domestic" ? "提交后自动完成规划、生成和交付。" : "确认后将开始整套图片生成。" : workflow.mode === "mock" ? "确认后将保存任务计划，当前暂不生成图片。" : "生成服务状态确认中，确认入口暂时关闭。"}</p>
               {job.data && allowsJobAction(job.data.allowed_actions, "retry") ? (
                 <button className="primary-button" onClick={() => void retry()} disabled={retryJob.isPending}>{retryJob.isPending ? <LoaderCircle className="spin" size={17} /> : <RotateCcw size={17} />}重试失败项目</button>

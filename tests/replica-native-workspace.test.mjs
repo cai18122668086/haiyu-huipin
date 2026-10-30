@@ -13,7 +13,7 @@ test("native and legacy replica jobs restore the authenticated replica session",
 test("the replica source selector and execution modes have separate state", async () => {
   const source = await readFile(new URL("../components/style-replica-workspace.tsx", import.meta.url), "utf8");
   assert.match(source, /replication_method: replicationMethod/);
-  assert.match(source, /aria-label="复刻方式"/);
+  assert.match(source, /ChoiceControl name="replication-method" label="复刻方式"/);
   assert.match(source, /get\("sessionId"\)/);
   assert.doesNotMatch(source, /href=\{`\/workspace\/reference-remix/);
 });

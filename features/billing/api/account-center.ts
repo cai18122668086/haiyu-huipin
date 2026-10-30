@@ -33,14 +33,15 @@ export function useCreditProducts(workspaceId: string) {
     retry: false,
   });
 }
-export function useMembership(workspaceId: string) {
+export function useMembership(workspaceId: string | undefined) {
   return useQuery({
     queryKey: ["credit-membership", workspaceId],
+    enabled: Boolean(workspaceId),
     queryFn: async ({ signal }) =>
       unwrapApiResponse(
         await apiClient.GET(
           "/api/v1/workspaces/{workspace_id}/credits/membership",
-          { params: { path: { workspace_id: workspaceId } }, signal },
+          { params: { path: { workspace_id: workspaceId! } }, signal },
         ),
       ),
     refetchInterval: 5000,

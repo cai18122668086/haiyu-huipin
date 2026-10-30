@@ -14,24 +14,12 @@
 .creation-disclosure__fields{padding:4px 16px 18px}
 .creation-dev-options{margin:18px 0 0;color:#a49cae;font-size:11px}
 .creation-dev-options summary{cursor:pointer;padding:9px 0}
-.creation-output-settings{margin-top:25px;padding-top:22px;border-top:1px solid #ece7f3}
-.creation-output-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}
-.creation-output-heading h3{margin:0;font-size:14px;font-weight:700;color:#49414f}
-.creation-output-heading>span{padding:6px 9px;border-radius:6px;color:#8d819d;background:#f5f0fb;font-size:10px}
-.app-shell--creation .creation-output-settings .output-options{margin-top:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
-.app-shell--creation .creation-output-settings .option-field{display:grid;align-content:start;gap:10px;min-width:0;border:0;border-radius:0;padding:0;background:transparent;box-shadow:none}
-.app-shell--creation :is(.segmented-control,.page-count-control) button{transition:background .18s,box-shadow .18s,color .18s}
-.app-shell--creation :is(.segmented-control,.page-count-control) button.active{color:#252525;background:#e5ff70;border-color:#d5e99a;box-shadow:0 2px 5px #535e2210}
 .app-shell--creation :is(input,textarea):not([type=radio]):not([type=checkbox]){transition:border-color .18s,box-shadow .18s,background .18s}
 .app-shell--creation :is(input,textarea):not([type=radio]):not([type=checkbox]):focus{border-color:#b9a6d5;box-shadow:0 0 0 3px #efe8f8;outline:none;background:#fff}
 .app-shell--creation textarea{line-height:1.8}
-@media(max-width:640px){.creation-disclosure__trigger{padding:12px;gap:9px;min-height:60px}.creation-disclosure__fields{padding:4px 12px 14px}.creation-disclosure__trigger strong{font-size:12px}.creation-disclosure__trigger small{font-size:10px}.creation-output-heading{align-items:flex-start;flex-direction:column;gap:10px}.app-shell--creation .creation-output-settings .output-options{grid-template-columns:1fr;gap:18px}}
+@media(max-width:640px){.creation-disclosure__trigger{padding:12px;gap:9px;min-height:60px}.creation-disclosure__fields{padding:4px 12px 14px}.creation-disclosure__trigger strong{font-size:12px}.creation-disclosure__trigger small{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.creation-disclosure,.creation-disclosure__trigger>svg,.creation-disclosure__content,.app-shell--creation :is(input,textarea,button){transition:none}}
 
-.app-shell--creation .creation-output-settings .option-field > span{display:flex;align-items:center;gap:7px;margin:0;color:#6f667a;font-size:13px;line-height:1.5}
-.app-shell--creation .creation-output-settings :is(.segmented-control,.page-count-control){display:flex;gap:8px;min-height:46px;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
-.app-shell--creation .creation-output-settings :is(.segmented-control,.page-count-control) button{display:inline-flex;flex:1;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:10px 14px;border:1px solid #e4e1e9;border-radius:8px;background:#fff;color:#6f667a;box-shadow:none;font-size:13px}
-.app-shell--creation .creation-output-settings :is(.segmented-control,.page-count-control) button.active{border-color:#c6dc92;background:#f6ffe6;color:#303827;box-shadow:none;font-weight:650}
-.app-shell--creation .creation-output-settings :is(.segmented-control,.page-count-control) button:hover:not(:disabled){border-color:#b9a6d5}
-.app-shell--creation .creation-output-settings .option-field > button[aria-haspopup="listbox"]{min-height:46px;border-color:#e4e1e9;border-radius:8px;background:#fff}
-.app-shell--creation .creation-output-settings :is(.segmented-control,.page-count-control) button:focus-visible{outline:2px solid #b9a6d5;outline-offset:3px}
+
+
+.support-cases{padding:22px;margin:20px 0;border:1px solid #e5dfea;border-radius:12px;background:#fff;color:#403647}.support-cases h2{font-size:18px}.support-cases p{font-size:13px;line-height:1.8}.support-cases form,.support-cases label{display:grid;gap:10px}.support-cases form{margin:16px 0}.support-cases input,.support-cases textarea,.support-cases select{font:inherit;font-size:13px;max-width:100%;padding:10px 12px;border:1px solid #ddd5e5;border-radius:7px;color:inherit;background:#fff}.support-cases button{cursor:pointer}.support-cases form>button{justify-self:start}.support-case{padding:16px 0;border-top:1px solid #eee9f2}.support-case small{display:block;margin-top:8px;color:#766b80}.support-case a{margin-right:15px}.payment-success{padding:18px;background:#f6faed;border:1px solid #dde9c1;border-radius:10px}.payment-success h3{margin-top:0}

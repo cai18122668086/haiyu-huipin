@@ -10,7 +10,7 @@ import { AnnouncementPrompt } from "./announcement-prompt";
 import { usePathname } from "next/navigation";
 import { getFeatureByRoute } from "@/lib/feature-registry";
 import { CreationWorkspaceBar } from "./creation-workspace-bar";
-import { CreditAccountHeader, CreditUsageNotice } from "@/features/billing/components/credit-account";
+import { CreditAccountHeader } from "@/features/billing/components/credit-account";
 
 export function AppShell({
   children,
@@ -43,7 +43,6 @@ export function AppShell({
         taskTriggerRef={taskTriggerRef}
       />}
       {creationId && <CreationWorkspaceBar key={creationId} featureId={creationId} />}
-      {feature && <CreditUsageNotice jobType={feature.jobType} taskPreset={feature.taskPreset} />}
       <div className="app-shell__body">
         {showSidebar && (
           <ToolSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />

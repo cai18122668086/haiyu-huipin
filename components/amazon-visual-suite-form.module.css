@@ -5,52 +5,6 @@
   font-size: var(--amazon-body-size);
 }
 
-.amazonStepBar span {
-  font-size: var(--amazon-body-size);
-}
-
-.amazonStepBar i {
-  font-size: 12px;
-}
-
-.amazonWorkspace section h2 {
-  font-size: var(--amazon-heading-size);
-  font-weight: 700;
-}
-
-.amazonWorkspace section p,
-.amazonWorkspace section small {
-  font-size: var(--amazon-help-size);
-}
-
-.amazonWorkspace section strong,
-.amazonWorkspace section span {
-  font-size: var(--amazon-body-size);
-}
-
-.amazonWorkspace section button,
-.amazonWorkspace section input,
-.amazonWorkspace section textarea,
-.amazonWorkspace section select,
-.amazonWorkspace section label > span {
-  font-size: var(--amazon-body-size);
-}
-
-.amazonWorkspace footer p,
-.amazonWorkspace footer small {
-  font-size: var(--amazon-help-size);
-}
-
-.amazonWorkspace footer strong,
-.amazonWorkspace footer button {
-  font-size: var(--amazon-body-size);
-}
-
-.amazonWorkspace section textarea,
-.amazonWorkspace section input {
-  line-height: 1.6;
-}
-
 .amazonForm {
   display: grid;
   gap: 18px;
@@ -77,74 +31,11 @@
   min-width: 0;
 }
 
-.speedOptions {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.speedOptions legend {
-  margin-bottom: 8px;
-  color: var(--ink-800);
-  font-weight: 800;
-}
-
-.speedOptions > p {
-  margin: 10px 0 0;
-  color: var(--ink-500);
-  line-height: 1.6;
-}
-
-.speedChoices {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.speedChoices label {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 13px;
-  border: 1px solid var(--ink-200);
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.speedChoices label[data-selected] {
-  border-color: var(--studio-orange, var(--violet-500));
-  background: var(--studio-orange-soft, var(--violet-50));
-}
-
-.speedChoices input {
-  width: 16px;
-  height: 16px;
-  margin: 2px 0 0;
-  accent-color: var(--studio-orange, var(--violet-500));
-}
-
-.speedChoices span {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-}
-
-.speedChoices small {
-  color: var(--ink-500);
-  line-height: 1.5;
-}
-
-.speedOptions:disabled label {
-  cursor: default;
-  opacity: 0.75;
-}
-
 .simpleField > span {
-  color: var(--ink-800);
-  font-size: 13px;
-  font-weight: 800;
   line-height: 1.4;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-700);
 }
 
 .simpleField input,
@@ -311,9 +202,6 @@
 }
 
 @media (max-width: 480px) {
-  .speedChoices {
-    grid-template-columns: minmax(0, 1fr);
-  }
 
   .simpleField textarea {
     min-height: 108px;

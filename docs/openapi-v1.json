@@ -418,9 +418,22 @@
             "title": "Auto Start After Plan",
             "type": "boolean"
           },
+          "credit_budget": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Budget"
+          },
           "facts": {
             "default": "",
-            "maxLength": 4000,
+            "maxLength": 20000,
             "title": "Facts",
             "type": "string"
           },
@@ -1350,6 +1363,34 @@
         "title": "CrawlTaskCreateRequest",
         "type": "object"
       },
+      "CreationSummaryResponse": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "integer"
+          },
+          "completed": {
+            "title": "Completed",
+            "type": "integer"
+          },
+          "needs_attention": {
+            "title": "Needs Attention",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "active",
+          "needs_attention",
+          "completed",
+          "total"
+        ],
+        "title": "CreationSummaryResponse",
+        "type": "object"
+      },
       "CreativeImageConfiguration": {
         "properties": {
           "aspect_ratio": {
@@ -1550,6 +1591,48 @@
         "title": "CreditAccountResponse",
         "type": "object"
       },
+      "CreditJobSettlementResponse": {
+        "properties": {
+          "released_credits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Released Credits"
+          },
+          "reserved_credits": {
+            "title": "Reserved Credits",
+            "type": "integer"
+          },
+          "settled_credits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settled Credits"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reserved_credits",
+          "settled_credits",
+          "released_credits"
+        ],
+        "title": "CreditJobSettlementResponse",
+        "type": "object"
+      },
       "CreditLedgerEntry": {
         "properties": {
           "available_after_credits": {
@@ -1659,6 +1742,11 @@
             "title": "Member Credits",
             "type": "integer"
           },
+          "membership_status": {
+            "default": "none",
+            "title": "Membership Status",
+            "type": "string"
+          },
           "monthly_credits": {
             "title": "Monthly Credits",
             "type": "integer"
@@ -1732,6 +1820,17 @@
               }
             ],
             "title": "Plan Name"
+          },
+          "previous_plan_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Plan Name"
           },
           "starts_at": {
             "anyOf": [
@@ -1870,6 +1969,17 @@
               }
             ],
             "title": "Task Type"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
           }
         },
         "required": [
@@ -6627,6 +6737,17 @@
       },
       "ReplicaCreationRecordResponse": {
         "properties": {
+          "actual_credits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Credits"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -6639,8 +6760,29 @@
             "title": "Current Job Ids",
             "type": "array"
           },
+          "delivered": {
+            "default": 0,
+            "title": "Delivered",
+            "type": "integer"
+          },
+          "estimated_credits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Credits"
+          },
           "expected": {
             "title": "Expected",
+            "type": "integer"
+          },
+          "failed": {
+            "default": 0,
+            "title": "Failed",
             "type": "integer"
           },
           "generated": {
@@ -7055,6 +7197,102 @@
           }
         },
         "title": "SessionStartRequest",
+        "type": "object"
+      },
+      "SupportCreate": {
+        "properties": {
+          "issue": {
+            "maxLength": 4000,
+            "minLength": 3,
+            "title": "Issue",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          }
+        },
+        "required": [
+          "issue"
+        ],
+        "title": "SupportCreate",
+        "type": "object"
+      },
+      "SupportResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "issue": {
+            "title": "Issue",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "resolution": {
+            "title": "Resolution",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "job_id",
+          "issue",
+          "status",
+          "resolution"
+        ],
+        "title": "SupportResponse",
+        "type": "object"
+      },
+      "SupportUpdate": {
+        "properties": {
+          "resolution": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Resolution",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "SupportUpdate",
         "type": "object"
       },
       "UsageCompleteness": {
@@ -11690,6 +11928,137 @@
         ]
       }
     },
+    "/api/v1/admin/billing/support-cases": {
+      "get": {
+        "operationId": "admin_cases_api_v1_admin_billing_support_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "in_progress",
+                    "resolved"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SupportResponse"
+                  },
+                  "title": "Response Admin Cases Api V1 Admin Billing Support Cases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Admin Cases",
+        "tags": [
+          "support"
+        ]
+      }
+    },
+    "/api/v1/admin/billing/support-cases/{case_id}": {
+      "patch": {
+        "operationId": "update_case_api_v1_admin_billing_support_cases__case_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Update Case",
+        "tags": [
+          "support"
+        ]
+      }
+    },
     "/api/v1/admin/billing/users": {
       "get": {
         "operationId": "users_api_v1_admin_billing_users_get",
@@ -14446,6 +14815,53 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace_id}/creation-summary": {
+      "get": {
+        "operationId": "creation_summary_api_v1_workspaces__workspace_id__creation_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Creation Summary",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/credits": {
       "get": {
         "operationId": "account_api_v1_workspaces__workspace_id__credits_get",
@@ -14488,6 +14904,62 @@
           }
         ],
         "summary": "Account",
+        "tags": [
+          "credits"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/credits/jobs/{job_id}": {
+      "get": {
+        "operationId": "job_settlement_api_v1_workspaces__workspace_id__credits_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditJobSettlementResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Job Settlement",
         "tags": [
           "credits"
         ]
@@ -18073,6 +18545,121 @@
         "summary": "Revise Analysis",
         "tags": [
           "one-click-replica"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/support-cases": {
+      "get": {
+        "operationId": "list_cases_api_v1_workspaces__workspace_id__support_cases_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SupportResponse"
+                  },
+                  "title": "Response List Cases Api V1 Workspaces  Workspace Id  Support Cases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "List Cases",
+        "tags": [
+          "support"
+        ]
+      },
+      "post": {
+        "operationId": "create_case_api_v1_workspaces__workspace_id__support_cases_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Create Case",
+        "tags": [
+          "support"
         ]
       }
     },

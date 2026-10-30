@@ -1,4 +1,6 @@
 "use client";
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -38,7 +40,8 @@ export default function LocalEditPage() {
 function LocalEditWorkspace() {
   const fileInput = useRef<HTMLInputElement>(null);
   const maskEditor = useRef<MaskEditorHandle>(null);
-  const [draftPrompt, setDraftPrompt] = useState("");
+  const { workspace } = useWorkspace();
+  const [draftPrompt, setDraftPrompt] = useDraftState(workspace?.id, "local-edit", "prompt", "");
   const [promptEdited, setPromptEdited] = useState(false);
   const setPrompt = (value: string) => { setDraftPrompt(value); setPromptEdited(true); };
   const [sourceOverridden, setSourceOverridden] = useState(false);
@@ -49,7 +52,6 @@ function LocalEditWorkspace() {
   const [editorError, setEditorError] = useState<string>();
   const [preparing, setPreparing] = useState(false);
   const submissionLock = useRef(false);
-  const { workspace } = useWorkspace();
   const [jobId, setJobId] = useWorkspaceJobId("/workspace/local-edit");
   const handoff = useAssetHandoff(workspace?.id, 1, jobId);
   const job = useJob(workspace?.id, jobId);
@@ -212,7 +214,7 @@ function LocalEditWorkspace() {
               </ImageDropZone>
               <section className="control-card">
                 <div className="control-card__heading"><span>2</span><div><strong>想怎么修改？</strong><p id="local-edit-prompt-hint">描述选区里的变化，选区外保持原样</p></div></div>
-                <div className="textarea-wrap"><textarea disabled={Boolean(jobId) || busy} value={prompt} placeholder="例如：将选区改为深灰色磨砂金属，保留商品结构与光影。" maxLength={500} onChange={(event) => setPrompt(event.target.value)} aria-label="修改要求" aria-describedby="local-edit-prompt-hint" /><span>{prompt.length} / 500</span></div>
+                <ProductFactsGuidance editing /><div className="textarea-wrap"><textarea disabled={Boolean(jobId) || busy} value={prompt} placeholder="例如：将选区改为深灰色磨砂金属，保留商品结构与光影。" maxLength={500} onChange={(event) => setPrompt(event.target.value)} aria-label="修改要求" aria-describedby="local-edit-prompt-hint" /><span>{prompt.length} / 500</span></div>
                 {!jobId && <div className="local-edit-examples" aria-label="修改要求示例">
                   <span>试试这些写法</span>
                   {[

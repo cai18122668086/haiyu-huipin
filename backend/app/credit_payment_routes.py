@@ -266,6 +266,8 @@ class CreditPurchaseList(BaseModel):
 
 
 class CreditMembershipState(BaseModel):
+    membership_status: str = "none"
+    previous_plan_name: str | None = None
     plan_id: str | None
     plan_name: str | None
     monthly_credits: int

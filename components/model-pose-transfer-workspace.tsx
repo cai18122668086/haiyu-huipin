@@ -1,4 +1,7 @@
 "use client";
+import { ChoiceControl } from "@/components/creation-settings";
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -298,7 +301,7 @@ export function ModelPoseTransferWorkspace() {
   const [draftSelectedPoseSlug, setSelectedPoseSlug] = useState<string>();
   const [draftCustomPose, setCustomPose] = useState<Asset>();
   const [materializedPose, setMaterializedPose] = useState<MaterializedPose>();
-  const [draftInstruction, setInstruction] = useState("");
+  const [draftInstruction, setInstruction] = useDraftState(workspace?.id, "model-pose-transfer", "instruction", "");
   const [uiError, setUiError] = useState<string>();
   const [humanReviewComplete, setHumanReviewComplete] = useWorkspaceJobReview(jobId);
   const submissionLock = useRef(false);
@@ -542,48 +545,12 @@ export function ModelPoseTransferWorkspace() {
                 <strong>单选</strong>
               </div>
 
-              <div className={styles.modeTabs} role="tablist" aria-label="姿势来源">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={poseMode === "catalog"}
-                  data-active={poseMode === "catalog" || undefined}
-                  disabled={Boolean(jobId) || isSubmitting}
-                  onClick={() => choosePoseMode("catalog")}
-                >
-                  <Images size={16} /> 内置姿势库
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={poseMode === "custom"}
-                  data-active={poseMode === "custom" || undefined}
-                  disabled={Boolean(jobId) || isSubmitting}
-                  onClick={() => choosePoseMode("custom")}
-                >
-                  <Upload size={16} /> 自定义姿势
-                </button>
-              </div>
+              <ChoiceControl label="姿势来源" name="pose-source" value={poseMode} onChange={choosePoseMode} disabled={Boolean(jobId) || isSubmitting} options={[{value:"catalog",label:"内置姿势库"},{value:"custom",label:"自定义姿势"}]} />
 
               {poseMode === "catalog" ? (
                 <div className={styles.catalogArea}>
                   <div className={styles.catalogToolbar}>
-                    <div role="group" aria-label="筛选模特性别">
-                      <button
-                        type="button"
-                        data-active={gender === "female" || undefined}
-                        aria-pressed={gender === "female"}
-                        disabled={Boolean(jobId) || isSubmitting}
-                        onClick={() => setGender("female")}
-                      >女模姿势 <span>39</span></button>
-                      <button
-                        type="button"
-                        data-active={gender === "male" || undefined}
-                        aria-pressed={gender === "male"}
-                        disabled={Boolean(jobId) || isSubmitting}
-                        onClick={() => setGender("male")}
-                      >男模姿势 <span>21</span></button>
-                    </div>
+                    <ChoiceControl label="筛选模特性别" name="pose-gender" value={gender} onChange={setGender} disabled={Boolean(jobId) || isSubmitting} options={[{value:"female",label:"女模姿势 · 39"},{value:"male",label:"男模姿势 · 21"}]} />
                     <p>已显示 {visiblePoses.length} 个姿势</p>
                   </div>
                   <div className={styles.poseGrid}>
@@ -636,12 +603,12 @@ export function ModelPoseTransferWorkspace() {
                 <div><span>03</span><div><h2>补充要求</h2><p>可选。仅补充服装保真、表情或背景要求，不要改写目标姿势。</p></div></div>
                 <strong>可选</strong>
               </div>
-              <textarea
+              <ProductFactsGuidance editing /><textarea
                 className={styles.instruction}
                 value={instruction}
                 maxLength={500}
                 disabled={Boolean(jobId) || isSubmitting}
-                placeholder="例如：保持服装版型、花纹和配饰不变，人物表情自然。"
+                placeholder="请详细描述需保留的服装版型、花纹、配饰、表情和背景要求。"
                 onChange={(event) => setInstruction(event.currentTarget.value)}
               />
               <div className={styles.textareaMeta}><span>源图画布优先，默认输出 PNG</span><span>{instruction.length} / 500</span></div>

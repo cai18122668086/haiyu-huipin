@@ -1,4 +1,9 @@
 "use client";
+import { CreationSettings, SettingField, ChoiceControl, GenerationVersionField, QuantityControl, RatioControl } from "@/components/creation-settings";
+import { splitProductFacts } from "@/lib/product-facts";
+
+import { useDraftState } from "@/lib/hooks/use-creation-draft";
+import { ProductFactsGuidance } from "@/components/product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -20,7 +25,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ImageDropZone } from "@/components/image-drop-zone";
 import { ReplicaSelect } from "@/components/replica-select";
 import { JobProgressFeedback } from "@/components/job-progress-feedback";
-import { GenerationRecommendation } from "@/components/generation-recommendation";
 import { AppShell } from "@/components/app-shell";
 import { WorkspaceJobGate, WorkspaceJobInputs } from "@/components/workspace-job-gate";
 import { useWorkspaceJobId, useWorkspaceJobReview } from "@/lib/jobs/use-workspace-job-id";
@@ -160,13 +164,7 @@ const emptySelections: Record<RoleKey, string[]> = {
   brand: [],
 };
 
-function splitList(value: string, maxItems = 12): string[] {
-  return value
-    .split(/[\n,，;；]+/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, maxItems);
-}
+function splitList(value: string, maxItems = 12) { return splitProductFacts(value, maxItems); }
 
 function readAmazonPlanPages(payload: Record<string, unknown> | undefined): AmazonPlanPage[] {
   if (!payload || !Array.isArray(payload.pages)) return [];
@@ -395,22 +393,16 @@ export function CommerceSkillWorkspace({
   const job = useJob(workspace?.id, jobId);
   const saved = workspaceJobSnapshot(job.data);
 
-  const [draftSelections, setSelections] = useState(emptySelections);
-  const [draftPlatformCode, setPlatformCode] = useState(
-    featureId === "amazon-visual-suite" ? "amazon-us" : "tmall",
-  );
-  const [draftLanguage, setLanguage] = useState(
-    featureId === "amazon-visual-suite" ? "en-US" : "zh-CN",
-  );
-  const [draftAspectRatio, setAspectRatio] = useState<AspectRatio>(
-    featureId === "reference-remix" ? "follow-reference" : "1:1",
-  );
-  const [draftImageCount, setImageCount] = useState(1);
+  const [draftSelections, setSelections] = useDraftState(workspace?.id, featureId, "selections", emptySelections);
+  const [draftPlatformCode, setPlatformCode] = useDraftState(workspace?.id, featureId, "draftPlatformCode", featureId === "amazon-visual-suite" ? "amazon-us" : "tmall",);
+  const [draftLanguage, setLanguage] = useDraftState(workspace?.id, featureId, "draftLanguage", featureId === "amazon-visual-suite" ? "en-US" : "zh-CN",);
+  const [draftAspectRatio, setAspectRatio] = useDraftState<AspectRatio>(workspace?.id, featureId, "draftAspectRatio", featureId === "reference-remix" ? "follow-reference" : "1:1",);
+  const [draftImageCount, setImageCount] = useDraftState(workspace?.id, featureId, "draftImageCount", 1);
   const [draftCreativeDirection, setCreativeDirection] =
-    useState<CreativeDirection>("selling_point");
-  const [draftInstruction, setInstruction] = useState("");
-  const [draftSellingPoints, setSellingPoints] = useState("");
-  const [draftProductName, setProductName] = useState("");
+    useDraftState<CreativeDirection>(workspace?.id, featureId, "draftCreativeDirection", "selling_point");
+  const [draftInstruction, setInstruction] = useDraftState(workspace?.id, featureId, "draftInstruction", "");
+  const [draftSellingPoints, setSellingPoints] = useDraftState(workspace?.id, featureId, "draftSellingPoints", "");
+  const [draftProductName, setProductName] = useDraftState(workspace?.id, featureId, "draftProductName", "");
   const [draftAmazonSpeed, setAmazonSpeed] = useState<AmazonSuiteSpeed>("standard");
   const hydratedAmazonSpeedWorkspace = useRef<string | undefined>(undefined);
   // Keep the full backend contract while the simplified Amazon form leaves legacy optional fields blank.
@@ -419,7 +411,7 @@ export function CommerceSkillWorkspace({
   const listingTitle = "";
   const listingDescription = "";
   const aPlusCopy = "";
-  const [draftProductFacts, setProductFacts] = useState("");
+  const [draftProductFacts, setProductFacts] = useDraftState(workspace?.id, featureId, "draftProductFacts", "");
   const parameters = "";
   const certificationsOrEvidence = "";
   const forbiddenClaims = "";
@@ -483,7 +475,6 @@ export function CommerceSkillWorkspace({
           const compose = JSON.parse(rawCompose) as { instruction?: string };
           if (compose.instruction) {
             // Hydrate the one-time handoff payload into the existing composer.
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setInstruction((current) => current || compose.instruction!);
           }
           window.localStorage.removeItem("polaris-inspiration-compose");
@@ -508,12 +499,14 @@ export function CommerceSkillWorkspace({
         setInstruction((current) => current || handoffInstruction);
       }
 
+      // A one-time handoff from browser storage may request the existing submit flow.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (strategy.autoStart) setAutoStart(true);
       window.localStorage.removeItem("polaris-inspiration-strategy");
     } catch {
       // Ignore malformed handoff data and keep the normal workspace flow intact.
     }
-  }, [featureId, jobId]);
+  }, [featureId, jobId, setInstruction, setSelections]);
 
   const resultAssets = selectJobResultAssets(job.data);
   const requestError = workspaceError ?? upload.error ?? confirmPlan.error ?? job.error;
@@ -534,11 +527,6 @@ export function CommerceSkillWorkspace({
   )?.label ?? "未选择站点";
   const selectedLanguageLabel = languageOptions.find((option) => option.value === language)?.label
     ?? "未选择语言";
-  const selectedSizeLabel = isAmazon
-    ? `${amazonSpeed === "fast" ? "目标画幅：" : ""}主图 2000 × 2000；副图 1200 × 1600；桌面 A+ 1464 × 600；移动 A+ 1600 × 1200`
-    : aspectRatio === "follow-reference"
-      ? "跟随首张参考图画幅比例"
-      : aspectRatios.find((ratio) => ratio.value === aspectRatio)?.note ?? "未选择";
   const expectedCount = isAmazon
     ? 21
     : job.data?.expected_item_count ?? imageCount;
@@ -944,21 +932,7 @@ export function CommerceSkillWorkspace({
 
               {isAmazon ? (
                 <div className={amazonStyles.amazonForm}>
-                  <fieldset className={amazonStyles.speedOptions} disabled={Boolean(jobId)}>
-                    <legend>生成版本</legend>
-                    <div className={amazonStyles.speedChoices}>
-                      {([
-                        ["fast", "快速版（约5分钟）"],
-                        ["standard", "精致版（约40分钟）"],
-                      ] as const).map(([value, title]) => (
-                        <label key={value} data-selected={amazonSpeed === value || undefined}>
-                          <input type="radio" name="amazon-suite-speed" value={value} checked={amazonSpeed === value} onChange={() => selectAmazonSpeed(value)} />
-                          <span><strong>{title}{value === "fast" && <GenerationRecommendation />}</strong></span>
-                        </label>
-                      ))}
-                    </div>
-                    <p>生成 21 张图片，覆盖主图、副图及桌面与移动 A+。</p>
-                  </fieldset>
+                  <GenerationVersionField name="amazon-suite-speed" span="full" value={amazonSpeed} onChange={selectAmazonSpeed} disabled={Boolean(jobId)} hint="固定 21 张，覆盖主图、副图与桌面 / 移动 A+" />
                   <label className={amazonStyles.simpleField}>
                     <span>商品名称</span>
                     <input
@@ -971,7 +945,7 @@ export function CommerceSkillWorkspace({
                   </label>
 
                   <label className={amazonStyles.simpleField}>
-                    <span>商品卖点与参数</span>
+                    <span>商品卖点与参数</span><ProductFactsGuidance />
                     <textarea
                       value={productFacts}
                       onChange={(event) => setProductFacts(event.target.value)}
@@ -995,73 +969,24 @@ export function CommerceSkillWorkspace({
                 </div>
               ) : (
                 <>
-                  <div className={styles.formGrid}>
-                    <label>
-                      <span>目标平台</span>
-                      <ReplicaSelect label="目标平台" value={platformCode} onChange={setPlatformCode} disabled={Boolean(jobId)} options={platforms.map(platform => [platform.value, platform.label] as const)} />
-                      <small>用于匹配不同渠道的构图与视觉规范。图片尺寸：{selectedSizeLabel}</small>
-                    </label>
-                    <label>
-                      <span>图片文案语言</span>
-                      <ReplicaSelect label="图片文案语言" value={language} onChange={setLanguage} disabled={Boolean(jobId)} options={(featureId === "reference-remix" && !jobId ? languageOptions.filter(option => option.value === "zh-CN") : languageOptions).map(option => [option.value, option.label] as const)} />
-                      <small>用于生成图片中的文字内容。</small>
-                    </label>
-                    {isCreative ? (
-                      <label>
-                        <span>创意方向</span>
-                        <ReplicaSelect label="创意方向" value={creativeDirection} onChange={value => setCreativeDirection(value as CreativeDirection)} disabled={Boolean(jobId)} options={creativeDirections.map(direction => [direction.value, direction.label] as const)} />
-                        <small>用于确定画面的主要表达方向。</small>
-                      </label>
-                    ) : null}
-                  </div>
-
-                  <fieldset className={styles.optionGroup} disabled={Boolean(jobId)}>
-                    <legend>画面比例</legend>
-                    <div className={styles.ratioGrid}>
-                      {(featureId === "reference-remix" && !jobId ? referenceAspectRatios.filter(ratio => ratio.value === "follow-reference") : featureId === "reference-remix" ? referenceAspectRatios : aspectRatios).map((ratio) => (
-                        <label key={ratio.value} data-selected={aspectRatio === ratio.value || undefined}>
-                          <input
-                            type="radio"
-                            name={`${featureId}-aspect-ratio`}
-                            value={ratio.value}
-                            checked={aspectRatio === ratio.value}
-                            onChange={() => setAspectRatio(ratio.value)}
-                          />
-                          <span className={styles.ratioPreview} aria-hidden="true"><i style={{ aspectRatio: ratio.value === "follow-reference" ? "3 / 4" : ratio.value.replace(":", " / ") }} /></span>
-                          <strong>{ratio.label}</strong>
-                          <small>{ratio.note}</small>
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset className={styles.optionGroup} disabled={Boolean(jobId)}>
-                    <legend>生成数量</legend>
-                    <div className={styles.countOptions}>
-                      {imageCountOptions.map((count) => (
-                        <label key={count} data-selected={imageCount === count || undefined}>
-                          <input
-                            type="radio"
-                            name={`${featureId}-image-count`}
-                            value={count}
-                            checked={imageCount === count}
-                            onChange={() => setImageCount(count)}
-                          />
-                          <strong>{count}</strong><span>张</span>
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
+                  <CreationSettings summary={`${selectedPlatformLabel} · ${selectedLanguageLabel} · ${imageCount} 张`}>
+                    <SettingField label="目标平台"><ReplicaSelect label="目标平台" value={platformCode} onChange={setPlatformCode} disabled={Boolean(jobId)} options={platforms.map(platform => [platform.value,platform.label] as const)} /></SettingField>
+                    <SettingField label="图片文案语言"><ReplicaSelect label="图片文案语言" value={language} onChange={setLanguage} disabled={Boolean(jobId)} options={(featureId === "reference-remix" && !jobId ? languageOptions.filter(option => option.value === "zh-CN") : languageOptions).map(option => [option.value,option.label] as const)} /></SettingField>
+                    <SettingField label="生成数量"><QuantityControl value={imageCount} onChange={setImageCount} allowedValues={imageCountOptions} disabled={Boolean(jobId)} /></SettingField>
+                    {isCreative && <SettingField label="创意方向" span="full"><ChoiceControl name="creative-direction" label="创意方向" value={creativeDirection} onChange={setCreativeDirection} disabled={Boolean(jobId)} options={creativeDirections.map(direction => ({value:direction.value,label:direction.label}))} /></SettingField>}
+                    <SettingField label="画面比例" span="full"><RatioControl name={`${featureId}-aspect-ratio`} value={aspectRatio} onChange={value => setAspectRatio(value as typeof aspectRatio)} disabled={Boolean(jobId)} options={featureId === "reference-remix" && !jobId ? referenceAspectRatios.filter(ratio => ratio.value === "follow-reference") : featureId === "reference-remix" ? referenceAspectRatios : aspectRatios} /></SettingField>
+                  </CreationSettings>
 
                   <label className={styles.instructionField}>
-                    <span>{featureId === "reference-remix" ? "商品事实与不可变特征 *" : "商品卖点"}</span>
+                    <span>{featureId === "reference-remix" ? "商品事实与不可变特征 *" : "商品卖点"}</span><ProductFactsGuidance />
                     <textarea
                       value={sellingPoints}
                       onChange={(event) => setSellingPoints(event.target.value)}
                       rows={4}
-                      placeholder={featureId === "reference-remix" ? "请填写真实商品事实、结构特征或纹样方向，每行一项" : "每行一项，最多 12 项"}
+                      placeholder={featureId === "reference-remix" ? "请填写真实商品事实、结构特征或纹样方向，每行一项" : "可粘贴完整商品介绍，分行填写便于阅读"}
                       disabled={Boolean(jobId)}
                     />
-                    <small>按换行或逗号拆分，最多提交 12 项。</small>
+                    <small>真实资料越完整，越有助于规划内容；较多条目会合并整理，保留全部内容。</small>
                   </label>
 
                   <label className={styles.instructionField}>
@@ -1260,7 +1185,7 @@ export function CommerceSkillWorkspace({
             <p>
               <strong>{workspace?.name ?? "正在连接工作区"}</strong>
               <small>{jobId ? progressText : isAmazon ? "预计生成 21 张套图" : `预计生成 ${imageCount} 张图片`}</small>
-              {!jobId && <CreditCostHint jobType={feature.jobType} count={expectedCount} />}
+              {!jobId && <CreditCostHint jobType={feature.jobType} count={expectedCount} variant={(isAmazon && amazonSpeed === "fast") || featureId === "reference-remix" ? "fast" : undefined} />}
             </p>
           </div>
           <div className={styles.stickyActions}>

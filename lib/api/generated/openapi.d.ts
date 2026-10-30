@@ -1054,6 +1054,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/support-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin Cases */
+        get: operations["admin_cases_api_v1_admin_billing_support_cases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/support-cases/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Case */
+        patch: operations["update_case_api_v1_admin_billing_support_cases__case_id__patch"];
+        trace?: never;
+    };
     "/api/v1/admin/billing/users": {
         parameters: {
             query?: never;
@@ -1727,6 +1761,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/creation-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Creation Summary */
+        get: operations["creation_summary_api_v1_workspaces__workspace_id__creation_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/credits": {
         parameters: {
             query?: never;
@@ -1736,6 +1787,23 @@ export interface paths {
         };
         /** Account */
         get: operations["account_api_v1_workspaces__workspace_id__credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/credits/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Job Settlement */
+        get: operations["job_settlement_api_v1_workspaces__workspace_id__credits_jobs__job_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2549,6 +2617,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/support-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cases */
+        get: operations["list_cases_api_v1_workspaces__workspace_id__support_cases_get"];
+        put?: never;
+        /** Create Case */
+        post: operations["create_case_api_v1_workspaces__workspace_id__support_cases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/ecommerce": {
         parameters: {
             query?: never;
@@ -2771,6 +2857,8 @@ export interface components {
              * @default false
              */
             auto_start_after_plan: boolean;
+            /** Credit Budget */
+            credit_budget?: number | null;
             /**
              * Facts
              * @default
@@ -3047,6 +3135,17 @@ export interface components {
             /** Workspace Id */
             workspace_id: string;
         };
+        /** CreationSummaryResponse */
+        CreationSummaryResponse: {
+            /** Active */
+            active: number;
+            /** Completed */
+            completed: number;
+            /** Needs Attention */
+            needs_attention: number;
+            /** Total */
+            total: number;
+        };
         /** CreativeImageConfiguration */
         CreativeImageConfiguration: {
             /**
@@ -3136,6 +3235,17 @@ export interface components {
             /** Reserved Credits */
             reserved_credits: number;
         };
+        /** CreditJobSettlementResponse */
+        CreditJobSettlementResponse: {
+            /** Released Credits */
+            released_credits: number | null;
+            /** Reserved Credits */
+            reserved_credits: number;
+            /** Settled Credits */
+            settled_credits: number | null;
+            /** Status */
+            status: string;
+        };
         /** CreditLedgerEntry */
         CreditLedgerEntry: {
             /** Available After Credits */
@@ -3172,6 +3282,11 @@ export interface components {
             expiring_credits: number;
             /** Member Credits */
             member_credits: number;
+            /**
+             * Membership Status
+             * @default none
+             */
+            membership_status: string;
             /** Monthly Credits */
             monthly_credits: number;
             /** Next Expiry At */
@@ -3188,6 +3303,8 @@ export interface components {
             plan_id: string | null;
             /** Plan Name */
             plan_name: string | null;
+            /** Previous Plan Name */
+            previous_plan_name?: string | null;
             /** Starts At */
             starts_at: string | null;
         };
@@ -3227,6 +3344,8 @@ export interface components {
             job_type: string;
             /** Task Type */
             task_type: string | null;
+            /** Variant */
+            variant?: string | null;
         };
         /** CreditPurchaseCreate */
         CreditPurchaseCreate: {
@@ -5043,6 +5162,8 @@ export interface components {
         };
         /** ReplicaCreationRecordResponse */
         ReplicaCreationRecordResponse: {
+            /** Actual Credits */
+            actual_credits?: number | null;
             /**
              * Created At
              * Format: date-time
@@ -5050,8 +5171,20 @@ export interface components {
             created_at: string;
             /** Current Job Ids */
             current_job_ids: string[];
+            /**
+             * Delivered
+             * @default 0
+             */
+            delivered: number;
+            /** Estimated Credits */
+            estimated_credits?: number | null;
             /** Expected */
             expected: number;
+            /**
+             * Failed
+             * @default 0
+             */
+            failed: number;
             /** Generated */
             generated: number;
             /** Id */
@@ -5176,6 +5309,41 @@ export interface components {
             platform: "auto" | "taobao" | "tmall" | "alibaba1688" | "1688" | "jd" | "pinduoduo";
             /** Url */
             url?: string | null;
+        };
+        /** SupportCreate */
+        SupportCreate: {
+            /** Issue */
+            issue: string;
+            /** Job Id */
+            job_id?: string | null;
+        };
+        /** SupportResponse */
+        SupportResponse: {
+            /** Id */
+            id: string;
+            /** Issue */
+            issue: string;
+            /** Job Id */
+            job_id: string | null;
+            /** Resolution */
+            resolution: string;
+            /** Status */
+            status: string;
+            /** Workspace Id */
+            workspace_id: string;
+        };
+        /** SupportUpdate */
+        SupportUpdate: {
+            /**
+             * Resolution
+             * @default
+             */
+            resolution: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "in_progress" | "resolved";
         };
         /**
          * UsageCompleteness
@@ -7615,6 +7783,73 @@ export interface operations {
             };
         };
     };
+    admin_cases_api_v1_admin_billing_support_cases_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "in_progress" | "resolved") | null;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_case_api_v1_admin_billing_support_cases__case_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     users_api_v1_admin_billing_users_get: {
         parameters: {
             query?: {
@@ -8960,6 +9195,37 @@ export interface operations {
             };
         };
     };
+    creation_summary_api_v1_workspaces__workspace_id__creation_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreationSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     account_api_v1_workspaces__workspace_id__credits_get: {
         parameters: {
             query?: never;
@@ -8978,6 +9244,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditAccountResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    job_settlement_api_v1_workspaces__workspace_id__credits_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditJobSettlementResponse"];
                 };
             };
             /** @description Validation Error */
@@ -10772,6 +11070,74 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cases_api_v1_workspaces__workspace_id__support_cases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_case_api_v1_workspaces__workspace_id__support_cases_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportResponse"];
                 };
             };
             /** @description Validation Error */
