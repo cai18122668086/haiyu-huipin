@@ -1,0 +1,15 @@
+{
+  "typecheck": "passed",
+  "production_build": "passed",
+  "eslint_errors": 0,
+  "eslint_existing_warnings": 1,
+  "frontend_tests": {
+    "passed": 243,
+    "failed": 0,
+    "skipped": 0
+  },
+  "production_source_and_asset_hash_matches": 91,
+  "public_original_assets_sampled": 6,
+  "backend_restarted": false,
+  "database_changed": false
+}

@@ -1,0 +1,14 @@
+{
+  "status": "activated",
+  "revision": "0a6589e0368aeb69886d163028825d1aace96657",
+  "frontend_image": "huipin-showcase/frontend:0a6589e0368aeb69886d163028825d1aace96657",
+  "previous_image": "huipin-experience/frontend:68dda82b44b5f8e1064f7b7887a20c0ea1931e37",
+  "backend_restarted": false,
+  "database_changed": false,
+  "other_services_preserved": true,
+  "runtime_environment_preserved": true,
+  "protected_configuration_preserved": true,
+  "public_routes_verified": 6,
+  "public_original_assets_verified": 6,
+  "matched_files": 91
+}

@@ -72,22 +72,18 @@ def test():
     private=ROOT/'candidate.private.env'
     private.write_text('\n'.join(baseline['Config']['Env'])+'\n');private.chmod(0o600)
     network=next(iter(baseline['NetworkSettings']['Networks']))
-    subprocess.run(['docker','run','-d','--name',name,'--network',network,'--env-file',str(private),'-p','127.0.0.1:18960:3000',IMAGE],check=True,stdout=subprocess.DEVNULL)
+    subprocess.run(['docker','run','-d','--name',name,'--network',network,'--env-file',str(private),IMAGE],check=True,stdout=subprocess.DEVNULL)
+    check="""(async()=>{for(const path of ['/','/tools','/style-replica','/workspace/product-image/try-on','/account','/jobs']){const r=await fetch('http://127.0.0.1:3000'+path,{signal:AbortSignal.timeout(15000)});if(r.status!==200)throw new Error('Route '+path+': '+r.status);const text=await r.text();if(path==='/'&&(!text.includes('home-outcome-grid')||!text.includes('/images/cases/olay-20261030/replica-01.png')))throw new Error('Missing approved homepage');if(text.includes('usr_isolated_olay_preview')||text.includes('aria-label="本地模拟预览导航"'))throw new Error('Local preview configuration leaked')}console.log('Candidate routes passed')})().catch(e=>{console.error(e.message);process.exit(1)})"""
     try:
-        for _ in range(60):
-            state=inspect(name)['State']
-            assert state['Running'],'Candidate did not start'
-            try:
-                assert_page('http://127.0.0.1:18960','/',('home-outcome-grid','/images/cases/olay-20261030/replica-01.png'))
-                break
-            except (OSError,TimeoutError):
-                time.sleep(2)
+        for _ in range(30):
+            state=inspect(name)['State'];assert state['Running'],'Candidate did not start'
+            result=subprocess.run(['docker','exec',name,'node','-e',check],capture_output=True)
+            if result.returncode==0:break
+            time.sleep(2)
         else:
-            raise RuntimeError('Candidate did not respond')
-        for path in ['/tools','/style-replica','/workspace/product-image/try-on','/account','/jobs']:
-            assert_page('http://127.0.0.1:18960',path)
-        write_json('test-result.json',{'status':'passed','image_id':built['image_id'],'runtime_routes':7,'source_files':verify_sources()['matched_files']})
-        print(json.dumps({'status':'candidate_verified','runtime_routes':7}))
+            raise RuntimeError('Candidate route check failed: '+result.stderr.decode()[-800:])
+        write_json('test-result.json',{'status':'passed','image_id':built['image_id'],'runtime_routes':6,'source_files':verify_sources()['matched_files']})
+        print(json.dumps({'status':'candidate_verified','runtime_routes':6}))
     finally:
         subprocess.run(['docker','rm','-f',name],check=True,stdout=subprocess.DEVNULL)
         private.unlink(missing_ok=True)
@@ -142,7 +138,7 @@ def activate():
         subprocess.run(COMPOSE+['up','-d','--no-deps','frontend'],cwd=RUNTIME,check=True)
         write_json('activation.json',{'status':'rolled_back','backend_restarted':False})
         raise
-    result={'status':'activated','revision':MANIFEST['revision'],'frontend_image':IMAGE,'previous_image':before['Config']['Image'],'backend_restarted':False,'database_changed':False,'other_services_preserved':True,'runtime_environment_preserved':True,'protected_configuration_preserved':True,'public_routes_verified':7,'public_original_assets_verified':len(MANIFEST['public_smoke_assets']),**proof}
+    result={'status':'activated','revision':MANIFEST['revision'],'frontend_image':IMAGE,'previous_image':before['Config']['Image'],'backend_restarted':False,'database_changed':False,'other_services_preserved':True,'runtime_environment_preserved':True,'protected_configuration_preserved':True,'public_routes_verified':6,'public_original_assets_verified':len(MANIFEST['public_smoke_assets']),**proof}
     write_json('activation.json',result);print(json.dumps(result))
 
 

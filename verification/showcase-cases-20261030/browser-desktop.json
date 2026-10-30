@@ -1,0 +1,31 @@
+{
+  "animation": "_reveal-result_1esd7_1",
+  "brokenImages": 0,
+  "cards": [
+    {
+      "descriptionY": 672,
+      "h": 383,
+      "id": "local-edit",
+      "w": 287
+    },
+    {
+      "descriptionY": 672,
+      "h": 383,
+      "id": "reference-remix",
+      "w": 287
+    },
+    {
+      "descriptionY": 672,
+      "h": 383,
+      "id": "amazon-visual-suite",
+      "w": 287
+    }
+  ],
+  "localControls": false,
+  "overflow": false,
+  "url": "https://huipin.haiyushuke.com/#outcomes",
+  "viewport": {
+    "h": 974,
+    "w": 2040
+  }
+}
