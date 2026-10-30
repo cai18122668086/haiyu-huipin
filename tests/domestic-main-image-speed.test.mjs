@@ -3,7 +3,7 @@ import test from "node:test";
 import { MAIN_IMAGE_SPEED_OPTIONS, mainImageSpeed, mainImageSpeedSettings } from "../lib/domestic-main-image-speed.ts";
 
 test("only original and retained native B are selectable and restored", () => {
-  assert.deepEqual(MAIN_IMAGE_SPEED_OPTIONS.map(([value]) => value), ["standard", "native_fast"]);
+  assert.deepEqual(MAIN_IMAGE_SPEED_OPTIONS.map(([value]) => value), ["native_fast", "standard"]);
   for (const value of [undefined, null, "standard", "fast", "parallel_v20", {}, true]) assert.equal(mainImageSpeed(value), "standard");
   assert.equal(mainImageSpeed("native_fast"), "native_fast");
 });

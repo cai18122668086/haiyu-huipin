@@ -1,0 +1,20 @@
+.badge.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: 7px;
+  padding: 3px 6px;
+  border: 1px solid #eed9a1;
+  border-radius: 5px;
+  color: #946516;
+  background: #fff7df;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.badge svg {
+  flex: none;
+}
