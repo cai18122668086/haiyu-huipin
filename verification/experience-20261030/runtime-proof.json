@@ -1,0 +1,33 @@
+{
+  "current_protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "legacy_v15_preserved": true,
+  "fast_concurrency": 20,
+  "image_global_concurrency": 3000,
+  "worker_async_runtime": true,
+  "wechat_query_reconciliation": true,
+  "bounded_refined_and_amazon_planners": true,
+  "native_portrait_acceptance": true,
+  "preview_and_wrong_aspect_rejected": true,
+  "worker_command": [
+    "python",
+    "-m",
+    "celery",
+    "-A",
+    "app.celery_app:celery_app",
+    "worker",
+    "--loglevel=INFO",
+    "--concurrency=3000",
+    "--prefetch-multiplier=1",
+    "--queues=default,one_click_replica,domestic_detail_v431",
+    "--pool=threads"
+  ],
+  "health": {
+    "api": "healthy",
+    "worker": "healthy",
+    "dispatcher": "healthy",
+    "frontend": "healthy"
+  }
+}

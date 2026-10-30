@@ -1,0 +1,7 @@
+{
+  "passed": 317,
+  "warnings": 4,
+  "seconds": 427.85,
+  "isolated_postgresql": true,
+  "complete_migration_head": "20261030_0036"
+}

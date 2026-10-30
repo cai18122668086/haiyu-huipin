@@ -2,7 +2,7 @@
 
 面向电商商家的 AI 图片工作台，提供商品图、详情图、套图、一键复刻、任务与素材管理，以及独立的账户、会员、积分和支付后台。运营主体为海宇数科（广东横琴）科技有限公司。
 
-- 唯一正式源码仓库：<https://github.com/cai18122668086/haiyu-huipin>（用户已授权公开）。
+- 唯一正式源码仓库：<https://github.com/cai18122668086/haiyu-huipin>（公开）。
 - 正式网站：<https://huipin.haiyushuke.com>。
 - 账户中心：<https://huipin.haiyushuke.com/account>。
 - 管理后台：<https://huipin.haiyushuke.com/admin/billing>。
@@ -77,7 +77,7 @@ npm run dev -- --host 127.0.0.1 --port 18938 --strictPort
 
 已完成 3000 个模拟任务的调度验证，没有执行 3000 张真实付费图片压测。真实吞吐仍受上游、图片大小、带宽、内存、数据库和存储影响。
 
-当前生产后端镜像为 `huipin-main-image-recovery/backend:32d60f187bc0cc55548db62b6b7e1537e2850ed2`，前端为 `huipin-main-image-recovery/frontend:32d60f187bc0cc55548db62b6b7e1537e2850ed2`；原版继续使用已部署的 v16 拆屏修复，并保留历史 v15 恢复。数据库迁移为 `20261030_0035`，规划版本字段扩至 64 字符。一键复刻新增默认原版、用户可选快速，快速版单套最多 20 张滚动并发。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
+当前生产后端镜像为 `huipin-experience/backend:68dda82b44b5f8e1064f7b7887a20c0ea1931e37`，前端为 `huipin-experience/frontend:68dda82b44b5f8e1064f7b7887a20c0ea1931e37`；原版继续使用已部署的 v16 拆屏修复，并保留历史 v15 恢复。数据库迁移为 `20261030_0036`，规划版本字段扩至 64 字符。一键复刻新增默认原版、用户可选快速，快速版单套最多 20 张滚动并发。部署使用现有基础 Compose 和会员支付叠加配置，必须保留三个工作队列、支付积分设置、共享并发与资源预算。禁止直接用旧基础配置覆盖当前生产服务。
 
 规划 tokens 与原图交付修复已随后统一合并发布，详情精修显示实际分辨率，原版 v16 协议哈希及历史恢复保留；见 `verification/consolidated-20261029`。
 
@@ -86,6 +86,8 @@ npm run dev -- --host 127.0.0.1 --port 18938 --strictPort
 2026-10-30 已发布主图规划保存与失败恢复修复，以及四入口快速版优先、星标推荐及预计时长展示。原失败任务可保留输入重新规划，未自动启动客户生图。见 [本次发布记录](docs/release-main-image-recovery-20261030.md)。
 
 GitHub 推送只保存源码，不自动发布生产。2026-10-29 已将微信主动补单与 EveryInfra 采集统一合并到 `main` 并发布；商户、队列和并发配置保留。详情见 [RELEASE-STATUS.txt](RELEASE-STATUS.txt) 与 `verification/everyinfra-integrated-*.json`。
+
+2026-10-30 已发布统一创作、会员积分与任务中心体验；灵感 5、快速 8、精致 15 积分。详见 [本次发布记录](docs/release-experience-20261030.md)。
 
 ## 验证
 

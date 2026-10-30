@@ -1,0 +1,441 @@
+{
+  "scanner": "gitleaks v8.30.1",
+  "scope": "git history reachable from feature HEAD, including main",
+  "findings": 72,
+  "classified_false_positives": 72,
+  "unresolved": [],
+  "review": [
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/experience-20261030/production-baseline.json",
+      "line": 1,
+      "commit": "982e5a1d6933b3c86a8dccb3a07f1cfaa73a9cec",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 5,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 30,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 366,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 368,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 382,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 397,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 429,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 441,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 443,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 444,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 445,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 446,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 447,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 521,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 525,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 529,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 531,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 543,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 553,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/main-image-recovery-20261030/production-baseline.json",
+      "line": 558,
+      "commit": "5cc40b2b6a89aa323e537792cd40ab31154a9ab5",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/suite-fast-20261029/production-baseline.json",
+      "line": 58,
+      "commit": "72eaf6787788f7a032021cdce34f8527f304abf6",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/suite-fast-20261029/production-baseline.json",
+      "line": 62,
+      "commit": "72eaf6787788f7a032021cdce34f8527f304abf6",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/suite-fast-20261029/production-baseline.json",
+      "line": 98,
+      "commit": "72eaf6787788f7a032021cdce34f8527f304abf6",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/suite-fast-20261029/production-baseline.json",
+      "line": 101,
+      "commit": "72eaf6787788f7a032021cdce34f8527f304abf6",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/consolidated-20261029/production-baseline.json",
+      "line": 58,
+      "commit": "ce56815f50eb890c2f9ef117201481acbe04fc4e",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/consolidated-20261029/production-baseline.json",
+      "line": 62,
+      "commit": "ce56815f50eb890c2f9ef117201481acbe04fc4e",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/consolidated-20261029/production-baseline.json",
+      "line": 98,
+      "commit": "ce56815f50eb890c2f9ef117201481acbe04fc4e",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/consolidated-20261029/production-baseline.json",
+      "line": 101,
+      "commit": "ce56815f50eb890c2f9ef117201481acbe04fc4e",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/replica-fast/production-baseline.json",
+      "line": 56,
+      "commit": "ad3ef21aed09bea7abbed3d5389e57d4f1afe91a",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/replica-fast/production-baseline.json",
+      "line": 60,
+      "commit": "ad3ef21aed09bea7abbed3d5389e57d4f1afe91a",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/replica-fast/production-baseline.json",
+      "line": 96,
+      "commit": "ad3ef21aed09bea7abbed3d5389e57d4f1afe91a",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "deploy/replica-fast/production-baseline.json",
+      "line": 99,
+      "commit": "ad3ef21aed09bea7abbed3d5389e57d4f1afe91a",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "verification/wechat-build-manifest.json",
+      "line": 36,
+      "commit": "0492f2119fb54c1d19dcf76f45392d503b1da29c",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "verification/wechat-build-manifest.json",
+      "line": 485,
+      "commit": "0492f2119fb54c1d19dcf76f45392d503b1da29c",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "backend/tests/test_credit_payments.py",
+      "line": 44,
+      "commit": "3f5dc0e573e7f34f4e7fcf581f7b25a7f7894660",
+      "reason": "synthetic test fixture"
+    },
+    {
+      "file": "backend/tests/test_p0_amazon_fail_closed.py",
+      "line": 699,
+      "commit": "3f5dc0e573e7f34f4e7fcf581f7b25a7f7894660",
+      "reason": "synthetic test fixture"
+    },
+    {
+      "file": "backend/tests/test_xinghe_single_image_provider.py",
+      "line": 67,
+      "commit": "3f5dc0e573e7f34f4e7fcf581f7b25a7f7894660",
+      "reason": "synthetic test fixture"
+    },
+    {
+      "file": "backend/tests/test_xinghe_single_image_provider.py",
+      "line": 1687,
+      "commit": "3f5dc0e573e7f34f4e7fcf581f7b25a7f7894660",
+      "reason": "synthetic test fixture"
+    },
+    {
+      "file": "backend/tests/test_xinghe_single_image_provider.py",
+      "line": 1729,
+      "commit": "3f5dc0e573e7f34f4e7fcf581f7b25a7f7894660",
+      "reason": "synthetic test fixture"
+    },
+    {
+      "file": "docs/releases/2026-10-17-observed-production.json",
+      "line": 4,
+      "commit": "3f5dc0e573e7f34f4e7fcf581f7b25a7f7894660",
+      "reason": "source or artifact digest"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 97,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 106,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 115,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 124,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 133,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 142,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 285,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 291,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 297,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 303,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 309,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    },
+    {
+      "file": "verification/amazon-suite-fast-20261029/local-real-summary.json",
+      "line": 315,
+      "commit": "b2bde5990a6a9216bc3f88f0644b43137e77fe93",
+      "reason": "image slot identifier SECONDARY-01 through 06"
+    }
+  ]
+}
