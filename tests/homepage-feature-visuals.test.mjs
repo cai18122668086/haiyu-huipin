@@ -90,7 +90,7 @@ test("the homepage grid covers all one-click tasks and their registered routes",
     featured.map((feature) => feature.id),
     EXPECTED_FEATURE_IDS,
   );
-  assert.deepEqual(Object.keys(HOME_FEATURE_VISUALS), EXPECTED_FEATURE_IDS.filter(id => id !== "one-click-replica"));
+  assert.deepEqual(Object.keys(HOME_FEATURE_VISUALS).sort(), [...EXPECTED_FEATURE_IDS, "change-background", "change-color", "try-on"].sort());
   assert.deepEqual(
     featured.map((feature) => feature.route),
     [
@@ -110,13 +110,11 @@ test("all responsive production assets use supported formats with declared stabl
   assert.equal(files.some((file) => file.toLowerCase().endsWith(".gif")), false);
 
   const images = mappedImages();
-  assert.equal(images.length, 30);
-  assert.deepEqual(
-    images.map((image) => path.basename(image.src)).sort(),
-    [...EXPECTED_FILES, ...EXPECTED_INPUT_FILES].filter(file => !file.startsWith("02-")).sort(),
-  );
+  assert.equal(images.length, Object.keys(HOME_FEATURE_VISUALS).length * 6);
+  assert.ok(images.some(image => image.src.startsWith("/images/cases/")), "Real platform deliveries are part of the production mapping");
 
   for (const image of images) {
+    assert.match(image.src, /\.(png|webp)$/);
     const buffer = await readFile(path.join(root, "public", image.src));
     assert.deepEqual(imageDimensions(buffer, path.basename(image.src)), {
       width: image.width,

@@ -1,0 +1,32 @@
+.art{display:block;position:relative;width:100%;height:100%;min-height:0;overflow:hidden;background:#efeae4;color:#5f505b;isolation:isolate}
+.art img{display:block;width:100%;height:100%;max-width:100%;object-fit:contain;object-position:center;transform:none!important;transition:none!important;border:0;border-radius:0}
+.art .poster{position:absolute;inset:0}
+.sequence,.sourceFrame,.referenceFrame,.revealFrame{position:absolute;inset:0;display:block;background:#efeae4}
+.sequence{z-index:2;opacity:0;pointer-events:none}
+.sourceFrame{z-index:1}.referenceFrame{z-index:2;opacity:0}.revealFrame{z-index:3;clip-path:inset(0 100% 0 0)}
+.frameLabel,.resultLabel,.hoverHint{position:absolute;z-index:5;display:inline-flex;align-items:center;gap:4px;width:max-content;max-width:calc(100% - 24px);padding:5px 8px;border:1px solid #ffffffa6;border-radius:5px;background:#ffffffe6;color:#635465;font-size:9px;font-weight:500;line-height:1.3;backdrop-filter:blur(6px)}
+.frameLabel{top:12px;left:12px}.resultLabel{top:12px;left:12px}.hoverHint{right:12px;bottom:12px;background:#ffffffe6;color:#786e77}
+.scanLine{position:absolute;z-index:4;top:0;bottom:0;left:0;width:2px;background:#fff9;box-shadow:0 0 12px #fff;opacity:0}
+.replay{--reveal-delay:.85s;--reveal-duration:2.8s}.withReference{--reveal-delay:1.75s}
+@media(hover:hover) and (pointer:fine){
+  :global(a:is(:hover,:focus-visible)) .replay .sequence,.replay:hover .sequence{opacity:1}
+  :global(a:is(:hover,:focus-visible)) .replay>.resultLabel,.replay:hover>.resultLabel,
+  :global(a:is(:hover,:focus-visible)) .replay>.hoverHint,.replay:hover>.hoverHint{opacity:0}
+  :global(a:is(:hover,:focus-visible)) .replay .referenceFrame,.replay:hover .referenceFrame{animation:show-reference .2s ease .85s both}
+  :global(a:is(:hover,:focus-visible)) .replay .revealFrame,.replay:hover .revealFrame{animation:reveal-result var(--reveal-duration) cubic-bezier(.22,1,.36,1) var(--reveal-delay) both}
+  :global(a:is(:hover,:focus-visible)) .replay .scanLine,.replay:hover .scanLine{animation:scan-result var(--reveal-duration) cubic-bezier(.22,1,.36,1) var(--reveal-delay) both}
+}
+@keyframes show-reference{from{opacity:0}to{opacity:1}}
+@keyframes reveal-result{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
+@keyframes scan-result{0%{left:0;opacity:1}95%{opacity:1}100%{left:100%;opacity:0}}
+.inputOnly{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;padding:12px;background:linear-gradient(145deg,#f5f0ea,#eee8e3)}
+.label{display:block;text-align:center;font-size:9px;line-height:1.5;color:#817273}
+.inputImages{display:flex;min-height:0;align-items:center;justify-content:center}.inputOnly .inputImages img{width:100%;height:100%}
+.goal{display:flex;justify-content:center;align-items:center;gap:5px;font-size:9px;color:#86735f;text-align:center;line-height:1.6}.goal svg{flex-shrink:0}
+@media(max-width:640px){.frameLabel,.resultLabel,.hoverHint{font-size:8px;padding:4px 6px}.frameLabel,.resultLabel{top:8px;left:8px}.hoverHint{right:8px;bottom:8px}.inputOnly{padding:8px}.label,.goal{font-size:8px}}
+@media(hover:none),(pointer:coarse){.hoverHint{display:none}}
+@media(prefers-reduced-motion:reduce){.replay .sequence{display:none}.replay>.resultLabel{opacity:1!important}.replay>.hoverHint{display:none}}
+.landscape{background:#f3eee8}.portrait{background:#f4f1ed}
+/* Portrait cards use original portrait deliveries; square product shots retain their whole canvas. */
+.art[data-case-art=amazon-visual-suite],.art[data-case-art=domestic-main-image]{background:#fff}
+.art[data-case-art=amazon-visual-suite] .sequence,.art[data-case-art=amazon-visual-suite] .sourceFrame,.art[data-case-art=amazon-visual-suite] .revealFrame{background:#fff}

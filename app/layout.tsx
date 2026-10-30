@@ -8,6 +8,7 @@ import "./haiyu-surfaces.css";
 import "./haiyu-workspaces.css";
 import "./haiyu-forms.css";
 import "./haiyu-readability.css";
+import "./showcase-cases.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();

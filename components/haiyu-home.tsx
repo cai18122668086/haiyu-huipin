@@ -5,6 +5,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Check, MoveUpRight, Sparkles } fro
 import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./brand-mark";
 import { HOME_FEATURE_VISUALS } from "@/lib/home-feature-visuals";
+import { FeatureCaseArt } from "./feature-case-art";
 
 export function HaiyuHero() {
   const [paused, setPaused] = useState(false);
@@ -65,18 +66,18 @@ export function HaiyuHero() {
         <div className="haiyu-collage" aria-label="商品视觉创作">
           <div className="haiyu-collage__shape" aria-hidden="true" />
           <span className="haiyu-collage__spark" aria-hidden="true">✳</span>
-          <Link href="/workspace/product-image/try-on" className="haiyu-photo haiyu-photo--fashion">
+          <Link href="/style-replica" className="haiyu-photo haiyu-photo--fashion">
             <div className="haiyu-photo__bar"><span /><span /><span /><small>LOOKBOOK / 01</small></div>
-            <img src="/images/haiyu/fashion.webp" alt="服饰模特穿搭展示效果" width={1536} height={2752} fetchPriority="high" />
-            <span className="haiyu-photo__caption">穿搭灵感，轻松呈现 <ArrowUpRight size={18} /></span>
+            <img src="/images/cases/olay-20261030/replica-07.png" alt="OLAY 身体乳复刻任务中的人物场景成图" width={1055} height={1491} fetchPriority="high" />
+            <span className="haiyu-photo__caption">从实拍，到品牌视觉 <ArrowUpRight size={18} /></span>
           </Link>
           <Link href="/workspace/product-image/change-background" className="haiyu-photo haiyu-photo--product">
-            <img src="/images/homepage-features/native-v2-webp/02-background-primary-desktop.webp" alt="耳机置于自然光家居场景的换背景效果" width={1374} height={1145} />
+            <img src="/images/cases/platform-v3/background-result.png" alt="耳机更换背景任务的真实成图" width={768} height={1024} />
             <span className="haiyu-photo__caption">给商品一个新场景 <MoveUpRight size={17} /></span>
           </Link>
           <Link href="/workspace/domestic-main-image" className="haiyu-photo haiyu-photo--commerce">
             <span className="haiyu-photo__tag">PRODUCT VISUAL</span>
-            <img src="/images/homepage-features/native-v2-webp/05-domestic-primary-mobile.webp" alt="家用电煮锅电商主图效果" width={1774} height={887} />
+            <img src="/images/cases/history-20261030/asset_a47a47f308464d7ea2e928e8cc9f5c0c.png" alt="猫粮国内主图任务的成图" width={1254} height={1254} />
             <span className="haiyu-photo__caption">商品主图，一眼心动 <ArrowUpRight size={16} /></span>
           </Link>
           <span className="haiyu-collage__sticker"><Sparkles size={15} /> 好创意，即刻成图</span>
@@ -123,17 +124,35 @@ const SHOWCASE_TOOLS = [
 // The latest homepage promotes replica instead of background editing. Keep this
 // demonstration independent of the featured-card selection.
 const BACKGROUND_VISUAL = {
-  primary: { desktop: { src: "/images/homepage-features/native-v2-webp/02-background-primary-desktop.webp" } },
-  input: { desktop: { src: "/images/homepage-features/native-v2-webp/02-input-desktop.webp" } },
+  primary: { desktop: { src: "/images/cases/platform-v3/background-result.png" } },
+  input: { desktop: { src: "/images/cases/platform-v3/02-headphones-messy.png" } },
 };
 
 const GALLERY_IMAGES = [
-  ["/images/haiyu/outdoor.webp", "户外服饰场景"],
-  ["/images/homepage-features/native-v2-webp/01-masked-primary-desktop.webp", "香氛商品视觉"],
-  ["/images/homepage-features/native-v2-webp/04-detail-primary-desktop.webp", "随行杯卖点展示"],
-  ["/images/haiyu/fashion.webp", "时尚穿搭展示"],
-  ["/images/homepage-features/native-v2-webp/05-domestic-primary-desktop.webp", "家电主图创作"],
-  ["/images/homepage-features/native-v2-webp/02-background-primary-desktop.webp", "数码产品场景"],
+  [
+    "/images/cases/olay-20261030/replica-07.png",
+    "OLAY 身体乳场景复刻"
+  ],
+  [
+    "/images/cases/history-20261030/asset_6f416209332b45b285e07c3f91a6124b.png",
+    "猫粮详情图"
+  ],
+  [
+    "/images/cases/platform-v3/background-result.png",
+    "耳机场景"
+  ],
+  [
+    "/images/cases/platform-v2/try-on-result.png",
+    "针织开衫试穿"
+  ],
+  [
+    "/images/cases/platform-v3/color-result.png",
+    "皮革手提包换色"
+  ],
+  [
+    "/images/cases/olay-20261030/replica-06.png",
+    "身体乳横向视觉"
+  ]
 ] as const;
 
 export function HaiyuProductShowcase() {
@@ -172,7 +191,7 @@ export function HaiyuProductShowcase() {
         <Link className="haiyu-text-link" href="/inspiration">去灵感专区看看 <ArrowRight size={16} /></Link>
       </section>
       <section className="haiyu-value">
-        <div className="haiyu-value__art" aria-label="商品从单张主图到详情套图的创作效果"><div className="haiyu-value__sheet"><span>01 / MAIN VISUAL</span><img src="/images/homepage-features/native-v2-webp/05-domestic-primary-desktop.webp" alt="电煮锅主图效果" width={1374} height={1145} loading="lazy" /></div><div className="haiyu-value__sheet"><span>02 / PRODUCT DETAILS</span><img src="/images/homepage-features/native-v2-webp/04-detail-primary-desktop.webp" alt="随行杯详情图效果" width={1374} height={1145} loading="lazy" /></div><span className="haiyu-value__seal"><Sparkles size={19} /> 从好图<br />到好生意</span></div>
+        <div className="haiyu-value__art" aria-label="商品从单张主图到详情套图的创作效果"><div className="haiyu-value__sheet"><span>01 / MAIN VISUAL</span><img src="/images/cases/history-20261030/asset_a47a47f308464d7ea2e928e8cc9f5c0c.png" alt="猫粮搜索主图成图" width={1374} height={1145} loading="lazy" /></div><div className="haiyu-value__sheet"><span>02 / PRODUCT DETAILS</span><img src="/images/cases/history-20261030/asset_6f416209332b45b285e07c3f91a6124b.png" alt="猫粮详情页成图" width={1374} height={1145} loading="lazy" /></div><span className="haiyu-value__seal"><Sparkles size={19} /> 从好图<br />到好生意</span></div>
         <div className="haiyu-value__copy"><span className="haiyu-eyebrow">CREATE MORE. MAKE IT YOURS.</span><h2>少一点反复，<br />多一点生意的可能。</h2><p>把精力留给选品、运营和品牌。让海宇绘品，陪你把每一次上新的视觉做好。</p><ul><li><Check size={16} /><span><strong>让上新更从容</strong>主图、详情与场景素材，在同一处开始创作。</span></li><li><Check size={16} /><span><strong>让灵感多走一步</strong>从参考构图到商品细节，快速尝试不同表达。</span></li><li><Check size={16} /><span><strong>让每一份素材更有价值</strong>同一件商品，探索适合不同展示场景的视觉。</span></li></ul><Link className="haiyu-text-link" href="/workspace/detail-pack">开始制作商品详情图 <ArrowRight size={17} /></Link></div>
       </section>
     </div>
@@ -208,7 +227,7 @@ export function HaiyuCreativeVoices() {
 }
 
 export function HaiyuReplicaCardArt() {
-  return <span className="home-feature-card__art haiyu-replica-art" aria-hidden="true"><span className="haiyu-replica-art__frame"><img src="/images/homepage-features/native-v2-webp/03-remix-primary-desktop.webp" alt="" width={1374} height={1145} loading="lazy" /><small>REFERENCE</small></span><span className="haiyu-replica-art__frame"><img src="/images/homepage-features/native-v2-webp/04-detail-primary-desktop.webp" alt="" width={1374} height={1145} loading="lazy" /><small>MAKE IT YOURS</small></span><span className="haiyu-replica-art__spark"><Sparkles size={21} /></span></span>;
+  return <span className="home-feature-card__art case-art-shell"><FeatureCaseArt featureId="one-click-replica" /></span>;
 }
 
 export function HaiyuHomeFooter() {

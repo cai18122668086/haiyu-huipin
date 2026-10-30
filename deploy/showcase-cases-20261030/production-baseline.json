@@ -1,0 +1,7 @@
+{
+  "id": "9e91e5c60684b9d72164d88734bcb762446c0792b4bb137498bb07bddf0e1559",
+  "image": "huipin-experience/frontend:68dda82b44b5f8e1064f7b7887a20c0ea1931e37",
+  "image_id": "sha256:2143cb34b99c0eda1695f90b1a9852606212ae85e028eef8a5dc04d742440090",
+  "healthy": "healthy",
+  "baseline_source_files_verified": 16
+}

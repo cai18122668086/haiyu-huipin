@@ -110,7 +110,7 @@
 .workspace-visual-preview figure { width:29%;margin:0;padding:6px;border:1px solid #e5e2ec;border-radius:8px;background:#fff;box-shadow:3px 4px 0 #eeebf5;transform:rotate(-6deg); }
 .workspace-visual-preview figure:nth-of-type(2) { transform:rotate(4deg); }
 .workspace-visual-preview figure:last-child { background:#f4ffce;transform:rotate(-3deg); }
-.workspace-visual-preview figure img { width:100%;aspect-ratio:4 / 5;object-fit:cover;border-radius:4px; }
+.workspace-visual-preview figure img { display:block;width:100%;height:auto;aspect-ratio:4 / 5;object-fit:contain;border-radius:4px;background:#f6f4ef; }
 .workspace-visual-preview figcaption { display:flex;justify-content:center;align-items:center;gap:3px;padding:9px 0 4px;color:#77717f;font-size:10px;white-space:nowrap; }
 .workspace-visual-preview > span,.workspace-visual-preview > svg { flex-shrink:0;color:#aaa0bb; }
 .haiyu-start-card h3,.haiyu-quick-start h2,.haiyu-quick-start strong { color:#202020; }

@@ -1,0 +1,18 @@
+.haiyu-start-card__visual>[data-case-art]{height:100%}.haiyu-start-card__visual:has([data-case-art])>span,.haiyu-start-card__visual:has([data-case-art])>b{display:none}.haiyu-photo--fashion>img,.haiyu-photo--product>img,.haiyu-photo--commerce>img{object-fit:contain;background:#f5f0e8}.haiyu-gallery img{object-fit:contain}.home-feature-card>.case-art-shell{display:block;position:relative;min-height:180px;height:100%;overflow:hidden;border-radius:8px}.haiyu-start-card__visual [data-case-art] img{transform:none}.haiyu-value__sheet>img{object-fit:contain;background:#f7f2e9}
+@media(max-width:640px){.home-feature-card>.case-art-shell{min-height:145px}}
+
+.haiyu-start-card__visual>.case-art-cover{width:100%;height:100%}.haiyu-comparison__images>img{object-fit:contain;background:#eee9e3}.haiyu-gallery__track img{object-fit:contain;background:#f1ece5}
+/* Main entry cards keep their approved square artwork. */
+.haiyu-start-card__visual{height:auto;aspect-ratio:1/1}
+/* Secondary outcomes have one compact, consistent size regardless of source ratio. */
+.focus-home .home-outcome-heading,.focus-home .home-outcome-grid{width:100%;max-width:900px;margin-inline:auto}
+.focus-home .home-outcome-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;gap:20px;align-items:stretch}
+.focus-home .home-outcome-grid .home-feature-card{height:auto;min-height:0;aspect-ratio:auto;align-self:stretch;margin-top:0}
+.focus-home .home-outcome-grid .home-feature-card>.home-feature-card__art.case-art-shell{height:auto;min-height:0;aspect-ratio:1/1;border-radius:0}
+.focus-home .home-outcome-grid .home-feature-card>div{height:96px;min-height:96px;padding:16px;align-content:start;grid-template-rows:20px 32px;gap:6px 4px}
+.focus-home .home-outcome-grid .home-feature-card strong{font-size:15px;line-height:20px}
+.focus-home .home-outcome-grid .home-feature-card>div>span{align-self:start;height:32px;margin:0;font-size:11px;line-height:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.focus-home .home-outcome-grid .home-feature-card>div>svg{align-self:center}
+.focus-home .home-outcome-grid .home-feature-card:not(.is-unavailable):is(:hover,:focus-visible,:focus-within){transform:none}
+#outcomes{scroll-margin-top:105px}
+@media(max-width:640px){.focus-home .home-outcome-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.focus-home .home-outcome-grid .home-feature-card>div{padding:12px 10px}.focus-home .home-outcome-grid .home-feature-card strong{font-size:13px}.focus-home .home-outcome-grid .home-feature-card>div>span{font-size:10px}.haiyu-start-card__visual{height:auto;aspect-ratio:1/1}}
