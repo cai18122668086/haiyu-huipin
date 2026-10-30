@@ -375,8 +375,7 @@ export function DomesticMainImageWorkspace() {
         <div className={styles.grid}>
           <main>
             <section className={styles.card}>
-              <div className={styles.heading}><span>01</span><div><h2>上传商品原图</h2><p>清晰展示外观与细节，多角度图片有助于保持商品一致。</p></div></div>
-              {!jobId && <button type="button" className="secondary-button" disabled={busy} onClick={() => setLibraryOpen(true)}>从素材库选择商品原图</button>}
+              <div className={styles.heading}><span>01</span><div><h2>上传商品原图</h2><p>清晰展示外观与细节，多角度图片有助于保持商品一致。</p></div>{!jobId && <button type="button" className={styles.libraryButton} disabled={busy} onClick={() => setLibraryOpen(true)}><ImagePlus size={14} />素材库</button>}</div>
               {jobId ? <div className={styles.uploads}>{restoredAssetIds.map((assetId, index) => <RestoredSource key={assetId} workspaceId={workspace?.id} assetId={assetId} index={index} />)}</div> : <>
                 {sources.length < MAX_SOURCE_IMAGES && <div
                   className={styles.dropZone}

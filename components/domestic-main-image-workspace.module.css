@@ -92,3 +92,7 @@
 .speedChoice:disabled label { cursor:default; }
 .speedNote { margin:0 0 18px; }
 @media(max-width:640px){.speedChoice{flex-direction:column}}
+.heading .libraryButton { display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;margin-left:auto;padding:8px 10px;border:1px solid var(--violet-200);border-radius:7px;background:var(--violet-50);color:var(--violet-600);font-size:11px;font-weight:500;cursor:pointer; }
+.heading .libraryButton:hover { background:var(--violet-100);border-color:var(--violet-300); }
+.heading .libraryButton:focus-visible { outline:2px solid var(--violet-400);outline-offset:3px; }
+@media(max-width:640px){.heading .libraryButton{padding:7px 8px;font-size:10px}}

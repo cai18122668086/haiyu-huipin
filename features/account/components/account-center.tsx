@@ -826,7 +826,7 @@ function Membership({
                     <Layers3 size={24} />
                   )}
                 </div>
-                <h3>{copy?.name ?? "创作积分包"}</h3>
+                <h3 className={styles.planTitle}>{copy?.name ?? "创作积分包"}{product.plan_id && currentMembership.data?.plan_id === product.plan_id && <span className={styles.currentPlan} title={`有效至 ${date(currentMembership.data.ends_at)}`}><Check size={11} />当前套餐</span>}</h3>
                 <p className="plan-desc">
                   {copy?.description ?? "备好额度，随时上新"}
                 </p>
@@ -842,17 +842,13 @@ function Membership({
                     折合 ¥{money(product.amount_fen / 12)} / 月，按年一次支付
                   </div>
                 )}
-                {product.plan_id && currentMembership.data?.plan_id === product.plan_id && <p className="plan-desc">当前套餐 · 有效至 {date(currentMembership.data.ends_at)}</p>}<div className="plan-credit">
+                <div className="plan-credit">
                   <strong>{fmt(product.credits)}</strong>
                   <span>创作积分{tab === "member" ? " / 月" : ""}</span>
                 </div>
-                <p className="plan-desc">{tab === "member" ? "每月额度约可生成" : "本次积分约可生成"}：灵感 {fmt(Math.floor(product.credits / 5))} 张 / 快速 {fmt(Math.floor(product.credits / 8))} 张 / 精致 {fmt(Math.floor(product.credits / 15))} 张，按所选功能计费。</p><div className="plan-output">
-                  <ImageIcon size={14} />
-                  <span>
-                    {tab === "member" ? "每月约可创作" : "约可创作"}{" "}
-                    <strong>{fmt(Math.floor(product.credits / 5))}</strong>{" "}
-                    张普通单图（5 积分/张）
-                  </span>
+                <div className={styles.outputEstimates}>
+                  <span>{tab === "member" ? "每月预计出图" : "预计出图"}</span>
+                  <dl>{([["灵感", 5], ["快速", 8], ["精致", 15]] as const).map(([label, unit]) => <div key={label}><dt>{label}<small>{unit} 积分/张</small></dt><dd><b>{fmt(Math.floor(product.credits / unit))}</b><span>张</span></dd></div>)}</dl>
                 </div>
                 <Button
                   variant={featured ? "lime-button" : "outline"}
@@ -894,7 +890,7 @@ function Membership({
       {!catalog.data?.enabled && <p role="status" className="checkout-note">会员方案已同步，在线购买尚未开放。</p>}
       <div className="pricing-disclaimer">
         <p>
-          图片数量按普通单图估算，不同功能消耗不同，以生成前展示为准。已有会员时，新购会员在已购买周期结束后生效。
+          数量为各版本单独使用时的估算，以生成前报价为准。续费会员顺延生效。
         </p>
       </div>
       <Faqs />

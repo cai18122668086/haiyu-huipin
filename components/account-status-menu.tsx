@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Coins, Crown, RefreshCw, UserRound } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Coins, Crown, History, Images, RefreshCw, UserRound } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { authUserLabel, useCurrentAuthUser } from "@/features/auth/api/me";
 import { useCreditAccount } from "@/features/billing/api/credits";
@@ -32,23 +32,46 @@ export function AccountStatusMenu() {
   const identity = plan ? `${plan}会员` : pending ? "会员待生效" : member.data?.membership_status === "expired" ? "会员已到期" : "创作账户";
   return <div ref={ref} className={styles.root}>
     <button ref={trigger} type="button" className={styles.trigger} data-member={Boolean(plan) || undefined} aria-expanded={open} aria-controls="huipin-account-summary" onClick={() => setOpen(value => !value)}>
-      <span className={styles.identity}>{plan ? <Crown size={16} /> : <UserRound size={16} />}<span>{identity}</span></span>
-      <span className={styles.balance}><Coins size={14} />{wallet.data ? `${number(wallet.data.available_credits)} 积分` : wallet.isError ? "积分待同步" : "读取积分…"}</span><ChevronDown size={13} />
+      <span className={styles.identity}>{plan ? <Crown size={14} /> : <UserRound size={14} />}<span>{identity}</span></span>
+      <span className={styles.balance}><Coins size={14} />{wallet.data ? <><b>{number(wallet.data.available_credits)}</b><span>积分</span></> : wallet.isError ? "待同步" : "同步中"}</span><ChevronDown size={12} />
     </button>
     {open && <section id="huipin-account-summary" className={styles.panel} aria-label="会员与积分摘要">
-      <div className={styles.heading}><strong>{authUserLabel(user.data)}</strong><span>{identity}</span></div>
-      {member.data?.previous_plan_name && !plan && <p>{member.data.previous_plan_name}会员已到期，可查看权益与续费方案。</p>}
-      {plan && <p>会员有效至 {day(member.data?.ends_at)}</p>}
-      {pending && <p>{pending}将于 {day(member.data?.next_plan_starts_at)} 生效</p>}
-      {member.isError && <button onClick={() => void member.refetch()}><RefreshCw size={14} />重新读取会员信息</button>}
-      {wallet.data ? <dl className={styles.wallet}><div><dt>可用积分</dt><dd>{number(wallet.data.available_credits)}</dd></div><div><dt>任务预留</dt><dd>{number(wallet.data.reserved_credits)}</dd></div></dl> : <button onClick={() => void wallet.refetch()}><RefreshCw size={14} />{wallet.isError ? "积分读取失败，点击重试" : "正在同步积分"}</button>}
-      {member.data?.monthly_credits ? <p>本期会员额度 {number(member.data.monthly_credits)} 积分 / 月 · 全部创作工具</p> : null}
-      {member.data?.next_grant_at && <p>下期发放：{day(member.data.next_grant_at)}</p>}
-      {!!member.data?.expiring_credits && <p className={styles.expiry}>{number(member.data.expiring_credits)} 积分将于 {day(member.data.next_expiry_at)} 到期</p>}
-      <p>任务预留在结算后更新，未使用部分自动释放。</p>
-      <nav onClick={() => setOpen(false)} aria-label="账户快捷导航">
-        <Link href="/account#membership">{plan ? "管理会员与权益" : "会员与充值"}</Link><Link href="/account#credits">积分明细</Link>
-        <Link href="/jobs">全部生成记录</Link><Link href="/assets">我的素材</Link><Link href="/account#orders">订单与发票</Link><Link href="/account#settings">账户设置</Link><Link href="/account#help">消息与帮助</Link>
+      <div className={styles.memberCard}>
+        <div className={styles.heading}>
+          <span className={styles.memberIcon}>{plan ? <Crown size={21} /> : <UserRound size={21} />}</span>
+          <div><strong>{identity}</strong><small>{authUserLabel(user.data)}</small></div>
+          <span className={styles.status}>{plan ? "权益生效中" : pending ? "待生效" : "我的账户"}</span>
+        </div>
+        {plan && <p className={styles.validity}>{day(member.data?.ends_at)} 到期</p>}
+        {pending && <p className={styles.validity}>{pending} · {day(member.data?.next_plan_starts_at)} 生效</p>}
+        {member.data?.previous_plan_name && !plan && !pending && <p className={styles.validity}>{member.data.previous_plan_name}已到期</p>}
+      </div>
+      <div className={styles.creditSection}>
+        {wallet.data ? <dl className={styles.wallet}>
+          <div><dt>可用积分</dt><dd>{number(wallet.data.available_credits)}</dd></div>
+          <div><dt>任务预留</dt><dd>{number(wallet.data.reserved_credits)}</dd></div>
+        </dl> : <button className={styles.retry} onClick={() => void wallet.refetch()}><RefreshCw size={14} />{wallet.isError ? "积分同步失败，重试" : "正在同步积分"}</button>}
+        {member.isError && <button className={styles.retry} onClick={() => void member.refetch()}><RefreshCw size={14} />会员信息同步失败，重试</button>}
+        <div className={styles.primaryActions} onClick={() => setOpen(false)}>
+          <Link href="/account#membership">{plan ? "管理会员" : "开通会员"}<ArrowUpRight size={14} /></Link>
+          <Link href="/account#credits">积分明细</Link>
+        </div>
+        {(!!member.data?.monthly_credits || !!member.data?.expiring_credits) && <details className={styles.entitlements}>
+          <summary>额度与有效期<ChevronDown size={13} /></summary>
+          <dl>
+            {!!member.data?.monthly_credits && <div><dt>每月额度</dt><dd>{number(member.data.monthly_credits)} 积分</dd></div>}
+            {member.data?.next_grant_at && <div><dt>下期发放</dt><dd>{day(member.data.next_grant_at)}</dd></div>}
+            {!!member.data?.expiring_credits && <div><dt>{day(member.data.next_expiry_at)} 到期</dt><dd>{number(member.data.expiring_credits)} 积分</dd></div>}
+          </dl>
+          <p>任务未使用的预留积分会自动释放。</p>
+        </details>}
+      </div>
+      <nav className={styles.shortcuts} onClick={() => setOpen(false)} aria-label="账户快捷导航">
+        <Link href="/jobs"><History size={17} /><span>生成记录</span><ArrowUpRight size={13} /></Link>
+        <Link href="/assets"><Images size={17} /><span>我的素材</span><ArrowUpRight size={13} /></Link>
+      </nav>
+      <nav className={styles.footer} onClick={() => setOpen(false)} aria-label="账户设置与帮助">
+        <Link href="/account#orders">订单与发票</Link><Link href="/account#settings">账户设置</Link><Link href="/account#help">帮助中心</Link>
       </nav>
     </section>}
   </div>;

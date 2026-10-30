@@ -3,6 +3,7 @@ import { splitProductFacts } from "@/lib/product-facts";
 
 import { useDraftState } from "@/lib/hooks/use-creation-draft";
 import { ProductFactsGuidance } from "@/components/product-facts-guidance";
+import { FormDisclosure } from "@/components/form-disclosure";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
@@ -365,7 +366,7 @@ function DetailPackWorkspace() {
             {uploadError && <div className="api-state api-state--error" role="alert"><AlertCircle size={20} /><div><strong>部分素材未能上传</strong><p>{uploadError}</p></div></div>}
           </section>
 
-          <details className="creation-channel-settings"><summary>目标渠道：{selectedMarketplace.name} · 点击调整</summary>
+          <FormDisclosure title="目标渠道" summary={`${selectedMarketplace.name} · ${isRefinedDetail ? "3:4 原图交付" : imageSize}`}>
           <section className="marketplace-selector">
             <div className="marketplace-selector__head"><span className="number-chip">0</span><div><h2>选择目标电商渠道</h2><p>所选渠道会影响图片尺寸、构图和文案规范。</p></div><span className="platform-selected-state"><CheckCircle2 size={15} />{selectedMarketplace.name} · {isRefinedDetail ? "3:4 原图交付" : `严格交付 ${imageSize}`}</span></div>
             <div className="market-region-switch" aria-label="电商地区">
@@ -377,7 +378,7 @@ function DetailPackWorkspace() {
             </div>
           </section>
 
-          </details>
+          </FormDisclosure>
           <section className="detail-form-card">
             <div className="form-section-head"><span className="number-chip">2</span><div><h2>商品信息</h2><p>请填写商品名称与核心卖点，用于生成页面方案。</p></div></div>
             <div className="form-grid">
