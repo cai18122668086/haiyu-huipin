@@ -261,7 +261,7 @@ def override_sms_apis(original: Any, limiter: SmsRateLimiter | None = None) -> A
                 "reset",
             }:
                 return GeneralErrorResponse("无效的手机号验证用途。")
-            if flow != "reset":
+            if flow == "register":
                 from .errors import ApiError
                 from .processing_consent import validate_choice
 

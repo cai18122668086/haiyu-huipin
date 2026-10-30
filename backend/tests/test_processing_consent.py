@@ -120,7 +120,7 @@ def test_consent_is_scoped_to_authenticated_identity(tmp_path):
     "choice",
     [None, {**CHOICE, "aiTraining": False}, {**CHOICE, "policyVersion": "old"}],
 )
-def test_sms_autoregistration_rejects_missing_choice_before_consuming_otp(choice):
+def test_registration_rejects_missing_choice_before_sms_or_otp(choice):
     import asyncio
 
     called = []
@@ -132,7 +132,7 @@ def test_sms_autoregistration_rejects_missing_choice_before_consuming_otp(choice
     async def body():
         return {
             "acceptedAgreements": True,
-            "flow": "login",
+            "flow": "register",
             "processingConsent": choice,
         }
 

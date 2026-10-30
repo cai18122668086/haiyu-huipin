@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app.auth import _external_principal
 from app.errors import ApiError
 from app.main import create_app
-from app.models import UserRecord
+from app.models import ProcessingConsentRecord, UserRecord
 from app.phone_accounts import (
     check_password,
     hash_password,
@@ -15,7 +15,7 @@ from app.phone_accounts import (
     validate_password,
     verify_password_account,
 )
-from app.processing_consent import POLICY_VERSION
+from app.processing_consent import POLICY_VERSION, current_consent, withdraw_consent
 from app.supertokens_auth import ExternalIdentity
 from tests.test_auth_external import FakeExternalAuthBackend, external_settings
 
@@ -102,10 +102,32 @@ def test_registering_existing_phone_cannot_replace_password(tmp_path) -> None:
             session, identity(), "register", "FirstPassword123", CONSENT
         )
         with pytest.raises(ApiError, match="已注册"):
-            persist_otp_account(session, identity(1), "register", "InjectedPassword123")
+            persist_otp_account(
+                session, identity(1), "register", "InjectedPassword123", CONSENT
+            )
         session.rollback()
         user = session.scalar(select(UserRecord))
         assert check_password("FirstPassword123", user.password_hash)
+
+
+def test_sms_login_cannot_autoregister_without_choices_or_regrant_withdrawn_training(
+    tmp_path,
+):
+    with TestClient(
+        create_app(external_settings(tmp_path), FakeExternalAuthBackend())
+    ) as client, client.app.state.session_factory() as session:
+        with pytest.raises(ApiError, match="分别阅读"):
+            persist_otp_account(session, identity(), "login", None)
+        session.rollback()
+        assert session.scalar(select(UserRecord.id)) is None
+        account = persist_otp_account(session, identity(), "login", None, CONSENT)
+        withdraw_consent(session, account.user_id)
+        session.commit()
+        logged_in = persist_otp_account(session, identity(), "login", None)
+        assert logged_in.user_id == account.user_id
+        assert current_consent(session, account.user_id) is None
+        receipts = session.scalars(select(ProcessingConsentRecord)).all()
+        assert len(receipts) == 1 and receipts[0].withdrawn_at is not None
 
 
 def test_password_login_endpoints_fail_closed_when_sms_is_disabled(tmp_path) -> None:

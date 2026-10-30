@@ -8,7 +8,7 @@
       "failed": 0
     },
     "backend_targeted_tests": {
-      "passed": 215,
+      "passed": 216,
       "failed": 0,
       "database": "isolated SQLite with mock providers"
     },

@@ -6,8 +6,10 @@ development checkout and its unpublished work. No production change has been mad
 1. Explicit processing choices
 The registration/SMS login form separately presents Hong Kong processing and AI
 training notices, unchecked by default. The same versioned notice JSON is used by
-frontend and backend. SMS creation/resend and consumption validate explicit choices
-before processing a new login/registration. Password recovery remains available
+frontend and backend. The registration flow validates choices before SMS/OTP;
+SMS auto-registration validates again after phone proof and before provisioning
+the application account. Existing users can sign in to read/download without
+regranting withdrawn AI training. Password recovery also remains available
 without granting AI training. Authenticated users may accept or withdraw through
 account settings. Reads, downloads and cancellation remain available; new workspace
 writes require the current recorded choice. Existing accepted background jobs retain

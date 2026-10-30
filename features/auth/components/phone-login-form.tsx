@@ -42,7 +42,7 @@ export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: 
     if (!accepted) { setError("请先阅读并同意用户协议和隐私政策。"); return; }
     setSending(true);
     try {
-      if (flow !== "reset" && (!hongKong || !training)) { setError("请分别阅读并确认香港处理与模型训练说明。"); return; }
+      if (flow === "register" && (!hongKong || !training)) { setError("请分别阅读并确认香港处理与模型训练说明。"); return; }
       const normalized = normalizeLoginPhone(phone);
       const result = await sendPhoneLoginCode(phone, sentPhone === normalized, flow, flow === "reset" ? undefined : processingChoice(hongKong, training));
       if (result.status === "SIGN_IN_UP_NOT_ALLOWED") { setError(result.reason); return; }
@@ -62,7 +62,7 @@ export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: 
     setError(undefined);
     if (!accepted) { setError("请先阅读并同意用户协议和隐私政策。"); return; }
     if (!sentPhone || sentPhone !== normalizeLoginPhone(phone)) { setError("请先获取当前手机号的验证码。"); return; }
-    if (flow !== "reset" && (!hongKong || !training)) { setError("请分别阅读并确认香港处理与模型训练说明。"); return; }
+    if (flow === "register" && (!hongKong || !training)) { setError("请分别阅读并确认香港处理与模型训练说明。"); return; }
     if (needsPassword && (!validPassword || password !== confirmation)) { setError("请设置包含字母和数字的 8 至 99 位密码，并确保两次输入一致。"); return; }
     submissionLocked.current = true;
     setSubmitting(true);
@@ -93,8 +93,9 @@ export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: 
     </> : null}
     {notice ? <p className="sms-notice" role="status">{notice}</p> : null}
     {error ? <p className="auth-form__error" role="alert">{error}</p> : null}
+    {flow === "login" && <p className="sms-notice">首次注册需要确认以下两项。已有账号可仅登录查看、下载作品；新的图片创作会另行检查授权。</p>}
     {flow !== "reset" && <ProcessingConsentFields hongKong={hongKong} training={training} onHongKong={setHongKong} onTraining={setTraining} disabled={busy}/>}
-    <button className="auth-button auth-button--primary auth-button--full" disabled={!validPhone || code.length !== 6 || !accepted || (flow !== "reset" && (!hongKong || !training)) || busy || !sentPhone || (needsPassword && (!validPassword || password !== confirmation))} type="submit">{submitting ? "正在验证…" : flow === "register" ? "注册并登录" : flow === "reset" ? "重置密码" : "登录 / 注册"}</button>
+    <button className="auth-button auth-button--primary auth-button--full" disabled={!validPhone || code.length !== 6 || !accepted || (flow === "register" && (!hongKong || !training)) || busy || !sentPhone || (needsPassword && (!validPassword || password !== confirmation))} type="submit">{submitting ? "正在验证…" : flow === "register" ? "注册并登录" : flow === "reset" ? "重置密码" : "登录 / 注册"}</button>
     <label className="sms-consent"><input type="checkbox" checked={accepted} disabled={busy} onChange={(event) => setAccepted(event.target.checked)} /><span>我已阅读并同意<Link href={LEGAL_ROUTES.terms} target="_blank" rel="noreferrer">《用户协议》</Link>和<Link href={LEGAL_ROUTES.privacy} target="_blank" rel="noreferrer">《隐私政策》</Link></span></label>
   </form>;
 }
