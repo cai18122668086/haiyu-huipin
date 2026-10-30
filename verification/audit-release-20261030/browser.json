@@ -1,0 +1,36 @@
+{
+  "url": "https://huipin.haiyushuke.com/",
+  "registration_checkboxes_unchecked": true,
+  "widths": [
+    {
+      "viewport_width": 320,
+      "all_visible_header_controls_inside": true,
+      "client_width": 312,
+      "overlaps": 0
+    },
+    {
+      "viewport_width": 375,
+      "all_visible_header_controls_inside": true,
+      "client_width": 367,
+      "overlaps": 0
+    },
+    {
+      "viewport_width": 390,
+      "all_visible_header_controls_inside": true,
+      "client_width": 382,
+      "overlaps": 0
+    },
+    {
+      "viewport_width": 430,
+      "all_visible_header_controls_inside": true,
+      "client_width": 422,
+      "overlaps": 0
+    },
+    {
+      "viewport_width": 768,
+      "all_visible_header_controls_inside": true,
+      "client_width": 760,
+      "overlaps": 0
+    }
+  ]
+}

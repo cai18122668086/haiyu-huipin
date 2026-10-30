@@ -1,0 +1,32 @@
+{
+  "new_pricing_and_task_support_routes": true,
+  "versioned_registration_consent": true,
+  "withdrawal_keeps_reads_and_blocks_new_writes": true,
+  "reacceptance_preserves_history": true,
+  "payment_catalog_enabled": true,
+  "channels": [
+    "alipay",
+    "wechat"
+  ],
+  "commercial_products": 9,
+  "new_customer_initial_credits": 0,
+  "customer_admin_access_denied": true,
+  "public_consume_status": "OK",
+  "front_token_decodes": true,
+  "front_token_header_count": 1,
+  "stored_cookie_names": [
+    "sAccessToken",
+    "sRefreshToken"
+  ],
+  "public_authenticated_me_status": 200,
+  "real_sms_sent": 0,
+  "generation_requests": 0,
+  "crawler": {
+    "source_count": 12,
+    "paid_fetch_requests": 0
+  },
+  "synthetic_account_cleaned": true,
+  "receipt_history_verified": true,
+  "public_routes_verified": 6,
+  "public_display_cache_and_original_bytes_verified": true
+}

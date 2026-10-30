@@ -1,0 +1,14 @@
+{
+  "status": "activated",
+  "revision": "1ed6e1ebc029b3f393cab8bdfbdbf5452c60cd0f",
+  "backend_image": "huipin-audit/backend:1ed6e1ebc029b3f393cab8bdfbdbf5452c60cd0f",
+  "frontend_image": "huipin-audit/frontend:1ed6e1ebc029b3f393cab8bdfbdbf5452c60cd0f",
+  "migration": "20261030_0037",
+  "backup_sha256": "bc24b2d7a85ebdacd5016646383995bd1c4ed714b58eea1eb7b6064b2e7db47c",
+  "backup_bytes": 1100565,
+  "backup_catalog_verified": true,
+  "settings_queues_capacity_preserved": true,
+  "other_services_preserved": true,
+  "customer_task_restarted": false,
+  "caddy_change": "add immutable display image cache only"
+}

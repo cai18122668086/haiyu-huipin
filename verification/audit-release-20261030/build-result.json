@@ -1,0 +1,17 @@
+{
+  "revision": "1ed6e1ebc029b3f393cab8bdfbdbf5452c60cd0f",
+  "backend_id": "sha256:ec751089d6adddd9ef63aed18c392ac3cae975c658278437616807bcf904f210",
+  "frontend_id": "sha256:9e1986c5e82a8b86b91dac09787fd76296cdd5e293e35f0134f27be227c1c0de",
+  "backend_sources_checked": 376,
+  "frontend_sources_checked": 255,
+  "baseline_differences": [
+    "app/auth.py",
+    "app/main.py",
+    "app/models.py",
+    "app/phone_accounts.py",
+    "app/processing_consent.py",
+    "app/processing_consent_routes.py",
+    "app/sms_auth.py"
+  ],
+  "original_images_verified": 74
+}

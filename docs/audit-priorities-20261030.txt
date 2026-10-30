@@ -1,7 +1,9 @@
 Audit priorities implementation, 2026-10-30
 
 Source baseline: origin/main 78d9809. All changes are isolated from the original
-development checkout and its unpublished work. No production change has been made.
+development checkout and its unpublished work. Production activation completed at
+22:21 Asia/Shanghai on 2026-10-30 from merge 1ed6e1e; see
+docs/release-audit-priorities-20261030.md for the separate deployment evidence.
 
 1. Explicit processing choices
 The registration/SMS login form separately presents Hong Kong processing and AI
@@ -58,5 +60,6 @@ On application rollback retain the additive consent table and its audit history.
 Never deploy the synthetic local preview configuration or data.
 
 Local validation and sanitized evidence are recorded under
-verification/audit-priorities-20261030/. Production activation and real payment,
-SMS, paid image generation and collection are outside the completed local checks.
+verification/audit-priorities-20261030/. Production activation and public synthetic
+checks are recorded separately under verification/audit-release-20261030/.
+Real payment, SMS, paid image generation and collection were not performed.
