@@ -1,0 +1,50 @@
+{
+  "screens": [
+    {
+      "screen": 1,
+      "bound_bytes": 34072,
+      "wire_bytes_before": 34743,
+      "wire_bytes_after": 29620,
+      "all_json_values_preserved": true,
+      "within_limit": true,
+      "original_dispatch_hash_verified": true
+    },
+    {
+      "screen": 2,
+      "bound_bytes": 28777,
+      "wire_bytes_before": 29448,
+      "wire_bytes_after": 29448,
+      "all_json_values_preserved": true,
+      "within_limit": true
+    },
+    {
+      "screen": 3,
+      "bound_bytes": 28037,
+      "wire_bytes_before": 28708,
+      "wire_bytes_after": 28708,
+      "all_json_values_preserved": true,
+      "within_limit": true
+    },
+    {
+      "screen": 4,
+      "bound_bytes": 28264,
+      "wire_bytes_before": 28935,
+      "wire_bytes_after": 28935,
+      "all_json_values_preserved": true,
+      "within_limit": true
+    },
+    {
+      "screen": 5,
+      "bound_bytes": 31856,
+      "wire_bytes_before": 32527,
+      "wire_bytes_after": 31189,
+      "all_json_values_preserved": true,
+      "within_limit": true
+    }
+  ],
+  "native_protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "no_provider_request_sent": true
+}
