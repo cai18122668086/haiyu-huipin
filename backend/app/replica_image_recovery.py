@@ -26,7 +26,7 @@ def job_available(session: Any, job: Any) -> bool:
     return bool(
         job.id in values.get("job_ids", [])
         and (approved.get("model_protocol") or {}).get("version")
-        in {VERSION, "exact-compact-v15", "exact-compact-v16"}
+        in {VERSION, "exact-compact-v15", "exact-compact-v16", "exact-compact-v17"}
         and execution.get("model_protocol") == approved.get("model_protocol")
         and values.get("plan_hash")
         == job.configuration.get("settings", {}).get("replica_plan_hash")
@@ -36,7 +36,7 @@ def job_available(session: Any, job: Any) -> bool:
 
 def retryable(run: Any, error: Exception) -> bool:
     if (getattr(run, "binding", None) or {}).get("version") not in {
-        VERSION, "exact-compact-v15", "exact-compact-v16"
+        VERSION, "exact-compact-v15", "exact-compact-v16", "exact-compact-v17"
     }:
         return False
     metrics = getattr(error, "provider_metrics", {})

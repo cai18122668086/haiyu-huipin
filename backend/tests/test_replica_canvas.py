@@ -20,6 +20,8 @@ from app.replica_direct_delivery import (
     V12_BINDING,
     V13_BINDING,
     V14_BINDING,
+    V15_BINDING,
+    V16_BINDING,
     inspect_artwork,
 )
 from app.replica_exact_compact import protocol_binding, run_class
@@ -120,13 +122,11 @@ def test_existing_rejected_token_resumes_only_its_verified_native_bytes(
 @pytest.mark.parametrize(
     "canvas,size",
     [
-        ((1024, 1623), (768, 1217)),
+        ((1024, 1623), (256, 405)),
         ((1024, 1623), (1254, 1254)),
-        ((2048, 3246), (996, 1579)),
-        ((1024, 1623), (966, 1531)),
     ],
 )
-def test_preview_wrong_aspect_and_explicit_large_resolution_still_stop(
+def test_small_preview_and_wrong_aspect_still_stop(
     tmp_path, canvas, size
 ):
     _, render, calls = native_renderer(tmp_path, [result(size)], canvas)
@@ -188,12 +188,10 @@ def test_every_failed_task_aspect_keeps_its_complete_native_canvas(tmp_path, can
     )
     assert record["size"] == [width, height]
     assert path.read_bytes() == response.artifact.payload and len(calls) == 1
-    assert native_budget_matches(list(canvas), (width, height)) == (
-        canvas[0] * canvas[1] > NATIVE_PIXEL_BUDGET
-    )
+    assert native_budget_matches(list(canvas), (width, height))
 
 
-def test_deployed_protocols_keep_their_original_hashes_and_new_runs_use_v16():
+def test_deployed_protocols_keep_their_original_hashes_and_new_runs_use_v17():
     for binding in (
         V5_BINDING,
         V6_BINDING,
@@ -205,7 +203,9 @@ def test_deployed_protocols_keep_their_original_hashes_and_new_runs_use_v16():
         V12_BINDING,
         V13_BINDING,
         V14_BINDING,
+        V15_BINDING,
+        V16_BINDING,
     ):
         cls = run_class("exact", binding)
         assert sys.modules[cls.__module__].protocol_binding() == binding
-    assert protocol_binding()["version"] == "exact-compact-v16"
+    assert protocol_binding()["version"] == "exact-compact-v17"

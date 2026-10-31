@@ -96,6 +96,14 @@ V15_BINDING = {
 }
 
 
+V16_BINDING = {
+    "version": "exact-compact-v16",
+    "content_sha256": (
+        "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+    ),
+}
+
+
 def validate_source(
     previous: dict[str, Any], approved: dict[str, Any], prefix: str
 ) -> None:
@@ -117,6 +125,7 @@ def validate_source(
         V13_BINDING,
         V14_BINDING,
         V15_BINDING,
+        V16_BINDING,
         protocol_binding(),
     )
     for snapshot in (previous, approved):

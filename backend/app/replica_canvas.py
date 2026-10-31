@@ -1,30 +1,24 @@
-"""Native pixel-budget admission for direct delivery, without resizing artwork.
-
-Exact planning derives a 1024px short edge from each source's aspect. Relays
-also return native canvases around 1024*1536 pixels; their short edge varies
-with that aspect. A complete native canvas must not be treated as a preview
-solely because a portrait is taller than 3:2. The original planning canvas and
-strict invocation verdict remain evidence; delivery records the actual size.
-"""
+"""Aspect-based native delivery, retaining the supplier's original pixels."""
 
 from typing import Any
 
-POLICY = "native-aspect-pixel-budget-v1"
+POLICY = "native-aspect-minimum-edge-v2"
+LEGACY_POLICY = "native-aspect-pixel-budget-v1"
 NATIVE_PIXEL_BUDGET = 1024 * 1536
+MIN_NATIVE_EDGE = 512
 
 
 def native_budget_matches(expected: list[int], actual: tuple[int, int]) -> bool:
-    """Only admit server-derived 1024px plans at full native pixel density.
+    """Requested pixels are a target; aspect and a usable native edge govern.
 
-    The existing strict contract still handles all smaller canvases. This
-    boundary does not authorize replacing an explicitly larger resolution,
-    a changed aspect, or a low resolution preview with a smaller image.
+    A 1% relative ratio tolerance accommodates integer rounding. The 512px
+    floor rejects small previews, independently of a larger planned canvas.
+    Small synthetic/legacy canvases retain their existing smaller floor.
     """
     return (
-        min(expected) == 1024
-        and expected[0] * expected[1] > NATIVE_PIXEL_BUDGET
-        and min(actual) > 0
-        and actual[0] * actual[1] >= NATIVE_PIXEL_BUDGET * 0.99
+        len(expected) == len(actual) == 2
+        and min(expected) > 0
+        and min(actual) >= min(MIN_NATIVE_EDGE, min(expected))
         and abs((actual[0] / actual[1]) / (expected[0] / expected[1]) - 1) <= 0.01
     )
 
@@ -40,3 +34,15 @@ def delivery_receipt(
         "provider_bytes_preserved": True,
         "locally_resampled": False,
     }
+
+
+def receipt_matches(
+    receipt: Any, expected: list[int], actual: tuple[int, int], sha256: str
+) -> bool:
+    """Validate old receipts without rewriting their historical policy claim."""
+    if not isinstance(receipt, dict) or receipt.get("policy") not in {
+        POLICY,
+        LEGACY_POLICY,
+    }:
+        return False
+    return {**receipt, "policy": POLICY} == delivery_receipt(expected, actual, sha256)

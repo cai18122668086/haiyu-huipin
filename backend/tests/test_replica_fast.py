@@ -523,10 +523,12 @@ def test_original_default_and_native_protocol_unchanged():
     assert body.replica_speed == "standard"
     import sys
 
-    from app.replica_direct_delivery import V15_BINDING
+    from app.replica_direct_delivery import V15_BINDING, V16_BINDING
     from app.replica_exact_compact import protocol_binding, run_class
 
-    assert protocol_binding() == {
+    assert protocol_binding()["version"] == "exact-compact-v17"
+    current_v16 = run_class("exact", V16_BINDING)
+    assert sys.modules[current_v16.__module__].protocol_binding() == {
         "version": "exact-compact-v16",
         "content_sha256": (
             "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"

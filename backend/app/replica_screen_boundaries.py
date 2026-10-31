@@ -129,7 +129,7 @@ async def segment_references(
             }
         )
     run.context["reference_columns"] = columns
-    if getattr(run, "binding", {}).get("version") in {"exact-compact-v15", "exact-compact-v16"}:
+    if getattr(run, "binding", {}).get("version") in {"exact-compact-v15", "exact-compact-v16", "exact-compact-v17"}:
         from .replica_column_evidence import add_evidence
 
         columns = [add_evidence(column, run.root / "crops") for column in columns]
@@ -157,13 +157,13 @@ async def segment_references(
     crop_gate = getattr(run, "binding", {}).get("version") in {
         "exact-compact-v11",
         "exact-compact-v12",
-        "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16",
+        "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16", "exact-compact-v17",
     }
     if getattr(run, "binding", {}).get("version") in {
         "exact-compact-v10",
         "exact-compact-v11",
         "exact-compact-v12",
-        "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16",
+        "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16", "exact-compact-v17",
     }:
         from .replica_boundary_geometry import resolve_boundaries
 
@@ -227,7 +227,7 @@ async def segment_references(
             "exact-compact-v10",
             "exact-compact-v11",
             "exact-compact-v12",
-            "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16",
+            "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16", "exact-compact-v17",
         }:
             split, inventory, additional = resolve_boundaries(
                 columns, split, inventory, include_agreed=crop_gate

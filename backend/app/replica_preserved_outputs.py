@@ -68,6 +68,14 @@ async def recover_outputs(
         ]
     else:
         return 0
+    from .replica_retained_canvas import retained_module
+
+    modules = [
+        retained_module(
+            snapshot, module, canvas, f"{job.workspace_id}/replica/{document.id}/"
+        ) or module
+        for module, canvas in zip(modules, canvases, strict=True)
+    ]
     items = list(
         session.scalars(
             select(JobItemRecord)
@@ -101,6 +109,8 @@ async def recover_outputs(
         with Image.open(BytesIO(raw)) as image:
             image.load()
             size, mime = image.size, Image.MIME[image.format or "PNG"]
+        if module.get("recovered_canvas_verdict") and list(size) != module["size"]:
+            raise ReplicaNativeError("保留画幅的真实尺寸与原调用回执不一致。")
         if not native_budget_matches(canvas, size):
             # Small test/provider canvases can be exact matches as well.
             from .replica_native_provider import _canvas_matches
@@ -157,6 +167,8 @@ async def recover_outputs(
                     asset_metadata={
                         "recovered_from_job": job.id,
                         "review_status": "NOT_REVIEWED",
+                        **({"delivery_canvas": module["delivery_canvas"]}
+                           if "delivery_canvas" in module else {}),
                     },
                 )
                 session.add(asset)

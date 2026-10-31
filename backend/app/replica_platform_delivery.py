@@ -28,7 +28,9 @@ def delivery_run_type(base: type[NativeReplicaRun]) -> type[NativeReplicaRun]:
             )
             if self.direct_execution:
                 from .replica_direct_delivery import validate_direct_state
+                from .replica_retained_canvas import promote_retained
 
+                promote_retained(self)
                 validate_direct_state(self)
 
     return PlatformDeliveryRun
