@@ -4,8 +4,22 @@
   "same_plan": true,
   "expected_images": 5,
   "first_screen_provider_accepted": true,
-  "latest_status": "processing",
+  "latest_status": "failed",
   "succeeded_images": 0,
   "original_failure_record_preserved": true,
-  "original_invocation_fences_preserved": true
+  "original_invocation_fences_preserved": true,
+  "error_code": "REPLICA_CANVAS_MISMATCH",
+  "required_canvas": [
+    1440,
+    1440
+  ],
+  "returned_canvas": [
+    1254,
+    1254
+  ],
+  "native_image_attempts": 2,
+  "retained_originals": 2,
+  "skipped_images": 4,
+  "multipart_400_resolved": true,
+  "finished_at_beijing": "2026-10-31 18:17:06"
 }
