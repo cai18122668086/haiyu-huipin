@@ -1,4 +1,4 @@
-"""Versioned, explicit processing choices; never infer consent from a session."""
+"""Legacy processing receipts retained for compatibility and audit history."""
 
 import hashlib
 import json
@@ -103,12 +103,3 @@ def withdraw_consent(session: Session, user_id: str) -> None:
     )
     for record in records:
         record.withdrawn_at = utc_now()
-
-
-def require_processing_consent(session: Session, user_id: str) -> None:
-    if current_consent(session, user_id) is None:
-        raise ApiError(
-            403,
-            "PROCESSING_CONSENT_REQUIRED",
-            "请先在账户设置中分别确认香港处理与模型训练说明，再上传素材或开始新创作。",
-        )

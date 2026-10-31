@@ -6,8 +6,9 @@ from fastapi.testclient import TestClient
 from PIL import Image
 from sqlalchemy import func, select
 
+from app.credit_memberships import grant
 from app.main import create_app
-from app.models import ProcessingConsentRecord
+from app.models import ProcessingConsentRecord, WorkspaceCreditAccountRecord
 from app.processing_consent import NOTICE, NOTICE_HASH, POLICY_VERSION
 from app.sms_auth import override_sms_apis
 from tests.test_auth_external import (
@@ -35,13 +36,13 @@ def upload(client, workspace):
     )
 
 
-def test_old_session_needs_explicit_choices_and_revoke_keeps_read_access(tmp_path):
+def test_existing_session_uploads_without_extra_choice_and_keeps_history(tmp_path):
     backend = FakeExternalAuthBackend(identity=verified_identity())
     with TestClient(create_app(external_settings(tmp_path), backend)) as client:
         user_id = client.get("/api/v1/me").json()["id"]
         workspace = client.get("/api/v1/workspaces").json()[0]["id"]
         assert client.get(PATH).json()["accepted"] is False
-        assert upload(client, workspace).status_code == 403
+        assert upload(client, workspace).status_code == 201
         assert (
             client.post(
                 f"/api/v1/workspaces/{workspace}/jobs/job_missing/cancel",
@@ -49,7 +50,7 @@ def test_old_session_needs_explicit_choices_and_revoke_keeps_read_access(tmp_pat
                 headers={"Idempotency-Key": "synthetic-cancel"},
             ).status_code
             == 404
-        )  # Cancellation reaches the handler without new consent.
+        )  # Cancellation reaches the handler without extra confirmation.
         for partial in (
             {},
             {**CHOICE, "aiTraining": False},
@@ -75,7 +76,7 @@ def test_old_session_needs_explicit_choices_and_revoke_keeps_read_access(tmp_pat
         created = upload(client, workspace)
         assert created.status_code == 201, created.text
         assert client.delete(PATH).json()["accepted"] is False
-        assert upload(client, workspace).status_code == 403
+        assert upload(client, workspace).status_code == 201
         assert client.get(f"/api/v1/workspaces/{workspace}/assets").status_code == 200
         assert client.get(f"/api/v1/workspaces/{workspace}/jobs").status_code == 200
         # Existing originals remain downloadable after withdrawal.
@@ -104,6 +105,40 @@ def test_old_session_needs_explicit_choices_and_revoke_keeps_read_access(tmp_pat
             )
 
 
+def test_existing_session_creates_jobs_without_extra_confirmation(tmp_path):
+    backend = FakeExternalAuthBackend(identity=verified_identity())
+    with TestClient(create_app(external_settings(tmp_path), backend)) as client:
+        workspace = client.get("/api/v1/workspaces").json()[0]["id"]
+        source = upload(client, workspace)
+        assert source.status_code == 201, source.text
+        payload = {
+            "type": "product_image",
+            "intent": "submit",
+            "input": {"product_asset_ids": [source.json()["id"]]},
+            "configuration": {"task_type": "white_background", "image_count": 1},
+        }
+        insufficient = client.post(
+            f"/api/v1/workspaces/{workspace}/jobs",
+            headers={"Idempotency-Key": "synthetic-job-no-credits"},
+            json=payload,
+        )
+        assert insufficient.status_code == 402, insufficient.text
+        assert insufficient.json()["error"]["code"] == "BUDGET_LIMIT_EXCEEDED"
+        with client.app.state.session_factory() as session:
+            account = session.get(WorkspaceCreditAccountRecord, workspace)
+            grant(session, account, "synthetic-test", 20, None, "Synthetic test")
+            session.commit()
+        created = client.post(
+            f"/api/v1/workspaces/{workspace}/jobs",
+            headers={"Idempotency-Key": "synthetic-job-without-extra-consent"},
+            json=payload,
+        )
+        assert created.status_code == 202, created.text
+        assert client.get(PATH).json()["accepted"] is False
+        with client.app.state.session_factory() as session:
+            assert session.scalars(select(ProcessingConsentRecord)).all() == []
+
+
 def test_consent_is_scoped_to_authenticated_identity(tmp_path):
     backend = FakeExternalAuthBackend()
     with TestClient(create_app(external_settings(tmp_path), backend)) as client:
@@ -120,7 +155,7 @@ def test_consent_is_scoped_to_authenticated_identity(tmp_path):
     "choice",
     [None, {**CHOICE, "aiTraining": False}, {**CHOICE, "policyVersion": "old"}],
 )
-def test_registration_rejects_missing_choice_before_sms_or_otp(choice):
+def test_registration_requires_only_agreements_before_sms_or_otp(choice):
     import asyncio
 
     called = []
@@ -134,6 +169,7 @@ def test_registration_rejects_missing_choice_before_sms_or_otp(choice):
             "acceptedAgreements": True,
             "flow": "register",
             "processingConsent": choice,
+            "password": "SyntheticPassword123",
         }
 
     api = override_sms_apis(
@@ -146,20 +182,20 @@ def test_registration_rejects_missing_choice_before_sms_or_otp(choice):
     result = asyncio.run(
         api.consume_code_post(SimpleNamespace(request=SimpleNamespace(json=body)))
     )
-    assert result.to_json()["status"] == "GENERAL_ERROR"
+    assert result.status == "RESTART_FLOW_ERROR"
     options = SimpleNamespace(request=SimpleNamespace(json=body))
     assert (
-        asyncio.run(api.create_code_post(options)).to_json()["status"]
-        == "GENERAL_ERROR"
+        asyncio.run(api.create_code_post(options)).status
+        == "RESTART_FLOW_ERROR"
     )
     assert (
-        asyncio.run(api.resend_code_post(options)).to_json()["status"]
-        == "GENERAL_ERROR"
+        asyncio.run(api.resend_code_post(options)).status
+        == "RESTART_FLOW_ERROR"
     )
-    assert not called
+    assert len(called) == 3
 
 
-def test_sms_accepts_explicit_choices_and_password_reset_does_not_force_training():
+def test_sms_login_and_password_reset_do_not_require_extra_confirmation():
     import asyncio
 
     called = []

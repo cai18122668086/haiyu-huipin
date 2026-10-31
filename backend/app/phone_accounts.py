@@ -110,7 +110,6 @@ def persist_otp_account(
     identity: ExternalIdentity,
     flow: str,
     password: str | None,
-    processing_consent: dict[str, Any] | None = None,
 ) -> PhoneAccount:
     existing_id = session.scalar(
         select(UserRecord.id).where(
@@ -120,19 +119,6 @@ def persist_otp_account(
     )
     if flow == "reset" and existing_id is None:
         raise ApiError(404, "PHONE_NOT_REGISTERED", "该手机号尚未注册，请先注册。")
-    confirmed = False
-    if flow != "reset":
-        from .processing_consent import validate_choice
-
-        try:
-            validate_choice(processing_consent)
-            confirmed = True
-        except ApiError:
-            # Verified existing users can sign in to read/download without
-            # granting AI training. A new application account cannot be
-            # provisioned through SMS auto-registration without its choices.
-            if flow == "register" or existing_id is None:
-                raise
     user = _ensure_external_user(session, identity)
     session.flush()
     locked_user = session.get(
@@ -153,10 +139,6 @@ def persist_otp_account(
     if not user.display_name:
         user.display_name = "用户" + (user.phone_number or "")[-4:]
     ensure_personal_workspace(session, user)
-    if confirmed:
-        from .processing_consent import record_consent
-
-        record_consent(session, user.id, processing_consent, source="phone_" + flow)
     session.commit()
     return account_snapshot(user)
 
@@ -192,7 +174,6 @@ async def finish_otp_login(result: Any, body: dict[str, Any], request: Request) 
                 identity,
                 flow,
                 body.get("password"),
-                body.get("processingConsent"),
             )
 
     account = await run_in_threadpool(persist)

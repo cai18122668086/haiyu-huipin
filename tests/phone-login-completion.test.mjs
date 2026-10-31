@@ -37,11 +37,14 @@ test("phone authentication closes the dialog only on success, including storage 
     assert.equal(state.bodies[0].acceptedAgreements, true);
     assert.equal(state.bodies[0].processingConsent, undefined, "the client must not invent processing consent");
     state.status = "RESTART_FLOW_ERROR";
-    await auth.signInWithPhoneCode("synthetic", "login", undefined, {policyVersion:"test-version",hongKongProcessing:true,aiTraining:false});
-    assert.deepEqual(state.bodies.at(-1).processingConsent, {policyVersion:"test-version",hongKongProcessing:true,aiTraining:false});
-    await auth.sendPhoneLoginCode("13800000000", false, "register", {policyVersion:"test-version",hongKongProcessing:true,aiTraining:true});
+    await auth.signInWithPhoneCode("synthetic", "register", "SyntheticPassword123");
+    assert.equal(state.bodies.at(-1).processingConsent, undefined);
+    assert.equal(state.bodies.at(-1).acceptedAgreements, true);
+    assert.equal(state.bodies.at(-1).password, "SyntheticPassword123");
+    await auth.sendPhoneLoginCode("13800000000", false, "register");
     assert.equal(state.bodies.at(-1).flow, "register");
-    assert.equal(state.bodies.at(-1).processingConsent.aiTraining, true);
+    assert.equal(state.bodies.at(-1).processingConsent, undefined);
+    assert.equal(state.bodies.at(-1).acceptedAgreements, true);
     await auth.sendPhoneLoginCode("13800000000", true, "reset");
     assert.equal(state.bodies.at(-1).flow, "reset");
     assert.equal(state.bodies.at(-1).processingConsent, undefined);
