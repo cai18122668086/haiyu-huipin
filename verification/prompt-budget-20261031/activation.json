@@ -1,0 +1,15 @@
+{
+  "status": "activated",
+  "revision": "7be688ae78abb4744a80b9ca26d1eae0782b6001",
+  "image": "huipin-prompt-budget/backend:7be688ae78abb4744a80b9ca26d1eae0782b6001",
+  "migration": "20261030_0037",
+  "backup_bytes": 2329971,
+  "backup_sha256": "d58d2aad65b39752824b2d90528a3b8fa3cc8097997539dd4e529ef73b6bc9a9",
+  "backup_catalog_verified": true,
+  "source_files_verified": 377,
+  "environment_commands_mounts_resources_preserved": true,
+  "other_containers_preserved": true,
+  "frontend_unchanged": true,
+  "native_protocol_unchanged": true,
+  "customer_task_restarted": false
+}

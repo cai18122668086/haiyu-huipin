@@ -1,0 +1,19 @@
+{
+  "exit_code": 0,
+  "isolated_database": true,
+  "image_id": "sha256:a1b104378b8aa3f7e30be191541e638ac6fbcd29cfb85963f1b2e6be04c89aaf",
+  "test_files": [
+    "test_haiyu_prompt",
+    "test_haiyu_transport",
+    "test_replica_image_recovery",
+    "test_replica_canvas_recovery",
+    "test_replica_execution_resume",
+    "test_replica_native_plan_policy",
+    "test_replica_fast",
+    "test_execution_reliability",
+    "test_credit_payments",
+    "test_credit_memberships",
+    "test_credit_refunds",
+    "test_replica_automatic_recovery"
+  ]
+}

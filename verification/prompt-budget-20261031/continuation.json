@@ -1,0 +1,11 @@
+{
+  "authorized_continuation": true,
+  "used_existing_retry_service": true,
+  "same_plan": true,
+  "expected_images": 5,
+  "first_screen_provider_accepted": true,
+  "latest_status": "processing",
+  "succeeded_images": 0,
+  "original_failure_record_preserved": true,
+  "original_invocation_fences_preserved": true
+}

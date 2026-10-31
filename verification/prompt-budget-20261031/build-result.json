@@ -1,0 +1,10 @@
+{
+  "image": "huipin-prompt-budget/backend:7be688ae78abb4744a80b9ca26d1eae0782b6001",
+  "image_id": "sha256:a1b104378b8aa3f7e30be191541e638ac6fbcd29cfb85963f1b2e6be04c89aaf",
+  "source_files_verified": 377,
+  "native_protocol": {
+    "version": "exact-compact-v16",
+    "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"
+  },
+  "baseline_matched": true
+}
