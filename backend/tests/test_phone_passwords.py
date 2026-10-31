@@ -15,7 +15,12 @@ from app.phone_accounts import (
     validate_password,
     verify_password_account,
 )
-from app.processing_consent import POLICY_VERSION, current_consent, withdraw_consent
+from app.processing_consent import (
+    POLICY_VERSION,
+    current_consent,
+    record_consent,
+    withdraw_consent,
+)
 from app.supertokens_auth import ExternalIdentity
 from tests.test_auth_external import FakeExternalAuthBackend, external_settings
 
@@ -65,7 +70,7 @@ def test_registration_and_reset_preserve_local_identity_and_invalidate_old_sessi
         client.app.state.session_factory() as session,
     ):
         account = persist_otp_account(
-            session, identity(), "register", "FirstPassword123", CONSENT
+            session, identity(), "register", "FirstPassword123"
         )
         assert account.version == 1
         assert (
@@ -99,28 +104,26 @@ def test_registering_existing_phone_cannot_replace_password(tmp_path) -> None:
         client.app.state.session_factory() as session,
     ):
         persist_otp_account(
-            session, identity(), "register", "FirstPassword123", CONSENT
+            session, identity(), "register", "FirstPassword123"
         )
         with pytest.raises(ApiError, match="已注册"):
             persist_otp_account(
-                session, identity(1), "register", "InjectedPassword123", CONSENT
+                session, identity(1), "register", "InjectedPassword123"
             )
         session.rollback()
         user = session.scalar(select(UserRecord))
         assert check_password("FirstPassword123", user.password_hash)
 
 
-def test_sms_login_cannot_autoregister_without_choices_or_regrant_withdrawn_training(
+def test_sms_autoregistration_needs_no_extra_choice_and_preserves_legacy_receipts(
     tmp_path,
 ):
     with TestClient(
         create_app(external_settings(tmp_path), FakeExternalAuthBackend())
     ) as client, client.app.state.session_factory() as session:
-        with pytest.raises(ApiError, match="分别阅读"):
-            persist_otp_account(session, identity(), "login", None)
-        session.rollback()
-        assert session.scalar(select(UserRecord.id)) is None
-        account = persist_otp_account(session, identity(), "login", None, CONSENT)
+        account = persist_otp_account(session, identity(), "login", None)
+        assert session.scalars(select(ProcessingConsentRecord)).all() == []
+        record_consent(session, account.user_id, CONSENT, source="legacy_test")
         withdraw_consent(session, account.user_id)
         session.commit()
         logged_in = persist_otp_account(session, identity(), "login", None)
