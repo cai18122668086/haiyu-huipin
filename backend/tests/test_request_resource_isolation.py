@@ -154,21 +154,27 @@ def test_slow_public_database_lookup_does_not_block_event_loop(
         else _archive_url(bounded_client)
     )
     entered, release = threading.Event(), threading.Event()
+    entered_async = asyncio.Event()
+    event_loop = None
 
     def slow_query(_conn, _cursor, statement, *_args):
         if f"FROM {table}" in statement:
             entered.set()
-            assert release.wait(3)
+            assert event_loop is not None
+            event_loop.call_soon_threadsafe(entered_async.set)
+            assert release.wait(10)
 
     event.listen(app.state.engine, "before_cursor_execute", slow_query)
 
     async def scenario():
+        nonlocal event_loop
+        event_loop = asyncio.get_running_loop()
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:
             task = asyncio.create_task(client.get(url))
             try:
-                assert await asyncio.to_thread(entered.wait, 1)
+                await asyncio.wait_for(entered_async.wait(), 10)
                 ready = await asyncio.wait_for(client.get("/health/live"), 1)
                 assert ready.status_code == 200
                 assert not release.is_set()
@@ -179,7 +185,13 @@ def test_slow_public_database_lookup_does_not_block_event_loop(
 
     try:
         with ThreadPoolExecutor(max_workers=1) as executor:
-            watchdog = executor.submit(lambda: release.wait(2) or release.set())
+            def release_blocked_query():
+                # Start the deadlock guard at actual SQL entry, rather than
+                # spending its budget on a busy runner's thread startup.
+                if not entered.wait(10) or not release.wait(3):
+                    release.set()
+
+            watchdog = executor.submit(release_blocked_query)
             asyncio.run(scenario())
             watchdog.result()
     finally:

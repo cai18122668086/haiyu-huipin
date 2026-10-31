@@ -343,7 +343,7 @@ def test_direct_canvas_failure_stops_after_one_format_correction_without_model_a
 
     async def wrong(request):
         calls.append(request)
-        return result((512, 640))
+        return result((512, 512))
 
     gateway.edit = wrong
     with pytest.raises(ReplicaCanvasMismatch):

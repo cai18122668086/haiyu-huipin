@@ -14,7 +14,7 @@ from PIL import Image
 
 from .models import JobItemRecord, JobRecord, ReplicaDocumentRecord, utc_now
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
-from .replica_canvas import delivery_receipt, native_budget_matches
+from .replica_canvas import delivery_receipt, native_budget_matches, receipt_matches
 from .replica_layout import exact_review_context
 from .replica_native import (
     VISUAL_EVIDENCE_POLICY_VERSION,
@@ -230,7 +230,7 @@ class NativeReplicaProvider:
                     or (
                         direct_source
                         and snapshot["model_protocol"].get("version")
-                        not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16"}
+                        not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16", "exact-compact-v17"}
                     )
                     else run_class(
                         values["replication_method"], snapshot["model_protocol"]
@@ -246,7 +246,7 @@ class NativeReplicaProvider:
             )
             if direct_source and snapshot.get("model_protocol") and snapshot.get("model_protocol", {}).get(
                 "version"
-            ) not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16"}:
+            ) not in {"exact-compact-v5", "exact-compact-v6", "exact-compact-v7", "exact-compact-v8", "exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16", "exact-compact-v17"}:
                 await replica_direct_delivery.restore_source(
                     run, snapshot, direct_source[1]
                 )
@@ -389,7 +389,7 @@ class NativeReplicaProvider:
         minimum_edge = min(canvas) if run.method == "exact" else 0
         native_delivery = run.method == "exact" and getattr(run, "direct_execution", False)
         canvas_correction = native_delivery and (
-            getattr(run, "binding", {}).get("version") in {"exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16"}
+            getattr(run, "binding", {}).get("version") in {"exact-compact-v9", "exact-compact-v10", "exact-compact-v11", "exact-compact-v12", "exact-compact-v13", "exact-compact-v14", "exact-compact-v15", "exact-compact-v16", "exact-compact-v17"}
             or getattr(run, "canvas_correction_enabled", False)
         )
         format_limit = 2 if canvas_correction or not getattr(run, "direct_execution", False) else 1
@@ -437,9 +437,11 @@ class NativeReplicaProvider:
                         ):
                             raise ReplicaNativeError("缓存图片与原生模块或画幅绑定不一致。")
                         receipt = delivery_receipt(canvas, actual, prior["sha256"])
-                        if not format_start and prior.get("delivery_canvas") not in (None, receipt):
+                        if not format_start and prior.get("delivery_canvas") is not None and not receipt_matches(
+                            prior["delivery_canvas"], canvas, actual, prior["sha256"]
+                        ):
                             raise ReplicaNativeError("原生画幅交付记录发生变化。")
-                        if not format_start and prior.get("delivery_canvas") != receipt:
+                        if not format_start and prior.get("delivery_canvas") is None:
                             # Retain canvas_rejected and its original strict verdict.
                             prior["delivery_canvas"] = receipt
                             write_json(ledger_path, ledger)
@@ -453,7 +455,7 @@ class NativeReplicaProvider:
 
                 if (
                     prior.get("state") == "invoked"
-                    and (getattr(run, "binding", None) or {}).get("version") in {VERSION, "exact-compact-v15", "exact-compact-v16"}
+                    and (getattr(run, "binding", None) or {}).get("version") in {VERSION, "exact-compact-v15", "exact-compact-v16", "exact-compact-v17"}
                     and prior.get("job_id") == request.job_id
                     and prior.get("target") == key
                     and prior.get("native_prompt_sha256") == digest(prompt.encode("utf-8"))

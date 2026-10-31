@@ -164,7 +164,7 @@ def test_real_count_disagreement_still_stops_at_existing_bound_not_blank_band_co
 def test_v14_archive_and_new_protocol_keep_separate_hashes():
     old = run_class("exact", V14_BINDING)
     assert sys.modules[old.__module__].protocol_binding() == V14_BINDING
-    assert protocol_binding()["version"] == "exact-compact-v16"
+    assert protocol_binding()["version"] == "exact-compact-v17"
 
 
 def test_v15_published_snapshot_still_resolves_to_frozen_protocol():
