@@ -1,0 +1,13 @@
+{
+  "revision": "e9617eb0122f551e01f8008a8c739aa1a560ed83",
+  "backend_id": "sha256:6a2788eb71e71dc720c368bbbb39b49f66f3393f9b63dda0aca45c001c27cc13",
+  "frontend_id": "sha256:bb48f1bd54f3f58c80105abeb3bc89a901a9700e5d05b825514895c182e67a26",
+  "backend_sources_checked": 376,
+  "frontend_sources_checked": 252,
+  "baseline_differences": [
+    "app/auth.py",
+    "app/phone_accounts.py",
+    "app/processing_consent.py",
+    "app/sms_auth.py"
+  ]
+}

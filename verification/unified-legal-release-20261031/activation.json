@@ -1,0 +1,14 @@
+{
+  "status": "activated",
+  "revision": "e9617eb0122f551e01f8008a8c739aa1a560ed83",
+  "backend_image": "huipin-legal/backend:e9617eb0122f551e01f8008a8c739aa1a560ed83",
+  "frontend_image": "huipin-legal/frontend:e9617eb0122f551e01f8008a8c739aa1a560ed83",
+  "migration": "20261030_0037",
+  "backup_sha256": "a3baf13c53f5431000023d802d6f11da7c0f537cf09d9c164536e7c735bf4c73",
+  "backup_bytes": 2000256,
+  "backup_catalog_verified": true,
+  "settings_queues_capacity_preserved": true,
+  "other_services_preserved": true,
+  "customer_task_restarted": false,
+  "caddy_change": "unchanged"
+}

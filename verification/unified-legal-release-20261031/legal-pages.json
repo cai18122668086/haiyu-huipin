@@ -1,0 +1,14 @@
+{
+  "/legal/terms": {
+    "status": 200,
+    "updated_date": "2026-10-31",
+    "processing_disclosures_present": true,
+    "extra_confirmation_instructions_removed": true
+  },
+  "/legal/privacy": {
+    "status": 200,
+    "updated_date": "2026-10-31",
+    "processing_disclosures_present": true,
+    "extra_confirmation_instructions_removed": true
+  }
+}
