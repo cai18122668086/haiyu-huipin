@@ -398,11 +398,28 @@ class HaiyuTransport:
         # reject a native artifact that does not meet its delivery contract.
         if values.get("size"):
             note += f"\nTarget output canvas: {values['size']} pixels."
+        from .haiyu_prompt import fit_prompt
+
+        try:
+            wire_prompt = fit_prompt(values.get("prompt", "") + note)
+        except ValueError as prompt_error:
+            if reconcile_only:
+                raise _error(
+                    "Original image request exceeds the current wire limit; "
+                    "reconciliation is still required."
+                ) from prompt_error
+            return 400, {
+                "error": {
+                    "code": "image_prompt_too_long",
+                    "type": "invalid_request_error",
+                    "message": str(prompt_error),
+                }
+            }
         wire_fields = [(key, value) for key, value in fields if key in {"model", "n"}]
         if self.send_size and values.get("size"):
             wire_fields.append(("size", values["size"]))
         wire_fields += [
-            ("prompt", values.get("prompt", "") + note),
+            ("prompt", wire_prompt),
             ("async", "true"),
             ("response_format", "url"),
         ]
