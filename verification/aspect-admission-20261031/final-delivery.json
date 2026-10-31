@@ -1,0 +1,83 @@
+{
+  "status": "completed",
+  "expected_images": 5,
+  "delivered_images": 5,
+  "reused_images": 1,
+  "new_native_images": 4,
+  "same_approved_plan": true,
+  "first_screen_not_regenerated": true,
+  "original_canvas_verdict_preserved": true,
+  "finished_at_beijing": "2026-11-01T00:47:13.065032+08:00",
+  "outputs": [
+    {
+      "screen": 1,
+      "requested_size": [
+        1440,
+        1440
+      ],
+      "actual_size": [
+        1254,
+        1254
+      ],
+      "ratio_valid": true,
+      "raw_hash_verified": true,
+      "reused": true
+    },
+    {
+      "screen": 2,
+      "requested_size": [
+        1024,
+        1024
+      ],
+      "actual_size": [
+        1254,
+        1254
+      ],
+      "ratio_valid": true,
+      "raw_hash_verified": true,
+      "reused": false
+    },
+    {
+      "screen": 3,
+      "requested_size": [
+        1024,
+        1024
+      ],
+      "actual_size": [
+        1254,
+        1254
+      ],
+      "ratio_valid": true,
+      "raw_hash_verified": true,
+      "reused": false
+    },
+    {
+      "screen": 4,
+      "requested_size": [
+        1440,
+        1440
+      ],
+      "actual_size": [
+        1254,
+        1254
+      ],
+      "ratio_valid": true,
+      "raw_hash_verified": true,
+      "reused": false
+    },
+    {
+      "screen": 5,
+      "requested_size": [
+        1024,
+        1024
+      ],
+      "actual_size": [
+        1254,
+        1254
+      ],
+      "ratio_valid": true,
+      "raw_hash_verified": true,
+      "reused": false
+    }
+  ]
+}

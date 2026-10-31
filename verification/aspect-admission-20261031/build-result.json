@@ -1,0 +1,10 @@
+{
+  "image": "huipin-aspect-admission/backend:920757f9a7cc0d02171c6e605fcd8921cee17bfe",
+  "image_id": "sha256:fb1098c8eaf40a8922886c5673113a1c3d36cb6afe2db55f02f03a4b79caca58",
+  "source_files_verified": 398,
+  "native_protocol": {
+    "version": "exact-compact-v17",
+    "content_sha256": "aedefa6ba511e79cb996946baa36eee923f8c0bc08c75afde08e2b5dadf434ce"
+  },
+  "baseline_matched": true
+}

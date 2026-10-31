@@ -1,0 +1,2 @@
+{"old_protocol": {"version": "exact-compact-v16", "content_sha256": "63df401796fde30686b4485af519a2f5ee0f3a3577cfd2225dfc352d2cd2c59c"}, "new_protocol": {"version": "exact-compact-v17", "content_sha256": "aedefa6ba511e79cb996946baa36eee923f8c0bc08c75afde08e2b5dadf434ce"}, "retained_first_screen_reusable": true, "required_size": [1440, 1440], "actual_size": [1254, 1254], "raw_bytes_hash_verified": true, "source_snapshot_unchanged": true, "original_canvas_verdict_preserved": true, "missing_screens": 4, "no_generation_requests": true, "no_database_writes": true}
+

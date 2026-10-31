@@ -1,0 +1,15 @@
+{
+  "status": "activated",
+  "revision": "920757f9a7cc0d02171c6e605fcd8921cee17bfe",
+  "image": "huipin-aspect-admission/backend:920757f9a7cc0d02171c6e605fcd8921cee17bfe",
+  "migration": "20261030_0037",
+  "backup_bytes": 2661118,
+  "backup_sha256": "16121a134cd1dd06d447a77d5f37f81cc3e8759a922559763e3133e5dacf446f",
+  "backup_catalog_verified": true,
+  "source_files_verified": 398,
+  "environment_commands_mounts_resources_preserved": true,
+  "other_containers_preserved": true,
+  "frontend_unchanged": true,
+  "historical_native_protocol_preserved": true,
+  "customer_task_restarted": false
+}

@@ -1,0 +1,75 @@
+{
+  "head": "920757f9a7cc0d02171c6e605fcd8921cee17bfe",
+  "checks": [
+    {
+      "name": "Backend quality",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124593637751"
+    },
+    {
+      "name": "Backend shard 5",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121956"
+    },
+    {
+      "name": "Backend shard 4",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121944"
+    },
+    {
+      "name": "Backend shard 2",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121932"
+    },
+    {
+      "name": "Backend shard 3",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121910"
+    },
+    {
+      "name": "Container build (crawl-worker)",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121829"
+    },
+    {
+      "name": "Backend shard 6",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121824"
+    },
+    {
+      "name": "Backend shard 7",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121815"
+    },
+    {
+      "name": "Backend shard 0",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121794"
+    },
+    {
+      "name": "Backend shard 1",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121787"
+    },
+    {
+      "name": "Container build (backend)",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121771"
+    },
+    {
+      "name": "Container build (frontend)",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121699"
+    },
+    {
+      "name": "Frontend quality",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121691"
+    },
+    {
+      "name": "API contract",
+      "conclusion": "success",
+      "url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/41218221161/job/124587121606"
+    }
+  ]
+}

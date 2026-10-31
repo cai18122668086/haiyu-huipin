@@ -1,0 +1,66 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 20260725_0001, Create assets and jobs tables.
+INFO  [alembic.runtime.migration] Running upgrade 20260725_0001 -> 20260725_0002, Add the Phase 1.1 production domain model.
+INFO  [alembic.runtime.migration] Running upgrade 20260725_0002 -> 20260725_0003, Backfill Phase 1 data and validate production constraints.
+INFO  [alembic.runtime.migration] Running upgrade 20260725_0003 -> 20260725_0004, Finalize tenant-safe constraints and production indexes.
+INFO  [alembic.runtime.migration] Running upgrade 20260725_0004 -> 20260727_0005, Harden tenant relations, accounting uniqueness, and queue claims.
+INFO  [alembic.runtime.migration] Running upgrade 20260727_0005 -> 20260808_0006, Add durable Amazon whole-suite review attempts.
+INFO  [alembic.runtime.migration] Running upgrade 20260808_0006 -> 20260814_0007, Add site-wide announcements and administrator publishing metadata.
+INFO  [alembic.runtime.migration] Running upgrade 20260814_0007 -> 20260814_0008, Add optional public image metadata to announcements.
+INFO  [alembic.runtime.migration] Running upgrade 20260814_0008 -> 20260817_0009, Add 30-day user content retention metadata.
+INFO  [alembic.runtime.migration] Running upgrade 20260817_0009 -> 20260820_0010, Raise legacy workspace provider cost defaults to $10,000,000.
+INFO  [alembic.runtime.migration] Running upgrade 20260820_0010 -> 20260820_0011, Add durable Aurora retry scheduling fields.
+INFO  [alembic.runtime.migration] Running upgrade 20260820_0011 -> 20260824_0012, Add database-backed inspiration cases.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0012 -> 20260901_0013, Add the first persisted domestic ecommerce crawl task loop.
+INFO  [alembic.runtime.migration] Running upgrade 20260901_0013 -> 20260901_0014, Add workspace-owned ecommerce accounts and isolated profiles.
+INFO  [alembic.runtime.migration] Running upgrade 20260901_0014 -> 20260901_0015, Add fencing tokens to ecommerce profile leases.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0012 -> 20260828_0013, Add explicit inspiration workflow routing configuration.
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0013 -> 20260828_0014, Finalize the approved workflow routing for all published inspiration cases.
+INFO  [alembic.runtime.migration] Running upgrade 20260828_0014 -> 20260831_0015, Repair the approved inspiration case catalog and its asset-role map.
+INFO  [alembic.runtime.migration] Running upgrade 20260831_0015 -> 20260831_0016, Restore the approved case-specific prompts without changing workflow routing.
+INFO  [alembic.runtime.migration] Running upgrade 20260831_0016 -> 20260831_0017, Restore historical inspiration card metadata without touching prompts or assets.
+INFO  [alembic.runtime.migration] Running upgrade 20260831_0017, 20260901_0015 -> 20260902_0018, Merge the inspiration and domestic ecommerce migration branches.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0018 -> 20260902_0019, Add the crawl result snapshot reference used by task recovery.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0019 -> 20260902_0020, Add durable administrator roles and permissions.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0020 -> 20260902_0021, Add durable leases for human-assisted ecommerce login sessions.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0021 -> 20260903_0022, Add scope-bound outbound local ecommerce worker registration.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0022 -> 20260904_0023, Add worker-bound remote login job metadata.
+INFO  [alembic.runtime.migration] Running upgrade 20260904_0023 -> 20260909_0024, Add durable recovery credentials for automatic Worker re-registration.
+INFO  [alembic.runtime.migration] Running upgrade 20260909_0024 -> 20260930_0025, Allow complete generation with a separately blocked Aurora set review.
+INFO  [alembic.runtime.migration] Running upgrade 20260930_0025 -> 20261017_0026, Record the production stage expansion without narrowing existing data.
+INFO  [alembic.runtime.migration] Running upgrade 20261017_0026 -> 20261021_0027, Persist workspace product imports and reference-remix plans.
+INFO  [alembic.runtime.migration] Running upgrade 20261021_0027 -> 20261027_0028, Persist the phone of independently authenticated ecommerce users.
+INFO  [alembic.runtime.migration] Running upgrade 20261027_0028 -> 20261028_0029, Keep customer tariffs separate from hash-bound generation inputs.
+INFO  [alembic.runtime.migration] Running upgrade 20261028_0029 -> 20261028_0030, Independent, idempotent official-channel credit purchase orders.
+INFO  [alembic.runtime.migration] Running upgrade 20261028_0030 -> 20261028_0031, Frozen purchase terms, calendar memberships and source-bound credit lots.
+INFO  [alembic.runtime.migration] Running upgrade 20261028_0031 -> 20261028_0032, Durable original-route refunds and reversible entitlement cancellation.
+INFO  [alembic.runtime.migration] Running upgrade 20261028_0032 -> 20261028_0033, Manual memberships and permanent support-action receipts.
+INFO  [alembic.runtime.migration] Running upgrade 20261028_0033 -> 20261029_0034, Durable server-side payment reconciliation independent of the browser.
+INFO  [alembic.runtime.migration] Running upgrade 20261029_0034 -> 20261030_0035, Allow complete plan protocol identifiers without changing their identity.
+INFO  [alembic.runtime.migration] Running upgrade 20261030_0035 -> 20261030_0036, Add task-linked support records without changing wallet or payment tables.
+INFO  [alembic.runtime.migration] Running upgrade 20261030_0036 -> 20261030_0037, Append explicit processing choices; preserve legacy users and existing jobs.
+........................................................................ [ 24%]
+........................................................................ [ 48%]
+........................................................................ [ 72%]
+........................................................................ [ 96%]
+..........                                                               [100%]
+=============================== warnings summary ===============================
+../../../usr/local/lib/python3.13/site-packages/anyio/pytest_plugin.py:14
+  /usr/local/lib/python3.13/site-packages/anyio/pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+../../../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+app/domestic_detail/review.py:17
+app/domestic_detail/review.py:17
+  /tmp/candidate/backend/app/domestic_detail/review.py:17: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.
+    from jsonschema import Draft202012Validator, FormatChecker, RefResolver
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+298 passed, 4 warnings in 317.15s (0:05:17)

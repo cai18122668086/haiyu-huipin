@@ -1,0 +1,10 @@
+{
+  "authorized_continuation": true,
+  "used_existing_retry_service": true,
+  "same_approved_plan": true,
+  "status": "completed",
+  "delivered_images": 5,
+  "reused_images": 1,
+  "first_screen_not_regenerated": true,
+  "finished_at_beijing": "2026-11-01T00:47:13.065032+08:00"
+}

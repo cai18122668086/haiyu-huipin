@@ -1,0 +1,26 @@
+{
+  "exit_code": 0,
+  "isolated_database": true,
+  "image_id": "sha256:fb1098c8eaf40a8922886c5673113a1c3d36cb6afe2db55f02f03a4b79caca58",
+  "test_files": [
+    "test_replica_aspect_delivery",
+    "test_replica_canvas",
+    "test_replica_partial_delivery",
+    "test_replica_similar_audit",
+    "test_replica_column_evidence",
+    "test_replica_analysis_recovery",
+    "test_haiyu_prompt",
+    "test_haiyu_transport",
+    "test_replica_image_recovery",
+    "test_replica_canvas_recovery",
+    "test_replica_execution_resume",
+    "test_replica_native_plan_policy",
+    "test_replica_fast",
+    "test_execution_reliability",
+    "test_credit_payments",
+    "test_credit_memberships",
+    "test_credit_refunds",
+    "test_replica_automatic_recovery",
+    "test_request_resource_isolation"
+  ]
+}
