@@ -1,0 +1,12 @@
+{
+  "revision": "60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "backend_id": "sha256:5c54fe3fdfbdeba9e2b024ac899a666bf172537ee29161e8717c38fcb04233f7",
+  "frontend_id": "sha256:e143cefeb77f3eededc2b043106134274246d52c27c58cebabb2f0b17109e2a3",
+  "backend_sources": 399,
+  "frontend_sources": 263,
+  "baseline_matched": true,
+  "native_protocol": {
+    "version": "exact-compact-v17",
+    "content_sha256": "aedefa6ba511e79cb996946baa36eee923f8c0bc08c75afde08e2b5dadf434ce"
+  }
+}

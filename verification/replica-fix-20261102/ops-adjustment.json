@@ -1,0 +1,6 @@
+{
+  "previous_attempt": "rolled_back",
+  "reason": "Docker bind-list ordering differed; resolved mounts were identical",
+  "guard": "compare sorted binds plus resolved type/name/source/destination/mode/read-write/propagation",
+  "application_images_unchanged": true
+}

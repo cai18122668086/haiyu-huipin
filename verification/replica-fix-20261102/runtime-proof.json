@@ -1,0 +1,37 @@
+{
+  "services": {
+    "api": {
+      "image": "huipin-replica-fix/backend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+      "health": "healthy",
+      "environment_commands_resources_unchanged": true
+    },
+    "worker": {
+      "image": "huipin-replica-fix/backend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+      "health": "healthy",
+      "environment_commands_resources_unchanged": true
+    },
+    "dispatcher": {
+      "image": "huipin-replica-fix/backend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+      "health": "healthy",
+      "environment_commands_resources_unchanged": true
+    },
+    "frontend": {
+      "image": "huipin-replica-fix/frontend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+      "health": "healthy",
+      "environment_commands_resources_unchanged": true
+    }
+  },
+  "source_files": {
+    "api": 399,
+    "worker": 399,
+    "dispatcher": 399,
+    "frontend": 263
+  },
+  "database": {
+    "jobs": 0,
+    "replicas": 0,
+    "migration": "20261030_0037"
+  },
+  "no_production_migration": true,
+  "customer_jobs_not_rerun_by_release": true
+}

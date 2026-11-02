@@ -1,0 +1,7 @@
+{
+  "status": "automatically_rolled_back",
+  "reason": "Docker bind-list order changed; sorted bind definitions and resolved mounts were identical",
+  "rollback_services_healthy": true,
+  "database_downgraded": false,
+  "application_images_changed_for_second_attempt": false
+}

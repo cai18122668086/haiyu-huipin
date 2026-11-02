@@ -1,0 +1,16 @@
+{
+  "status": "activated",
+  "revision": "60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "image": "huipin-replica-fix/backend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "migration": "20261030_0037",
+  "backup_bytes": 4552560,
+  "backup_sha256": "8b2e53e08f41f3f331cd4a7514f26f4cb4d3b554a206a6a47a52fe5b9ab95fab",
+  "backup_catalog_verified": true,
+  "source_files_verified": 399,
+  "environment_commands_mounts_resources_preserved": true,
+  "other_containers_preserved": true,
+  "frontend_image": "huipin-replica-fix/frontend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "frontend_sources_verified": 263,
+  "historical_native_protocol_preserved": true,
+  "customer_task_restarted": false
+}

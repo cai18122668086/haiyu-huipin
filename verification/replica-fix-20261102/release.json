@@ -1,0 +1,17 @@
+{
+  "deployed_at": "2026-11-02T16:25:30.168310+08:00",
+  "pull_request": "https://github.com/cai18122668086/haiyu-huipin/pull/7",
+  "merge_revision": "510b653cdd497589f80decc435f0f7648cc52ddc",
+  "application_revision": "60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "deployment_directory": "/srv/huipin-replica-fix-20261102-60ea63c-v2",
+  "first_attempt_directory": "/srv/huipin-replica-fix-20261102-60ea63c",
+  "backup_bytes": 4552560,
+  "backup_sha256": "8b2e53e08f41f3f331cd4a7514f26f4cb4d3b554a206a6a47a52fe5b9ab95fab",
+  "backup_catalog_verified": true,
+  "ci_checks_passed": 14,
+  "isolated_candidate_tests_passed": 811,
+  "frontend_tests_passed": 244,
+  "public_probe_passed": true,
+  "application_services_healthy": 4,
+  "production_schema_unchanged": "20261030_0037"
+}

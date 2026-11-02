@@ -1,0 +1,9 @@
+{
+  "passed": 811,
+  "skipped": 0,
+  "failed": 0,
+  "summary": "811 passed, 4 warnings in 616.94s (0:10:16)",
+  "isolated_postgresql": true,
+  "previously_skipped_heartbeat_cases_executed": true,
+  "test_database_removed": true
+}
