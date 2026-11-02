@@ -72,6 +72,7 @@ import {
   jobTitle,
   jobTypeLabel,
 } from "@/lib/jobs/presentation";
+import { jobWorkspaceHref } from "@/lib/jobs/workspace-link";
 import styles from "./account-center.module.css";
 
 type Page =
@@ -117,10 +118,8 @@ const date = (value: string | null | undefined) =>
         minute: "2-digit",
       }).format(new Date(value))
     : "—";
-const recordHref = (job: Pick<Job, "id">) =>
-  job.id.startsWith("rep_")
-    ? `/style-replica?sessionId=${encodeURIComponent(job.id)}`
-    : `/jobs?jobId=${encodeURIComponent(job.id)}`;
+const recordHref = (job: Pick<Job, "id"> & Partial<Pick<Job, "type" | "task_preset" | "display_name">>) =>
+  job.type ? jobWorkspaceHref({ ...job, type: job.type }) : `/jobs?jobId=${encodeURIComponent(job.id)}`;
 function Button({
   children,
   variant = "outline",

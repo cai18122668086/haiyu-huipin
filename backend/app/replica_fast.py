@@ -449,6 +449,9 @@ def confirm(
     if values.get("job_ids"):
         return _wire(row)
     request.state.replica_session_id = document_id
+    from .replica_billing import submitted_units
+
+    request.state.replica_billable_units = submitted_units(values, len(plan["units"]))
     created = create_job(
         payload=ReferenceRemixJobCreate.model_validate(
             {

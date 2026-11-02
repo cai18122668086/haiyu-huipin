@@ -121,7 +121,7 @@ class Gateway(FakeXingheGateway):
         )
 
 
-def create(client, gateway, method="exact", count=1, auto=False):
+def create(client, gateway, method="exact", count=1, auto=False, budget=None):
     client.app.state.settings.reference_remix_provider_enabled = True
     client.app.state.replica_gateway = gateway
     product = upload(client, "red")
@@ -139,6 +139,7 @@ def create(client, gateway, method="exact", count=1, auto=False):
             "references": [{"asset_id": ref} for ref in refs],
             "facts": "用户授权红色商品",
             "auto_start_after_plan": auto,
+            **({"credit_budget": budget} if budget is not None else {}),
         },
     )
     assert response.status_code == 202, response.text

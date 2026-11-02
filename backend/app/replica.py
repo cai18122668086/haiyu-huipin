@@ -1690,10 +1690,14 @@ def confirm(
     row.payload = values
     session.commit()
     jobs = list(values.get("job_ids", []))
+    from .replica_billing import submitted_units
+
+    billable = submitted_units(values, len(values["plans"]))
     request.state.replica_session_id = document_id
     for index, plan in enumerate(values["plans"]):
         if index < len(jobs):
             continue
+        request.state.replica_billable_units = int(index < billable)
         extra = payload.instructions[index] if index < len(payload.instructions) else ""
         prompt = prompts[index]
         body = ReferenceRemixJobCreate.model_validate(
@@ -1809,6 +1813,9 @@ def _confirm_native(
     row.payload = values
     session.commit()
     request.state.replica_session_id = document_id
+    from .replica_billing import submitted_units
+
+    request.state.replica_billable_units = submitted_units(values, len(values["plans"]))
     body = ReferenceRemixJobCreate.model_validate(
         {
             "type": "reference_remix",
