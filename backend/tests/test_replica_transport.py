@@ -170,9 +170,12 @@ def test_oversized_generation_does_not_consume_an_invocation_token(
 def test_non_rgb_png_depth_and_mode_keep_original_transport_bytes(tmp_path, mode):
     run = run_at(tmp_path, "exact")
     path = tmp_path / "reference.png"
-    Image.new(mode, (512, 512), 1024 if mode == "I;16" else 27).save(
-        path, compress_level=0, bits=8
-    )
+    image = Image.new(mode, (512, 512), 1024 if mode == "I;16" else 27)
+    if mode == "P":
+        # An unspecified palette may be encoded as a one-bit PNG by Pillow.
+        # Keep the fixture eight-bit so it exercises the >256KB transport path.
+        image.putpalette([value for value in range(256) for _ in range(3)])
+    image.save(path, compress_level=0, bits=8)
     original = path.read_bytes()
     assert len(original) > 256 * 1024
     source = run.sources([path])[0]
