@@ -1498,6 +1498,18 @@ def create_job(
             **job.configuration,
             "replica_session_id": replica_session_id,
         }
+        from .replica_billing import KEY, VERSION
+
+        billable = getattr(request.state, "replica_billable_units", None)
+        if (
+            isinstance(billable, int)
+            and not isinstance(billable, bool)
+            and billable >= 0
+        ):
+            job.configuration[KEY] = {
+                "version": VERSION,
+                "submitted_units": billable,
+            }
     from .amazon_auto_start import bind_submission as bind_amazon_submission
     from .domestic_detail.auto_start import bind_submission
 

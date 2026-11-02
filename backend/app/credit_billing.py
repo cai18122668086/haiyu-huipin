@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .domain import JobItemStatus, JobType
 from .errors import ApiError
 from .models import CreditReservationRecord, JobAssetRecord, JobItemRecord, JobRecord
+from .replica_billing import job_units
 
 PRICING_VERSION = "image-credits-5-8-15-v2"
 SUPPORTED_PRICING_VERSIONS = {PRICING_VERSION, "image-credits-5-15-v1"}
@@ -91,11 +92,13 @@ def bind_image_reservation(
         raise ApiError(
             409, "CREDIT_ITEMS_NOT_READY", "创作图片数量尚未确定，请重新提交。"
         )
-    job.estimated_credits = unit * len(ids)
+    billable = job_units(job.type, job.configuration or {}, len(ids))
+    job.estimated_credits = unit * billable
     return job.estimated_credits, {
         "version": PRICING_VERSION,
         "credits_per_image": unit,
         "item_ids": ids,
+        "billable_units": billable,
     }
 
 
@@ -144,6 +147,9 @@ def successful_image_credits(session: Session, job: JobRecord) -> int | None:
         )
         or 0
     )
+    billable = pricing.get("billable_units")
+    if isinstance(billable, int) and not isinstance(billable, bool) and billable >= 0:
+        succeeded = min(succeeded, billable)
     return int(succeeded) * int(unit)
 
 

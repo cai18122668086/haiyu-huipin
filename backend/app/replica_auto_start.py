@@ -12,7 +12,9 @@ from typing import Any
 from fastapi import BackgroundTasks, Request
 
 from .auth import _principal_from_user, require_workspace, require_workspace_write
+from .credit_billing import FAST_IMAGE_CREDITS, PLANNED_IMAGE_CREDITS
 from .models import ReplicaDocumentRecord, UserRecord, utc_now
+from .replica_billing import submitted_units
 
 
 async def submit_automatic(app: Any, document_id: str, attempt_id: str) -> None:
@@ -40,16 +42,21 @@ async def submit_automatic(app: Any, document_id: str, attempt_id: str) -> None:
                 or values.get("plans")
                 or []
             )
-            estimate = len(units) * (8 if values.get("replica_speed") == "fast" else 15)
+            billable = submitted_units(values, len(units))
+            estimate = billable * (
+                FAST_IMAGE_CREDITS
+                if values.get("replica_speed") == "fast"
+                else PLANNED_IMAGE_CREDITS
+            )
             if budget is not None and estimate > budget:
-                # Materializing a longer reference is not permission to spend
-                # beyond the amount shown at the original submission.
+                # Splitting references adds no billable units. A genuinely
+                # lower authorized budget still requires manual confirmation.
                 row.payload = {
                     **values,
                     "auto_start_after_plan": False,
                     "credit_budget_exceeded": True,
                     "credit_quote": {
-                        "image_count": len(units),
+                        "image_count": billable,
                         "estimated_credits": estimate,
                     },
                 }
