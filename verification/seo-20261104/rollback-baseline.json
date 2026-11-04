@@ -1,0 +1,6 @@
+{
+  "status": "passed",
+  "image": "huipin-seo/base:0f153cbb0b40",
+  "original_home_and_auth_gate_verified": true,
+  "no_running_service_changed": true
+}

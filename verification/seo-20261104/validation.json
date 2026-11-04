@@ -3,9 +3,12 @@
   "production_build": "passed",
   "frontend_tests": 248,
   "frontend_failed": 0,
-  "caddy_policy_tests": 2,
+  "caddy_policy_tests": 3,
   "eslint_errors": 0,
   "existing_eslint_warnings": 2,
   "browser_uses_synthetic_session": true,
-  "real_sms_payment_or_generation": false
+  "real_sms_payment_or_generation": false,
+  "github_ci_checks": 14,
+  "production_public_pages_verified": 20,
+  "production_browser_verified": true
 }

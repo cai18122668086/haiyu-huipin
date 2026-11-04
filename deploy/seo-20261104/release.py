@@ -5,12 +5,14 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import time
 from urllib.request import urlopen
 
 import yaml
 from caddy_policy import scope_worker_bridge
+from runtime_policy import environment_values
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST = json.loads((ROOT / "release-manifest.json").read_text())
@@ -64,7 +66,8 @@ def verify_sources(container, expected):
 
 
 def capture():
-    assert not (ROOT / "baseline.private.json").exists(), "Baseline already captured"
+    if (ROOT / "baseline.private.json").exists():
+        verify_baseline()
     current = inspect(FRONTEND)
     labels = current["Config"]["Labels"]
     assert labels["com.docker.compose.project"] == "huipin-prelaunch"
@@ -80,9 +83,8 @@ def capture():
     (ROOT / "billing-before.private.yml").chmod(0o600)
     staged = ROOT / "Caddyfile.seo-candidate"
     staged.write_text(scope_worker_bridge(CADDY_FILE.read_text()))
-    command(["docker", "cp", str(staged), CADDY + ":/tmp/huipin-seo-candidate"])
-    subprocess.run(["docker", "exec", CADDY, "caddy", "validate", "--config",
-                    "/tmp/huipin-seo-candidate", "--adapter", "caddyfile"], check=True)
+    subprocess.run(["docker", "exec", "-i", CADDY, "caddy", "validate", "--config",
+                    "-", "--adapter", "caddyfile"], input=staged.read_bytes(), check=True)
     print(json.dumps({"status": "baseline_captured", "base_image": MANIFEST["base_image"],
                       "base_source_files_verified": len(MANIFEST["base_sources"]),
                       "caddy_candidate_validated": True}))
@@ -91,6 +93,46 @@ def capture():
 def build():
     verify_baseline()
     assert inspect(MANIFEST["base_image"])["Id"] == baseline()["frontend"]["Image"], "Base image tag was changed"
+    base_image = inspect(MANIFEST["base_image"])
+    # Earlier releases copied files in individual layers. Export the immutable,
+    # unmounted frontend when that chain exceeds normal overlay limits; this
+    # leaves the running container and its image untouched.
+    if len(base_image.get("RootFS", {}).get("Layers", [])) > 100:
+        before = baseline()["frontend"]
+        assert before["HostConfig"]["ReadonlyRootfs"] and not before["Mounts"]
+        flat = "huipin-seo/base:" + MANIFEST["revision"][:12]
+        changes = []
+        config = base_image["Config"]
+        allowed = {"PATH", "NODE_VERSION", "YARN_VERSION", "NODE_ENV", "PORT", "HOSTNAME"}
+        for item in config.get("Env", []):
+            key, value = item.split("=", 1)
+            assert key in allowed, "Unexpected image-level environment key"
+            changes.extend(["--change", "ENV " + key + "=" + json.dumps(value)])
+        for directive, value in [("USER", config.get("User")), ("WORKDIR", config.get("WorkingDir"))]:
+            if value:
+                changes.extend(["--change", directive + " " + value])
+        for directive, value in [("ENTRYPOINT", config.get("Entrypoint")), ("CMD", config.get("Cmd"))]:
+            if value:
+                changes.extend(["--change", directive + " " + json.dumps(value)])
+        for port in config.get("ExposedPorts", {}):
+            changes.extend(["--change", "EXPOSE " + port])
+        exporter = subprocess.Popen(["docker", "export", FRONTEND], stdout=subprocess.PIPE)
+        try:
+            result = subprocess.run(["docker", "import", *changes, "-", flat],
+                                    stdin=exporter.stdout, capture_output=True, check=True)
+        finally:
+            exporter.stdout.close()
+            export_status = exporter.wait()
+        assert export_status == 0, "Read-only frontend export failed"
+        flat_id = result.stdout.decode().strip()
+        write_json("flattened-base.json", {"image": flat, "image_id": flat_id,
+                   "original_layer_count": len(base_image["RootFS"]["Layers"]),
+                   "source_container_unchanged": inspect(FRONTEND)["Id"] == before["Id"]})
+        dockerfile = ROOT / "frontend.Dockerfile"
+        content = dockerfile.read_text()
+        content = content.replace("FROM " + MANIFEST["base_image"] + "\n", "FROM " + flat + "\n", 1)
+        dockerfile.write_text(content)
+        verify_baseline()
     with (ROOT / "build.log").open("w") as log:
         subprocess.run(["docker", "build", "--network", "host", "-f",
                         str(ROOT / "frontend.Dockerfile"), "-t", IMAGE, str(ROOT)],
@@ -100,10 +142,8 @@ def build():
 
 
 def http_check(container):
-    script = """
-const fs=require('fs');
+    script = "const m=" + json.dumps({"pages": MANIFEST["pages"]}) + ";\n" + """
 (async()=>{
- const m=JSON.parse(fs.readFileSync('/tmp/seo-manifest.json','utf8'));
  for(const p of m.pages){
   const r=await fetch('http://127.0.0.1:3000'+p.path);const s=await r.text();
   if(r.status!==200||!s.includes('<title>'+p.title+'</title>')||!s.includes('name="description" content="'+p.description+'"')||!s.includes('rel="canonical" href="https://huipin.haiyushuke.com'+p.path+'"'))throw new Error('Metadata mismatch: '+p.path);
@@ -126,7 +166,6 @@ const fs=require('fs');
  console.log(JSON.stringify({public_pages:20,public_tools:16,private_pages:4,crawl_files:2,cache_checks:4}));
 })().catch(e=>{console.error(e.message);process.exit(1)})
 """
-    command(["docker", "cp", str(ROOT / "release-manifest.json"), container + ":/tmp/seo-manifest.json"])
     return json.loads(command(["docker", "exec", container, "node", "-e", script]))
 
 
@@ -167,8 +206,24 @@ def write_in_place(path, data):
 
 
 def reload_caddy():
+    # The pinned 2.10 deployment has admin off and predates signal reloads.
+    # Restart only this project's proxy; docker restart retains its identity,
+    # configuration and mounts. No other service is restarted.
+    if re.search(r"^\s*admin\s+off\s*$", CADDY_FILE.read_text(), re.M):
+        subprocess.run(["docker", "restart", "--timeout", "10", CADDY], check=True,
+                       stdout=subprocess.DEVNULL)
+        for _ in range(30):
+            try:
+                with urlopen("https://huipin.haiyushuke.com/", timeout=5) as response:
+                    assert response.status == 200
+                    response.read()
+                    return "project_proxy_restart"
+            except Exception:
+                time.sleep(1)
+        raise RuntimeError("Project proxy did not recover after the configuration restart")
     subprocess.run(["docker", "exec", CADDY, "caddy", "reload", "--config",
                     "/etc/caddy/Caddyfile", "--adapter", "caddyfile"], check=True)
+    return "admin_api_reload"
 
 
 def activate():
@@ -201,7 +256,8 @@ def activate():
         else:
             raise RuntimeError("Frontend did not become healthy")
         assert after["Image"] == built["image_id"]
-        for key in ["Env", "Cmd", "Entrypoint", "WorkingDir"]:
+        assert environment_values(after["Config"]["Env"]) == environment_values(before["Config"]["Env"]), "Environment values changed"
+        for key in ["Cmd", "Entrypoint", "WorkingDir", "User"]:
             assert after["Config"].get(key) == before["Config"].get(key), key
         for key in ["Memory", "NanoCpus", "PidsLimit", "Ulimits", "PortBindings"]:
             assert after["HostConfig"].get(key) == before["HostConfig"].get(key), key
@@ -210,7 +266,7 @@ def activate():
         proof = verify_sources(FRONTEND, MANIFEST["sources"])
         assert digest(CADDY_FILE) == baseline()["caddy_sha256"]
         write_in_place(CADDY_FILE, (ROOT / "Caddyfile.seo-candidate").read_bytes())
-        reload_caddy()
+        caddy_apply_method = reload_caddy()
         for path in ["/", "/style-replica", "/admin/accounts"]:
             with urlopen("https://huipin.haiyushuke.com" + path, timeout=30) as response:
                 policy = response.headers.get("Content-Security-Policy", "")
@@ -219,16 +275,31 @@ def activate():
                 response.read()
         assert {name: inspect(name)["Id"] for name in others} == others, "Other containers changed"
     except BaseException:
+        caddy_changed = CADDY_FILE.read_bytes() != original_caddy
         write_in_place(OVERRIDE, original)
         write_in_place(CADDY_FILE, original_caddy)
-        reload_caddy()
-        subprocess.run(COMPOSE + ["up", "-d", "--no-deps", "frontend"], cwd=RUNTIME, check=True)
-        write_json("activation.json", {"status": "rolled_back", "backend_restarted": False})
+        rollback_image = before["Config"]["Image"]
+        try:
+            subprocess.run(COMPOSE + ["up", "-d", "--no-deps", "frontend"], cwd=RUNTIME, check=True)
+        except subprocess.CalledProcessError:
+            # A verified flattened copy of the exact original readonly rootfs
+            # remains available if the historical 436-layer image cannot mount.
+            rollback = json.loads((ROOT / "rollback-baseline.json").read_text())
+            assert rollback["status"] == "passed"
+            fallback = yaml.safe_load(original)
+            fallback["services"]["frontend"]["image"] = rollback["image"]
+            write_in_place(OVERRIDE, yaml.safe_dump(fallback, sort_keys=False).encode())
+            subprocess.run(COMPOSE + ["up", "-d", "--no-deps", "frontend"], cwd=RUNTIME, check=True)
+            rollback_image = rollback["image"]
+        if caddy_changed:
+            reload_caddy()
+        write_json("activation.json", {"status": "rolled_back", "backend_restarted": False, "rollback_image": rollback_image})
         raise
     result = {"status": "activated", "revision": MANIFEST["revision"], "image": IMAGE,
               "previous_image": before["Config"]["Image"], "backend_restarted": False,
               "database_changed": False, "other_containers_preserved": True,
               "runtime_environment_preserved": True, "csp_scoped_to_admin_accounts": True,
+              "caddy_apply_method": caddy_apply_method,
               **checks, **proof}
     write_json("activation.json", result)
     print(json.dumps(result))

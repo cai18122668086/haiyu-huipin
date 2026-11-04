@@ -1,0 +1,18 @@
+{
+  "status": "activated",
+  "revision": "0f153cbb0b40f47a99fac5a8fe39791e91d58eb7",
+  "image": "huipin-seo/frontend:0f153cbb0b40f47a99fac5a8fe39791e91d58eb7",
+  "previous_image": "huipin-replica-fix/frontend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "backend_restarted": false,
+  "database_changed": false,
+  "other_containers_preserved": true,
+  "runtime_environment_preserved": true,
+  "csp_scoped_to_admin_accounts": true,
+  "caddy_apply_method": "project_proxy_restart",
+  "public_pages": 20,
+  "public_tools": 16,
+  "private_pages": 4,
+  "crawl_files": 2,
+  "cache_checks": 4,
+  "matched_files": 69
+}

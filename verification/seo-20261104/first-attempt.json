@@ -1,0 +1,7 @@
+{
+  "status": "rolled_back",
+  "backend_restarted": false,
+  "rollback_image": "huipin-replica-fix/frontend:60ea63cf3fad55237f9169a5b74cbfcfc18a1a74",
+  "reason": "environment_order_only",
+  "environment_values_identical": true
+}

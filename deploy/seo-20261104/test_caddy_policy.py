@@ -5,9 +5,20 @@ import unittest
 spec = importlib.util.spec_from_file_location("seo_caddy", Path(__file__).with_name("caddy_policy.py"))
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
+runtime_spec = importlib.util.spec_from_file_location("seo_runtime", Path(__file__).with_name("runtime_policy.py"))
+runtime = importlib.util.module_from_spec(runtime_spec)
+runtime_spec.loader.exec_module(runtime)
 
 
 class CaddyPolicyTests(unittest.TestCase):
+    def test_environment_order_is_ignored_but_values_and_duplicate_keys_are_checked(self):
+        self.assertEqual(runtime.environment_values(["A=1", "B=2=3"]), runtime.environment_values(["B=2=3", "A=1"]))
+        self.assertNotEqual(runtime.environment_values(["A=1"]), runtime.environment_values(["A=2"]))
+        self.assertNotEqual(runtime.environment_values(["A=1"]), runtime.environment_values(["B=1"]))
+        for entries in [["A=1", "A=1"], ["A=1", "A=2"], ["A"], ["=1"]]:
+            with self.assertRaises(ValueError):
+                runtime.environment_values(entries)
+
     def test_public_policy_removes_only_worker_hosts_and_preserves_admin_function(self):
         original = '''(huipin_routes) {
     header {

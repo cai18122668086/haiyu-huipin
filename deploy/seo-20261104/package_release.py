@@ -49,9 +49,9 @@ def main():
     with tarfile.open(out / "source.tar.gz", "w:gz") as archive:
         for name in sources:
             archive.add(ROOT / name, arcname="source/" + name)
-        for name in ["release.py", "caddy_policy.py"]:
+        for name in ["release.py", "caddy_policy.py", "runtime_policy.py"]:
             archive.add(Path(__file__).parent / name, arcname=name)
-        for name, value in [("frontend.Dockerfile", dockerfile), ("release-manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))]:
+        for name, value in [(".dockerignore", "**\n!source/\n!source/**\n!frontend.Dockerfile\n"), ("frontend.Dockerfile", dockerfile), ("release-manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))]:
             data = value.encode()
             entry = tarfile.TarInfo(name)
             entry.size = len(data)

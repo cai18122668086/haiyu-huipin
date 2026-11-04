@@ -1,0 +1,10 @@
+{
+  "public_production_intro": true,
+  "no_automatic_login_dialog": true,
+  "upload_opens_login": true,
+  "close_retains_intro": true,
+  "description_disclosure_operates": true,
+  "mobile_no_horizontal_overflow": true,
+  "javascript_errors": [],
+  "no_sms_payment_or_generation": true
+}
