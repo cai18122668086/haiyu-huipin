@@ -90,6 +90,7 @@ def capture():
 
 def build():
     verify_baseline()
+    assert inspect(MANIFEST["base_image"])["Id"] == baseline()["frontend"]["Image"], "Base image tag was changed"
     with (ROOT / "build.log").open("w") as log:
         subprocess.run(["docker", "build", "--network", "host", "-f",
                         str(ROOT / "frontend.Dockerfile"), "-t", IMAGE, str(ROOT)],

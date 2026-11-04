@@ -11,4 +11,3 @@ export async function generateMetadata({ params }: { params: Promise<{ preset: s
 export default function ProductToolLayout({ children }: { children: React.ReactNode }) {
   return children;
 }
-

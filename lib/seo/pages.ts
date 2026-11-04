@@ -209,4 +209,3 @@ export function getSeoPage(pathname: string): SeoPage | undefined {
 export function getToolSeoPage(pathname: string): SeoPage | undefined {
   return SEO_PAGES.find(page => page.tool && page.path === pathname);
 }
-

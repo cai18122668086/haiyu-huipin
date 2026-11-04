@@ -12,4 +12,3 @@ export function SiteStructuredData() {
 export function ToolsStructuredData() {
   return <StructuredData data={{ "@context": "https://schema.org", "@type": "ItemList", name: "海宇绘品AI电商图片工具", itemListElement: SEO_PAGES.filter(page => page.tool).map((page, index) => ({ "@type": "ListItem", position: index + 1, name: page.h1, url: SITE_ORIGIN + page.path })) }} />;
 }
-

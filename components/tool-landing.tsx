@@ -31,12 +31,17 @@ export function ToolLanding({ pathname }: { pathname: string }) {
       <header className={styles.hero}>
         <div className={styles.intro}>
           <p className={styles.eyebrow}>海宇绘品 · 电商图片创作</p>
-          <h1>{page.h1}</h1><p className={styles.description}>{page.description}</p>
+          <h1>{page.h1}</h1>
+          <p className={styles.description}>{feature?.description ?? page.description}</p>
           <div className={styles.actions}>
             <button type="button" className="primary-button" onClick={start}><Upload size={18} />上传图片</button>
             <button type="button" className="secondary-button" onClick={start}>开始制作<ArrowRight size={17} /></button>
           </div>
-          <p className={styles.note}>先了解效果，登录后上传自己的商品开始创作。</p>
+          <p className={styles.note}>先看效果，动手制作时再登录。</p>
+          <dl className={styles.facts}>
+            <div><dt>准备素材</dt><dd>{feature?.inputHint ?? "商品原图 + 参考图"}</dd></div>
+            <div><dt>获得结果</dt><dd>{feature?.outputHint ?? "自己的商品套图"}</dd></div>
+          </dl>
         </div>
         {example && <section className={styles.example} aria-label={example.outputs.length ? "原图与效果对比" : "上传素材示例"}>
           <div className={styles.comparison}>
@@ -45,24 +50,17 @@ export function ToolLanding({ pathname }: { pathname: string }) {
           </div>
         </section>}
       </header>
-      <section className={styles.section} aria-labelledby="tool-introduction">
-        <h2 id="tool-introduction">用{page.name}完成你的商品视觉</h2>
-        <div className={styles.benefits}>
-          <div><h3>准备素材</h3><p>{feature?.inputHint ?? "准备自己的商品实拍图，以及有权使用的参考链接或图片。"}</p></div>
-          <div><h3>说明要求</h3><p>{feature?.guidance ?? "说明商品卖点、目标平台与希望保留的细节，结合参考图确定构图和视觉方向。"}</p></div>
-          <div><h3>查看与下载</h3><p>{feature?.outputHint ?? "查看生成的商品套图"}。核对商品、文字与规格信息后，再用于上架或推广。</p></div>
-        </div>
-      </section>
       <section className={styles.section} aria-labelledby="tool-steps"><h2 id="tool-steps">如何开始使用</h2>
         <ol className={styles.steps}>
-          <li><span>01</span><div><h3>上传商品素材</h3><p>点击上传图片，登录后进入工作区。选择主体清晰、细节完整且有权使用的素材。</p></div></li>
-          <li><span>02</span><div><h3>填写制作要求</h3><p>补充商品信息、目标效果与参考素材，按工具提示选择尺寸和制作方式。</p></div></li>
-          <li><span>03</span><div><h3>检查结果并下载</h3><p>查看生成图片，核对商品外观和文案；必要时调整要求，再下载需要的成果。</p></div></li>
+          <li><span>01</span><div><h3>上传素材</h3><p>选好商品图，登录后继续。</p></div></li>
+          <li><span>02</span><div><h3>说明要求</h3><p>告诉AI你想保留和改变的细节。</p></div></li>
+          <li><span>03</span><div><h3>查看结果</h3><p>核对效果，下载需要的图片。</p></div></li>
         </ol>
       </section>
-      <section className={styles.section} aria-labelledby="tool-faq"><h2 id="tool-faq">常见问题</h2>
+      <section className={styles.section} aria-labelledby="tool-faq"><h2 id="tool-faq">了解更多</h2>
+        <details><summary>{page.name}适合做什么？</summary><p>{page.description}</p></details>
         <details><summary>需要先登录才能了解功能吗？</summary><p>不需要。你可以直接查看本页的功能介绍和示例，点击上传或开始制作后再登录。</p></details>
-        <details><summary>怎样准备适合{page.name}的素材？</summary><p>{feature?.inputHint ?? "商品原图与参考图分开提供"}。尽量使用清晰原图，并说明需要保留的商品结构、颜色和文字信息。</p></details>
+        <details><summary>怎样准备素材，效果更好？</summary><p>{feature?.inputHint ?? "商品原图与参考图分开提供"}。{feature?.guidance ?? "说明商品卖点、目标平台与希望保留的细节，结合参考图确定构图和视觉方向。"}</p></details>
         <details><summary>生成图片后还需要检查吗？</summary><p>需要。AI结果可能出现细节或文字偏差，请检查商品一致性、参数与平台要求，再决定是否发布。具体费用以工作区展示为准。</p></details>
       </section>
       <section className={styles.section}><h2>继续探索电商图片工具</h2><div className={styles.related}>{related.map(item => <Link key={item.path} href={item.path} title={item.h1}>{item.name}<ArrowRight size={15} /></Link>)}<Link href="/help">查看使用指南<ArrowRight size={15} /></Link></div></section>

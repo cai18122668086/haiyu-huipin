@@ -5,6 +5,7 @@
   "close_keeps_intro": true,
   "login_enters_existing_workspace": true,
   "return_query_preserved": true,
+  "anonymous_reload_restores_public_intro": true,
   "mobile_no_horizontal_overflow": true,
   "no_generation_requests": true,
   "javascript_errors": []
