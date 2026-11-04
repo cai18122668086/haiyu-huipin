@@ -60,7 +60,7 @@ def verify_baseline():
 
 
 def verify_sources(container, expected):
-    script = """const fs=require('fs'),c=require('crypto');let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{const m=JSON.parse(s);for(const [p,h] of Object.entries(m)){const b=fs.readFileSync('/app/'+p);const n=b.toString('utf8').replace(/\\r\\n/g,'\\n').replace(/^\\uFEFF/,'');if(c.createHash('sha256').update(n).digest('hex')!==h)throw new Error('Source mismatch: '+p)}console.log(JSON.stringify({matched_files:Object.keys(m).length}))})"""
+    script = """const fs=require('fs'),c=require('crypto');let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{const m=JSON.parse(s);for(const [p,h] of Object.entries(m)){const b=fs.readFileSync('/app/'+p);const n=/\\.(webp|png|jpe?g|avif)$/i.test(p)?b:b.toString('utf8').replace(/\\r\\n/g,'\\n').replace(/^\\uFEFF/,'');if(c.createHash('sha256').update(n).digest('hex')!==h)throw new Error('Source mismatch: '+p)}console.log(JSON.stringify({matched_files:Object.keys(m).length}))})"""
     args = ["docker", "exec", "-i", container, "node", "-e", script]
     return json.loads(command(args, input=json.dumps(expected).encode()))
 
@@ -82,7 +82,10 @@ def capture():
     (ROOT / "billing-before.private.yml").write_bytes(OVERRIDE.read_bytes())
     (ROOT / "billing-before.private.yml").chmod(0o600)
     staged = ROOT / "Caddyfile.seo-candidate"
-    staged.write_text(scope_worker_bridge(CADDY_FILE.read_text()))
+    if MANIFEST.get("preserve_caddy"):
+        staged.write_bytes(CADDY_FILE.read_bytes())
+    else:
+        staged.write_text(scope_worker_bridge(CADDY_FILE.read_text()))
     subprocess.run(["docker", "exec", "-i", CADDY, "caddy", "validate", "--config",
                     "-", "--adapter", "caddyfile"], input=staged.read_bytes(), check=True)
     print(json.dumps({"status": "baseline_captured", "base_image": MANIFEST["base_image"],
@@ -142,12 +145,18 @@ def build():
 
 
 def http_check(container):
-    script = "const m=" + json.dumps({"pages": MANIFEST["pages"]}) + ";\n" + """
+    examples = [{key: item[key] for key in ("id", "output", "sha256")} for item in MANIFEST.get("examples", [])]
+    script = "const m=" + json.dumps({"pages": MANIFEST["pages"], "examples": examples}) + ";\n" + """
 (async()=>{
  for(const p of m.pages){
   const r=await fetch('http://127.0.0.1:3000'+p.path);const s=await r.text();
   if(r.status!==200||!s.includes('<title>'+p.title+'</title>')||!s.includes('name="description" content="'+p.description+'"')||!s.includes('rel="canonical" href="https://huipin.haiyushuke.com'+p.path+'"'))throw new Error('Metadata mismatch: '+p.path);
   if(p.tool&&(!s.includes('data-public-tool=')||s.includes('正在确认登录状态')))throw new Error('Tool intro missing: '+p.path);
+  if(p.tool&&m.examples.length&&!s.includes('aria-label="原图与效果对比"'))throw new Error('Comparison missing: '+p.path);
+ }
+ for(const example of m.examples){
+  const r=await fetch('http://127.0.0.1:3000'+example.output);const b=Buffer.from(await r.arrayBuffer());
+  if(r.status!==200||!r.headers.get('content-type')?.includes('image/webp')||require('crypto').createHash('sha256').update(b).digest('hex')!==example.sha256)throw new Error('Illustration asset mismatch: '+example.id);
  }
  for(const p of ['/robots.txt','/sitemap.xml']){
   const r=await fetch('http://127.0.0.1:3000'+p);const s=await r.text();
@@ -163,7 +172,7 @@ def http_check(container):
   for(let i=0;i<4;i++){const r=await fetch('http://127.0.0.1:3000'+p);await r.text();cache=r.headers.get('cache-control')||'';if(cache.includes('s-maxage=86400'))break;}
   if(!cache.includes('s-maxage=86400')||!cache.includes('stale-while-revalidate=3600'))throw new Error('Public cache policy: '+p);
  }
- console.log(JSON.stringify({public_pages:20,public_tools:16,private_pages:4,crawl_files:2,cache_checks:4}));
+ console.log(JSON.stringify({public_pages:20,public_tools:16,private_pages:4,crawl_files:2,cache_checks:4,illustration_assets:m.examples.length,paired_tools:m.examples.length?16:undefined}));
 })().catch(e=>{console.error(e.message);process.exit(1)})
 """
     return json.loads(command(["docker", "exec", container, "node", "-e", script]))
@@ -265,8 +274,12 @@ def activate():
         checks = http_check(FRONTEND)
         proof = verify_sources(FRONTEND, MANIFEST["sources"])
         assert digest(CADDY_FILE) == baseline()["caddy_sha256"]
-        write_in_place(CADDY_FILE, (ROOT / "Caddyfile.seo-candidate").read_bytes())
-        caddy_apply_method = reload_caddy()
+        candidate_caddy = (ROOT / "Caddyfile.seo-candidate").read_bytes()
+        if candidate_caddy != original_caddy:
+            write_in_place(CADDY_FILE, candidate_caddy)
+            caddy_apply_method = reload_caddy()
+        else:
+            caddy_apply_method = "unchanged"
         for path in ["/", "/style-replica", "/admin/accounts"]:
             with urlopen("https://huipin.haiyushuke.com" + path, timeout=30) as response:
                 policy = response.headers.get("Content-Security-Policy", "")

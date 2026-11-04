@@ -46,7 +46,7 @@ export function ToolLanding({ pathname }: { pathname: string }) {
         {example && <section className={styles.example} aria-label={example.outputs.length ? "原图与效果对比" : "上传素材示例"}>
           <div className={styles.comparison}>
             <figure><span>{example.inputLabel}</span><div className={styles.inputImages}>{example.inputs.map(input => <DisplayImage key={input.src} src={input.src} alt={page.h1 + "：" + input.label} width={600} height={600} />)}</div><figcaption>清晰、完整的商品素材</figcaption></figure>
-            {example.outputs.length ? <figure><span>{example.outputLabel}</span><DisplayImage src={example.outputs[0]} alt={page.h1 + "效果示例"} width={600} height={600} /><figcaption>示例效果，实际结果取决于素材与要求</figcaption></figure> : <div className={styles.goal}><Check size={26} /><h2>创作目标</h2><p>{feature?.description}</p><p>{feature?.guidance}</p></div>}
+            {example.outputs.length ? <figure><span>{example.outputLabel}</span><DisplayImage src={example.outputs[0]} alt={page.h1 + "：" + example.outputLabel} width={600} height={600} /><figcaption>{example.caption ?? "示例效果，实际结果取决于素材与要求"}</figcaption></figure> : <div className={styles.goal}><Check size={26} /><h2>创作目标</h2><p>{feature?.description}</p><p>{feature?.guidance}</p></div>}
           </div>
         </section>}
       </header>

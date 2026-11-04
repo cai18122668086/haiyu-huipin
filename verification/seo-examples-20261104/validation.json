@@ -1,0 +1,16 @@
+{
+  "production_build": "passed",
+  "typecheck": "passed",
+  "frontend_tests": 248,
+  "frontend_failed": 0,
+  "release_policy_tests": 3,
+  "binary_and_normalized_hash_checks": "passed",
+  "eslint_errors": 0,
+  "eslint_existing_warnings": 2,
+  "paired_tools": 16,
+  "labelled_illustrations": 7,
+  "illustration_bytes": 580824,
+  "image_generation": "built-in image_gen",
+  "backend_changed": false,
+  "database_changed": false
+}
