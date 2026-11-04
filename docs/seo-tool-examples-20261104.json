@@ -1,0 +1,86 @@
+{
+  "created": "2026-11-04",
+  "mode": "built-in image_gen",
+  "kind": "functional-illustration",
+  "displayLabel": "效果示意",
+  "notes": "以站内现有公开素材为输入，由内置图像工具制作功能演示；非平台任务实测成图。原始图片保留，发布使用压缩后的WebP。",
+  "assets": [
+    {
+      "id": "change-scene",
+      "input": "/images/homepage-features/native-v2-webp/02-input-desktop.webp",
+      "output": "/images/seo-tool-examples/change-scene.webp",
+      "prompt": "Use case: precise-object-edit. Asset type: website functional illustration for changing a product scene. Input image is the edit target. Keep the exact open white wireless earbud case and both earbuds, their shapes, black speaker openings, lid angle, proportions and perspective unchanged. Replace only its original desk environment with a refined light stone bedside table in a softly sunlit modern bedroom, warm neutral colors and out of focus linen background. Match realistic contact shadows and lighting. Product remains clearly central, full product visible with breathing room, landscape 6:5 frame. Photorealistic ecommerce product photograph. No text, logos, graphics, watermark or collage.",
+      "width": 1200,
+      "height": 1000,
+      "bytes": 67354,
+      "sha256": "e81f8f3a24e650406646d1f6867140674d92a395c033c90011f21133b768c8b5",
+      "source_sha256": "fdc777f52d8de6cc2afcbee1d4b671a44386c24c092f65d5a77ab229f5dd6f5b"
+    },
+    {
+      "id": "scene-main",
+      "input": "/images/cases/platform-v3/01-bag-white.png",
+      "output": "/images/seo-tool-examples/scene-main.webp",
+      "prompt": "Use case: precise-object-edit. Asset type: website functional illustration for product scene hero images. Input image is the edit target. Preserve the exact caramel tan leather handbag, pebbled grain, rectangular gold clasp, gold hardware, top handle, shoulder strap, stitching, proportions and angle. Place this same bag on a low ivory stone display plinth in a minimalist warm beige studio with an architectural arch softly in the background and soft directional sunlight. Full bag and entire strap visible, premium editorial ecommerce photography. Portrait 3:4 frame. Do not change product design, add branding, text, watermark, collage or additional bags.",
+      "width": 900,
+      "height": 1200,
+      "bytes": 94296,
+      "sha256": "2c7f1611ee3c9363530b7c5ed9b9260e1cf7169e9c8f885d1f16040b805b5552",
+      "source_sha256": "1a6d7259b928e6170c8bdefa9b33e5a923bdf9d9c1d4df262af99ffbc623c942"
+    },
+    {
+      "id": "creative-image",
+      "input": "/images/homepage-features/native-v2-webp/04-input-desktop.webp",
+      "output": "/images/seo-tool-examples/creative-image.webp",
+      "prompt": "Use case: compositing. Asset type: website functional illustration for ecommerce creative imagery. Input image is the edit target. Preserve this exact sage green portable blender with transparent tall jar, matching lid and base, strap on its right, visible metal blade, precise shape and materials. Replace kitchen background with a polished light sage studio advertising scene, blender centered on a low circular pedestal, a few fresh lime wedges and green apple slices arranged near its base, subtle fresh water droplets in air behind the product. Keep clear empty jar and original product geometry unchanged; no false performance claims, no text, no logo, no watermark, no duplicate product. Photorealistic professional product campaign image, landscape 6:5.",
+      "width": 1200,
+      "height": 1000,
+      "bytes": 45928,
+      "sha256": "6ff67bb879938c42b16bcb2f60b1d62f09790794117e17fb666842fe07759bd0",
+      "source_sha256": "1f5970f1820a0cc9496cb5aedc247cb397e1b26a758fd530593581a4e594128c"
+    },
+    {
+      "id": "change-model",
+      "input": "/images/cases/platform-v2/04-model.png",
+      "output": "/images/seo-tool-examples/change-model.webp",
+      "prompt": "Use case: precise-object-edit. Asset type: website functional illustration for swapping an adult fashion model. Input image is the edit target. Replace only the adult woman with a different adult woman approximately age 30 with medium brown skin, a distinct face and dark curly shoulder length hair. Keep the exact original plain white short sleeve crewneck tshirt, light blue jeans, white sneakers, identical relaxed standing pose, framing and background room. Preserve clothing seams, fabric, proportions, lighting, all furniture, plants, window and rug. Natural photorealistic fashion photograph, portrait 3:4. No text, no watermark, no collage, no extra people.",
+      "width": 900,
+      "height": 1200,
+      "bytes": 140954,
+      "sha256": "a94b01f78db4923a412f06a265a4670881316fff3e38994a386a7020209565b4",
+      "source_sha256": "e10f77c14d0d089df1ff5b011bfe357289219bbeaf624577c8867652aa4bd6f7"
+    },
+    {
+      "id": "model-image",
+      "input": "/images/cases/platform-v2/03-cardigan.png",
+      "output": "/images/seo-tool-examples/model-image.webp",
+      "prompt": "Use case: compositing. Asset type: website functional illustration for a garment turned into a modeled ecommerce photograph. Input image is the garment edit target. Dress one adult woman approximately 30 in the exact sage green knitted cardigan shown, preserve its V neckline, five matching green buttons, knit texture, ribbed hem and cuffs, long sleeves and cropped fit. Pair with simple cream trousers. Adult model naturally standing front-facing in a warm neutral studio, hands relaxed, garment fully visible and buttoned, realistic drape. Portrait 3:4 photo framed head to mid thigh. Do not change cardigan color, design or button count. No text, logo, watermark or collage.",
+      "width": 900,
+      "height": 1200,
+      "bytes": 81162,
+      "sha256": "ef5a9b64e01d21bcfe19421f4c603a828f816b9071efc2d022543a3a174304de",
+      "source_sha256": "c9823611a5970ae2750b07953af8aaf48e04e276d39133b01ec36f0a9d6153a1"
+    },
+    {
+      "id": "model-pose-transfer",
+      "input": "/images/cases/platform-v2/04-model.png",
+      "output": "/images/seo-tool-examples/model-pose-transfer.webp",
+      "prompt": "Use case: identity-preserve. Asset type: website functional illustration for changing a fashion model pose. Input image is the edit target. Keep the exact same adult woman, face, dark shoulder-length hair, white crewneck tshirt, light blue jeans, white sneakers and the exact original bright living room background with plants, wooden cabinet, window and rug. Change only her pose: weight on right leg, left leg slightly crossing in front, right hand resting at her waist, left arm relaxed, upper body gently turned three quarter to camera, face toward camera. Preserve full body and feet in frame. Natural photorealistic fashion photography, portrait 3:4. Anatomically correct hands, no text, watermark, extra people or collage.",
+      "width": 900,
+      "height": 1200,
+      "bytes": 139576,
+      "sha256": "8873f3b4de76aef2188bd39a4fe07241e88397fd69c1bf9691214785ecdcdcc7",
+      "source_sha256": "448b27fdcbc922208559e497cab1766e4b75c399599b8119f9808c5a23e2c849"
+    },
+    {
+      "id": "white-background",
+      "input": "/images/homepage-features/native-v2-webp/02-input-desktop.webp",
+      "output": "/images/seo-tool-examples/white-background.webp",
+      "prompt": "Use case: precise-object-edit. Asset type: website functional illustration for ecommerce white background extraction. Input image is the edit target. Keep exactly the same open white earbud charging case with both earbuds, original lid angle, shape, proportions, small black speaker openings and original perspective. Remove all wood desk, cable, notebook and plants. Replace with seamless pure white RGB255 background, keeping only a faint realistic soft contact shadow directly below the product. Full product centered and fully visible, ample margin, landscape 6:5. Crisp clean ecommerce catalog photography. No text, no logos, no watermark, no collage. Opaque white background, not transparent.",
+      "width": 1200,
+      "height": 1000,
+      "bytes": 11554,
+      "sha256": "d57e3aa8767513c808efb9f395e6dfd95da9d105853b896501518f978d73d70a",
+      "source_sha256": "4d691f2b8108b5736850bf0087518ab9cec1ea46d1a5184657369d050bb26750"
+    }
+  ]
+}

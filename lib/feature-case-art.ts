@@ -1,11 +1,13 @@
 import { PLATFORM_SHOWCASE_CASES as PLATFORM_CASE_REVIEW } from "./platform-showcase-cases";
-import { PRODUCT_INPUT_EXAMPLES, RETAINED_WORKSPACE_EXAMPLES } from "./workspace-input-examples";
+import { RETAINED_WORKSPACE_EXAMPLES } from "./workspace-input-examples";
+import { SEO_TOOL_EXAMPLES, TOOL_ILLUSTRATION_CAPTION } from "./seo-tool-examples";
 
 export type FeatureCaseArtData = {
   inputs: { src: string; label: string }[];
   outputs: string[];
   inputLabel: string;
   outputLabel: string;
+  caption?: string;
 };
 
 const taskForFeature: Record<string, string> = {
@@ -38,20 +40,14 @@ export function getFeatureCaseArt(featureId: string, portrait = false): FeatureC
       outputLabel: outputs.length > 1 ? `${outputs.length} 张成图` : "生成结果",
     };
   }
+  const illustration = SEO_TOOL_EXAMPLES[featureId];
+  if (illustration) return {
+    inputs: [{ src: illustration.input, label: illustration.inputLabel }],
+    outputs: [illustration.output], inputLabel: illustration.inputLabel,
+    outputLabel: "效果示意", caption: TOOL_ILLUSTRATION_CAPTION,
+  };
   const legacy = RETAINED_WORKSPACE_EXAMPLES.find(item => item.id === featureId);
-  if (!legacy) {
-    const inputExamples: Record<string, { src: string; label: string; goal: string }> = {
-      "change-scene": { src: PRODUCT_INPUT_EXAMPLES.change_scene.product, label: "原场景商品图", goal: "迁移到新的使用场景" },
-      "change-model": { src: PRODUCT_INPUT_EXAMPLES.change_model.product, label: "原模特商品图", goal: "更换人物，保留服装" },
-      "scene-main": { src: PRODUCT_INPUT_EXAMPLES.scene_main.product, label: "商品主体图", goal: "制作商业场景主图" },
-      "white-background": { src: PRODUCT_INPUT_EXAMPLES.white_background.product, label: "有背景的商品原图", goal: "去除背景，保留主体" },
-      "model-image": { src: PRODUCT_INPUT_EXAMPLES.model_image.product, label: "待展示的服装商品", goal: "生成模特展示画面" },
-      "creative-image": { src: "/images/homepage-features/native-v2-webp/04-input-desktop.webp", label: "清晰商品照片", goal: "展开卖点与活动创意" },
-      "model-pose-transfer": { src: "/images/model-pose-transfer/previews/female-001-960.webp", label: "目标姿势参考", goal: "保留人物服装，换姿态" },
-    };
-    const example = inputExamples[featureId];
-    return example ? { inputs: [{ src: example.src, label: example.label }], outputs: [], inputLabel: example.label, outputLabel: example.goal } : undefined;
-  }
+  if (!legacy) return undefined;
   return {
     inputs: [{ src: legacy.input, label: "商品原图" }, ...(legacy.reference ? [{ src: legacy.reference, label: "构图参考" }] : [])],
     outputs: [legacy.result],
