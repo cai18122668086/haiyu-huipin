@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { formatBeijingDate } from "@/lib/datetime.mjs";
 import {
   AlertCircle,

@@ -1,5 +1,5 @@
 import { DisplayImage } from "./display-image";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { ArrowRight, ArrowUpRight, Grid2X2, ImagePlus, PackageCheck } from "lucide-react";
 import { PRIMARY_CREATION_ENTRIES } from "@/lib/creation-entrypoints";
 import { FEATURE_REGISTRY } from "@/lib/feature-registry";

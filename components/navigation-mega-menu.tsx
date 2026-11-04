@@ -2,7 +2,7 @@
 
 import { PrimaryNavigationLink } from "./primary-navigation-link";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { ChevronDown, Flame, Grid2X2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { HOT_FEATURE_IDS } from "@/lib/feature-priorities";

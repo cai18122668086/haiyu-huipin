@@ -1,8 +1,9 @@
 "use client";
 
 import { ArrowRight, ArrowUpRight, Lightbulb, Search, Sparkles, X } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useMemo, useState } from "react";
+import { ToolsStructuredData } from "@/components/seo-structured-data";
 import { AppShell } from "@/components/app-shell";
 import { FEATURE_CATEGORY_LABELS, FEATURE_REGISTRY, type FeatureCategory } from "@/lib/feature-registry";
 import { FEATURE_THUMBNAILS, PRIMARY_CREATION_ENTRIES } from "@/lib/creation-entrypoints";
@@ -25,12 +26,13 @@ export default function ToolsPage() {
 
   return <AppShell>
     <div className={styles.page}>
+      <ToolsStructuredData />
       <Link href="/inspiration" className={styles.inspirationBanner}>
         <span><Sparkles size={17} /> 好创意，从一张喜欢的图开始</span>
         <strong>去灵感专区看看 <ArrowRight size={16} /></strong>
         <div aria-hidden="true"><img src="/images/haiyu/fashion.webp" alt="" /><img src={PRIMARY_CREATION_ENTRIES[2].image} alt="" /><img src={PRIMARY_CREATION_ENTRIES[0].image} alt="" /></div>
       </Link>
-      <header className={styles.welcome}><div><p>你的电商视觉创作空间</p><h1>今天，想创作什么？</h1></div><span>{FEATURE_REGISTRY.length} 项工具，陪你的好商品出彩</span></header>
+      <header className={styles.welcome}><div><p>你的电商视觉创作空间</p><h1><span className="sr-only">全部AI电商图片创作工具 </span>今天，想创作什么？</h1></div><span>{FEATURE_REGISTRY.length} 项工具，陪你的好商品出彩</span></header>
       <section className={styles.spotlights} aria-label="推荐创作功能">
         {spotlightEntries.map((entry, index) => <Link key={entry.id} href={entry.href} className={styles.spotlight} data-tone={index === 0 ? "lilac" : "lime"}>
           <div><span>{index === 0 ? "有参考，做同款" : "讲清每一个卖点"}</span><h2>{entry.label}</h2><p>{entry.description}</p><b>立即体验 <ArrowUpRight size={16} /></b></div>

@@ -1,0 +1,11 @@
+{
+  "public_intro_before_login": true,
+  "no_auto_dialog": true,
+  "upload_opens_dialog": true,
+  "close_keeps_intro": true,
+  "login_enters_existing_workspace": true,
+  "return_query_preserved": true,
+  "mobile_no_horizontal_overflow": true,
+  "no_generation_requests": true,
+  "javascript_errors": []
+}

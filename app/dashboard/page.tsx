@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { ArrowRight, Clock3, ImagePlus, LoaderCircle, Sparkles } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";

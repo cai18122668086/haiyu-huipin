@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ExternalLink, ShieldCheck, Sparkles, Workflow } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { usePathname } from "next/navigation";
 
 import styles from "./admin-shell.module.css";

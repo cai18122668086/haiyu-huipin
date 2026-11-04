@@ -1,0 +1,322 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "title": "海宇绘品 - AI电商图片工作台｜商品主图详情图一键复刻",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "海宇绘品 AI电商图片工作台 让好商品，一眼出彩。"
+    ],
+    "public_tool": false,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/style-replica",
+    "status": 200,
+    "title": "一键复刻 - 参考同行爆款做自己的商品套图｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "一键复刻"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/domestic-main-image",
+    "status": 200,
+    "title": "主图套图制作 - 搜索主图与连续轮播图一次生成｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "主图套图制作"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/detail-pack",
+    "status": 200,
+    "title": "电商详情页设计 - 卖点结构化梳理与全套详情图生成｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "电商详情页设计"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/inspiration",
+    "status": 200,
+    "title": "灵感专区 - 电商商品图一键做同款｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "电商商品图灵感专区 找一个好灵感，做成自己的好商品。"
+    ],
+    "public_tool": false,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/tools",
+    "status": 200,
+    "title": "全部AI创作工具 - 电商图片处理功能大全｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "全部AI电商图片创作工具 今天，想创作什么？"
+    ],
+    "public_tool": false,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/amazon-visual-suite",
+    "status": 200,
+    "title": "亚马逊套图生成 - 跨境电商主图副图与页面制作｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "亚马逊套图生成"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/change-background",
+    "status": 200,
+    "title": "商品更换背景 - 智能抠图并替换电商纯色与场景底图｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "商品更换背景"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/change-scene",
+    "status": 200,
+    "title": "商品更换场景 - AI重建商品光影与商用场景氛围｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "商品更换场景"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/scene-main",
+    "status": 200,
+    "title": "场景主图生成 - 打造高点击率商业场景主视觉｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "场景主图生成"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/local-edit",
+    "status": 200,
+    "title": "一句话改图 - 自然语言涂抹局部精准精修｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "一句话改图"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/reference-remix",
+    "status": 200,
+    "title": "一键模仿 - 提取参考图构图与商业光影氛围做同款｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "一键模仿"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/change-color",
+    "status": 200,
+    "title": "商品换色 - 保留商品纹理细节快速生成多SKU配色｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "商品换色"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/creative-image",
+    "status": 200,
+    "title": "电商创意图制作 - 生成活动促销与营销卖点视觉素材｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "电商创意图制作"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/change-model",
+    "status": 200,
+    "title": "AI更换模特 - 电商服饰跨区域受众与本土化模特定制｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "AI更换模特"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/model-image",
+    "status": 200,
+    "title": "模特商品图生成 - 平铺挂拍与人台图转商业模特实拍图｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "模特商品图生成"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/try-on",
+    "status": 200,
+    "title": "AI商品试穿 - 服饰一键自然贴合上身试穿效果｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "AI商品试穿"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/model-pose-transfer",
+    "status": 200,
+    "title": "AI模特换姿势 - 保持服饰一致拓展多角度商业动作展示｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "AI模特换姿势"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/workspace/product-image/white-background",
+    "status": 200,
+    "title": "电商白底图生成 - 淘宝天猫京东合规主图一键去底｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "电商白底图生成"
+    ],
+    "public_tool": true,
+    "json_ld": 1,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  },
+  {
+    "path": "/help",
+    "status": 200,
+    "title": "帮助中心 - 电商图片制作指南与常见问题｜海宇绘品",
+    "title_ok": true,
+    "description_ok": true,
+    "keywords_ok": true,
+    "canonical_ok": true,
+    "h1": [
+      "需要帮助？从这里开始"
+    ],
+    "public_tool": false,
+    "json_ld": 0,
+    "cache": "no-store, must-revalidate",
+    "bad_private_links": []
+  }
+]

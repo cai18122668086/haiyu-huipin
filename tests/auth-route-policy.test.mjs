@@ -27,17 +27,17 @@ async function importBundled(entry) {
   return importedModule;
 }
 
-test("visitors can browse display pages while tools and personal data require authentication", async () => {
+test("visitors can browse known tool introductions while private and unknown routes stay protected", async () => {
   const routes = await importBundled("lib/auth/routes.ts");
   assert.equal(routes.isPublicRoute("/auth/login"), true);
   assert.equal(routes.isPublicRoute("/auth/register"), true);
   assert.equal(routes.isPublicRoute("/legal/terms"), true);
   assert.equal(routes.isPublicRoute("/legal/privacy"), true);
-  for (const pathname of ["/", "/tools", "/help", "/inspiration"]) {
+  for (const pathname of ["/", "/tools", "/help", "/inspiration", "/workspace/local-edit", "/workspace/detail-pack", "/workspace/reference-remix", "/style-replica", "/workspace/product-image/change-background"]) {
     assert.equal(routes.isPublicRoute(pathname), true, pathname);
     assert.equal(routes.routeRequiresWorkspace(pathname), false, pathname);
   }
-  for (const pathname of ["/workspace/local-edit", "/workspace/detail-pack", "/workspace/reference-remix", "/style-replica", "/commerce-crawler", "/jobs", "/account", "/dashboard", "/admin", "/unknown"]) {
+  for (const pathname of ["/workspace/private", "/workspace/product-image/not-a-tool", "/style-replica/private", "/commerce-crawler", "/jobs", "/account", "/dashboard", "/admin", "/unknown"]) {
     assert.equal(routes.isPublicRoute(pathname), false, pathname);
   }
   assert.equal(routes.isPublicRoute("/assets"), false);
@@ -135,7 +135,7 @@ test("final API 401 is centralised without browser token storage", async () => {
   assert.match(boundary, /if \(!publicRoute\) redirectToLogin\(\)/);
   assert.match(boundary, /if \(!developmentAuth\) initializeAuthClient/);
   assert.match(boundary, /onAuthSessionChanged/);
-  assert.match(boundary, /if \(publicRoute \|\| developmentAuth\) return;\s*let cancelled = false/);
+  assert.match(boundary, /if \(\(publicRoute && !publicTool\) \|\| developmentAuth\) return;\s*let cancelled = false/);
   assert.match(sessionEvents, /polaris:auth:unauthorised/);
   assert.match(providers, /<AuthBoundary>\{children\}<\/AuthBoundary>/);
 

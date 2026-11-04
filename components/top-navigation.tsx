@@ -3,7 +3,7 @@
 import { PrimaryNavigationLink } from "./primary-navigation-link";
 import styles from "./top-navigation.module.css";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";

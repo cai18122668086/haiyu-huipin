@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/seo-link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { AUTH_ROUTES, LEGAL_ROUTES } from "@/lib/auth/routes";

@@ -2,7 +2,7 @@
 import { clearCreationDraft } from "@/lib/hooks/use-creation-draft";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { getFeatureByRoute } from "@/lib/feature-registry";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { ChevronLeft, Plus } from "lucide-react";
 import styles from "./workspace-header.module.css";
 

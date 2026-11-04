@@ -1,7 +1,7 @@
 "use client";
 
 import { FileWarning, LoaderCircle } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import type { ReactNode } from "react";
 import { JobAssetPreview } from "@/components/job-asset-preview";
 import { AppShell } from "@/components/app-shell";

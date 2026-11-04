@@ -80,7 +80,7 @@ test("development auth bypass is explicit and skips SuperTokens initialization",
   assert.match(boundary, /if \(developmentAuth\) return routeRequiresWorkspace/);
 });
 
-test("runtime sources only allow loopback URLs and the approved customer-support link", async () => {
+test("runtime URLs stay local and declarative SEO URLs use a bounded allowlist", async () => {
   const files = await sourceFiles(["app", "components", "features", "lib"]);
   for (const file of files) {
     const source = await readFile(file, "utf8");
@@ -90,8 +90,19 @@ test("runtime sources only allow loopback URLs and the approved customer-support
       const approvedSupportLink = [
         "app/help/page.tsx", "app/legal/privacy/page.tsx", "app/legal/terms/page.tsx",
       ].includes(relative) && url.href === "https://work.weixin.qq.com/kfid/kfc1f8fc41acaca0895";
+      // These are canonical, schema and publisher identifiers, not remote API
+      // endpoints. Keep this exception scoped to the exact metadata modules.
+      const seoOrigins = {
+        "app/layout.tsx": ["https://huipin.haiyushuke.com"],
+        "lib/seo/pages.ts": ["https://huipin.haiyushuke.com"],
+        "app/sitemap.xml/route.ts": ["http://www.sitemaps.org"],
+        "components/seo-structured-data.tsx": ["https://schema.org", "https://www.haiyushuke.com"],
+        "components/tool-landing.tsx": ["https://schema.org", "https://www.haiyushuke.com"],
+        "components/inspiration-gallery-db-v2.tsx": ["https://schema.org"],
+      };
+      const approvedSeoIdentifier = seoOrigins[relative]?.includes(url.origin);
       assert.ok(
-        ["localhost", "127.0.0.1", "app.local"].includes(url.hostname) || approvedSupportLink,
+        ["localhost", "127.0.0.1", "app.local"].includes(url.hostname) || approvedSupportLink || approvedSeoIdentifier,
         `${path.relative(root, file)} contains remote runtime URL ${url.origin}`,
       );
     }

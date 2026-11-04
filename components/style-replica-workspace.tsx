@@ -4,7 +4,7 @@ import { SettingField, ChoiceControl, GenerationVersionField } from "@/component
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { WorkspaceVisualPreview } from "./workspace-visual-preview";
 import { useEffect, useRef, useState, type RefObject } from "react";

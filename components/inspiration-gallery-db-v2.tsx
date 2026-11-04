@@ -5,7 +5,7 @@ import { ProductFactsGuidance } from "./product-facts-guidance";
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { assetCreationHref } from "@/lib/assets/creation-handoff";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +31,8 @@ import {
 } from "@/features/runtime/api/runtime";
 import type { Asset as ApiAsset } from "@/lib/api/types";
 import styles from "./inspiration-gallery.module.css";
+import { StructuredData } from "./seo-structured-data";
+import { SITE_ORIGIN } from "@/lib/seo/pages";
 
 type Asset = { asset_id: string; role: "result" | "user_upload" | "reference"; ordinal: number; url: string };
 type WorkflowType = "reference_remix" | "product_prompt" | "local_edit" | "legacy_unclassified";
@@ -640,9 +642,10 @@ export function InspirationGalleryDb() {
   const resultAsset = resultAssets[0];
 
   return <div className={styles.page}>
-    <section className={styles.hero}>
+    <StructuredData data={{ "@context": "https://schema.org", "@type": "ItemList", name: "电商商品图灵感专区", url: SITE_ORIGIN + "/inspiration", itemListElement: filtered.map((item, index) => ({ "@type": "ListItem", position: index + 1, item: { "@type": "CreativeWork", name: item.title, description: item.description } })) }} />
+      <section className={styles.hero}>
       <div className={styles.heroInner}>
-        <div className={styles.heroTitle}><Sparkles size={27} /><h1>找一个好灵感，做成自己的好商品。</h1></div>
+        <div className={styles.heroTitle}><Sparkles size={27} /><h1><span className="sr-only">电商商品图灵感专区 </span>找一个好灵感，做成自己的好商品。</h1></div>
         <p className={styles.discoverySteps}>先看案例 <span>→</span> 查看创作指令 <span>→</span> 上传商品做同款 <a href="#inspiration-cases">浏览灵感素材 ↓</a></p>
         {authSession.data !== true && <p><Link href={loginHref("/inspiration")} className={styles.modalApply} onClick={(event) => { event.preventDefault(); requestLogin("/inspiration"); }}>登录后开始创作</Link></p>}
         <div className={`${styles.command} ${activeCase || composerAssets.length > 0 || generating ? styles.commandWithAssets : ""}`} ref={composerRef}>

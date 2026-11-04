@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useRouter } from "next/navigation";
 import { requestLogin } from "@/lib/auth/session-events";
 import { useAuthSession } from "@/features/auth/api/session";

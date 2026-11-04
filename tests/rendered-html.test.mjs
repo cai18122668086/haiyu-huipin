@@ -28,7 +28,7 @@ test("server-renders the public homepage without requiring authentication", asyn
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>首页｜海宇绘品<\/title>/i);
+  assert.match(html, /<title>海宇绘品 - AI电商图片工作台｜商品主图详情图一键复刻<\/title>/i);
   assert.doesNotMatch(html, /正在确认登录状态/);
   assert.match(html, /海宇绘品/);
   assert.doesNotMatch(html, /Your site is taking shape|codex-preview/i);
@@ -65,5 +65,18 @@ test("core product routes render", async () => {
   ]) {
     const response = await render(path);
     assert.equal(response.status, 200, `${path} should render`);
+  }
+});
+
+test("anonymous tool HTML includes the public introduction without mounting the private workspace", async () => {
+  for (const path of ["/style-replica", "/workspace/product-image/change-color", "/workspace/detail-pack"]) {
+    const response = await render(path);
+    const html = await response.text();
+    assert.equal(response.status, 200);
+    assert.match(html, /data-public-tool=/);
+    assert.match(html, /如何开始使用/);
+    assert.match(html, /application\/ld\+json/);
+    assert.doesNotMatch(html, /正在确认登录状态/);
+    assert.match(html, /rel="nofollow"/);
   }
 });

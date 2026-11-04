@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { Flame } from "lucide-react";
 import { useId, type CSSProperties } from "react";
 import styles from "./primary-navigation-link.module.css";
