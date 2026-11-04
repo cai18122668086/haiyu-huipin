@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authErrorMessage, signInWithPhonePassword } from "@/features/auth/api/auth";

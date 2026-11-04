@@ -16,7 +16,7 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import {

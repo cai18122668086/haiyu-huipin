@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { ArrowLeft, FolderOpen, Lightbulb } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ALL_TOOLS_MENU } from "@/lib/navigation-registry";

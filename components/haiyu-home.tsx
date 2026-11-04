@@ -2,7 +2,7 @@
 
 import { DisplayImage } from "./display-image";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { ArrowDown, ArrowRight, ArrowUpRight, Check, MoveUpRight, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./brand-mark";
@@ -57,7 +57,7 @@ export function HaiyuHero() {
       <div className="haiyu-hero__inner">
         <div className="haiyu-hero__copy">
           <p className="haiyu-eyebrow"><span /> 为电商而生的 AI 创作空间</p>
-          <h1 id="haiyu-hero-title">让好商品，<br />一眼<span className="haiyu-selection">出彩<i /><i /><i /><i /></span>。</h1>
+          <h1 id="haiyu-hero-title"><span className="sr-only">海宇绘品 AI电商图片工作台 </span>让好商品，<br />一眼<span className="haiyu-selection">出彩<i /><i /><i /><i /></span>。</h1>
           <p className="haiyu-hero__description">参考同行做套图，上传商品做主图与详情。<br />从灵感到上架视觉，找到适合你的创作方式。</p>
           <div className="haiyu-hero__actions">
             <Link className="haiyu-button" href="/style-replica"><Sparkles size={18} /> 开始一键复刻 <ArrowUpRight size={20} /></Link>

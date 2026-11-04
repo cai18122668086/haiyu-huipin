@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { AUTH_ROUTES } from "@/lib/auth/routes";
 import { withReturnTo } from "@/lib/auth/return-to";
 import { PhoneLoginForm } from "./phone-login-form";

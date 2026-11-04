@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/",
+    "cache_control": "s-maxage=86400, stale-while-revalidate=3600"
+  },
+  {
+    "path": "/tools",
+    "cache_control": "s-maxage=86400, stale-while-revalidate=3600"
+  },
+  {
+    "path": "/inspiration",
+    "cache_control": "no-store, must-revalidate"
+  },
+  {
+    "path": "/style-replica",
+    "cache_control": "s-maxage=86400, stale-while-revalidate=3600"
+  },
+  {
+    "path": "/account",
+    "cache_control": "no-store, must-revalidate"
+  },
+  {
+    "path": "/auth/login",
+    "cache_control": "no-store, must-revalidate"
+  }
+]

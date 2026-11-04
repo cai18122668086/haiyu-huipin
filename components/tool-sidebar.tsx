@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, CircleHelp, Clock3, FolderOpen, Grid2X2, Home, Lightbulb, Plus, X } from "lucide-react";
 import { PRIMARY_CREATION_ENTRIES } from "@/lib/creation-entrypoints";
@@ -90,4 +90,3 @@ export function ToolSidebar({
     </>
   );
 }
-

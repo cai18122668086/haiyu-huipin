@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { AUTH_ROUTES } from "@/lib/auth/routes";
 import { PhoneLoginForm } from "./phone-login-form";
 export function ForgotPasswordForm({ returnTo = "/account" }: { returnTo?: string }) {

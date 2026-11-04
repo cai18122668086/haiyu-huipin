@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { isEmailVerified, sessionExists, signOut } from "@/features/auth/api/auth";
@@ -18,6 +18,8 @@ import { AuthDialog } from "./auth-dialog";
 import { AuthDiagnosticDetails } from "./auth-diagnostic-details";
 import { beginAuthDiagnostics, createAuthDiagnostic, finishAuthDiagnostics, observeAuthCheck, reportAuthDiagnostic } from "@/lib/auth/diagnostics";
 import { authFailureCanRetry, type AuthDiagnostic, type AuthPhase } from "@/lib/auth/diagnostic-payload";
+import { getToolSeoPage } from "@/lib/seo/pages";
+import { ToolLanding } from "../tool-landing";
 
 type BoundaryResult = { state: "authenticated" } | { state: "unauthenticated" } | { state: "error"; diagnostic: AuthDiagnostic };
 
@@ -39,6 +41,7 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
   const publicRoute =
     isPublicRoute(pathname) || localHelpPreview || localHomePreview || localInspirationPreview;
   const developmentAuth = getAuthMode() === "development";
+  const publicTool = Boolean(getToolSeoPage(pathname));
 
   const redirectToLogin = useCallback(() => {
     queryClient.clear();
@@ -49,11 +52,16 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
   const enterFeature = useCallback(async (target: string) => {
     const returnTo = sanitizeReturnTo(target);
     if (developmentAuth || queryClient.getQueryData(AUTH_SESSION_QUERY_KEY) === true) {
+      setSessionRevision(value => value + 1);
       router.push(returnTo);
       return;
     }
     try {
-      if (await withAuthTimeout(sessionExists())) { router.push(returnTo); return; }
+      if (await withAuthTimeout(sessionExists())) {
+        setSessionRevision(value => value + 1);
+        router.push(returnTo);
+        return;
+      }
     } catch { /* 会话服务暂不可用时仍允许浏览，登录框负责显示后续请求错误。 */ }
     setLoginTarget(returnTo);
   }, [developmentAuth, queryClient, router]);
@@ -94,7 +102,7 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
     setSessionRevision((value) => value + 1);
   }), [queryClient]);
   useEffect(() => {
-    if (publicRoute || developmentAuth) return;
+    if ((publicRoute && !publicTool) || developmentAuth) return;
     let cancelled = false;
     const diagnostics = beginAuthDiagnostics();
     async function checkAuthentication() {
@@ -104,7 +112,12 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
         let phase: AuthPhase = "session";
         try {
           if (!(await withAuthTimeout(observeAuthCheck(diagnostics, attempt + 1, "session", sessionExists)))) {
-            if (!cancelled) redirectToLogin();
+            if (!cancelled) {
+              if (publicTool) {
+                queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, false);
+                setResult({ state: "unauthenticated" });
+              } else redirectToLogin();
+            }
             return;
           }
           if (cancelled) return;
@@ -132,12 +145,15 @@ export function AuthBoundary({ children }: { children: React.ReactNode }) {
     }
     void checkAuthentication().finally(() => finishAuthDiagnostics(diagnostics));
     return () => { cancelled = true; finishAuthDiagnostics(diagnostics); };
-  }, [developmentAuth, publicRoute, queryClient, redirectToLogin, retryKey, router, sessionRevision]);
+  }, [developmentAuth, publicRoute, publicTool, pathname, queryClient, redirectToLogin, retryKey, router, sessionRevision]);
 
   const loginDialog = loginTarget !== null ? <AuthDialog returnTo={loginTarget} onClose={() => {
     setLoginTarget(null);
     if (!publicRoute && result?.state === "unauthenticated") router.replace("/");
   }} /> : null;
+  if (publicTool) return <>{developmentAuth || result?.state === "authenticated"
+    ? <WorkspaceGate key={pathname}>{children}</WorkspaceGate>
+    : <ToolLanding pathname={pathname} />}{loginDialog}</>;
   if (publicRoute) return <>{children}{loginDialog}</>;
   if (developmentAuth) return routeRequiresWorkspace(pathname) ? <WorkspaceGate>{children}</WorkspaceGate> : <>{children}</>;
   if (!result) return <AuthStatus busy title={recovering ? "正在恢复连接" : "正在确认登录状态"} description={recovering ? "连接暂时中断，正在为你重新检查。" : "请稍候，我们正在安全地恢复你的会话。"} />;

@@ -1,4 +1,5 @@
-﻿import { AUTH_WEBSITE_BASE_PATH } from "./config";
+import { AUTH_WEBSITE_BASE_PATH } from "./config";
+import { getToolSeoPage } from "../seo/pages";
 
 export const AUTH_ROUTES = {
   login: `${AUTH_WEBSITE_BASE_PATH}/login`,
@@ -25,8 +26,9 @@ export function routeRequiresWorkspace(pathname: string): boolean {
   return !isPublicRoute(pathname) && pathname !== AUTH_ROUTES.account;
 }
 
-// 展示页允许游客浏览；创作入口、个人数据和未知路径仍默认要求登录。
+// Known tools have public introductions, while personal and unknown routes stay protected.
 export function isPublicRoute(pathname: string): boolean {
   return ["/", "/tools", "/help", "/inspiration"].includes(pathname) ||
+    Boolean(getToolSeoPage(pathname)) ||
     isAuthOrLegalRoute(pathname);
 }

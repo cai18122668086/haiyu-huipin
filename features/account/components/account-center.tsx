@@ -12,7 +12,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import {
   ArrowDownToLine,
   ArrowRight,

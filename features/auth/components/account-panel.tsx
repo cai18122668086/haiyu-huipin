@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Smartphone, ShieldCheck, UserRound } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

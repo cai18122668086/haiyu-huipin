@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { Ban, ChevronRight, LoaderCircle, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 

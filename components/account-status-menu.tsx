@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronDown, Coins, Crown, Images, RefreshCw, UserRound } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";

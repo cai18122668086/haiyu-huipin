@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { unwrapApiResponse } from "@/lib/api/request";

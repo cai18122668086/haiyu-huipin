@@ -1,5 +1,5 @@
-﻿"use client";
-import Link from "next/link";
+"use client";
+import Link from "@/components/seo-link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authErrorMessage, isEmailVerified, sendVerificationEmail, sessionExists, verifyEmail } from "@/features/auth/api/auth";

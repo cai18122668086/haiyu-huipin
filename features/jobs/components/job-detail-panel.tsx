@@ -11,7 +11,7 @@ import {
   ShieldAlert,
   X,
 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/seo-link";
 
 import { JobAssetPreview } from "@/components/job-asset-preview";
 import { JobDeliverablesDownload } from "@/components/job-deliverables-download";
