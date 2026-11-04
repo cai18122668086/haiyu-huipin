@@ -14,4 +14,6 @@
 
 本次基线打包参数为`--base-revision bc1fa4d --base-image huipin-seo/frontend:0f153cbb0b40f47a99fac5a8fe39791e91d58eb7 --preserve-caddy`，执行脚本为deploy/seo-20261104/package_release.py。服务端仍逐项确认当前镜像、源码与运行配置，基线变化会拒绝继续。
 
-验证与正式上线记录在发布完成后补入verification/seo-examples-20261104/及RELEASE-STATUS.txt。
+已正式上线，应用提交5225c73f0e89081c81c1d6fbca5dcb004be6503a，PR #9及合并提交5609cb9644d96f053cf378419483251c7d8affa3。前端镜像为huipin-seo/frontend:5225c73f0e89081c81c1d6fbca5dcb004be6503a。
+
+248项前端测试、3项发布策略检查及14项CI通过，类型检查和生产构建通过，ESLint保留两条既有警告且无错误。候选与公网20页检查、7张图片原字节哈希以及16页桌面和390像素手机浏览器验收通过，无JavaScript异常及制作请求；合成会话验证原工作区及地址参数保留。只更新前端，网关、后端、数据库和其他容器保持。记录见verification/seo-examples-20261104/及RELEASE-STATUS.txt。

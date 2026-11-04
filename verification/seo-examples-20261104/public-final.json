@@ -1,0 +1,236 @@
+{
+  "base": "https://huipin.haiyushuke.com",
+  "public_pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "海宇绘品 AI电商图片工作台 让好商品，一眼出彩。",
+      "public_tool": false,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/style-replica",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "一键复刻",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/domestic-main-image",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "主图套图制作",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/detail-pack",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "电商详情页设计",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/inspiration",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "电商商品图灵感专区 找一个好灵感，做成自己的好商品。",
+      "public_tool": false,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/tools",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "全部AI电商图片创作工具 今天，想创作什么？",
+      "public_tool": false,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/amazon-visual-suite",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "亚马逊套图生成",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/change-background",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "商品更换背景",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/change-scene",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "商品更换场景",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/scene-main",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "场景主图生成",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/local-edit",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "一句话改图",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/reference-remix",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "一键模仿",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/change-color",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "商品换色",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/creative-image",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "电商创意图制作",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/change-model",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "AI更换模特",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/model-image",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "模特商品图生成",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/try-on",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "AI商品试穿",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/model-pose-transfer",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "AI模特换姿势",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/workspace/product-image/white-background",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "电商白底图生成",
+      "public_tool": true,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 1,
+      "private_links_nofollow": true
+    },
+    {
+      "path": "/help",
+      "status": 200,
+      "metadata_matches_document": true,
+      "h1": "需要帮助？从这里开始",
+      "public_tool": false,
+      "cache_control": "s-maxage=86400, stale-while-revalidate=3600",
+      "json_ld_blocks": 0,
+      "private_links_nofollow": true
+    }
+  ],
+  "sitemap_urls": 20,
+  "robots_ok": true,
+  "private_pages": [
+    {
+      "path": "/auth/login",
+      "noindex": true,
+      "no_store": true
+    },
+    {
+      "path": "/account",
+      "noindex": true,
+      "no_store": true
+    },
+    {
+      "path": "/jobs",
+      "noindex": true,
+      "no_store": true
+    },
+    {
+      "path": "/assets",
+      "noindex": true,
+      "no_store": true
+    },
+    {
+      "path": "/admin/accounts",
+      "noindex": true,
+      "no_store": true
+    }
+  ],
+  "unknown_preset_404": true,
+  "crawler_ua_public_intro": true
+}

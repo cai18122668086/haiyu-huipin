@@ -1,0 +1,47 @@
+{
+  "assets": [
+    {
+      "id": "change-scene",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/change-scene.webp",
+      "bytes": 67354,
+      "hash_matched": true
+    },
+    {
+      "id": "scene-main",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/scene-main.webp",
+      "bytes": 94296,
+      "hash_matched": true
+    },
+    {
+      "id": "creative-image",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/creative-image.webp",
+      "bytes": 45928,
+      "hash_matched": true
+    },
+    {
+      "id": "change-model",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/change-model.webp",
+      "bytes": 140954,
+      "hash_matched": true
+    },
+    {
+      "id": "model-image",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/model-image.webp",
+      "bytes": 81162,
+      "hash_matched": true
+    },
+    {
+      "id": "model-pose-transfer",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/model-pose-transfer.webp",
+      "bytes": 139576,
+      "hash_matched": true
+    },
+    {
+      "id": "white-background",
+      "url": "https://huipin.haiyushuke.com/images/seo-tool-examples/white-background.webp",
+      "bytes": 11554,
+      "hash_matched": true
+    }
+  ],
+  "total_bytes": 580824
+}

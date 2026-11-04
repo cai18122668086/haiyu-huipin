@@ -1,0 +1,137 @@
+{
+  "base": "https://huipin.haiyushuke.com",
+  "tools": [
+    {
+      "path": "/style-replica",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/domestic-main-image",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/detail-pack",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/amazon-visual-suite",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/product-image/change-background",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/product-image/change-scene",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    },
+    {
+      "path": "/workspace/product-image/scene-main",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    },
+    {
+      "path": "/workspace/local-edit",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/reference-remix",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/product-image/change-color",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/creative-image",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    },
+    {
+      "path": "/workspace/product-image/change-model",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    },
+    {
+      "path": "/workspace/product-image/model-image",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    },
+    {
+      "path": "/workspace/product-image/try-on",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": false
+    },
+    {
+      "path": "/workspace/model-pose-transfer",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    },
+    {
+      "path": "/workspace/product-image/white-background",
+      "comparison": true,
+      "images_loaded": true,
+      "login_on_upload_only": true,
+      "mobile_no_overflow": true,
+      "illustration": true
+    }
+  ],
+  "paired_tools": 16,
+  "labelled_illustrations": 7,
+  "javascript_errors": [],
+  "mutation_requests": []
+}
