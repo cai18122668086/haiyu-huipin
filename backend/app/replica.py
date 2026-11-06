@@ -180,7 +180,8 @@ def _wire(row: ReplicaDocumentRecord) -> dict:
         "updated_at": row.updated_at.isoformat(),
     }
     if (
-        row.kind == "product" and row.status == "failed"
+        row.kind == "product"
+        and row.status == "failed"
         and row.payload.get("error_code") == "PRODUCT_ID_MISMATCH"
     ):
         receipts = row.payload.get("_product_provider_state", {}).values()
@@ -240,7 +241,8 @@ def _wire(row: ReplicaDocumentRecord) -> dict:
                     "exact-compact-v13",
                     "exact-compact-v14",
                     "exact-compact-v15",
-                    "exact-compact-v16", "exact-compact-v17",
+                    "exact-compact-v16",
+                    "exact-compact-v17",
                 }
             )
         )
@@ -1883,6 +1885,75 @@ class ImageRetryRequest(BaseModel):
     request_id: str = Field(min_length=8, max_length=80)
 
 
+class FreeRestartRequest(ImageRetryRequest):
+    confirm_new_generation: Literal[True]
+
+
+@router.post("/sessions/{document_id}/jobs/{job_id}/restart-free", status_code=202)
+async def restart_free_trial(
+    document_id: str,
+    job_id: str,
+    payload: FreeRestartRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    workspace: WorkspaceWriteDependency,
+    session: SessionDependency,
+) -> dict:
+    from .domain import RetryScope
+    from .replica_free_restart import available
+    from .routes_v1 import retry_job
+    from .schemas_v1 import RetryRequest
+    from .services import get_workspace_job
+
+    # Match the job/document lock order in the shared retry constructor.
+    job = get_workspace_job(session, workspace.workspace_id, job_id, for_update=True)
+    row = _get(session, workspace.workspace_id, document_id, "session")
+    if any(v["from"] == job_id for v in row.payload.get("retry_events", [])):
+        return _wire(row)
+    if row.created_by != workspace.principal.user_id or not available(
+        session, row, job
+    ):
+        raise ApiError(
+            409,
+            "FREE_REPLICA_RESTART_UNAVAILABLE",
+            "当前任务不可免费重新生成，请继续已有任务或联系客服。",
+        )
+    # Request.state is server-owned. Normal retry calls cannot bypass the fence.
+    request.state.free_replica_restart_job_id = job.id
+    from .models import AuditEventRecord
+
+    session.add(
+        AuditEventRecord(
+            workspace_id=workspace.workspace_id,
+            actor_user_id=workspace.principal.user_id,
+            action="promotion.replica_welcome_restart_requested",
+            resource_type="job",
+            resource_id=job.id,
+            request_id=payload.request_id[:64],
+            details={
+                "confirm_new_generation": True,
+                "credits": 0,
+                "delivered_images": 0,
+            },
+        )
+    )
+    try:
+        await retry_job(
+            job_id=job_id,
+            payload=RetryRequest(scope=RetryScope.FAILED),
+            request=request,
+            background_tasks=background_tasks,
+            workspace=workspace,
+            session=session,
+            idempotency_header="replica-free-restart-" + _hash([document_id, job_id]),
+        )
+    finally:
+        del request.state.free_replica_restart_job_id
+    row = _get(session, workspace.workspace_id, document_id, "session")
+    session.commit()
+    return _wire(row)
+
+
 @router.post("/sessions/{document_id}/jobs/{job_id}/retry", status_code=202)
 async def retry_image(
     document_id: str,
@@ -1906,7 +1977,8 @@ async def retry_image(
     if job_id not in jobs:
         raise ApiError(404, "REPLICA_JOB_NOT_FOUND", "请从当前复刻结果选择图片。")
     unknown_codes = {
-        "PROVIDER_OUTCOME_UNKNOWN", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
+        "PROVIDER_OUTCOME_UNKNOWN",
+        "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
         "IMAGE_ASYNC_TASK_FAILED",
     }
     original = session.scalar(

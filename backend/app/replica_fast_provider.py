@@ -191,8 +191,20 @@ class FastReplicaProvider:
                         409, "FAST_REPLICA_SCOPE_INVALID", "已有图片归属无效。"
                     )
                 return old
-            if old and (
-                old.get("state") != "rejected" or old.get("job_id") == request.job_id
+            explicit_free_restart = (
+                job.configuration.get("_free_replica_restart_from")
+                == job.retry_of_job_id
+                == old.get("job_id")
+                and job.retry_of_job_id is not None
+                and row.payload.get("use_welcome_trial") is True
+            )
+            if (
+                old
+                and not explicit_free_restart
+                and (
+                    old.get("state") != "rejected"
+                    or old.get("job_id") == request.job_id
+                )
             ):
                 raise ApiError(
                     409,
@@ -204,6 +216,7 @@ class FastReplicaProvider:
                 "job_id": request.job_id,
                 "attempt_id": request.attempt_id,
                 "plan_hash": canonical_hash(plan),
+                **({"previous_invocation": old} if explicit_free_restart else {}),
             }
             row.payload = {**row.payload, "_fast_invocations": receipts}
             row.updated_at = utc_now()
@@ -239,10 +252,7 @@ class FastReplicaProvider:
             fmt = image.format
         if (
             fmt not in {"PNG", "JPEG", "WEBP"}
-            or not (
-                min(w, h) >= 1024
-                or (min(w, h) >= 768 and w * h >= 1_500_000)
-            )
+            or not (min(w, h) >= 1024 or (min(w, h) >= 768 and w * h >= 1_500_000))
             or abs((w / h) / (canvas[0] / canvas[1]) - 1) > 0.01
         ):
             raise ApiError(

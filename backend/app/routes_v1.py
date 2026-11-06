@@ -2244,6 +2244,10 @@ async def retry_job(
         session, source, allow_replanning=payload.scope == RetryScope.FAILED
     )
     replica_document = None
+    free_replica_restart = (
+        getattr(getattr(request, "state", None), "free_replica_restart_job_id", None)
+        == source.id
+    )
     document_id = source.configuration.get("replica_session_id")
     if source.type == JobType.REFERENCE_REMIX.value and document_id:
         from .models import ReplicaDocumentRecord
@@ -2278,18 +2282,19 @@ async def retry_job(
             )
             .limit(1)
         )
-        if source.error_code in unknown_codes or unknown:
+        if (source.error_code in unknown_codes or unknown) and not free_replica_restart:
             raise ApiError(
                 409,
                 "REPLICA_OUTCOME_RECONCILIATION_REQUIRED",
                 "原生图结果尚未核实，请先找回原任务，避免重复生成。",
             )
-        try:
-            await recover_outputs(
-                session, request.app.state.storage, replica_document, source
-            )
-        except ReplicaNativeError as error:
-            raise ApiError(409, "REPLICA_RECOVERY_INVALID", str(error)) from error
+        if not free_replica_restart:
+            try:
+                await recover_outputs(
+                    session, request.app.state.storage, replica_document, source
+                )
+            except ReplicaNativeError as error:
+                raise ApiError(409, "REPLICA_RECOVERY_INVALID", str(error)) from error
         payload = payload.model_copy(
             update={"scope": RetryScope.FAILED, "item_ids": []}
         )
@@ -2303,6 +2308,11 @@ async def retry_job(
         )
     _validate_domestic_detail_retry(session, source, selected)
     retried = _copy_job_for_retry(session, source, payload.scope, selected)
+    if free_replica_restart:
+        retried.configuration = {
+            **retried.configuration,
+            "_free_replica_restart_from": source.id,
+        }
     if replan_main_image:
         # 新规划只继承用户输入，不能携带会阻止规划的旧调用标记。
         retried.configuration = {
@@ -2465,7 +2475,8 @@ def clone_job(
         # Clone is an explicit new generation using the frozen plan, with a new
         # paid-call scope; it must not inherit another job's image receipts.
         cloned.configuration = {
-            key: value for key, value in cloned.configuration.items()
+            key: value
+            for key, value in cloned.configuration.items()
             if not key.startswith("_main_image_fast")
         }
     cloned.root_job_id = None
@@ -4671,9 +4682,11 @@ def _reserve_real_provider_job_if_enabled(
         )
         provider_requests = _AMAZON_PROVIDER_REQUEST_ENVELOPE
         from .amazon_suite_fast import selected as fast_amazon_selected
+
         if fast_amazon_selected(configuration):
-            estimated_cost = (image_cost
-                + settings.tengli_planner_reserve_micros * int(planner_required))
+            estimated_cost = image_cost + settings.tengli_planner_reserve_micros * int(
+                planner_required
+            )
             provider_requests = AMAZON_EXPECTED_ITEM_COUNT + int(planner_required)
         group_count = int(planner_required)
     elif (
@@ -5217,8 +5230,10 @@ def _copy_job_relations_for_retry(
             copied_payload["state"] = "confirmed"
             if source_plan.schema_version == "aurora-main-image-native-fast-plan-v1":
                 for key in (
-                    "_native_final_job_id", "_native_final_session",
-                    "_native_final_manifest", "technical_delivery",
+                    "_native_final_job_id",
+                    "_native_final_session",
+                    "_native_final_manifest",
+                    "technical_delivery",
                 ):
                     copied_payload.pop(key, None)
                 copied_payload["harness_state"] = "AUTHORIZED"

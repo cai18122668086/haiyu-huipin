@@ -31,7 +31,7 @@ export function ReplicaWelcomeBanner() {
   const promotion = usePublicReplicaWelcome();
   const { workspace } = useWorkspace();
   const welcome = useReplicaWelcome(workspace?.id);
-  const eligible = !workspace || ["available", "in_progress"].includes(welcome.data?.status ?? "");
+  const eligible = !workspace || ["available", "in_progress", "recoverable"].includes(welcome.data?.status ?? "");
   if (!(promotion.data?.enabled && eligible)) return null;
   return <div className={styles.preview}><ReplicaWelcomeOffer /></div>;
 }

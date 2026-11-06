@@ -4214,6 +4214,27 @@
         "title": "FinalizeJobRequest",
         "type": "object"
       },
+      "FreeRestartRequest": {
+        "properties": {
+          "confirm_new_generation": {
+            "const": true,
+            "title": "Confirm New Generation",
+            "type": "boolean"
+          },
+          "request_id": {
+            "maxLength": 80,
+            "minLength": 8,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "confirm_new_generation"
+        ],
+        "title": "FreeRestartRequest",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -19200,6 +19221,83 @@
           }
         ],
         "summary": "Recover Images",
+        "tags": [
+          "one-click-replica"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/replica/sessions/{document_id}/jobs/{job_id}/restart-free": {
+      "post": {
+        "operationId": "restart_free_trial_api_v1_workspaces__workspace_id__replica_sessions__document_id__jobs__job_id__restart_free_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreeRestartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Restart Free Trial Api V1 Workspaces  Workspace Id  Replica Sessions  Document Id  Jobs  Job Id  Restart Free Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Restart Free Trial",
         "tags": [
           "one-click-replica"
         ]

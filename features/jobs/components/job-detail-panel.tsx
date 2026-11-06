@@ -111,7 +111,7 @@ export function JobDetailPanel({
               </button>
             </div>
             <JobProgress job={job} error={detail.error} lastSyncedAt={detail.dataUpdatedAt} refreshing={detail.isFetching} onRefresh={() => void detail.refetch()} />
-            <Link className="secondary-button" href={jobWorkspaceHref(job)}>打开对应工作台</Link><JobCreditSettlement workspaceId={workspaceId} jobId={job.id} />
+            <Link className="secondary-button" href={jobWorkspaceHref(job)}>{job.type === "reference_remix" && ["failed", "cancelled"].includes(job.status) ? "恢复复刻任务" : "打开对应工作台"}</Link><JobCreditSettlement workspaceId={workspaceId} jobId={job.id} />
 
             <section className="job-detail-section">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">任务信息</span><h3>任务概况</h3></div><small>{detail.isFetching ? "更新中…" : "实时更新"}</small></div>

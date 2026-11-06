@@ -19,6 +19,14 @@ export type ReplicaProgressDocument = {
 
 const terminal = new Set(["completed", "partial", "failed", "cancelled"]);
 
+export function replicaFreeRestartAvailable(job: {
+  status: string;
+  succeeded_item_count: number;
+  assets: { direction: string; is_deliverable: boolean }[];
+} | undefined, freeFastTrial: boolean): boolean {
+  return Boolean(freeFastTrial && job && ["failed", "cancelled"].includes(job.status) && job.succeeded_item_count === 0 && !job.assets.some(asset => asset.direction === "output" && asset.is_deliverable));
+}
+
 export function replicaRetryNeedsReconciliation(job: {
   error_code?: string | null;
   items?: { error_code?: string | null }[];
