@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 from hashlib import sha256
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
@@ -176,11 +177,21 @@ def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
         max(0, int((now - ready).total_seconds()) // WINDOW_SECONDS) if ready else 0
     )
     end = ready + timedelta(seconds=(window + 1) * WINDOW_SECONDS) if ready else None
+    shown_today = bool(
+        row
+        and row.last_shown_window >= 0
+        and aware(row.updated_at).astimezone(ZoneInfo("Asia/Shanghai")).date()
+        == now.astimezone(ZoneInfo("Asia/Shanghai")).date()
+    )
     return {
         "eligible": bool(enabled),
         "trial_viewed": row is not None,
         "should_show": bool(
-            row and ready and now >= ready and row.last_shown_window < window
+            row
+            and ready
+            and now >= ready
+            and row.last_shown_window < window
+            and not shown_today
         ),
         "server_now": now.isoformat(),
         "ready_at": ready.isoformat() if ready else None,
@@ -271,5 +282,6 @@ def claim_impression(session: Session, user: UserRecord, workspace_id: str) -> d
             )
             // WINDOW_SECONDS,
         )
+        row.updated_at = utc_now()
         session.flush()
     return result

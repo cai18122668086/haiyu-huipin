@@ -220,3 +220,33 @@ def test_reminder_disabled_and_personal_workspace_required(center_client):
         ).status_code
         == 422
     )
+
+
+def test_late_visit_does_not_remind_twice_on_same_beijing_day(
+    center_client, monkeypatch
+):
+    from datetime import UTC
+
+    now = datetime(2026, 11, 6, 0, 0, tzinfo=UTC)
+    with center_client.app.state.session_factory() as session:
+        session.get(PromotionCampaignRecord, center.REMINDER).starts_at = (
+            now - timedelta(days=2)
+        )
+        session.get(PromotionCampaignRecord, CAMPAIGN).starts_at = now - timedelta(
+            days=2
+        )
+        session.add(
+            NewcomerOfferRecord(
+                user_id=BUYER,
+                session_id="synthetic-delivered",
+                first_viewed_at=now - timedelta(hours=23),
+                last_shown_window=-1,
+            )
+        )
+        session.commit()
+    monkeypatch.setattr(center, "utc_now", lambda: now)
+    assert offer(center_client, "/impression", "post").json()["should_show"]
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(hours=2))
+    assert not offer(center_client, "/impression", "post").json()["should_show"]
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(days=1))
+    assert offer(center_client, "/impression", "post").json()["should_show"]
