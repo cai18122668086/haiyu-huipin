@@ -98,6 +98,9 @@ def grant(
     )
     session.add(lot)
     session.flush()
+    from .growth_rewards import award_paid_grant
+
+    award_paid_grant(session, lot)
     return lot
 
 
@@ -267,6 +270,10 @@ def finish_allocation(
         lot.held -= value
         lot.remaining -= consumed
         remaining_charge -= consumed
+        if lot.kind == "referral_bonus":
+            from .growth_rewards import record_bonus_consumption
+
+            record_bonus_consumption(session, account, lot, consumed)
     if remaining_charge:
         raise ApiError(409, "CREDIT_LOT_MISMATCH", "积分结算记录需要核对。")
     session.flush()

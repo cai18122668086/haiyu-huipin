@@ -44,6 +44,12 @@
 .footer a { color: var(--ink-500); font-size: 10px; text-decoration: none; }
 .footer a:hover { color: var(--violet-700); }
 .retry { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; border: 0; color: var(--violet-600); background: transparent; font-size: 11px; cursor: pointer; }
+.rewardActions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px; }
+.panel .rewardActions button,.panel .rewardActions a { display:flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:8px 5px;border:1px solid #e8e0f0;border-radius:7px;background:#f7f3fc;color:#75538f;font:inherit;font-size:13px;font-weight:550;text-decoration:none;cursor:pointer; }
+.rewardActions>:only-child { grid-column:1/-1; }
+.panel .rewardActions button:disabled { color:#8a7d96;background:#faf8fc;cursor:default;opacity:1; }
+.rewardActions button:hover:not(:disabled),.rewardActions a:hover { border-color:#c7b2da;background:#f0e8f8; }
+.rewardError { margin:9px 0 0;color:#96627c;font-size:12px;line-height:1.5; }
 @media(max-width:960px) {
   .trigger { width:36px; height:36px; justify-content:center; gap:0; padding:0; }
   .identity { min-height:0; padding:0; background:transparent; }

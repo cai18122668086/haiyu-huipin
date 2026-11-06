@@ -269,6 +269,8 @@ def create_purchase(
                 session.commit()
             return _response(pending)
     order_id = new_id("pay")[:32]
+    from .growth_rewards import referral_terms
+
     order = CreditPurchaseRecord(
         id=order_id,
         workspace_id=workspace.workspace_id,
@@ -280,6 +282,7 @@ def create_purchase(
         credits=product.credits,
         product_snapshot={
             **product.snapshot(),
+            **referral_terms(session, workspace.principal.user_id),
             "payment_identity": identity,
             "confirmation_mode": settings.credit_wechat_confirmation_mode
             if payload.channel == "wechat"

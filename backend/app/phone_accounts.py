@@ -110,6 +110,7 @@ def persist_otp_account(
     identity: ExternalIdentity,
     flow: str,
     password: str | None,
+    invite_code: object = None,
 ) -> PhoneAccount:
     existing_id = session.scalar(
         select(UserRecord.id).where(
@@ -139,6 +140,10 @@ def persist_otp_account(
     if not user.display_name:
         user.display_name = "用户" + (user.phone_number or "")[-4:]
     ensure_personal_workspace(session, user)
+    if flow == "register" and existing_id is None:
+        from .growth_rewards import bind_signup_invitation
+
+        bind_signup_invitation(session, user, invite_code)
     session.commit()
     return account_snapshot(user)
 
@@ -174,6 +179,7 @@ async def finish_otp_login(result: Any, body: dict[str, Any], request: Request) 
                 identity,
                 flow,
                 body.get("password"),
+                body.get("inviteCode"),
             )
 
     account = await run_in_threadpool(persist)

@@ -1,0 +1,24 @@
+{
+  "environment": "isolated local API and real frontend",
+  "api_mocked": false,
+  "synthetic_account": true,
+  "desktop": {
+    "checkin_balance_before": 0,
+    "checkin_balance_after": 10,
+    "claimed_button_disabled": true,
+    "invitation_copy_confirmed": true,
+    "development_status_label_removed": true
+  },
+  "mobile": {
+    "viewport_width": 390,
+    "document_width": 382,
+    "primary_button_height": 44.1,
+    "horizontal_overflow": false,
+    "account_menu_inside_viewport": true,
+    "account_menu_panel_left": 30.4,
+    "account_menu_panel_right": 370.4
+  },
+  "temporary_viewport_restored": true,
+  "real_sms_sent": false,
+  "real_payment_made": false
+}

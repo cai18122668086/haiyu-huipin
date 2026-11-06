@@ -9,7 +9,7 @@ import { build } from "esbuild";
 test("phone authentication closes the dialog only on success, including storage failure", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "huipin-login-completion-"));
   const output = path.join(directory, "auth.mjs");
-  const state = { status: "OK", failCleanup: false, cleared: 0, events: [], bodies: [] };
+  const state = { status: "OK", failCleanup: false, cleared: 0, inviteCleared: 0, events: [], bodies: [] };
   globalThis.__phoneLoginTest = state;
   try {
     await build({
@@ -26,6 +26,7 @@ test("phone authentication closes the dialog only on success, including storage 
           if (path.endsWith("/client")) return { contents: "export function initializeAuthClient() {}" };
           if (path.endsWith("/local-dev")) return { contents: "export const isLocalDevelopmentAuthEnabled=()=>false; export const LOCAL_DEV_AUTH_USER_ID='test';" };
           if (path.endsWith("/session-events")) return { contents: "export function emitAuthSessionChanged(value) { globalThis.__phoneLoginTest.events.push(value); }" };
+          if (path.endsWith("/invitation")) return { contents: "export const readInvitationCode=()=> 'HY123456ABCD'; export function clearInvitationCode(){globalThis.__phoneLoginTest.inviteCleared++;}" };
           return { contents: "export default {};" };
         });
       } }],
@@ -35,12 +36,15 @@ test("phone authentication closes the dialog only on success, including storage 
     assert.deepEqual(state.events, [true]);
     assert.equal(state.cleared, 1);
     assert.equal(state.bodies[0].acceptedAgreements, true);
+    assert.equal(state.bodies[0].inviteCode, undefined);
     assert.equal(state.bodies[0].processingConsent, undefined, "the client must not invent processing consent");
     state.status = "RESTART_FLOW_ERROR";
     await auth.signInWithPhoneCode("synthetic", "register", "SyntheticPassword123");
     assert.equal(state.bodies.at(-1).processingConsent, undefined);
     assert.equal(state.bodies.at(-1).acceptedAgreements, true);
     assert.equal(state.bodies.at(-1).password, "SyntheticPassword123");
+    assert.equal(state.bodies.at(-1).inviteCode, "HY123456ABCD");
+    assert.equal(state.inviteCleared, 0, "an unsuccessful registration retains attribution");
     await auth.sendPhoneLoginCode("13800000000", false, "register");
     assert.equal(state.bodies.at(-1).flow, "register");
     assert.equal(state.bodies.at(-1).processingConsent, undefined);
@@ -64,6 +68,11 @@ test("phone authentication closes the dialog only on success, including storage 
       await assert.rejects(auth.signInWithPhonePassword("13800000000", "synthetic"), /invalid/);
       assert.deepEqual(state.events, [true, true, true]);
     } finally { globalThis.fetch = originalFetch; }
+    await auth.signInWithPhoneCode("synthetic", "register", "SyntheticPassword123");
+    assert.equal(state.inviteCleared, 1);
+    await auth.signInWithPhoneCode("synthetic", "reset", "SyntheticPassword123");
+    assert.equal(state.bodies.at(-1).inviteCode, undefined);
+    assert.equal(state.inviteCleared, 1);
   } finally {
     delete globalThis.__phoneLoginTest;
     await rm(directory, {recursive:true,force:true});

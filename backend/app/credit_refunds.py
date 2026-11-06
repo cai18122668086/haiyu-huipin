@@ -395,6 +395,9 @@ def settle(session: Session, refund_id: str, result: dict[str, Any]) -> None:
             else "partially_refunded"
         )
         _entry(session, account, "refund", 0, "渠道退款已成功 · " + order.package_name)
+        from .growth_rewards import reverse_refund_rewards
+
+        reverse_refund_rewards(session, order, refund)
     else:
         _restore(session, account, refund)
     refund.status = status
