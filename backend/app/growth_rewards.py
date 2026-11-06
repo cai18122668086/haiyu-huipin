@@ -113,8 +113,10 @@ def bind_signup_invitation(session: Session, user: UserRecord, code: object) -> 
         return
 
 
-def referral_terms(session: Session, buyer_user_id: str) -> dict:
-    if not active(session, REFERRAL):
+def referral_terms(session: Session, buyer_user_id: str, workspace_id: str) -> dict:
+    if workspace_id != personal_workspace_id(buyer_user_id) or not active(
+        session, REFERRAL
+    ):
         return {}
     relationship = session.get(InvitationRecord, buyer_user_id)
     if not relationship or relationship.inviter_user_id == buyer_user_id:
@@ -202,7 +204,13 @@ def award_paid_grant(session: Session, source: CreditGrantRecord) -> None:
     purchase_id = source.source_key.split(":", 1)[0]
     order = session.get(CreditPurchaseRecord, purchase_id, populate_existing=True)
     terms = (order.product_snapshot or {}).get("referral_reward") if order else None
-    if not order or not terms or order.status not in {"paid", "partially_refunded"}:
+    if (
+        not order
+        or not terms
+        or order.status not in {"paid", "partially_refunded"}
+        or source.workspace_id != order.workspace_id
+        or order.workspace_id != personal_workspace_id(order.created_by_user_id)
+    ):
         return
     relationship = session.get(InvitationRecord, order.created_by_user_id)
     inviter = terms.get("inviter_user_id")

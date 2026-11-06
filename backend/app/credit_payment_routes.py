@@ -282,7 +282,9 @@ def create_purchase(
         credits=product.credits,
         product_snapshot={
             **product.snapshot(),
-            **referral_terms(session, workspace.principal.user_id),
+            **referral_terms(
+                session, workspace.principal.user_id, workspace.workspace_id
+            ),
             "payment_identity": identity,
             "confirmation_mode": settings.credit_wechat_confirmation_mode
             if payload.channel == "wechat"

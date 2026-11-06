@@ -488,3 +488,28 @@ def test_full_goodwill_refund_reverses_reward_even_if_buyer_spent_credits(
     finish(rewards_client, reserve(rewards_client, BUYER, 300), 300)
     refund_order(rewards_client, order, policy="goodwill")
     assert wallet(rewards_client, INVITER) == 0
+
+
+def test_payment_for_another_workspace_does_not_create_personal_referral_reward(
+    rewards_client,
+):
+    response = rewards_client.post(
+        "/api/v1/workspaces/ws_test/credits/purchases",
+        headers={"Idempotency-Key": uuid4().hex},
+        json={"package_id": "pack_small"},
+    )
+    assert response.status_code == 201, response.text
+    order = response.json()
+    assert (
+        rewards_client.post(
+            NOTIFY,
+            data=paid_fields(order, money="29.90", trade="workspace_" + order["id"]),
+        ).text
+        == "success"
+    )
+    assert wallet(rewards_client, INVITER) == 0
+    with rewards_client.app.state.session_factory() as session:
+        assert (
+            "referral_reward"
+            not in session.get(CreditPurchaseRecord, order["id"]).product_snapshot
+        )

@@ -61,7 +61,7 @@ export function RewardsCenter({ workspaceId }: { workspaceId: string }) {
     </div>
     <div className={styles.footnote}>
       <span>赠送积分 {data.validity_days} 天有效</span>
-      <details><summary>奖励规则</summary><div>签到按北京时间每天领取一次。邀请仅限直接邀请的新注册好友；会员按每期实际到账积分返赠，充值退款会同步调整对应奖励。</div></details>
+      <details><summary>奖励规则</summary><div>签到按北京时间每天领取一次。邀请仅限直接邀请的新注册好友为自己的个人账户充值；会员按每期实际到账积分返赠，充值退款会同步调整对应奖励。</div></details>
     </div>
     {message && <p className={styles.feedback} role="status">{message}</p>}
     {data.pending_adjustment_credits > 0 && <p className={styles.adjustment} title="充值退款对应的已用邀请奖励，将由后续赠送积分抵扣。">待调整 {number(data.pending_adjustment_credits)} 积分 · <Link href="/account#credits">查看明细</Link></p>}
