@@ -6,6 +6,7 @@ import { initializeAuthClient } from "@/lib/auth/client";
 import { isLocalDevelopmentAuthEnabled, LOCAL_DEV_AUTH_USER_ID } from "@/lib/auth/local-dev";
 import type { AuthTraceContext } from "@/lib/auth/diagnostics";
 import { emitAuthSessionChanged } from "@/lib/auth/session-events";
+import { clearInvitationCode, readInvitationCode } from "@/lib/auth/invitation";
 
 export type AuthFieldError = { id: string; error: string };
 const PASSWORD_ERROR_MESSAGES: Record<string, string> = {
@@ -45,13 +46,14 @@ export async function signInWithPhoneCode(code: string, flow: "login" | "registe
     userInputCode: code,
     options: { preAPIHook: async ({ url, requestInit }) => ({
       url,
-      requestInit: { ...requestInit, body: JSON.stringify({ ...JSON.parse(String(requestInit.body)), acceptedAgreements: true, flow, password }) },
+      requestInit: { ...requestInit, body: JSON.stringify({ ...JSON.parse(String(requestInit.body)), acceptedAgreements: true, flow, password, ...(flow === "register" ? { inviteCode: readInvitationCode() } : {}) }) },
     }) },
   });
   if (result.status === "OK") {
     // Authentication has already succeeded; unavailable browser storage must
     // not turn that success into an error or leave the dialog open.
     try { await Passwordless.clearLoginAttemptInfo(); } catch { /* Best-effort cleanup. */ }
+    if (flow === "register") clearInvitationCode();
     emitAuthSessionChanged(true);
   }
   return result;

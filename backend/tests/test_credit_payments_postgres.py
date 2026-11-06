@@ -27,7 +27,10 @@ from app.models import (
     CreditPurchaseRecord,
     CreditRefundRecord,
     CreditReservationRecord,
+    DailyCheckinRecord,
     JobRecord,
+    ReferralReversalRecord,
+    ReferralRewardRecord,
     UserRecord,
     WorkspaceCreditAccountRecord,
     WorkspaceRecord,
@@ -408,6 +411,11 @@ def test_postgres_credit_migrations_preserve_legacy_reservation(postgres_credits
         )
         session.commit()
     with engine.begin() as connection:
+        # This disposable schema is rewound to its historical membership state.
+        # Remove later dependent tables before replaying the old credit schema.
+        ReferralReversalRecord.__table__.drop(connection)
+        ReferralRewardRecord.__table__.drop(connection)
+        DailyCheckinRecord.__table__.drop(connection)
         CreditGrantRecord.__table__.drop(connection)
         CreditMembershipRecord.__table__.drop(connection)
         connection.execute(

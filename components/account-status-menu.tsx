@@ -2,11 +2,13 @@
 
 import Link from "@/components/seo-link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ChevronDown, Coins, Crown, Images, RefreshCw, UserRound } from "lucide-react";
+import { ArrowUpRight, CalendarCheck2, Check, ChevronDown, Coins, Crown, Gift, Images, LoaderCircle, RefreshCw, UserRound } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { authUserLabel, useCurrentAuthUser } from "@/features/auth/api/me";
 import { useCreditAccount } from "@/features/billing/api/credits";
 import { useMembership } from "@/features/billing/api/account-center";
+import { useCheckin, useRewards } from "@/features/billing/api/rewards";
+import { errorMessage } from "@/lib/api/request";
 import styles from "./account-status-menu.module.css";
 
 const day = (value?: string | null) => value ? new Date(value).toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }) : "";
@@ -17,6 +19,8 @@ export function AccountStatusMenu() {
   const user = useCurrentAuthUser();
   const wallet = useCreditAccount(workspace?.id);
   const member = useMembership(workspace?.id);
+  const rewards = useRewards(workspace?.id);
+  const checkin = useCheckin(workspace?.id);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -56,6 +60,11 @@ export function AccountStatusMenu() {
           <Link href="/account#membership">{plan ? "管理会员" : "开通会员"}<ArrowUpRight size={14} /></Link>
           <Link href="/account#credits">积分明细</Link>
         </div>
+        {(rewards.data?.checkin_enabled || rewards.data?.referral_enabled) && <div className={styles.rewardActions}>
+          {rewards.data.checkin_enabled && <button type="button" disabled={rewards.data.checked_in || checkin.isPending} onClick={() => checkin.mutate()}>{checkin.isPending ? <LoaderCircle className="spin" size={15} /> : rewards.data.checked_in ? <Check size={15} /> : <CalendarCheck2 size={15} />}{rewards.data.checked_in ? "今日已签到" : `签到 +${rewards.data.daily_credits}`}</button>}
+          {rewards.data.referral_enabled && <Link href="/account#rewards" onClick={() => setOpen(false)}><Gift size={15} />邀请返 {rewards.data.reward_percent}% 积分</Link>}
+        </div>}
+        {checkin.isError && <p className={styles.rewardError} role="alert">{errorMessage(checkin.error)}</p>}
         {(!!member.data?.monthly_credits || !!member.data?.expiring_credits) && <details className={styles.entitlements}>
           <summary>额度与有效期<ChevronDown size={13} /></summary>
           <dl>

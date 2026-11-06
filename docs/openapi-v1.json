@@ -1205,6 +1205,33 @@
         "title": "CapabilityStatus",
         "type": "object"
       },
+      "CheckinResult": {
+        "properties": {
+          "adjusted_credits": {
+            "title": "Adjusted Credits",
+            "type": "integer"
+          },
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "credited_credits": {
+            "title": "Credited Credits",
+            "type": "integer"
+          },
+          "rewards": {
+            "$ref": "#/components/schemas/RewardsState"
+          }
+        },
+        "required": [
+          "created",
+          "credited_credits",
+          "adjusted_credits",
+          "rewards"
+        ],
+        "title": "CheckinResult",
+        "type": "object"
+      },
       "ConfirmRequest": {
         "properties": {
           "instructions": {
@@ -6960,6 +6987,126 @@
         ],
         "title": "RetryScope",
         "type": "string"
+      },
+      "RewardEvent": {
+        "properties": {
+          "adjusted": {
+            "title": "Adjusted",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "checkin",
+              "referral"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "credits",
+          "created_at",
+          "adjusted"
+        ],
+        "title": "RewardEvent",
+        "type": "object"
+      },
+      "RewardsState": {
+        "properties": {
+          "checked_in": {
+            "title": "Checked In",
+            "type": "boolean"
+          },
+          "checkin_enabled": {
+            "title": "Checkin Enabled",
+            "type": "boolean"
+          },
+          "daily_credits": {
+            "title": "Daily Credits",
+            "type": "integer"
+          },
+          "day": {
+            "title": "Day",
+            "type": "string"
+          },
+          "earned_credits": {
+            "title": "Earned Credits",
+            "type": "integer"
+          },
+          "invite_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invite Url"
+          },
+          "invited_count": {
+            "title": "Invited Count",
+            "type": "integer"
+          },
+          "next_day_at": {
+            "title": "Next Day At",
+            "type": "string"
+          },
+          "pending_adjustment_credits": {
+            "title": "Pending Adjustment Credits",
+            "type": "integer"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/RewardEvent"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "referral_enabled": {
+            "title": "Referral Enabled",
+            "type": "boolean"
+          },
+          "reward_percent": {
+            "title": "Reward Percent",
+            "type": "integer"
+          },
+          "validity_days": {
+            "title": "Validity Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checkin_enabled",
+          "referral_enabled",
+          "checked_in",
+          "daily_credits",
+          "reward_percent",
+          "validity_days",
+          "day",
+          "next_day_at",
+          "invite_url",
+          "invited_count",
+          "earned_credits",
+          "pending_adjustment_credits",
+          "recent"
+        ],
+        "title": "RewardsState",
+        "type": "object"
       },
       "RuntimeCapabilities": {
         "properties": {
@@ -18788,6 +18935,100 @@
         "summary": "Revise Analysis",
         "tags": [
           "one-click-replica"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/rewards": {
+      "get": {
+        "operationId": "rewards_state_api_v1_workspaces__workspace_id__rewards_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RewardsState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Rewards State",
+        "tags": [
+          "account rewards"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/rewards/check-in": {
+      "post": {
+        "operationId": "claim_checkin_api_v1_workspaces__workspace_id__rewards_check_in_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Claim Checkin",
+        "tags": [
+          "account rewards"
         ]
       }
     },

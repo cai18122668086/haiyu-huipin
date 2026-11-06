@@ -1,0 +1,45 @@
+.root { min-width:0; }
+.cards { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px; }
+.card { display:flex;flex-direction:column;min-width:0;padding:24px;border:1px solid #e6e0ed;border-radius:16px;background:#fff;box-shadow:0 4px 20px #39254f04; }
+.card header { display:flex;align-items:center;gap:11px; }
+.card h2 { margin:0;color:#302538;font-size:18px;font-weight:650; }
+.icon { display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#f1ebf9;color:#7952a6; }
+.amount { display:flex;align-items:baseline;gap:10px;margin-top:22px;color:#39254f; }
+.amount strong { font-size:44px;line-height:1.1;letter-spacing:-1.8px;font-weight:650;font-variant-numeric:tabular-nums; }
+.amount strong small { font-size:25px;margin-left:3px;letter-spacing:-.5px; }
+.amount>span { font-size:14px;color:#786c82; }
+.card .description { margin:10px 0 17px;color:#786b83;font-size:14px;line-height:1.6; }
+.statistics { display:flex;flex-wrap:wrap;gap:7px 20px;margin:0 0 20px;color:#786b83;font-size:13px; }
+.statistics b { color:#584269;font-weight:650; }
+.invitation { background:linear-gradient(135deg,#fcfafe,#f6f1fb); }
+.invitation .icon { background:#eae0f5; }
+.root .action { display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin-top:auto;padding:10px 16px;border:1px solid #3b294d;border-radius:9px;background:#3b294d;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:background .18s,transform .18s,box-shadow .18s; }
+.root .action:hover:not(:disabled) { background:#503568;box-shadow:0 4px 12px #39254f1a;transform:translateY(-1px); }
+.root .action:focus-visible { outline:3px solid #b9a0da;outline-offset:3px; }
+.root .action:disabled { cursor:default;opacity:.7; }
+.root .action[data-claimed] { background:#f0edf4;color:#8b7c97;border-color:#ece6f1;opacity:1; }
+.footnote { display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-top:14px;color:#786b83;font-size:13px;line-height:1.7; }
+.footnote details { position:relative;text-align:right; }
+.footnote summary { cursor:pointer;list-style:none;color:#82718f; }
+.footnote summary::-webkit-details-marker { display:none; }
+.footnote details div { position:absolute;z-index:2;right:0;top:30px;width:min(340px,75vw);padding:16px 18px;border:1px solid #e6dfef;border-radius:10px;background:#fff;box-shadow:0 10px 30px #39254f12;text-align:left;color:#786a82; }
+.root .feedback { margin:15px 0;color:#755095;font-size:14px; }
+.adjustment { color:#81718e;font-size:13px; }
+.adjustment a { color:inherit;text-decoration:underline;text-underline-offset:3px; }
+.copyFallback { display:grid;gap:7px;margin-top:12px;color:#81718e;font-size:13px; }
+.copyFallback input { width:100%;min-width:0;padding:10px;border:1px solid #ddd3e9;border-radius:6px;background:#fff;color:#5a426d;font:inherit; }
+.history { margin-top:32px;border-top:1px solid #e9e4ef; }
+.history>header { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:23px 0 12px; }
+.history h2 { display:flex;align-items:center;gap:8px;margin:0;font-size:16px;font-weight:600;color:#4d3b5b; }
+.history header a { display:flex;align-items:center;gap:4px;color:#8b7b96;font-size:13px;text-decoration:none; }
+.history ul { list-style:none;margin:0;padding:0; }
+.history li { display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #eeebf2; }
+.eventIcon { display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border-radius:10px;background:#f3eff8;color:#9a83ae; }
+.history li div { display:grid;gap:5px;min-width:0; }
+.history li strong { font-size:14px;color:#5f4e6d;font-weight:550; }
+.history li div small { color:#7b6d86;font-size:13px; }
+.history li>b { margin-left:auto;color:#76518f;font-size:17px;white-space:nowrap;font-weight:600; }
+.history li>b small { margin-left:5px;color:#a293ac;font-size:12px;font-weight:400; }
+.skeleton { height:270px;border-radius:16px;background:#f1edf6; }
+@media(max-width:700px){.cards{grid-template-columns:1fr;gap:16px}.card{padding:20px}.amount{margin-top:18px}.amount strong{font-size:40px}.card .description{margin-bottom:15px}.statistics{margin-bottom:18px}.root .action{margin-top:5px}.history{margin-top:26px}}
+@media(prefers-reduced-motion:reduce){.root .action{transition:none}.root .action:hover:not(:disabled){transform:none}}

@@ -3,6 +3,8 @@ import { SupportCases } from "@/components/support-cases";
 import { AccountStatusMenu } from "@/components/account-status-menu";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
+import { RewardsCenter } from "./rewards-center";
+import { useRewards } from "@/features/billing/api/rewards";
 
 import { QRCodeSVG } from "qrcode.react";
 
@@ -28,6 +30,7 @@ import {
   Crown,
   FileText,
   FolderOpen,
+  Gift,
   Image as ImageIcon,
   Layers3,
   LayoutDashboard,
@@ -79,6 +82,7 @@ import styles from "./account-center.module.css";
 type Page =
   | "overview"
   | "membership"
+  | "rewards"
   | "credits"
   | "orders"
   | "creations"
@@ -88,6 +92,7 @@ type Page =
 const pages: { id: Page; label: string; icon: LucideIcon; group?: string }[] = [
   { id: "overview", label: "账户概览", icon: LayoutDashboard },
   { id: "membership", label: "会员与充值", icon: Crown },
+  { id: "rewards", label: "我的福利", icon: Gift },
   { id: "credits", label: "积分明细", icon: Coins },
   { id: "orders", label: "订单与发票", icon: FileText },
   { id: "creations", label: "创作记录", icon: Layers3, group: "我的创作" },
@@ -96,6 +101,7 @@ const pages: { id: Page; label: string; icon: LucideIcon; group?: string }[] = [
   { id: "settings", label: "账户设置", icon: Settings2, group: "其他" },
 ];
 const subtitles: Record<Page, string> = {
+  rewards: "签到与邀请奖励，都在这里。",
   overview: "管理你的创作、积分与会员，一切都在这里。",
   membership: "选择适合你的创作节奏，让每一次上新更从容。",
   credits: "每一笔消耗与到账，都清楚可查。",
@@ -304,6 +310,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
   const [orderId, setOrderId] = useState<string | null>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const user = useCurrentAuthUser();
+  const rewards = useRewards(workspaceId);
   const name = authUserLabel(user.data);
   useEffect(() => {
     const returned = new URLSearchParams(window.location.search).get(
@@ -350,13 +357,6 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
             </span>
           </Link>
           <div className="topbar-right"><Link className="account-button" href="/jobs">任务中心</Link><AccountStatusMenu />
-            {process.env.NODE_ENV !== "production" && (
-              <span className="local-badge">
-                <span />
-                本地联调 · 测试数据
-              </span>
-            )}
-
             <button
               ref={menuRef}
               className="icon-button mobile-menu"
@@ -382,7 +382,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
             个人中心<span>MY SPACE</span>
           </div>
           <nav aria-label="个人中心导航">
-            {pages.map((item) => (
+            {pages.filter(item => item.id !== "rewards" || rewards.data?.checkin_enabled || rewards.data?.referral_enabled).map((item) => (
               <div key={item.id}>
                 {item.group && <div className="nav-group">{item.group}</div>}
                 <button
@@ -429,6 +429,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
               openOrder={setOrderId}
             />
           )}
+          {page === "rewards" && <RewardsCenter workspaceId={workspaceId} />}
           {page === "credits" && (
             <Ledger workspaceId={workspaceId} recharge={recharge} />
           )}
@@ -614,7 +615,7 @@ function Overview({
           <div className="wallet-row">
             <span>
               <span className="source-dot lime" />
-              充值与历史积分
+              充值与赠送积分
             </span>
             <strong>{member.data ? fmt(member.data.pack_credits) : "—"}</strong>
           </div>
@@ -1240,7 +1241,9 @@ function Ledger({
     [query, setQuery] = useState("");
   const rows = ledger.data?.pages.flatMap((page) => page.items) ?? [];
   const kind = (row: (typeof rows)[number]) =>
-    row.entry_type === "reserve"
+    ["referral_reversal", "reward_adjustment"].includes(row.entry_type)
+      ? "调整"
+      : row.entry_type === "reserve"
       ? "冻结"
       : row.entry_type === "release"
         ? "退回"
@@ -1306,7 +1309,7 @@ function Ledger({
       <section className="panel ledger-panel">
         <div className="table-toolbar">
           <div className="filter-tabs">
-            {["全部", "消耗", "获得", "冻结", "退回", "到期"].map((value) => (
+            {["全部", "消耗", "获得", "冻结", "退回", "到期", "调整"].map((value) => (
               <button
                 key={value}
                 className={filter === value ? "active" : ""}
@@ -1643,7 +1646,7 @@ const faqs = [
   ],
   [
     "月卡积分与充值积分有什么区别？",
-    "会员积分按月发放，在对应周期内使用；新购积分包自到账起 12 个月有效。年付一次支付，分 12 期逐月发放。优先使用即将到期的积分，历史订单按购买时的条款处理。",
+    "会员积分按月发放，在对应周期内使用；常规积分包自到账起 12 个月有效，新人体验包及签到、邀请赠送积分为 30 天。年付一次支付，分 12 期逐月发放。优先使用即将到期的积分，历史订单按购买时的条款处理。",
   ],
   [
     "生成失败会扣积分吗？",

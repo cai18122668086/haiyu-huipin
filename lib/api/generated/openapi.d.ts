@@ -2670,6 +2670,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/rewards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rewards State */
+        get: operations["rewards_state_api_v1_workspaces__workspace_id__rewards_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/rewards/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim Checkin */
+        post: operations["claim_checkin_api_v1_workspaces__workspace_id__rewards_check_in_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/support-cases": {
         parameters: {
             query?: never;
@@ -3145,6 +3179,16 @@ export interface components {
              * @description Stable machine-readable explanation when execution is mocked or the capability is unavailable.
              */
             reason_code: ("LOCAL_EDIT_PROVIDER_NOT_IMPLEMENTED" | "TASK_RUNNER_MOCK" | "REAL_PROVIDER_NOT_REGISTERED" | "EXTERNAL_AUTHENTICATION_NOT_IMPLEMENTED") | null;
+        };
+        /** CheckinResult */
+        CheckinResult: {
+            /** Adjusted Credits */
+            adjusted_credits: number;
+            /** Created */
+            created: boolean;
+            /** Credited Credits */
+            credited_credits: number;
+            rewards: components["schemas"]["RewardsState"];
         };
         /** ConfirmRequest */
         ConfirmRequest: {
@@ -5307,6 +5351,51 @@ export interface components {
          * @enum {string}
          */
         RetryScope: "full" | "failed" | "missing" | "selected";
+        /** RewardEvent */
+        RewardEvent: {
+            /** Adjusted */
+            adjusted: boolean;
+            /** Created At */
+            created_at: string;
+            /** Credits */
+            credits: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "checkin" | "referral";
+            /** Title */
+            title: string;
+        };
+        /** RewardsState */
+        RewardsState: {
+            /** Checked In */
+            checked_in: boolean;
+            /** Checkin Enabled */
+            checkin_enabled: boolean;
+            /** Daily Credits */
+            daily_credits: number;
+            /** Day */
+            day: string;
+            /** Earned Credits */
+            earned_credits: number;
+            /** Invite Url */
+            invite_url: string | null;
+            /** Invited Count */
+            invited_count: number;
+            /** Next Day At */
+            next_day_at: string;
+            /** Pending Adjustment Credits */
+            pending_adjustment_credits: number;
+            /** Recent */
+            recent: components["schemas"]["RewardEvent"][];
+            /** Referral Enabled */
+            referral_enabled: boolean;
+            /** Reward Percent */
+            reward_percent: number;
+            /** Validity Days */
+            validity_days: number;
+        };
         /** RuntimeCapabilities */
         RuntimeCapabilities: {
             /** @description Asset upload, listing, and private access URL workflow. */
@@ -11288,6 +11377,68 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rewards_state_api_v1_workspaces__workspace_id__rewards_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RewardsState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    claim_checkin_api_v1_workspaces__workspace_id__rewards_check_in_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckinResult"];
                 };
             };
             /** @description Validation Error */
