@@ -1,0 +1,8 @@
+.offer { display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px 26px;margin-bottom:24px;border:1px solid #e6dcf1;border-radius:12px;background:#f7f3fc;color:#34233f; }
+.offer span { font-size:12px;font-weight:650;color:#8b65a8; }
+.offer h3 { margin:5px 0;font-size:20px;font-weight:650; }
+.offer p { margin:0;color:#8a7d96;font-size:13px; }
+.action { display:flex;align-items:center;gap:24px;flex-shrink:0; }
+.action strong { font-size:28px;letter-spacing:-1px;font-weight:650; }
+.action button { background:#39254f;color:#fff; }
+@media(max-width:640px){.offer{padding:18px;gap:16px;align-items:stretch;flex-direction:column}.offer h3{font-size:18px}.action{justify-content:space-between}}

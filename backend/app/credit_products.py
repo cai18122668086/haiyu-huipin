@@ -13,6 +13,8 @@ class Product:
     plan_id: str | None = None
     months: int = 0
     validity_months: int = 0
+    validity_days: int = 0
+    first_purchase_only: bool = False
 
     def snapshot(self) -> dict:
         return asdict(self)
@@ -22,6 +24,15 @@ class Product:
 # pending orders. The account center uses the three approved prototype packs.
 LEGACY_PACK_ID = "credits_1500"
 PRODUCTS = {
+    "newcomer_160": Product(
+        "newcomer_160",
+        "新人首单体验包",
+        990,
+        160,
+        "pack",
+        validity_days=30,
+        first_purchase_only=True,
+    ),
     "credits_1500": Product(
         "credits_1500",
         "创作积分包 · 1,500 积分",

@@ -1674,6 +1674,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/promotions/replica-welcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Offer */
+        get: operations["public_offer_api_v1_public_promotions_replica_welcome_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runtime": {
         parameters: {
             query?: never;
@@ -2402,6 +2419,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/promotions/replica-welcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Welcome State */
+        get: operations["welcome_state_api_v1_workspaces__workspace_id__promotions_replica_welcome_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/replica/documents/{document_id}": {
         parameters: {
             query?: never;
@@ -2907,6 +2941,11 @@ export interface components {
             replication_method?: ("exact" | "style") | null;
             /** Request Id */
             request_id: string;
+            /**
+             * Use Welcome Trial
+             * @default false
+             */
+            use_welcome_trial: boolean;
         };
         /** AnnouncementAdminAccessResponse */
         AnnouncementAdminAccessResponse: {
@@ -3346,6 +3385,11 @@ export interface components {
             amount_fen: number;
             /** Credits */
             credits: number;
+            /**
+             * First Purchase Only
+             * @default false
+             */
+            first_purchase_only: boolean;
             /** Id */
             id: string;
             /** Kind */
@@ -3356,6 +3400,11 @@ export interface components {
             name: string;
             /** Plan Id */
             plan_id: string | null;
+            /**
+             * Validity Days
+             * @default 0
+             */
+            validity_days: number;
             /** Validity Months */
             validity_months: number;
         };
@@ -9087,6 +9136,28 @@ export interface operations {
             };
         };
     };
+    public_offer_api_v1_public_promotions_replica_welcome_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     get_runtime_status_api_v1_runtime_get: {
         parameters: {
             query?: never;
@@ -10695,6 +10766,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssetResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    welcome_state_api_v1_workspaces__workspace_id__promotions_replica_welcome_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

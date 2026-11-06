@@ -94,12 +94,16 @@ def bind_image_reservation(
         )
     billable = job_units(job.type, job.configuration or {}, len(ids))
     job.estimated_credits = unit * billable
-    return job.estimated_credits, {
+    pricing = {
         "version": PRICING_VERSION,
         "credits_per_image": unit,
         "item_ids": ids,
         "billable_units": billable,
     }
+    from .replica_welcome import free_pricing
+
+    free_pricing(session, job, pricing)
+    return job.estimated_credits, pricing
 
 
 def successful_image_credits(session: Session, job: JobRecord) -> int | None:

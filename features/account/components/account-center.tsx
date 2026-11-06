@@ -2,6 +2,7 @@
 import { SupportCases } from "@/components/support-cases";
 import { AccountStatusMenu } from "@/components/account-status-menu";
 import { useQueryClient } from "@tanstack/react-query";
+import newcomerStyles from "./newcomer-offer.module.css";
 
 import { QRCodeSVG } from "qrcode.react";
 
@@ -702,11 +703,12 @@ function Membership({
     credits = useCreditAccount(workspaceId),
     create = useCreatePurchase(workspaceId);
   const currentMembership = useMembership(workspaceId);
+  const newcomer = catalog.data?.packages.find((product) => product.first_purchase_only);
   const products =
     catalog.data?.packages.filter((pack) =>
-      tab === "pack"
+      !pack.first_purchase_only && (tab === "pack"
         ? pack.kind === "pack"
-        : pack.kind === "membership" && pack.months === (annual ? 12 : 1),
+        : pack.kind === "membership" && pack.months === (annual ? 12 : 1)),
     ) ?? [];
   function select(product: Product) {
     create.newIntent();
@@ -734,6 +736,10 @@ function Membership({
           </button>
         </div>
       </div>
+      {newcomer && <section className={newcomerStyles.offer} aria-label="新人首单体验包">
+        <div><span>新人首单</span><h3>继续创作，低价体验更多好图</h3><p>{newcomer.credits} 积分 · {newcomer.validity_days} 天有效</p></div>
+        <div className={newcomerStyles.action}><strong>¥{money(newcomer.amount_fen)}</strong><Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>立即体验<ArrowUpRight size={16} /></Button></div>
+      </section>}
       <div className="pricing-toolbar">
         <div className="purchase-tabs" role="tablist" aria-label="购买方式">
           <button

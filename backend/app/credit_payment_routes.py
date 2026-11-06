@@ -1,7 +1,7 @@
 """Official Haiyu payment channels and atomic membership fulfillment."""
 
 import re
-from datetime import UTC
+from datetime import UTC, timedelta
 from typing import Annotated, Any, Literal, cast
 from urllib.parse import parse_qsl
 
@@ -88,6 +88,8 @@ class CreditPackage(BaseModel):
     plan_id: str | None
     months: int
     validity_months: int
+    validity_days: int = 0
+    first_purchase_only: bool = False
 
 
 class CreditPackageCatalog(BaseModel):
@@ -153,8 +155,13 @@ def _response(order: CreditPurchaseRecord) -> CreditPurchaseResponse:
     response_model=CreditPackageCatalog,
 )
 def packages(
-    request: Request, workspace: WorkspaceDependency, include_memberships: bool = False
+    request: Request,
+    workspace: WorkspaceDependency,
+    session: SessionDependency,
+    include_memberships: bool = False,
 ) -> CreditPackageCatalog:
+    from .replica_welcome import newcomer_eligible
+
     settings: Settings = request.app.state.settings
     available = payments.channels(settings)
     enabled = credit_enforcement_enabled(workspace.workspace_id) and bool(available)
@@ -166,6 +173,12 @@ def packages(
             for product in PRODUCTS.values()
             if product.id != LEGACY_PACK_ID
             and (include_memberships or product.kind == "pack")
+            and (
+                not product.first_purchase_only
+                or newcomer_eligible(
+                    session, workspace.principal.user_id, workspace.workspace_id
+                )
+            )
         ],
     )
 
@@ -214,6 +227,47 @@ def create_purchase(
             )
             session.commit()
         return _response(existing)
+    if product.first_purchase_only:
+        from .models import UserRecord
+        from .replica_welcome import newcomer_eligible
+
+        session.get(UserRecord, workspace.principal.user_id, with_for_update=True)
+        if not newcomer_eligible(
+            session, workspace.principal.user_id, workspace.workspace_id
+        ):
+            raise ApiError(
+                403,
+                "NEWCOMER_NOT_ELIGIBLE",
+                "新人首单权益已使用或当前账号不符合领取条件。",
+            )
+        pending = session.scalar(
+            select(CreditPurchaseRecord).where(
+                CreditPurchaseRecord.created_by_user_id == workspace.principal.user_id,
+                CreditPurchaseRecord.package_id == product.id,
+                CreditPurchaseRecord.status == "pending",
+            )
+        )
+        if pending:
+            if (
+                pending.signing_key_id != payload.channel
+                or pending.workspace_id != workspace.workspace_id
+            ):
+                raise ApiError(
+                    409,
+                    "NEWCOMER_ORDER_PENDING",
+                    "已有待付款新人订单，请先继续原订单。",
+                    {"purchase_id": pending.id},
+                )
+            if not pending.checkout_url:
+                pending.checkout_url = payments.create_checkout(
+                    settings,
+                    payload.channel,
+                    pending.id,
+                    pending.package_name,
+                    pending.amount_fen,
+                )
+                session.commit()
+            return _response(pending)
     order_id = new_id("pay")[:32]
     order = CreditPurchaseRecord(
         id=order_id,
@@ -242,6 +296,15 @@ def create_purchase(
     except IntegrityError:
         session.rollback()
         existing = session.scalar(statement)
+        if existing is None and product.first_purchase_only:
+            existing = session.scalar(
+                select(CreditPurchaseRecord).where(
+                    CreditPurchaseRecord.created_by_user_id
+                    == workspace.principal.user_id,
+                    CreditPurchaseRecord.package_id == product.id,
+                    CreditPurchaseRecord.status == "pending",
+                )
+            )
         if existing is None:
             raise
         if (
@@ -544,7 +607,9 @@ def _settle_verified_purchase(session: Session, parameters: dict[str, str]) -> N
         # Orders created before this release retain their original non-expiring
         # pack contract, including pending orders paid after the upgrade.
         expiry = (
-            add_months(utc_now(), terms["validity_months"])
+            aware(utc_now()) + timedelta(days=int(terms["validity_days"]))
+            if terms and terms.get("validity_days")
+            else add_months(utc_now(), terms["validity_months"])
             if terms and terms.get("validity_months")
             else None
         )
