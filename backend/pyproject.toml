@@ -34,7 +34,7 @@ browser = [
 dev = [
   "mypy>=1.16,<2",
   "pytest>=8,<10",
-  "ruff>=0.12,<1",
+  "ruff==0.17.2",
 ]
 
 [tool.pytest.ini_options]

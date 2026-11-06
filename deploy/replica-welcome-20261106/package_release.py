@@ -55,18 +55,35 @@ def main():
         .splitlines()
     )
 
+    snapshots = {}
+
     def sources(paths, base=None, strip=""):
+        if base and base not in snapshots:
+            with tarfile.open(
+                fileobj=io.BytesIO(
+                    git(
+                        "archive",
+                        base,
+                        "backend/app",
+                        "app",
+                        "components",
+                        "features",
+                        "lib",
+                        "next.config.ts",
+                    )
+                )
+            ) as archive:
+                snapshots[base] = {
+                    entry.name: archive.extractfile(entry).read()
+                    for entry in archive.getmembers()
+                    if entry.isfile()
+                }
         result = {}
         for p in paths:
             if base:
-                if subprocess.run(
-                    ["git", "cat-file", "-e", base + ":" + p],
-                    cwd=ROOT,
-                    check=False,
-                    capture_output=True,
-                ).returncode:
+                if p not in snapshots[base]:
                     continue
-                data = git("show", base + ":" + p)
+                data = snapshots[base][p]
             else:
                 data = (ROOT / p).read_bytes()
             result[p.removeprefix(strip)] = digest(data)

@@ -48,6 +48,29 @@ COMPOSE = [
 PROTECTED = [*base.PROTECTED_FILES, base.RUNTIME / "Caddyfile.prelaunch"]
 
 
+def verify_frontend(container, expected):
+    # Keep UTF-8 BOM bytes, matching both the package and inherited build probe.
+    # Only CRLF is normalized; no source content is silently discarded.
+    script = r"""const fs=require('fs'),crypto=require('crypto');
+let input='';process.stdin.on('data',d=>input+=d);process.stdin.on('end',()=>{
+ const expected=JSON.parse(input);
+ for(const [name,hash] of Object.entries(expected)){
+  const value=fs.readFileSync('/app/'+name).toString('utf8').replace(/\r\n/g,'\n');
+  if(crypto.createHash('sha256').update(value).digest('hex')!==hash)throw new Error('Source mismatch: '+name);
+ }
+ console.log(JSON.stringify({matched_files:Object.keys(expected).length}));
+});"""
+    return json.loads(
+        subprocess.check_output(
+            ["docker", "exec", "-i", container, "node", "-e", script],
+            input=json.dumps(expected).encode(),
+        )
+    )
+
+
+seo_check.verify_sources = verify_frontend
+
+
 def saved():
     return json.loads((ROOT / "baseline.private.json").read_text())
 
