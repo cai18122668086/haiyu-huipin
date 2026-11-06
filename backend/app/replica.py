@@ -1890,7 +1890,7 @@ class FreeRestartRequest(ImageRetryRequest):
 
 
 @router.post("/sessions/{document_id}/jobs/{job_id}/restart-free", status_code=202)
-async def restart_free_trial(
+def restart_free_trial(
     document_id: str,
     job_id: str,
     payload: FreeRestartRequest,
@@ -1905,11 +1905,14 @@ async def restart_free_trial(
     from .schemas_v1 import RetryRequest
     from .services import get_workspace_job
 
+    # A sync endpoint keeps blocking PostgreSQL row-lock waits off the event loop.
     # Match the job/document lock order in the shared retry constructor.
     job = get_workspace_job(session, workspace.workspace_id, job_id, for_update=True)
     row = _get(session, workspace.workspace_id, document_id, "session")
     if any(v["from"] == job_id for v in row.payload.get("retry_events", [])):
-        return _wire(row)
+        result = _wire(row)
+        session.commit()
+        return result
     if row.created_by != workspace.principal.user_id or not available(
         session, row, job
     ):
@@ -1938,14 +1941,17 @@ async def restart_free_trial(
         )
     )
     try:
-        await retry_job(
-            job_id=job_id,
-            payload=RetryRequest(scope=RetryScope.FAILED),
-            request=request,
-            background_tasks=background_tasks,
-            workspace=workspace,
-            session=session,
-            idempotency_header="replica-free-restart-" + _hash([document_id, job_id]),
+        asyncio.run(
+            retry_job(
+                job_id=job_id,
+                payload=RetryRequest(scope=RetryScope.FAILED),
+                request=request,
+                background_tasks=background_tasks,
+                workspace=workspace,
+                session=session,
+                idempotency_header="replica-free-restart-"
+                + _hash([document_id, job_id]),
+            )
         )
     finally:
         del request.state.free_replica_restart_job_id
