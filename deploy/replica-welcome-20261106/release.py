@@ -19,6 +19,14 @@ from test_candidate import run as test_candidate
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST = json.loads((ROOT / "release-manifest.json").read_text())
+base.SOURCE_PROBE = """import hashlib,json
+from pathlib import Path
+files = list(Path('/app/app').rglob('*.py'))
+files += [Path('/app') / name for name in ASSETS]
+print(json.dumps({str(p.relative_to('/app')): hashlib.sha256(p.read_bytes().replace(bytes([13,10]),bytes([10]))).hexdigest() for p in files}))
+""".replace(
+    "ASSETS", repr([p for p in MANIFEST["backend_sources"] if not p.endswith(".py")])
+)
 base.ROOT = ROOT
 base.BASE_BACKEND = MANIFEST["base_backend"]
 base.BASE_FRONTEND = MANIFEST["base_frontend"]
