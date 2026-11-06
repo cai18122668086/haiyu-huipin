@@ -1,4 +1,4 @@
-"""Package the rewards feature over the verified welcome-release images."""
+"""Package the growth center over the verified check-in/referral images."""
 
 import hashlib
 import io
@@ -46,7 +46,7 @@ def main():
     ]
     assert backend and frontend
     assert [p for p in backend if p.startswith("backend/migrations/")] == [
-        "backend/migrations/versions/20261106_0039_growth_rewards.py"
+        "backend/migrations/versions/20261106_0040_growth_center.py"
     ]
     be = git("ls-files", "backend/app").decode().splitlines()
     fe = (
