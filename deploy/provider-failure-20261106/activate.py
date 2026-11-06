@@ -98,9 +98,9 @@ def run(r):
             raise RuntimeError("Candidate services not healthy")
         for s, previous in before.items():
             current = r.inspect("huipin-prelaunch-" + s + "-1")
-            assert environment_values(
-                current["Config"]["Env"]
-            ) == environment_values(previous["Config"]["Env"])
+            assert environment_values(current["Config"]["Env"]) == environment_values(
+                previous["Config"]["Env"]
+            )
             for key in ["Cmd", "Entrypoint", "WorkingDir", "User"]:
                 assert current["Config"].get(key) == previous["Config"].get(key)
             for key in [
@@ -109,9 +109,13 @@ def run(r):
                 "PidsLimit",
                 "Ulimits",
                 "PortBindings",
-                "Binds",
             ]:
-                assert current["HostConfig"].get(key) == previous["HostConfig"].get(key)
+                assert current["HostConfig"].get(key) == previous["HostConfig"].get(
+                    key
+                ), (s, key)
+            assert sorted(current["HostConfig"].get("Binds") or []) == sorted(
+                previous["HostConfig"].get("Binds") or []
+            ), (s, "Binds")
             if s != "frontend":
                 assert (
                     json.loads(
