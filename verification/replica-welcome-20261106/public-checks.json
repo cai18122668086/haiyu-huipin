@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "body": {
+    "enabled": true
+  },
+  "cache_control": "no-store",
+  "existing_authenticated_account_offer_hidden": true,
+  "registration_ui_verified_in_isolated_browser": true,
+  "real_sms_sent": false,
+  "real_payment_made": false
+}

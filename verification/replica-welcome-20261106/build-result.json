@@ -1,0 +1,18 @@
+{
+  "revision": "89a14d5a3e8c655a8b08ca971e002fc8b40c7892",
+  "backend_id": "sha256:2016980d70cf552623f7e085c84e9f7ca67544e9c6a776ec85aeaab6660e31c0",
+  "frontend_id": "sha256:4d2edbd96672fd4c24ca6c5e3e9316e23952421789b32eaa927828efc0e3a670",
+  "backend_sources_checked": 649,
+  "frontend_sources_checked": 277,
+  "baseline_differences": [
+    "app/auth.py",
+    "app/credit_billing.py",
+    "app/credit_payment_routes.py",
+    "app/credit_products.py",
+    "app/main.py",
+    "app/models.py",
+    "app/promotion_routes.py",
+    "app/replica.py",
+    "app/replica_welcome.py"
+  ]
+}

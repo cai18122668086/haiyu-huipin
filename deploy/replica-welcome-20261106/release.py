@@ -127,6 +127,11 @@ def build():
 def test():
     verify_baseline()
     test_candidate(sys.modules[__name__])
+    test_frontend()
+
+
+def test_frontend():
+    verify_baseline()
     item = saved()["containers"]["frontend"]
     name = "huipin-welcome-frontend-test-" + MANIFEST["revision"][:12]
     env = ROOT / "frontend-candidate.private.env"
@@ -145,6 +150,14 @@ def test():
                 network,
                 "--env-file",
                 str(env),
+                "--health-cmd",
+                "node -e \"fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\"",
+                "--health-interval",
+                "2s",
+                "--health-timeout",
+                "5s",
+                "--health-start-period",
+                "5s",
                 FRONTEND,
             ],
             check=True,
@@ -267,6 +280,7 @@ def activate():
         updated["services"][s]["image"] = BACKEND
     updated["services"]["frontend"]["image"] = FRONTEND
     migrated = False
+    campaign_started = False
     try:
         write_config(yaml.safe_dump(updated, sort_keys=False).encode())
         effective = json.loads(
@@ -347,6 +361,7 @@ def activate():
             ) as response:
                 assert response.status == 200
                 response.read()
+        campaign_started = True
         enabled = campaign(True)
         assert enabled["enabled"] is True
         with urlopen(
@@ -355,7 +370,7 @@ def activate():
         ) as response:
             assert json.load(response) == {"enabled": True}
     except BaseException:
-        if migrated:
+        if campaign_started:
             campaign(False)
         rollback = yaml.safe_load(original)
         if migrated:
@@ -399,7 +414,13 @@ def activate():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["capture", "build", "test", "activate"])
-    {"capture": capture, "build": build, "test": test, "activate": activate}[
-        parser.parse_args().action
-    ]()
+    parser.add_argument(
+        "action", choices=["capture", "build", "test", "test-frontend", "activate"]
+    )
+    {
+        "capture": capture,
+        "build": build,
+        "test": test,
+        "test-frontend": test_frontend,
+        "activate": activate,
+    }[parser.parse_args().action]()

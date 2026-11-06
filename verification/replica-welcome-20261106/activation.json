@@ -1,0 +1,25 @@
+{
+  "status": "activated",
+  "revision": "89a14d5a3e8c655a8b08ca971e002fc8b40c7892",
+  "backend_image": "huipin-welcome/backend:89a14d5a3e8c655a8b08ca971e002fc8b40c7892",
+  "frontend_image": "huipin-welcome/frontend:89a14d5a3e8c655a8b08ca971e002fc8b40c7892",
+  "migration": "20261106_0038",
+  "campaign": {
+    "enabled": true,
+    "starts_at": "2026-11-06 04:55:12.43175+00"
+  },
+  "backup_bytes": 4555359,
+  "backup_sha256": "f9b5e2eec491c4104a7282faf6304a8408dbe8007c9313a7387a59a4ae169be3",
+  "backup_catalog_verified": true,
+  "runtime_environment_preserved": true,
+  "other_services_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 277,
+  "public_pages": 20,
+  "public_tools": 16,
+  "private_pages": 4,
+  "crawl_files": 2,
+  "cache_checks": 4,
+  "illustration_assets": 7,
+  "paired_tools": 16
+}
