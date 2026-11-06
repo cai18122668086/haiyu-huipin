@@ -7,6 +7,7 @@ import time
 from urllib.request import urlopen
 
 import yaml
+from runtime_policy import environment_values
 
 
 def run(r):
@@ -97,9 +98,9 @@ def run(r):
             raise RuntimeError("Candidate services not healthy")
         for s, previous in before.items():
             current = r.inspect("huipin-prelaunch-" + s + "-1")
-            assert r.environment_values(
+            assert environment_values(
                 current["Config"]["Env"]
-            ) == r.environment_values(previous["Config"]["Env"])
+            ) == environment_values(previous["Config"]["Env"])
             for key in ["Cmd", "Entrypoint", "WorkingDir", "User"]:
                 assert current["Config"].get(key) == previous["Config"].get(key)
             for key in [
