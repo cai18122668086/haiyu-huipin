@@ -31,6 +31,7 @@ def run(r):
         n: r.inspect(n)["Id"]
         for n in names
         if n not in {"huipin-prelaunch-" + s + "-1" for s in r.base.SERVICES}
+        and not n.startswith(("async-acceptance-test-", "huipin-provider-failure-test-"))
     }
     original = r.base.OVERRIDE.read_bytes()
     config = json.loads(
