@@ -123,7 +123,7 @@ def normalize_product(
             ),
             None,
         )
-    if not isinstance(body, Mapping):
+    if not isinstance(body, Mapping) or not body:
         raise ApiError(
             502,
             "PRODUCT_DATA_INVALID",
@@ -135,7 +135,13 @@ def normalize_product(
     shared_spu = (
         platform == "dewu" and item_id.startswith("share:") and actual.isdigit()
     )
-    if not actual or (not shared_spu and actual.upper() != expected.upper()):
+    if not actual:
+        raise ApiError(
+            502,
+            "PRODUCT_DATA_INVALID",
+            "未获取到有效商品信息，请更换链接或上传参考图。",
+        )
+    if not shared_spu and actual.upper() != expected.upper():
         raise ApiError(
             502, "PRODUCT_ID_MISMATCH", "采集服务返回的商品与链接不一致，请稍后重试。"
         )
@@ -193,7 +199,12 @@ class ProductClient:
         key = f"{platform}/{action}"
         entry = self.state.get(key, {})
         if entry.get("status") == "succeeded":
-            return entry["results"]
+            if entry.get("results") not in (None, [], {}):
+                return entry["results"]
+            # Older receipts accepted {} as success. An explicit fetch may
+            # retry that known empty result, rather than caching it forever.
+            entry.update(status="failed")
+            self._save()
         if entry.get("status") == "submitting":
             raise ApiError(
                 503,
@@ -264,7 +275,7 @@ class ProductClient:
                 raise _provider_error(503)
             if "results" not in wire:
                 time.sleep(POLL_INTERVAL)
-        if wire["results"] is None or wire["results"] == []:
+        if wire["results"] in (None, [], {}):
             entry["status"] = "failed"
             self._save()
             raise ApiError(

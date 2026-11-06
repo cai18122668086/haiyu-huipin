@@ -179,6 +179,20 @@ def _wire(row: ReplicaDocumentRecord) -> dict:
         "created_at": row.created_at.isoformat(),
         "updated_at": row.updated_at.isoformat(),
     }
+    if (
+        row.kind == "product" and row.status == "failed"
+        and row.payload.get("error_code") == "PRODUCT_ID_MISMATCH"
+    ):
+        receipts = row.payload.get("_product_provider_state", {}).values()
+        if any(
+            entry.get("status") == "succeeded" and entry.get("results") == {}
+            for entry in receipts
+        ):
+            # Correct legacy empty-result wording without rewriting its receipt.
+            value["payload"].update(
+                error_code="PRODUCT_DATA_INVALID",
+                error="未获取到有效商品信息，请更换链接或上传参考图。",
+            )
     from .replica_analysis_recovery import (
         segmentation_diagnostics,
         segmentation_repair_available,
@@ -1891,7 +1905,10 @@ async def retry_image(
     jobs = list(values.get("job_ids", []))
     if job_id not in jobs:
         raise ApiError(404, "REPLICA_JOB_NOT_FOUND", "请从当前复刻结果选择图片。")
-    unknown_codes = {"PROVIDER_OUTCOME_UNKNOWN", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED"}
+    unknown_codes = {
+        "PROVIDER_OUTCOME_UNKNOWN", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
+        "IMAGE_ASYNC_TASK_FAILED",
+    }
     original = session.scalar(
         select(JobRecord).where(
             JobRecord.id == job_id, JobRecord.workspace_id == workspace.workspace_id

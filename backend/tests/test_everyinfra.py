@@ -149,6 +149,74 @@ def test_wrong_identity_and_unrelated_xianyu_results_are_rejected():
     assert result["numIid"] == "123456789"
 
 
+@pytest.mark.parametrize("body", [{}, {"title": "No product identity"}, None, []])
+def test_missing_product_data_is_not_reported_as_a_different_product(body):
+    with pytest.raises(ApiError) as error:
+        normalize_product(
+            body, "tmall", "123456789", "https://detail.tmall.com/item.htm?id=123456789"
+        )
+    assert error.value.code == "PRODUCT_DATA_INVALID"
+
+
+@pytest.mark.parametrize("empty", [{}, None, []])
+def test_async_empty_result_is_failed_and_only_explicit_retry_resubmits(
+    monkeypatch, empty
+):
+    calls, checkpoints = [], []
+    replies = iter(
+        [
+            (202, {"job_id": "job_empty", "status": "running"}),
+            (200, {"status": "succeeded", "results": empty}),
+            (200, {"results": product_for("tmall", "123456789")}),
+        ]
+    )
+
+    def request(token, path, body=None):
+        calls.append((path, body))
+        return next(replies)
+
+    monkeypatch.setattr("app.everyinfra._request", request)
+    state = {}
+    args = (
+        "test",
+        "tmall",
+        "123456789",
+        "https://detail.tmall.com/item.htm?id=123456789",
+    )
+    with pytest.raises(ApiError) as error:
+        fetch_product(*args, state=state, on_checkpoint=checkpoints.append)
+    assert error.value.code == "PRODUCT_DATA_INVALID"
+    assert len(calls) == 2
+    assert state["taobao/product_detail"]["status"] == "failed"
+    assert not any(
+        s["taobao/product_detail"].get("status") == "succeeded" for s in checkpoints
+    )
+    assert fetch_product(*args, state=state)["numIid"] == "123456789"
+    assert len(calls) == 3 and calls[-1][1] is not None
+
+
+def test_legacy_empty_success_receipt_does_not_trap_explicit_retry(monkeypatch):
+    calls = route_provider(
+        monkeypatch, [(200, {"results": product_for("tmall", "123456789")})]
+    )
+    state = {
+        "taobao/product_detail": {
+            "status": "succeeded",
+            "job_id": "job_old",
+            "results": {},
+        }
+    }
+    result = fetch_product(
+        "test",
+        "tmall",
+        "123456789",
+        "https://detail.tmall.com/item.htm?id=123456789",
+        state=state,
+    )
+    assert result["numIid"] == "123456789"
+    assert len(calls) == 1 and calls[0][2] is not None
+
+
 def test_async_finalizing_is_polled_without_a_second_paid_post(monkeypatch):
     calls, snapshots = [], []
     responses = iter(
@@ -337,3 +405,52 @@ def test_supported_source_list_is_workspace_authenticated(client):
     assert response.status_code == 200
     assert {row["code"] for row in response.json()} == set(SOURCES)
     assert "everyinfra_api_key" not in str(response.json())
+
+
+def test_legacy_empty_product_receipt_displays_the_correct_error_without_refetch(
+    client, monkeypatch
+):
+    def no_network(*args, **kwargs):
+        raise AssertionError(
+            "Reading an old failed product must not submit a paid fetch"
+        )
+
+    monkeypatch.setattr("app.everyinfra._request", no_network)
+    saved_payload = {
+        "platform": "tmall",
+        "item_id": "952741033150",
+        "error_code": "PRODUCT_ID_MISMATCH",
+        "error": "商品与链接不一致",
+        "_product_provider_state": {
+            "taobao/product_detail": {
+                "status": "succeeded",
+                "job_id": "job_old",
+                "results": {},
+            },
+        },
+    }
+    with client.app.state.session_factory() as session:
+        session.add(
+            ReplicaDocumentRecord(
+                id="rep_legacy_empty",
+                workspace_id="ws_test",
+                created_by="usr_test",
+                kind="product",
+                status="failed",
+                fingerprint="legacy-empty",
+                payload=saved_payload,
+            )
+        )
+        session.commit()
+    response = client.get(
+        "/api/v1/workspaces/ws_test/replica/documents/rep_legacy_empty"
+    )
+    assert response.status_code == 200
+    assert response.json()["payload"]["error_code"] == "PRODUCT_DATA_INVALID"
+    assert "未获取到有效商品信息" in response.json()["payload"]["error"]
+    assert "_product_provider_state" not in response.json()["payload"]
+    with client.app.state.session_factory() as session:
+        assert (
+            session.get(ReplicaDocumentRecord, "rep_legacy_empty").payload
+            == saved_payload
+        )

@@ -23,7 +23,7 @@ export function replicaRetryNeedsReconciliation(job: {
   error_code?: string | null;
   items?: { error_code?: string | null }[];
 } | undefined): boolean {
-  const unknown = new Set(["PROVIDER_OUTCOME_UNKNOWN", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED"]);
+  const unknown = new Set(["PROVIDER_OUTCOME_UNKNOWN", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED", "IMAGE_ASYNC_TASK_FAILED"]);
   return unknown.has(job?.error_code ?? "") || Boolean(job?.items?.some(item => unknown.has(item.error_code ?? "")));
 }
 

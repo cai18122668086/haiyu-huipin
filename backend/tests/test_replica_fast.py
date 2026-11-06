@@ -278,6 +278,60 @@ def test_unknown_image_outcome_blocks_resubmission(client):
     assert len(gateway.images) == 1
 
 
+def test_async_failure_keeps_original_error_and_blocks_another_purchase(client):
+    from app.xinghe_agent import TengliOpenAICompatibleGateway
+
+    from .test_haiyu_transport import PollingTransport, Transport
+
+    delegate = Transport([(202, {"id": "original-task", "status": "queued"})])
+    transport = PollingTransport(
+        delegate,
+        [
+            (
+                200,
+                {
+                    "status": "failed",
+                    "error": {
+                        "code": "supplier_request_failed",
+                        "message": (
+                            "No image; do not create a replacement automatically"
+                        ),
+                    },
+                },
+            )
+        ],
+    )
+    real = TengliOpenAICompatibleGateway(
+        api_key="test",
+        base_url="https://api.haiyushuke.com",
+        planner_model="test",
+        image_model="image-2.5-flare",
+        transport=transport,
+    )
+
+    class TerminalGateway(Gateway):
+        async def edit(self, request):
+            self.images.append(request)
+            return await real.edit(request)
+
+    gateway = TerminalGateway(proposal())
+    doc = create(client, gateway)
+    job_id = confirm(client, doc)
+    assert execute(client, gateway, job_id) == "failed"
+    job = client.get(f"/api/v1/workspaces/ws_test/jobs/{job_id}").json()
+    assert job["error_code"] == "IMAGE_ASYNC_TASK_FAILED"
+    assert "生成服务报告原任务异常" in job["error_message"]
+    assert job["error_details"]["provider_request_id"] == "original-task"
+    assert job["error_details"]["provider_error"]["code"] == "supplier_request_failed"
+    assert job["error_details"]["provider_attempts"][0]["request_id"] == "original-task"
+    retry = client.post(
+        ROUTE + f"/sessions/{doc['id']}/jobs/{job_id}/retry",
+        json={"request_id": str(uuid4())},
+    )
+    assert retry.status_code == 409
+    assert len(delegate.calls) == 1
+
+
 def test_real_router_selects_fast_provider_without_extra_planning(client):
     from app.execution import build_fake_coordinator
 

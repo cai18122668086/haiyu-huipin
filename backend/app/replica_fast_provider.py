@@ -21,6 +21,7 @@ from .models import (
 )
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
+from .provider_diagnostics import retained_metrics, safe_text
 from .replica_exact_contracts import canonical_hash
 from .replica_fast import (
     SKILLS,
@@ -383,6 +384,7 @@ class FastReplicaProvider:
                 "replica_speed": "fast",
                 "planning_rounds": 1,
                 "metrics": {
+                    **retained_metrics(result.raw_usage),
                     "api_latency_seconds": result.api_latency_seconds,
                     "skill_id": plan["skill_id"],
                     "skill_content_hash": plan["skill_content_hash"],
@@ -400,7 +402,13 @@ class FastReplicaProvider:
                     unit,
                     request,
                     {
-                        "state": "unknown" if unknown else "rejected",
+                        "state": "unknown"
+                        if unknown
+                        else (
+                            "failed"
+                            if result.error_code == "IMAGE_ASYNC_TASK_FAILED"
+                            else "rejected"
+                        ),
                         "provider_request_id": result.provider_request_id,
                         "usage": usage,
                         "actual_cost_micros": result.actual_cost_micros,
@@ -415,7 +423,7 @@ class FastReplicaProvider:
                     else result.error_code or "FAST_REPLICA_IMAGE_FAILED",
                     error_message="原生图结果尚未核实，请先核查原任务。"
                     if unknown
-                    else "本屏生成未完成，可重试。",
+                    else safe_text(result.error_message or "本屏生成未完成，可重试。"),
                     provider_request_id=result.provider_request_id,
                     raw_usage=usage,
                     usage_reported=bool(usage.get("reported")),
