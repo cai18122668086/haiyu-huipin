@@ -35,7 +35,7 @@ def newcomer_eligible(session: Session, user_id: str, workspace_id: str) -> bool
     if not campaign_enabled(session) or workspace_id != personal_workspace_id(user_id):
         return False
     user = session.get(UserRecord, user_id)
-    if not user or not ensure_grant(session, user):
+    if not user or user.status != "active" or not user.phone_number:
         return False
     return (
         session.scalar(

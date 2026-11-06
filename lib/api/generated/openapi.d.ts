@@ -1985,6 +1985,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Invitations */
+        get: operations["invitations_api_v1_workspaces__workspace_id__invitations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/jobs": {
         parameters: {
             query?: never;
@@ -2413,6 +2430,57 @@ export interface paths {
          * @description Materialize only a private catalog original resolved by slug and hash.
          */
         post: operations["materialize_model_pose_asset_api_v1_workspaces__workspace_id__model_pose_transfer_pose_assets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Newcomer Offer */
+        get: operations["newcomer_offer_api_v1_workspaces__workspace_id__promotions_newcomer_offer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/impression": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Impression */
+        post: operations["impression_api_v1_workspaces__workspace_id__promotions_newcomer_offer_impression_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/viewed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trial Viewed */
+        post: operations["trial_viewed_api_v1_workspaces__workspace_id__promotions_newcomer_offer_viewed_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4612,6 +4680,53 @@ export interface components {
             /** Retained Fact Ids */
             retained_fact_ids: string[];
         };
+        /** InvitationCenter */
+        InvitationCenter: {
+            /** Earned Credits */
+            earned_credits: number;
+            /** Invite Code */
+            invite_code: string;
+            /** Invite Url */
+            invite_url: string;
+            /** Invited Count */
+            invited_count: number;
+            /** Items */
+            items: components["schemas"]["InvitationFriend"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Paid Count */
+            paid_count: number;
+            /** Refunded Count */
+            refunded_count: number;
+            /** Reward Percent */
+            reward_percent: number;
+            /** Total */
+            total: number;
+            /** Unpaid Count */
+            unpaid_count: number;
+            /** Validity Days */
+            validity_days: number;
+        };
+        /** InvitationFriend */
+        InvitationFriend: {
+            /** Earned Credits */
+            earned_credits: number;
+            /** Friend */
+            friend: string;
+            /** Id */
+            id: string;
+            /** Last Paid At */
+            last_paid_at: string | null;
+            /**
+             * Payment Status
+             * @enum {string}
+             */
+            payment_status: "unpaid" | "paid" | "refunded";
+            /** Registered At */
+            registered_at: string;
+        };
         /** JobAssetResponse */
         JobAssetResponse: {
             /** Asset Id */
@@ -4980,6 +5095,33 @@ export interface components {
             currency: string;
             /** Micros */
             micros: string;
+        };
+        /** NewcomerOffer */
+        NewcomerOffer: {
+            /** Amount Fen */
+            amount_fen: number;
+            /** Credits */
+            credits: number;
+            /** Eligible */
+            eligible: boolean;
+            /** Fast Images */
+            fast_images: number;
+            /** Ready At */
+            ready_at: string | null;
+            /** Regular Amount Fen */
+            regular_amount_fen: number;
+            /** Savings Fen */
+            savings_fen: number;
+            /** Server Now */
+            server_now: string;
+            /** Should Show */
+            should_show: boolean;
+            /** Trial Viewed */
+            trial_viewed: boolean;
+            /** Validity Days */
+            validity_days: number;
+            /** Window Ends At */
+            window_ends_at: string | null;
         };
         /** PasswordChangeBody */
         PasswordChangeBody: {
@@ -5556,6 +5698,11 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** ViewedTrial */
+        ViewedTrial: {
+            /** Session Id */
+            session_id: string;
         };
         /** WorkerAccountSessionRequest */
         WorkerAccountSessionRequest: {
@@ -9866,6 +10013,41 @@ export interface operations {
             };
         };
     };
+    invitations_api_v1_workspaces__workspace_id__invitations_get: {
+        parameters: {
+            query?: {
+                status?: "all" | "unpaid" | "paid" | "refunded";
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationCenter"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_jobs_api_v1_workspaces__workspace_id__jobs_get: {
         parameters: {
             query?: {
@@ -10855,6 +11037,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssetResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    newcomer_offer_api_v1_workspaces__workspace_id__promotions_newcomer_offer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewcomerOffer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    impression_api_v1_workspaces__workspace_id__promotions_newcomer_offer_impression_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewcomerOffer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trial_viewed_api_v1_workspaces__workspace_id__promotions_newcomer_offer_viewed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ViewedTrial"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewcomerOffer"];
                 };
             };
             /** @description Validation Error */

@@ -1,0 +1,48 @@
+{
+  "environment": "isolated API, synthetic users and mocked payment gateway",
+  "popup": {
+    "regularPrice": 19.9,
+    "newcomerPrice": 9.9,
+    "savings": 10,
+    "approximateDiscount": "5折",
+    "sameCredits": 160,
+    "sameValidityDays": 30,
+    "desktopAndMobileInspected": true
+  },
+  "confirmation": {
+    "newcomerPrice": 9.9,
+    "regularPrice": 19.9,
+    "validityDays": 30,
+    "preselectedFromPopup": true
+  },
+  "regularPacks": 4,
+  "desktop": {
+    "cards": [
+      {
+        "left": 266,
+        "right": 534.5,
+        "width": 268.5
+      },
+      {
+        "left": 552.5,
+        "right": 821,
+        "width": 268.5
+      },
+      {
+        "left": 839,
+        "right": 1107.5,
+        "width": 268.5
+      },
+      {
+        "left": 1125.5,
+        "right": 1394,
+        "width": 268.5
+      }
+    ],
+    "columns": "268.5px 268.5px 268.5px 268.5px",
+    "documentWidth": 1432,
+    "viewportWidth": 1440
+  },
+  "realPaymentMade": false,
+  "orderSubmitted": false
+}

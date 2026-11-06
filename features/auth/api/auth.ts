@@ -40,13 +40,13 @@ export async function sendPhoneLoginCode(phone: string, resend = false, flow: "l
   return result;
 }
 
-export async function signInWithPhoneCode(code: string, flow: "login" | "register" | "reset" = "login", password?: string) {
+export async function signInWithPhoneCode(code: string, flow: "login" | "register" | "reset" = "login", password?: string, invitationCode?: string) {
   initialise();
   const result = await Passwordless.consumeCode({
     userInputCode: code,
     options: { preAPIHook: async ({ url, requestInit }) => ({
       url,
-      requestInit: { ...requestInit, body: JSON.stringify({ ...JSON.parse(String(requestInit.body)), acceptedAgreements: true, flow, password, ...(flow === "register" ? { inviteCode: readInvitationCode() } : {}) }) },
+      requestInit: { ...requestInit, body: JSON.stringify({ ...JSON.parse(String(requestInit.body)), acceptedAgreements: true, flow, password, ...(flow === "register" ? { inviteCode: invitationCode === undefined ? readInvitationCode() : invitationCode.trim().toUpperCase() } : {}) }) },
     }) },
   });
   if (result.status === "OK") {

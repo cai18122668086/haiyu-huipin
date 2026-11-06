@@ -333,7 +333,7 @@ def test_unconfigured_payments_show_catalog_but_block_purchase(pilot_client):
     pilot_client.app.state.settings.credit_payments_enabled = False
     catalog = pilot_client.get(BASE + "/packages?include_memberships=true").json()
     assert not catalog["enabled"] and catalog["channels"] == []
-    assert len(catalog["packages"]) == 9
+    assert len(catalog["packages"]) == 10
     assert (
         pilot_client.post(
             BASE + "/purchases",

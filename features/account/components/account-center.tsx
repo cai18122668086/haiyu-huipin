@@ -1,6 +1,8 @@
 "use client";
 import { SupportCases } from "@/components/support-cases";
 import { AccountStatusMenu } from "@/components/account-status-menu";
+import { RewardsNavigation } from "@/components/rewards-navigation";
+import { InvitationCenter } from "./invitation-center";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
 import { RewardsCenter } from "./rewards-center";
@@ -31,6 +33,7 @@ import {
   FileText,
   FolderOpen,
   Gift,
+  UsersRound,
   Image as ImageIcon,
   Layers3,
   LayoutDashboard,
@@ -83,6 +86,7 @@ type Page =
   | "overview"
   | "membership"
   | "rewards"
+  | "invitations"
   | "credits"
   | "orders"
   | "creations"
@@ -93,6 +97,7 @@ const pages: { id: Page; label: string; icon: LucideIcon; group?: string }[] = [
   { id: "overview", label: "账户概览", icon: LayoutDashboard },
   { id: "membership", label: "会员与充值", icon: Crown },
   { id: "rewards", label: "我的福利", icon: Gift },
+  { id: "invitations", label: "邀请中心", icon: UsersRound },
   { id: "credits", label: "积分明细", icon: Coins },
   { id: "orders", label: "订单与发票", icon: FileText },
   { id: "creations", label: "创作记录", icon: Layers3, group: "我的创作" },
@@ -101,6 +106,7 @@ const pages: { id: Page; label: string; icon: LucideIcon; group?: string }[] = [
   { id: "settings", label: "账户设置", icon: Settings2, group: "其他" },
 ];
 const subtitles: Record<Page, string> = {
+  invitations: "分享好工具，每一份邀请都有回响。",
   rewards: "签到与邀请奖励，都在这里。",
   overview: "管理你的创作、积分与会员，一切都在这里。",
   membership: "选择适合你的创作节奏，让每一次上新更从容。",
@@ -356,7 +362,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
               海宇绘品<small>HAIYU HUIPIN</small>
             </span>
           </Link>
-          <div className="topbar-right"><Link className="account-button" href="/jobs">任务中心</Link><AccountStatusMenu />
+          <div className="topbar-right"><RewardsNavigation /><Link className={`account-button ${styles.taskEntry}`} href="/jobs" aria-label="任务中心"><span className={styles.desktopTaskLabel}>任务中心</span><span className={styles.mobileTaskLabel}>任务</span></Link><AccountStatusMenu />
             <button
               ref={menuRef}
               className="icon-button mobile-menu"
@@ -382,7 +388,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
             个人中心<span>MY SPACE</span>
           </div>
           <nav aria-label="个人中心导航">
-            {pages.filter(item => item.id !== "rewards" || rewards.data?.checkin_enabled || rewards.data?.referral_enabled).map((item) => (
+            {pages.filter(item => item.id === "invitations" ? rewards.data?.referral_enabled : item.id !== "rewards" || rewards.data?.checkin_enabled || rewards.data?.referral_enabled).map((item) => (
               <div key={item.id}>
                 {item.group && <div className="nav-group">{item.group}</div>}
                 <button
@@ -430,6 +436,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
             />
           )}
           {page === "rewards" && <RewardsCenter workspaceId={workspaceId} />}
+          {page === "invitations" && <InvitationCenter workspaceId={workspaceId} />}
           {page === "credits" && (
             <Ledger workspaceId={workspaceId} recharge={recharge} />
           )}
@@ -705,6 +712,18 @@ function Membership({
     create = useCreatePurchase(workspaceId);
   const currentMembership = useMembership(workspaceId);
   const newcomer = catalog.data?.packages.find((product) => product.first_purchase_only);
+  const starter = catalog.data?.packages.find((product) => product.id === "pack_starter_160");
+  const offerHandled = useRef(false);
+  useEffect(() => {
+    if (!newcomer || !catalog.data?.enabled || offerHandled.current || new URLSearchParams(window.location.search).get("offer") !== "newcomer") return;
+    offerHandled.current = true;
+    create.newIntent();
+    setChannel(catalog.data.channels[0] ?? "alipay");
+    setSelected(newcomer);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("offer");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, [newcomer, catalog.data, create]);
   const products =
     catalog.data?.packages.filter((pack) =>
       !pack.first_purchase_only && (tab === "pack"
@@ -739,7 +758,7 @@ function Membership({
       </div>
       {newcomer && <section className={newcomerStyles.offer} aria-label="新人首单体验包">
         <div><span>新人首单</span><h3>继续创作，低价体验更多好图</h3><p>{newcomer.credits} 积分 · {newcomer.validity_days} 天有效</p></div>
-        <div className={newcomerStyles.action}><strong>¥{money(newcomer.amount_fen)}</strong><Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>立即体验<ArrowUpRight size={16} /></Button></div>
+        <div className={newcomerStyles.action}><div className={newcomerStyles.price}>{starter && starter.credits === newcomer.credits && starter.validity_days === newcomer.validity_days && <small>常规价 <s>¥{money(starter.amount_fen)}</s></small>}<strong>¥{money(newcomer.amount_fen)}</strong></div><Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>立即体验<ArrowUpRight size={16} /></Button></div>
       </section>}
       <div className="pricing-toolbar">
         <div className="purchase-tabs" role="tablist" aria-label="购买方式">
@@ -805,6 +824,8 @@ function Membership({
                   name: product.name,
                   description: product.id === "pack_small"
                     ? "先试试，找到你的出图节奏"
+                    : product.id === "pack_starter_160"
+                      ? "轻量补给，随时开画"
                     : product.id === "pack_large"
                       ? "为下一轮上新多做些准备"
                       : "备好额度，随时上新",
@@ -872,6 +893,8 @@ function Membership({
                     "全部单图与套图工具",
                     tab === "member"
                       ? "年付积分逐月发放，月卡积分当期有效"
+                      : product.validity_days
+                        ? `${product.validity_days} 天有效，按需使用`
                       : product.validity_months
                         ? `${product.validity_months} 个月有效，按需使用`
                         : "购买积分无固定到期日，按需使用",
@@ -926,6 +949,8 @@ function Membership({
           <p className="checkout-note">
             {selected.kind === "membership"
               ? `${selected.months === 12 ? "年付一次支付，分 12 期按月发放" : "月卡按一个月周期发放"}，每期积分当期有效。已有会员时顺延生效。`
+              : selected.validity_days
+                ? `积分到账后 ${selected.validity_days} 天有效。`
               : selected.validity_months
                 ? `积分到账后 ${selected.validity_months} 个月有效。`
                 : "购买积分无固定到期日。"}
@@ -1646,7 +1671,7 @@ const faqs = [
   ],
   [
     "月卡积分与充值积分有什么区别？",
-    "会员积分按月发放，在对应周期内使用；常规积分包自到账起 12 个月有效，新人体验包及签到、邀请赠送积分为 30 天。年付一次支付，分 12 期逐月发放。优先使用即将到期的积分，历史订单按购买时的条款处理。",
+    "会员积分按月发放，在对应周期内使用；轻量体验及新人首单包为30天，其他常规积分包为12个月，具体以套餐页面为准。签到、邀请赠送积分为30天。年付一次支付，分12期逐月发放。优先使用即将到期的积分，历史订单按购买时的条款处理。",
   ],
   [
     "生成失败会扣积分吗？",

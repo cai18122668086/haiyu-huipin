@@ -4,6 +4,7 @@ import { SettingField, ChoiceControl, GenerationVersionField } from "@/component
 
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 import { useReplicaWelcome } from "@/features/billing/api/replica-welcome";
+import { TrialResultViewed } from "./newcomer-offer-controller";
 
 import Link from "@/components/seo-link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -352,6 +353,7 @@ export function StyleReplicaWorkspace() {
   </div>;
 
   return <div className={styles.page}>
+    {workspaceId && sessionDoc?.payload.use_welcome_trial && complete && jobs.every(id => jobStatuses[id] === "completed") && <TrialResultViewed workspaceId={workspaceId} sessionId={sessionDoc.id} />}
     {libraryRole && <AssetLibraryDialog workspaceId={workspaceId} title={libraryRole === "product" ? "选择商品原图" : "选择参考图"} description="复用已保存的素材，商品图和参考图请分别选择。" selectedIds={(libraryRole === "product" ? products : references).map(item => item.id)} excludedIds={(libraryRole === "product" ? references : products).map(item => item.id)} maxItems={libraryRole === "product" ? 6 : 20} onClose={() => setLibraryRole(null)} onConfirm={(ids, assets) => { const items = ids.map(id => ({ id, name: assets.find(asset => asset.id === id)?.original_filename ?? "已保存素材" })); if (libraryRole === "product") setProducts(items); else { setReferences(items); setSelectedReferences(ids); } setLibraryRole(null); }} />}
 
     <div className={styles.stepper} aria-label="复刻进度">{STEPS.map((label, index) => <div key={label} className={`${styles.stepItem} ${index === step ? styles.stepCurrent : ""} ${index < step ? styles.stepDone : ""}`}><span>{index < step ? <Check size={13} /> : index + 1}</span><b>{index === 4 ? generationStepLabel : label}</b>{index < STEPS.length - 1 && <i />}</div>)}</div>

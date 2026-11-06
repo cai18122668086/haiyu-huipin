@@ -1,0 +1,46 @@
+{
+  "environment": "isolated local API and synthetic data",
+  "offer": {
+    "notShownBefore120Seconds": true,
+    "automaticallyShownAfter120Seconds": true,
+    "secondsTickObserved": true,
+    "closeButtonVerified": true,
+    "mobile": {
+      "bottom": 694,
+      "left": 17,
+      "right": 373.3999938964844,
+      "scrollWidth": 355,
+      "top": 150,
+      "viewportHeight": 844,
+      "viewportWidth": 390
+    }
+  },
+  "navigation": {
+    "claimedCredits": 10,
+    "balanceBefore": 180,
+    "balanceAfter": 190,
+    "claimedButtonDisabled": true,
+    "homeMobile": {
+      "checkinHeight": 44,
+      "checkinLeft": 161.1999969482422,
+      "checkinRight": 241.79999542236328,
+      "documentWidth": 382,
+      "viewportWidth": 390
+    }
+  },
+  "invitations": {
+    "maskedFriends": 4,
+    "paidFriends": 2,
+    "earnedCredits": 180,
+    "unpaidFilterRows": 1,
+    "paidFilterRows": 2,
+    "refundedFilterRows": 1
+  },
+  "registration": {
+    "linkCodePrefilled": true,
+    "manualCodeEditable": true,
+    "noSmsSent": true,
+    "noRegistrationSubmitted": true
+  },
+  "realPaymentsMade": false
+}

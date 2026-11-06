@@ -73,6 +73,10 @@ test("phone authentication closes the dialog only on success, including storage 
     await auth.signInWithPhoneCode("synthetic", "reset", "SyntheticPassword123");
     assert.equal(state.bodies.at(-1).inviteCode, undefined);
     assert.equal(state.inviteCleared, 1);
+    await auth.signInWithPhoneCode("synthetic", "register", "SyntheticPassword123", "hyabcdef1234");
+    assert.equal(state.bodies.at(-1).inviteCode, "HYABCDEF1234", "a manually entered code replaces link attribution before registration");
+    await auth.signInWithPhoneCode("synthetic", "register", "SyntheticPassword123", "");
+    assert.equal(state.bodies.at(-1).inviteCode, "", "clearing the optional code must not restore a previous link code");
   } finally {
     delete globalThis.__phoneLoginTest;
     await rm(directory, {recursive:true,force:true});

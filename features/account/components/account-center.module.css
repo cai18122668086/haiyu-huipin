@@ -4970,3 +4970,7 @@
     padding: 18px;
   }
 }
+
+.taskEntry{white-space:nowrap}.mobileTaskLabel{display:none}@media(max-width:640px){.desktopTaskLabel{display:none}.mobileTaskLabel{display:inline}}
+
+@media(min-width:1440px){.root :global(.pack-grid){grid-template-columns:repeat(4,minmax(0,1fr))}}@media(min-width:761px) and (max-width:1439px){.root :global(.pack-grid){grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -6,3 +6,5 @@
 .action strong { font-size:28px;letter-spacing:-1px;font-weight:650; }
 .action button { background:#39254f;color:#fff; }
 @media(max-width:640px){.offer{padding:18px;gap:16px;align-items:stretch;flex-direction:column}.offer h3{font-size:18px}.action{justify-content:space-between}}
+
+.price{display:grid;gap:3px}.price small{font-size:12px;color:#9c87ac}.price s{margin-left:3px}
