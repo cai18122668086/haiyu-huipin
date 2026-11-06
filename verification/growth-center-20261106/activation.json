@@ -1,0 +1,29 @@
+{
+  "status": "activated",
+  "revision": "a9db7140a67c304448e7ba0b8e7608bf62c51a70",
+  "backend_image": "huipin-growth-center/backend:a9db7140a67c304448e7ba0b8e7608bf62c51a70",
+  "frontend_image": "huipin-growth-center/frontend:a9db7140a67c304448e7ba0b8e7608bf62c51a70",
+  "migration": "20261106_0040",
+  "campaign": [
+    {
+      "id": "newcomer-reminder-v1",
+      "enabled": true,
+      "starts_at": "2026-11-06 08:41:44.739738+00"
+    }
+  ],
+  "existing_campaigns_preserved": true,
+  "backup_bytes": 4578853,
+  "backup_sha256": "7dc56cacf8562e69551c4dbfefd5512d25a93c97466b169e60b7a3413497754d",
+  "backup_catalog_verified": true,
+  "runtime_environment_preserved": true,
+  "other_services_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 291,
+  "public_pages": 20,
+  "public_tools": 16,
+  "private_pages": 4,
+  "crawl_files": 2,
+  "cache_checks": 4,
+  "illustration_assets": 7,
+  "paired_tools": 16
+}

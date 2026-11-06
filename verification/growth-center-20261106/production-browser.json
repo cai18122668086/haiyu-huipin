@@ -1,0 +1,24 @@
+{
+  "site": "https://huipin.haiyushuke.com/account#invitations",
+  "navigation_visible": true,
+  "invitation_center_visible": true,
+  "authenticated_after_user_login": true,
+  "user_already_checked_in": true,
+  "standard_pack": {
+    "visible": true,
+    "amount_fen": 1990,
+    "credits": 160,
+    "validity_days": 30
+  },
+  "mobile": {
+    "checkinHeight": 44,
+    "checkinLeft": 158.1999969482422,
+    "checkinRight": 238.79999542236328,
+    "documentWidth": 390,
+    "viewportWidth": 390
+  },
+  "temporary_viewport_restored": true,
+  "assistant_claimed_real_credits": false,
+  "real_payment_made": false,
+  "no_unexpected_offer_for_existing_customer": true
+}
