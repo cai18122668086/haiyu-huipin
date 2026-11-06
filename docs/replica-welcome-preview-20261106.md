@@ -14,8 +14,21 @@
 
 开发模式访问 `/?replica_offer_preview=1`，首页显示“注册就送一整套”“全网最牛一键复刻”活动条；点击“免费领取”打开带相同权益提示的注册弹窗。没有发送短信或执行支付。预览受开发模式与查询参数双重限制，生产不展示。活动界面源代码尚未部署。
 
-根据用户反馈，活动条改为桌面62px、手机66px高度，与首页主内容左右边界一致；注册提示与输入框等宽。已删除页面中的预览和未开放提示，用户界面不显示内部交付状态。8个宽度（320–1920px）的布局检查、桌面与手机领取进入注册、类型检查均通过，见 `verification/detail-guidance-20261106/compact-offer-browser.json`。用户界面长期要求已保存至 `.cursor/rules/customer-facing-ui.mdc`。
+根据用户反馈，活动条保持紧凑，与首页主内容左右边界一致；注册提示与输入框等宽。已删除页面中的预览和未开放提示，用户界面不显示内部交付状态。首轮紧凑布局记录见 `verification/detail-guidance-20261106/compact-offer-browser.json`，最新字号与动效调整见下节及 `verification/detail-guidance-20261106/animated-offer-browser.json`。用户界面长期要求已保存至 `.cursor/rules/customer-facing-ui.mdc`。
 
 建议商业规则是一次快速复刻体验券，最多10张参考图、7天内使用；新人9.9元160积分、限购一次、30天有效。均为方案，现有生产赠送和支付目录未修改。快速复刻按唯一参考图数量封顶计费，额外拆屏不增加费用，不能将参考图数与实际输出数混为一谈。
+
+## 字号与动效调整
+
+按用户反馈研究开源项目的公开示例与源码后，主标题调整为桌面28px，赠送权益32px，辅助卖点17px，按钮16px。横幅高度76px；移动端按宽度分级调整文字，保留左右对齐。最终采用与品牌协调的深紫底、白色标题、淡紫权益高光及浅紫按钮；黄红方案已取消，图标标签与分隔线已精简，注册弹窗不再展示次数、参考图数量或拆屏计费等细则。文字扫光、按钮柔光与扫光、低频背景流光使用本地CSS实现，悬停时按钮轻抬与箭头位移，减少动态效果偏好会停止循环和位移。未引入新的组件库依赖。
+
+设计参考：
+
+- [Flowbite Banner](https://github.com/themesberg/flowbite/blob/main/content/components/banner.md)：营销信息与明确CTA组合、响应式容器和对齐。
+- [Magic UI Shimmer Button](https://github.com/magicuidesign/magicui/blob/main/apps/www/registry/magicui/shimmer-button.tsx) 与 [Animated Shiny Text](https://magicui.design/docs/components/animated-shiny-text)：扫光突出行动入口与关键词。
+- [Motion Primitives Glow Effect](https://github.com/ibelick/motion-primitives/blob/main/components/core/glow-effect.tsx)：柔化光晕、呼吸节奏与层次。
+- [React Bits Shiny Text](https://github.com/DavidHDev/react-bits/blob/main/src/content/TextAnimations/ShinyText/ShinyText.jsx)：局部文字高光、不同触发与动态效果偏好处理。
+
+以上作为结构和视觉机制参考，本次样式为项目内独立实现。浏览器验证见 `verification/detail-guidance-20261106/animated-offer-browser.json`。
 
 正式活动上线前需实现服务端资格和唯一领取、任务绑定与有效期、失败恢复、限购并发保护、支付到账及退款处理，再启用真实领取入口并同步站内文章。当前组件不构成正式权益实现。
