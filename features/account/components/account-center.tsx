@@ -712,6 +712,7 @@ function Membership({
     create = useCreatePurchase(workspaceId);
   const currentMembership = useMembership(workspaceId);
   const newcomer = catalog.data?.packages.find((product) => product.first_purchase_only);
+  const starter = catalog.data?.packages.find((product) => product.id === "pack_starter_160");
   const offerHandled = useRef(false);
   useEffect(() => {
     if (!newcomer || !catalog.data?.enabled || offerHandled.current || new URLSearchParams(window.location.search).get("offer") !== "newcomer") return;
@@ -757,7 +758,7 @@ function Membership({
       </div>
       {newcomer && <section className={newcomerStyles.offer} aria-label="新人首单体验包">
         <div><span>新人首单</span><h3>继续创作，低价体验更多好图</h3><p>{newcomer.credits} 积分 · {newcomer.validity_days} 天有效</p></div>
-        <div className={newcomerStyles.action}><strong>¥{money(newcomer.amount_fen)}</strong><Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>立即体验<ArrowUpRight size={16} /></Button></div>
+        <div className={newcomerStyles.action}><div className={newcomerStyles.price}>{starter && starter.credits === newcomer.credits && starter.validity_days === newcomer.validity_days && <small>常规价 <s>¥{money(starter.amount_fen)}</s></small>}<strong>¥{money(newcomer.amount_fen)}</strong></div><Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>立即体验<ArrowUpRight size={16} /></Button></div>
       </section>}
       <div className="pricing-toolbar">
         <div className="purchase-tabs" role="tablist" aria-label="购买方式">
@@ -823,6 +824,8 @@ function Membership({
                   name: product.name,
                   description: product.id === "pack_small"
                     ? "先试试，找到你的出图节奏"
+                    : product.id === "pack_starter_160"
+                      ? "轻量补给，随时开画"
                     : product.id === "pack_large"
                       ? "为下一轮上新多做些准备"
                       : "备好额度，随时上新",
@@ -890,6 +893,8 @@ function Membership({
                     "全部单图与套图工具",
                     tab === "member"
                       ? "年付积分逐月发放，月卡积分当期有效"
+                      : product.validity_days
+                        ? `${product.validity_days} 天有效，按需使用`
                       : product.validity_months
                         ? `${product.validity_months} 个月有效，按需使用`
                         : "购买积分无固定到期日，按需使用",
@@ -944,6 +949,8 @@ function Membership({
           <p className="checkout-note">
             {selected.kind === "membership"
               ? `${selected.months === 12 ? "年付一次支付，分 12 期按月发放" : "月卡按一个月周期发放"}，每期积分当期有效。已有会员时顺延生效。`
+              : selected.validity_days
+                ? `积分到账后 ${selected.validity_days} 天有效。`
               : selected.validity_months
                 ? `积分到账后 ${selected.validity_months} 个月有效。`
                 : "购买积分无固定到期日。"}
@@ -1664,7 +1671,7 @@ const faqs = [
   ],
   [
     "月卡积分与充值积分有什么区别？",
-    "会员积分按月发放，在对应周期内使用；常规积分包自到账起 12 个月有效，新人体验包及签到、邀请赠送积分为 30 天。年付一次支付，分 12 期逐月发放。优先使用即将到期的积分，历史订单按购买时的条款处理。",
+    "会员积分按月发放，在对应周期内使用；轻量体验及新人首单包为30天，其他常规积分包为12个月，具体以套餐页面为准。签到、邀请赠送积分为30天。年付一次支付，分12期逐月发放。优先使用即将到期的积分，历史订单按购买时的条款处理。",
   ],
   [
     "生成失败会扣积分吗？",

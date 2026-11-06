@@ -5108,6 +5108,10 @@ export interface components {
             fast_images: number;
             /** Ready At */
             ready_at: string | null;
+            /** Regular Amount Fen */
+            regular_amount_fen: number;
+            /** Savings Fen */
+            savings_fen: number;
             /** Server Now */
             server_now: string;
             /** Should Show */

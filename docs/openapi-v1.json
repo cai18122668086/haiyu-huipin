@@ -6163,6 +6163,14 @@
             ],
             "title": "Ready At"
           },
+          "regular_amount_fen": {
+            "title": "Regular Amount Fen",
+            "type": "integer"
+          },
+          "savings_fen": {
+            "title": "Savings Fen",
+            "type": "integer"
+          },
           "server_now": {
             "title": "Server Now",
             "type": "string"
@@ -6199,6 +6207,8 @@
           "ready_at",
           "window_ends_at",
           "amount_fen",
+          "regular_amount_fen",
+          "savings_fen",
           "credits",
           "fast_images",
           "validity_days"

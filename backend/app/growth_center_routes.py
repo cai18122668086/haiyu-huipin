@@ -42,6 +42,8 @@ class NewcomerOffer(BaseModel):
     ready_at: str | None
     window_ends_at: str | None
     amount_fen: int
+    regular_amount_fen: int
+    savings_fen: int
     credits: int
     fast_images: int
     validity_days: int

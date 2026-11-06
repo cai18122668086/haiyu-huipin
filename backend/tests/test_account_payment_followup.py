@@ -9,13 +9,22 @@ def test_catalog_preserves_original_packs(pilot_client):
     catalog = pilot_client.get(BASE + "/packages?include_memberships=true").json()
     packs = [p for p in catalog["packages"] if p["kind"] == "pack"]
     assert [
-        (p["id"], p["amount_fen"], p["credits"], p["validity_months"]) for p in packs
+        (p["id"], p["amount_fen"], p["credits"], p["validity_months"])
+        for p in packs
+        if p["id"] != "pack_starter_160"
     ] == [
         ("pack_small", 2990, 300, 12),
         ("pack_medium", 9900, 1100, 12),
         ("pack_large", 29900, 3600, 12),
     ]
     assert catalog["channels"] == ["alipay", "wechat"]
+    starter = next(p for p in packs if p["id"] == "pack_starter_160")
+    assert (starter["amount_fen"], starter["credits"], starter["validity_days"]) == (
+        1990,
+        160,
+        30,
+    )
+    assert not starter["first_purchase_only"]
 
 
 def test_authenticated_query_recovers_missed_notice_once(pilot_client, monkeypatch):

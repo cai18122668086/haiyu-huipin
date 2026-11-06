@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from . import growth_rewards as rewards
 from .credit_memberships import aware
+from .credit_products import PRODUCTS, STARTER_PACK_ID
 from .errors import ApiError
 from .models import (
     CreditPurchaseRecord,
@@ -23,7 +24,7 @@ from .models import (
     utc_now,
 )
 from .onboarding import personal_workspace_id
-from .replica_welcome import newcomer_eligible
+from .replica_welcome import NEWCOMER_PACK, newcomer_eligible
 
 REMINDER = "newcomer-reminder-v1"
 VIEWING_SECONDS = 120
@@ -165,6 +166,8 @@ def invitation_center(
 
 
 def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
+    product = PRODUCTS[NEWCOMER_PACK]
+    regular = PRODUCTS[STARTER_PACK_ID]
     now = aware(utc_now())
     enabled = rewards.active(session, REMINDER) and newcomer_eligible(
         session, user.id, workspace_id
@@ -196,10 +199,12 @@ def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
         "server_now": now.isoformat(),
         "ready_at": ready.isoformat() if ready else None,
         "window_ends_at": end.isoformat() if end else None,
-        "amount_fen": 990,
-        "credits": 160,
-        "fast_images": 20,
-        "validity_days": 30,
+        "amount_fen": product.amount_fen,
+        "regular_amount_fen": regular.amount_fen,
+        "savings_fen": regular.amount_fen - product.amount_fen,
+        "credits": product.credits,
+        "fast_images": product.credits // 8,
+        "validity_days": product.validity_days,
     }
 
 

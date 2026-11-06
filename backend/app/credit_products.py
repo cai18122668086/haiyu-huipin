@@ -21,8 +21,9 @@ class Product:
 
 
 # The original single-pack offer remains compatible with existing clients and
-# pending orders. The account center uses the three approved prototype packs.
+# pending orders. The catalog includes the approved packs and 30-day starter.
 LEGACY_PACK_ID = "credits_1500"
+STARTER_PACK_ID = "pack_starter_160"
 PRODUCTS = {
     "newcomer_160": Product(
         "newcomer_160",
@@ -40,6 +41,14 @@ PRODUCTS = {
         1500,
         "pack",
         validity_months=0,
+    ),
+    STARTER_PACK_ID: Product(
+        STARTER_PACK_ID,
+        "轻量体验",
+        1990,
+        160,
+        "pack",
+        validity_days=30,
     ),
 }
 for product_id, name, price, credits in (

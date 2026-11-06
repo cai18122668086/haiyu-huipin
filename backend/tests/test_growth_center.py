@@ -250,3 +250,42 @@ def test_late_visit_does_not_remind_twice_on_same_beijing_day(
     assert not offer(center_client, "/impression", "post").json()["should_show"]
     monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(days=1))
     assert offer(center_client, "/impression", "post").json()["should_show"]
+
+
+def test_regular_price_matches_real_repeatable_pack_and_refund(center_client):
+    from sqlalchemy import select
+
+    from app import credit_products
+    from app.models import CreditGrantRecord
+    from tests.test_growth_rewards import wallet
+
+    data = offer(center_client).json()
+    regular = credit_products.PRODUCTS[credit_products.STARTER_PACK_ID]
+    newcomer = credit_products.PRODUCTS["newcomer_160"]
+    assert data["regular_amount_fen"] == regular.amount_fen == 1990
+    assert data["amount_fen"] == newcomer.amount_fen == 990
+    assert data["savings_fen"] == 1000
+    assert (
+        (regular.credits, regular.validity_days)
+        == (newcomer.credits, newcomer.validity_days)
+        == (160, 30)
+    )
+    first, _ = paid(center_client, regular.id, "19.90")
+    paid(center_client, regular.id, "19.90")
+    assert wallet(center_client, BUYER) == 320
+    assert wallet(center_client, INVITER) == 32
+    with center_client.app.state.session_factory() as session:
+        lot = session.scalar(
+            select(CreditGrantRecord).where(CreditGrantRecord.source_key == first["id"])
+        )
+        assert (
+            abs(
+                (aware(lot.expires_at) - aware(lot.created_at)).total_seconds()
+                - 30 * 86400
+            )
+            < 5
+        )
+    refund_order(center_client, first)
+    assert wallet(center_client, BUYER) == 160
+    assert wallet(center_client, INVITER) == 16
+    assert not offer(center_client).json()["eligible"]
