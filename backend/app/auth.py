@@ -285,6 +285,9 @@ def _external_principal(session: Session, identity: ExternalIdentity) -> Princip
                 "当前账户已被停用。",
             )
         ensure_personal_workspace(session, user)
+        from .replica_welcome import ensure_grant
+
+        ensure_grant(session, user)
         session.commit()
     except ApiError:
         raise

@@ -1,0 +1,109 @@
+{
+  "animationState": [
+    {
+      "name": "_offerLightSweep_dgnvp_1",
+      "state": "running",
+      "duration": 6800
+    },
+    {
+      "name": "_offerTextShine_dgnvp_1",
+      "state": "running",
+      "duration": 5600
+    },
+    {
+      "name": "_offerButtonGlow_dgnvp_1",
+      "state": "running",
+      "duration": 3600
+    },
+    {
+      "name": "_offerButtonShine_dgnvp_1",
+      "state": "running",
+      "duration": 5600
+    }
+  ],
+  "sizes": [
+    {
+      "width": 1920,
+      "height": 76,
+      "titleSize": "28px",
+      "buttonSize": "16px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "height": 76,
+      "titleSize": "28px",
+      "buttonSize": "16px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "height": 76,
+      "titleSize": "28px",
+      "buttonSize": "16px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "height": 76,
+      "titleSize": "28px",
+      "buttonSize": "16px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "height": 76,
+      "titleSize": "25px",
+      "buttonSize": "16px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 740,
+      "height": 76,
+      "titleSize": "25px",
+      "buttonSize": "16px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 640,
+      "height": 76,
+      "titleSize": "21px",
+      "buttonSize": "14px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "height": 76,
+      "titleSize": "21px",
+      "buttonSize": "14px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "height": 76,
+      "titleSize": "19px",
+      "buttonSize": "13px",
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "height": 76,
+      "titleSize": "19px",
+      "buttonSize": "13px",
+      "overlap": false,
+      "overflow": false
+    }
+  ],
+  "reducedAnimations": 0,
+  "registrationOpens": true,
+  "pageErrors": []
+}

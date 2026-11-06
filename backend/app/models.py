@@ -1564,6 +1564,33 @@ class ReplicaDocumentRecord(Base):
     )
 
 
+class PromotionCampaignRecord(Base):
+    __tablename__ = "promotion_campaigns"
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ReplicaWelcomeGrantRecord(TimestampMixin, Base):
+    __tablename__ = "replica_welcome_grants"
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), primary_key=True
+    )
+    phone_key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    workspace_id: Mapped[str] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    session_id: Mapped[str | None] = mapped_column(
+        ForeignKey("replica_documents.id", ondelete="RESTRICT"), unique=True
+    )
+    source_job_id: Mapped[str | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="RESTRICT"), unique=True
+    )
+
+
 class CreditPurchaseRecord(TimestampMixin, Base):
     __tablename__ = "credit_purchases"
     __table_args__ = (
@@ -1584,6 +1611,13 @@ class CreditPurchaseRecord(TimestampMixin, Base):
             name="ck_credit_purchase_status",
         ),
         Index("ix_credit_purchase_reconcile_due", "status", "reconcile_next_at"),
+        Index(
+            "uq_newcomer_pending_user",
+            "created_by_user_id",
+            unique=True,
+            postgresql_where=text("package_id = 'newcomer_160' AND status = 'pending'"),
+            sqlite_where=text("package_id = 'newcomer_160' AND status = 'pending'"),
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)

@@ -498,6 +498,11 @@
             "minLength": 8,
             "title": "Request Id",
             "type": "string"
+          },
+          "use_welcome_trial": {
+            "default": false,
+            "title": "Use Welcome Trial",
+            "type": "boolean"
           }
         },
         "required": [
@@ -1909,6 +1914,11 @@
             "title": "Credits",
             "type": "integer"
           },
+          "first_purchase_only": {
+            "default": false,
+            "title": "First Purchase Only",
+            "type": "boolean"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -1935,6 +1945,11 @@
               }
             ],
             "title": "Plan Id"
+          },
+          "validity_days": {
+            "default": 0,
+            "title": "Validity Days",
+            "type": "integer"
           },
           "validity_months": {
             "title": "Validity Months",
@@ -14547,6 +14562,29 @@
         ]
       }
     },
+    "/api/v1/public/promotions/replica-welcome": {
+      "get": {
+        "operationId": "public_offer_api_v1_public_promotions_replica_welcome_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Public Offer Api V1 Public Promotions Replica Welcome Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Offer",
+        "tags": [
+          "promotions"
+        ]
+      }
+    },
     "/api/v1/runtime": {
       "get": {
         "description": "Reports internal-test workflow availability and execution mode. availability=available only means the workflow/API can be exercised; clients must read execution before describing real generation support.",
@@ -17838,6 +17876,55 @@
         "summary": "Materialize Model Pose Asset",
         "tags": [
           "assets"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/promotions/replica-welcome": {
+      "get": {
+        "operationId": "welcome_state_api_v1_workspaces__workspace_id__promotions_replica_welcome_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Welcome State Api V1 Workspaces  Workspace Id  Promotions Replica Welcome Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Welcome State",
+        "tags": [
+          "promotions"
         ]
       }
     },

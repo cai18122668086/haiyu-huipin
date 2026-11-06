@@ -13,7 +13,8 @@ def test_membership_migrations_follow_existing_phone_identity_and_preserve_data(
     config = Config()
     config.set_main_option("script_location", str(root / "migrations"))
     scripts = ScriptDirectory.from_config(config)
-    assert scripts.get_heads() == ["20261030_0037"]
+    assert scripts.get_heads() == ["20261106_0038"]
+    assert scripts.get_revision("20261106_0038").down_revision == "20261030_0037"
     assert scripts.get_revision("20261030_0037").down_revision == "20261030_0036"
     assert scripts.get_revision("20261030_0036").down_revision == "20261030_0035"
     assert scripts.get_revision("20261030_0035").down_revision == "20261029_0034"
@@ -30,6 +31,7 @@ def test_membership_migrations_follow_existing_phone_identity_and_preserve_data(
             "INSERT INTO workspace_credit_accounts "
             "VALUES ('existing-workspace', 157, 10)",
             "CREATE TABLE jobs (id TEXT PRIMARY KEY)",
+            "CREATE TABLE replica_documents (id TEXT PRIMARY KEY)",
             "CREATE TABLE credit_reservations (id TEXT PRIMARY KEY, "
             "reserved_credits BIGINT)",
             "INSERT INTO credit_reservations VALUES ('existing-reservation', 10)",
@@ -45,6 +47,7 @@ def test_membership_migrations_follow_existing_phone_identity_and_preserve_data(
             "20261029_0034_payment_reconciliation.py",
             "20261030_0036_support_cases.py",
             "20261030_0037_processing_consents.py",
+            "20261106_0038_replica_welcome.py",
         ]:
             spec = spec_from_file_location(
                 "credit_migration", root / "migrations/versions" / name
@@ -77,5 +80,15 @@ def test_membership_migrations_follow_existing_phone_identity_and_preserve_data(
         )
         assert {"credit_purchases", "credit_memberships", "credit_grants"} <= set(
             inspect(connection).get_table_names()
+        )
+        assert (
+            connection.execute(text("SELECT enabled FROM promotion_campaigns")).scalar()
+            == 0
+        )
+        assert (
+            connection.execute(
+                text("SELECT count(*) FROM replica_welcome_grants")
+            ).scalar()
+            == 0
         )
     engine.dispose()

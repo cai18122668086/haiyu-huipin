@@ -1,0 +1,20 @@
+{
+  "status": "activated",
+  "revision": "4e07ae17ae6ea860b871bdc07843586a8908edb0",
+  "image": "huipin-seo/frontend:4e07ae17ae6ea860b871bdc07843586a8908edb0",
+  "previous_image": "huipin-seo/frontend:5225c73f0e89081c81c1d6fbca5dcb004be6503a",
+  "backend_restarted": false,
+  "database_changed": false,
+  "other_containers_preserved": true,
+  "runtime_environment_preserved": true,
+  "csp_scoped_to_admin_accounts": true,
+  "caddy_apply_method": "unchanged",
+  "public_pages": 20,
+  "public_tools": 16,
+  "private_pages": 4,
+  "crawl_files": 2,
+  "cache_checks": 4,
+  "illustration_assets": 7,
+  "paired_tools": 16,
+  "matched_files": 1
+}

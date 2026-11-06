@@ -17,6 +17,7 @@ export type Product = components["schemas"]["CreditPackage"];
 export function useCreditProducts(workspaceId: string) {
   return useQuery({
     queryKey: ["credit-products", workspaceId],
+    refetchInterval: 10_000,
     queryFn: async ({ signal }) =>
       unwrapApiResponse(
         await apiClient.GET(

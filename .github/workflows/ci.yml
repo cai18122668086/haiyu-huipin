@@ -83,6 +83,11 @@ jobs:
         env:
           POLARIS_TEST_DATABASE_URL: postgresql+psycopg://polaris:polaris_ci_only@localhost:${{ job.services.postgres.ports[5432] }}/polaris_ci
         run: python -m pytest backend/tests/test_replica_heartbeat_postgres.py -vv
+      - name: Test signup promotion concurrency on isolated PostgreSQL schemas
+        if: matrix.shard == 0
+        env:
+          POLARIS_TEST_DATABASE_URL: postgresql+psycopg://polaris:polaris_ci_only@localhost:${{ job.services.postgres.ports[5432] }}/polaris_ci
+        run: python -m pytest backend/tests/test_replica_welcome_postgres.py -vv
       - name: Test isolated local-worker lifecycle
         if: matrix.shard == 0
         run: python -m unittest discover -s tools/local_worker_runtime -p test_runtime.py -v

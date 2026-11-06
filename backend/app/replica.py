@@ -95,6 +95,7 @@ class AnalysisRequest(BaseModel):
     replica_speed: Literal["standard", "fast"] = "standard"
     auto_start_after_plan: bool = False
     credit_budget: int | None = Field(default=None, ge=0, le=1000000)
+    use_welcome_trial: bool = False
 
     @model_validator(mode="after")
     def validate_roles(self) -> AnalysisRequest:
@@ -384,6 +385,11 @@ def _claim(
     )
     session.add(row)
     try:
+        if kind == "session" and payload.get("use_welcome_trial"):
+            from .replica_welcome import bind_session
+
+            session.flush()
+            bind_session(session, row)
         session.commit()
     except IntegrityError:
         session.rollback()
@@ -1380,6 +1386,8 @@ def analyse(
     if not request.app.state.settings.reference_remix_provider_enabled:
         raise ApiError(503, "REPLICA_DISABLED", "复刻生成服务暂未开放，请稍后再试。")
     values = payload.model_dump(mode="json")
+    if not payload.use_welcome_trial:
+        values.pop("use_welcome_trial", None)
     if payload.credit_budget is None:
         values.pop("credit_budget", None)
     if payload.replica_speed == "standard":

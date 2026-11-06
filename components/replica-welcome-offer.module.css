@@ -1,0 +1,160 @@
+.preview {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: var(--nav-height);
+  background: radial-gradient(ellipse at 85% 120%, #68508055 0%, transparent 55%), #261c35;
+  border-bottom: 1px solid #cab4e526;
+  box-shadow: inset 0 1px 0 #ffffff0a;
+}
+
+.preview::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  left: 0;
+  width: 32vw;
+  background: linear-gradient(110deg, transparent, #e1cbff12 50%, transparent);
+  transform: translateX(-40vw) skewX(-18deg);
+  animation: offerLightSweep 6.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.preview::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 12%, #d7bcff50 50%, transparent 90%);
+  opacity: .45;
+  pointer-events: none;
+}
+
+.offer {
+  position: relative;
+  width: min(1280px, calc(100% - 96px));
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 76px;
+  padding-block: 10px;
+  color: #faf7ff;
+}
+
+.copy { display: flex; align-items: center; gap: 30px; min-width: 0; }
+.copy h2 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -.8px;
+  white-space: nowrap;
+}
+.copy h2 span {
+  display: inline-block;
+  margin-left: 3px;
+  font-size: 32px;
+  color: #d8baff;
+  background: linear-gradient(105deg, #d8baff 30%, #e3ceff 43%, #ffffff 50%, #e3ceff 57%, #d8baff 70%);
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 18px #bc8eff20;
+  animation: offerTextShine 5.6s ease-in-out infinite;
+}
+.headline { margin: 0; font-size: 17px; font-weight: 500; line-height: 26px; color: #c4b7d3; white-space: nowrap; }
+.action { position: relative; isolation: isolate; flex-shrink: 0; }
+.action::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -3px -5px;
+  border-radius: 14px;
+  background: #c4a0f0;
+  filter: blur(12px);
+  opacity: .16;
+  animation: offerButtonGlow 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.action button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid #eee4ff;
+  border-radius: 8px;
+  background: #f1e7ff;
+  box-shadow: 0 2px 8px #0d061a30;
+  color: #39244e;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.action button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -30%;
+  left: -55%;
+  height: 160%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #ffffffa8, transparent);
+  transform: skewX(-22deg);
+  animation: offerButtonShine 5.6s 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+.action button:hover { transform: translateY(-1px); box-shadow: 0 4px 18px #c9a0ff40; }
+.action button:active { transform: translateY(1px); box-shadow: 0 1px 4px #0d061a30; }
+.action button svg { transition: transform .2s ease; }
+.action button:hover svg { transform: translate(2px, -2px); }
+.action button:focus-visible { outline: 2px solid #ddc6ff; outline-offset: 5px; }
+
+.compact { padding: 14px 16px; margin: 0 0 20px; border: 1px solid #eee7f6; border-radius: 8px; background: #f7f3fc; color: #34233f; }
+.compact .copy { display: grid; gap: 4px; }
+.compact .copy h2 { font-size: 23px; line-height: 32px; }
+.compact .copy h2 span { font-size: 26px; }
+.compact .copy h2 span { background: none; color: #78509b; -webkit-text-fill-color: currentColor; text-shadow: none; animation: none; }
+.compact .headline { padding: 0; border: 0; font-size: 15px; line-height: 23px; color: #8a749d; }
+
+@keyframes offerLightSweep {
+  0%, 10% { transform: translateX(-40vw) skewX(-18deg); opacity: 0; }
+  18% { opacity: .9; }
+  62%, 100% { transform: translateX(140vw) skewX(-18deg); opacity: 0; }
+}
+@keyframes offerTextShine { 0%, 20% { background-position: 120% 0; } 60%, 100% { background-position: -20% 0; } }
+@keyframes offerButtonGlow { 0%, 100% { opacity: .12; transform: scale(.98); } 50% { opacity: .3; transform: scale(1.02); } }
+@keyframes offerButtonShine { 0%, 24% { left: -55%; } 52%, 100% { left: 130%; } }
+
+@media (max-width: 1250px) { .offer { width: calc(100% - 72px); } .copy { gap: 24px; } }
+@media (max-width: 1000px) { .offer { width: calc(100% - 56px); gap: 20px; } .copy { gap: 16px; } .copy h2 { font-size: 25px; } .copy h2 span { font-size: 28px; } .headline { font-size: 16px; padding-left: 16px; } .action button { padding-inline: 17px; } }
+@media (max-width: 740px) { .offer { padding-block: 8px; } .copy { display: grid; gap: 0; } .headline { border: 0; padding: 0; font-size: 14px; line-height: 21px; } }
+@media (max-width: 640px) {
+  .offer { width: calc(100% - 44px); min-height: 76px; gap: 12px; padding-block: 10px; }
+  .copy h2 { font-size: 21px; line-height: 29px; letter-spacing: -.6px; }
+  .copy h2 span { font-size: 23px; margin-left: 2px; }
+  .headline { font-size: 14px; line-height: 21px; }
+  .action button { min-height: 40px; padding-inline: 13px; gap: 8px; font-size: 14px; }
+  .action button svg { width: 17px; height: 17px; }
+  .buttonExtra { display: none; }
+}
+@media (max-width: 360px) { .offer { gap: 8px; } .copy h2 { font-size: 19px; } .copy h2 span { font-size: 21px; } .headline { font-size: 13px; } .action button { padding-inline: 10px; gap: 5px; font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) {
+  .preview::before, .copy h2 span, .action::before, .action button::after { animation: none; }
+  .preview::before, .action button::after { opacity: 0; }
+  .copy h2 span { background: none; -webkit-text-fill-color: currentColor; }
+  .action button, .action button svg { transition: none; }
+  .action button:hover, .action button:active, .action button:hover svg { transform: none; }
+}

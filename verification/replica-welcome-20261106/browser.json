@@ -1,0 +1,34 @@
+{
+  "mockApi": true,
+  "realApplication": true,
+  "checks": [
+    {
+      "width": 1440,
+      "guestBanner": true,
+      "registration": true,
+      "noOverflow": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "guestBanner": true,
+      "registration": true,
+      "noOverflow": true,
+      "pageErrors": []
+    },
+    {
+      "width": 1440,
+      "freeWorkspace": true,
+      "newcomerPack": true,
+      "noOverflow": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "freeWorkspace": true,
+      "newcomerPack": true,
+      "noOverflow": true,
+      "pageErrors": []
+    }
+  ]
+}

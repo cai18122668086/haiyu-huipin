@@ -1,0 +1,12 @@
+{
+  "desktopOffer": true,
+  "desktopTop": 122,
+  "mobileTop": 114,
+  "mobileOverflow": false,
+  "claimOpensRegistration": true,
+  "mobileRegistration": true,
+  "previewHiddenWithoutOptIn": true,
+  "pageErrors": [],
+  "smsSent": false,
+  "paymentMade": false
+}

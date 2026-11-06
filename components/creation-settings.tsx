@@ -38,11 +38,11 @@ export function ChoiceControl<T extends string>({ value, onChange, options, name
   </div>;
 }
 
-export function GenerationVersionControl({ value, onChange, disabled = false, name }: {
-  value: "fast" | "standard"; onChange: (value: "fast" | "standard") => void; disabled?: boolean; name: string;
+export function GenerationVersionControl({ value, onChange, disabled = false, name, fastPrice = 8 }: {
+  value: "fast" | "standard"; onChange: (value: "fast" | "standard") => void; disabled?: boolean; name: string; fastPrice?: number;
 }) {
   return <ChoiceControl label="生成版本" name={name} value={value} onChange={onChange} disabled={disabled} variant="cards" options={[
-    { value: "fast", label: "快速版", description: "约 5 分钟", price: 8, recommended: true },
+    { value: "fast", label: "快速版", description: "约 5 分钟", price: fastPrice, recommended: true },
     { value: "standard", label: "精致版", description: "约 40 分钟", price: 15 },
   ]} />;
 }

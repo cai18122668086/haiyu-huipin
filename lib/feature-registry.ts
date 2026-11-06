@@ -513,7 +513,7 @@ export const FEATURE_REGISTRY = [
     featured: true,
     inputHint: "多角度商品图；参考图可选",
     outputHint: "按规划逐页交付",
-    guidance: "页面内选择国内或国际市场；现有国际稳定链路保持不变。",
+    guidance: "先选择国内或国际市场，上传清晰的多角度商品图；如有版式或风格要求，可补充参考图和文案说明。",
   },
   {
     id: "domestic-main-image",

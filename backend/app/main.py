@@ -51,6 +51,7 @@ from .inspiration_routes import router as inspiration_router
 from .legacy_detail_proxy import LegacyDetailProxy
 from .models import WorkspaceLimitRecord
 from .processing_consent_routes import router as processing_consent_router
+from .promotion_routes import router as promotion_router
 from .replica import router as replica_router
 from .routes_v1 import router as v1_router
 from .schemas_v1 import HealthResponse
@@ -548,6 +549,7 @@ def create_app(
     application.include_router(inspiration_router)
     application.include_router(ecommerce_router)
     application.include_router(replica_router)
+    application.include_router(promotion_router)
     application.include_router(ecommerce_account_router)
     application.include_router(ecommerce_crawl_tasks_router)
     application.include_router(ecommerce_worker_router)
