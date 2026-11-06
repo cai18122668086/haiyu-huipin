@@ -1,0 +1,14 @@
+{
+  "revision": "525d8d1fcc7d8a0ec3dfa710f3d9e5f0f64cf8fe",
+  "backend_id": "sha256:daec83703235d85535a4622a64ee0f510685a2695916e9b2b52bdd1195a8b09d",
+  "frontend_id": "sha256:b60c225550fb77c3db1eabb32a4a85010ab1e91e0c0d4e9022a093a16959c3bc",
+  "backend_sources_checked": 654,
+  "frontend_sources_checked": 291,
+  "baseline_differences": [
+    "app/promotion_routes.py",
+    "app/replica.py",
+    "app/replica_fast_provider.py",
+    "app/replica_free_restart.py",
+    "app/routes_v1.py"
+  ]
+}

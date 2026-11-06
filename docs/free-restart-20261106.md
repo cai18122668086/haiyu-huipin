@@ -11,3 +11,13 @@ The source job lock and deterministic retry identity make repeated or concurrent
 Validation: synthetic route tests cover one and ten references, initial failure, no implicit image calls, explicit free restart, successful delivery, unchanged failed source, preserved receipt, zero reserved/settled credits, duplicate clicks, denied spoof/paid access and bounded repeated failure. An isolated PostgreSQL test exercises four simultaneous clicks. Frontend tests cover eligibility and retained unknown-outcome fences. Production candidates use the existing full payment, rewards, membership, replica and provider regression suite against a disposable database.
 
 Release tooling in `deploy/free-restart-20261106` layers the fix on the already deployed provider-failure release, verifies all application source hashes and preserves schema 20261106_0040, runtime settings and campaign starts. Activation requires healthy candidates, no active customer tasks, a validated database backup and automatic rollback on verification failure.
+
+## Production verification
+
+Published revision `525d8d1fcc7d8a0ec3dfa710f3d9e5f0f64cf8fe` to `huipin-free-restart/backend` and `huipin-free-restart/frontend`, with release directory `/srv/huipin-free-restart-20261106-525d8d1fcc7d`. All four application services are healthy. The validated pre-cutover database backup is 4,618,661 bytes; schema, campaigns and runtime were preserved.
+
+Validation passed: 357 isolated candidate tests, 254 frontend tests after a production build, 90 local targeted backend tests (the PostgreSQL-only test was skipped locally and passed in the isolated candidate), Ruff, targeted Mypy, TypeScript and targeted ESLint. The first candidate's PostgreSQL concurrency test caught a row-lock wait blocking the event loop. The final endpoint runs blocking database work in a worker thread and commits the idempotent return before releasing it; four simultaneous clicks now converge on one zero-credit replacement.
+
+The actual failed ten-image task was checked read-only after deployment: free restart is available, original status remains failed, actual/reserved/settled credits are all zero, its grant/source are preserved, and no replacement jobs have been created. The authenticated original session now visibly shows one remaining free task, one enabled whole-task free generation button and ten enabled per-card free generation buttons. The incorrect 80-credit estimate is absent. No customer generation was requested and no old images were retrieved.
+
+Public, redacted release evidence is in `verification/free-restart-20261106/`; database backups and runtime snapshots remain only on the server.
