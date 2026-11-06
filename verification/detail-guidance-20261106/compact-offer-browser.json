@@ -1,0 +1,64 @@
+{
+  "sizes": [
+    {
+      "width": 1920,
+      "height": 62,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "height": 62,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "height": 62,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "height": 62,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "height": 62,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 640,
+      "height": 66,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "height": 66,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    },
+    {
+      "width": 320,
+      "height": 66,
+      "leftDelta": 0,
+      "rightDelta": 0,
+      "overflow": false
+    }
+  ],
+  "internalCopyRemoved": true,
+  "dialogAligned": true,
+  "claimOpensRegistration": true,
+  "pageErrors": []
+}
