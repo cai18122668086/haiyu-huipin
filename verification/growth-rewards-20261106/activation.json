@@ -1,0 +1,34 @@
+{
+  "status": "activated",
+  "revision": "565417804eacf806bf5a898687c04712382242f1",
+  "backend_image": "huipin-growth/backend:565417804eacf806bf5a898687c04712382242f1",
+  "frontend_image": "huipin-growth/frontend:565417804eacf806bf5a898687c04712382242f1",
+  "migration": "20261106_0039",
+  "campaign": [
+    {
+      "id": "daily-checkin-v1",
+      "enabled": true,
+      "starts_at": "2026-11-06 06:36:38.111993+00"
+    },
+    {
+      "id": "referral-credits-v1",
+      "enabled": true,
+      "starts_at": "2026-11-06 06:36:38.111993+00"
+    }
+  ],
+  "welcome_campaign_preserved": true,
+  "backup_bytes": 4561485,
+  "backup_sha256": "c3d229b26c6694155f74e2b6b706954ce26f789b4b13a81fafaee45892fd4719",
+  "backup_catalog_verified": true,
+  "runtime_environment_preserved": true,
+  "other_services_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 282,
+  "public_pages": 20,
+  "public_tools": 16,
+  "private_pages": 4,
+  "crawl_files": 2,
+  "cache_checks": 4,
+  "illustration_assets": 7,
+  "paired_tools": 16
+}

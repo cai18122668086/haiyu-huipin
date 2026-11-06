@@ -1,0 +1,17 @@
+{
+  "revision": "565417804eacf806bf5a898687c04712382242f1",
+  "backend_id": "sha256:3ea7f849106086657acd2a2c6b2714aca902c7f13f41504f7b4b874c3ecf015b",
+  "frontend_id": "sha256:b7fc0eda727a902a2a00de1cbf3c3a80252928011711bfe36e1e3ae936ecf835",
+  "backend_sources_checked": 651,
+  "frontend_sources_checked": 282,
+  "baseline_differences": [
+    "app/credit_memberships.py",
+    "app/credit_payment_routes.py",
+    "app/credit_refunds.py",
+    "app/growth_rewards.py",
+    "app/growth_routes.py",
+    "app/main.py",
+    "app/models.py",
+    "app/phone_accounts.py"
+  ]
+}

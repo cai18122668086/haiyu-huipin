@@ -1,0 +1,24 @@
+{
+  "exit_code": 0,
+  "image_id": "sha256:3ea7f849106086657acd2a2c6b2714aca902c7f13f41504f7b4b874c3ecf015b",
+  "isolated_database": true,
+  "tests": [
+    "tests/test_growth_rewards.py",
+    "tests/test_growth_rewards_postgres.py",
+    "tests/test_replica_welcome.py",
+    "tests/test_replica_welcome_postgres.py",
+    "tests/test_credit_migration_chain.py",
+    "tests/test_credit_payments_postgres.py",
+    "tests/test_credit_payments.py",
+    "tests/test_credit_memberships.py",
+    "tests/test_credit_refunds.py",
+    "tests/test_customer_credit_billing.py",
+    "tests/test_payment_reconciliation.py",
+    "tests/test_account_payment_followup.py",
+    "tests/test_phone_passwords.py",
+    "tests/test_auth_external.py",
+    "tests/test_replica.py",
+    "tests/test_replica_fast.py",
+    "tests/test_replica_billing.py"
+  ]
+}

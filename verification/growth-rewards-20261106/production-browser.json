@@ -1,0 +1,29 @@
+{
+  "site": "https://huipin.haiyushuke.com/account#rewards",
+  "desktopCardsVisible": true,
+  "accountShortcutsVisible": true,
+  "validityDays": 30,
+  "mobile": {
+    "cards": [
+      {
+        "left": 16,
+        "right": 374.3999938964844
+      },
+      {
+        "left": 16,
+        "right": 374.3999938964844
+      }
+    ],
+    "checkinButtonHeight": 44.10000228881836,
+    "documentWidth": 390,
+    "viewportWidth": 390
+  },
+  "mobileMenu": {
+    "insideViewport": true,
+    "left": 38.400001525878906,
+    "right": 378.4000015258789
+  },
+  "temporaryViewportRestored": true,
+  "realCheckinClaimed": false,
+  "realPaymentMade": false
+}
