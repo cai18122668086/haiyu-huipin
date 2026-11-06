@@ -4864,6 +4864,132 @@
         "title": "IntakeConflictResolution",
         "type": "object"
       },
+      "InvitationCenter": {
+        "properties": {
+          "earned_credits": {
+            "title": "Earned Credits",
+            "type": "integer"
+          },
+          "invite_code": {
+            "title": "Invite Code",
+            "type": "string"
+          },
+          "invite_url": {
+            "title": "Invite Url",
+            "type": "string"
+          },
+          "invited_count": {
+            "title": "Invited Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InvitationFriend"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "paid_count": {
+            "title": "Paid Count",
+            "type": "integer"
+          },
+          "refunded_count": {
+            "title": "Refunded Count",
+            "type": "integer"
+          },
+          "reward_percent": {
+            "title": "Reward Percent",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unpaid_count": {
+            "title": "Unpaid Count",
+            "type": "integer"
+          },
+          "validity_days": {
+            "title": "Validity Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "invite_code",
+          "invite_url",
+          "invited_count",
+          "paid_count",
+          "unpaid_count",
+          "refunded_count",
+          "earned_credits",
+          "reward_percent",
+          "validity_days",
+          "total",
+          "offset",
+          "limit",
+          "items"
+        ],
+        "title": "InvitationCenter",
+        "type": "object"
+      },
+      "InvitationFriend": {
+        "properties": {
+          "earned_credits": {
+            "title": "Earned Credits",
+            "type": "integer"
+          },
+          "friend": {
+            "title": "Friend",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_paid_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Paid At"
+          },
+          "payment_status": {
+            "enum": [
+              "unpaid",
+              "paid",
+              "refunded"
+            ],
+            "title": "Payment Status",
+            "type": "string"
+          },
+          "registered_at": {
+            "title": "Registered At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "friend",
+          "registered_at",
+          "payment_status",
+          "last_paid_at",
+          "earned_credits"
+        ],
+        "title": "InvitationFriend",
+        "type": "object"
+      },
       "JobAssetResponse": {
         "properties": {
           "asset_id": {
@@ -6006,6 +6132,78 @@
           "currency"
         ],
         "title": "MoneyAmount",
+        "type": "object"
+      },
+      "NewcomerOffer": {
+        "properties": {
+          "amount_fen": {
+            "title": "Amount Fen",
+            "type": "integer"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "fast_images": {
+            "title": "Fast Images",
+            "type": "integer"
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready At"
+          },
+          "server_now": {
+            "title": "Server Now",
+            "type": "string"
+          },
+          "should_show": {
+            "title": "Should Show",
+            "type": "boolean"
+          },
+          "trial_viewed": {
+            "title": "Trial Viewed",
+            "type": "boolean"
+          },
+          "validity_days": {
+            "title": "Validity Days",
+            "type": "integer"
+          },
+          "window_ends_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Ends At"
+          }
+        },
+        "required": [
+          "eligible",
+          "trial_viewed",
+          "should_show",
+          "server_now",
+          "ready_at",
+          "window_ends_at",
+          "amount_fen",
+          "credits",
+          "fast_images",
+          "validity_days"
+        ],
+        "title": "NewcomerOffer",
         "type": "object"
       },
       "PasswordChangeBody": {
@@ -7600,6 +7798,21 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ViewedTrial": {
+        "properties": {
+          "session_id": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "ViewedTrial",
         "type": "object"
       },
       "WorkerAccountSessionRequest": {
@@ -15920,6 +16133,93 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace_id}/invitations": {
+      "get": {
+        "operationId": "invitations_api_v1_workspaces__workspace_id__invitations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "unpaid",
+                "paid",
+                "refunded"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationCenter"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Invitations",
+        "tags": [
+          "growth center"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/jobs": {
       "get": {
         "operationId": "list_jobs_api_v1_workspaces__workspace_id__jobs_get",
@@ -18023,6 +18323,157 @@
         "summary": "Materialize Model Pose Asset",
         "tags": [
           "assets"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer": {
+      "get": {
+        "operationId": "newcomer_offer_api_v1_workspaces__workspace_id__promotions_newcomer_offer_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewcomerOffer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Newcomer Offer",
+        "tags": [
+          "growth center"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/impression": {
+      "post": {
+        "operationId": "impression_api_v1_workspaces__workspace_id__promotions_newcomer_offer_impression_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewcomerOffer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Impression",
+        "tags": [
+          "growth center"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/viewed": {
+      "post": {
+        "operationId": "trial_viewed_api_v1_workspaces__workspace_id__promotions_newcomer_offer_viewed_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewedTrial"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewcomerOffer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Trial Viewed",
+        "tags": [
+          "growth center"
         ]
       }
     },

@@ -43,3 +43,5 @@
 .skeleton { height:270px;border-radius:16px;background:#f1edf6; }
 @media(max-width:700px){.cards{grid-template-columns:1fr;gap:16px}.card{padding:20px}.amount{margin-top:18px}.amount strong{font-size:40px}.card .description{margin-bottom:15px}.statistics{margin-bottom:18px}.root .action{margin-top:5px}.history{margin-top:26px}}
 @media(prefers-reduced-motion:reduce){.root .action{transition:none}.root .action:hover:not(:disabled){transform:none}}
+
+.root a.action{text-decoration:none}

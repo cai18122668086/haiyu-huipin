@@ -1594,6 +1594,7 @@ class ReplicaWelcomeGrantRecord(TimestampMixin, Base):
 class CreditPurchaseRecord(TimestampMixin, Base):
     __tablename__ = "credit_purchases"
     __table_args__ = (
+        Index("ix_credit_purchases_buyer_status", "created_by_user_id", "status"),
         UniqueConstraint(
             "workspace_id",
             "created_by_user_id",
@@ -1898,3 +1899,15 @@ class ReferralReversalRecord(TimestampMixin, Base):
         primary_key=True,
     )
     source_credits: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+
+class NewcomerOfferRecord(TimestampMixin, Base):
+    __tablename__ = "newcomer_offer_views"
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), primary_key=True
+    )
+    session_id: Mapped[str] = mapped_column(String(40), nullable=False)
+    first_viewed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    last_shown_window: Mapped[int] = mapped_column(Integer, default=-1, nullable=False)

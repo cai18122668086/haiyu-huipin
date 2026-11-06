@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCreationSummary } from "@/features/jobs/api/creation-summary";
 import { AccountStatusMenu } from "./account-status-menu";
+import { RewardsNavigation } from "./rewards-navigation";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
 import { getFeatureByRoute } from "@/lib/feature-registry";
 import {
@@ -175,11 +176,12 @@ export function TopNavigation({
           pathname={pathname}
         />
         <div className="top-nav__actions">
+          <RewardsNavigation />
           <AnnouncementBanner />
           <button ref={taskTriggerRef} className={`task-trigger ${taskStateClass}`} onClick={() => workspace ? onOpenTasks() : requestLogin("/jobs")} aria-label={taskAriaLabel} aria-controls="task-drawer" aria-expanded={taskOpen} aria-haspopup="dialog">
             <PanelRightOpen size={18} /><span>{taskLabel}</span>{activeCount || errorCount ? <i>{activeCount || errorCount}</i> : null}
           </button>
-          {workspace ? <AccountStatusMenu /> : <Link href={loginHref(pathname)} onClick={event => { event.preventDefault(); requestLogin(pathname); }} className="user-menu">登录 / 注册</Link>}
+          {workspace ? <AccountStatusMenu /> : <Link href={loginHref(pathname)} onClick={event => { event.preventDefault(); requestLogin(pathname); }} className="user-menu" aria-label="登录 / 注册"><span className={styles.loginDesktop}>登录 / 注册</span><span className={styles.loginMobile}>登录</span></Link>}
         </div>
       </div>
     </header>

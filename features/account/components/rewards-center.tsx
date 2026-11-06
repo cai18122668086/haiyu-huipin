@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "@/components/seo-link";
-import { ArrowUpRight, CalendarCheck2, Check, Copy, Gift, LoaderCircle, UsersRound } from "lucide-react";
+import { ArrowUpRight, CalendarCheck2, Check, Gift, LoaderCircle, UsersRound } from "lucide-react";
 import { useCheckin, useRewards } from "@/features/billing/api/rewards";
 import { errorMessage } from "@/lib/api/request";
 import styles from "./rewards-center.module.css";
@@ -14,8 +14,6 @@ export function RewardsCenter({ workspaceId }: { workspaceId: string }) {
   const rewards = useRewards(workspaceId);
   const claim = useCheckin(workspaceId);
   const [message, setMessage] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [copyFallback, setCopyFallback] = useState(false);
   const data = rewards.data;
 
   async function checkin() {
@@ -24,16 +22,6 @@ export function RewardsCenter({ workspaceId }: { workspaceId: string }) {
       const result = await claim.mutateAsync();
       setMessage(result.created ? result.adjusted_credits ? `签到完成 · ${result.credited_credits} 积分到账` : `${result.credited_credits} 积分已到账` : "今日已签到");
     } catch (error) { setMessage(errorMessage(error)); }
-  }
-
-  async function copy() {
-    if (!data?.invite_url) return;
-    try {
-      await navigator.clipboard.writeText(data.invite_url);
-      setCopied(true);
-      setCopyFallback(false);
-      setMessage("链接已复制，发给好友即可");
-    } catch { setCopyFallback(true); }
   }
 
   if (rewards.isPending) return <div className={`page-content ${styles.root}`} aria-busy="true"><div className={styles.cards}><div className={styles.skeleton} /><div className={styles.skeleton} /></div></div>;
@@ -55,8 +43,7 @@ export function RewardsCenter({ workspaceId }: { workspaceId: string }) {
         <div className={styles.amount}><strong>{data.reward_percent}<small>%</small></strong><span>返赠积分</span></div>
         <p className={styles.description}>积分包与会员购买，均可获得奖励</p>
         <div className={styles.statistics}><span>已邀请 <b>{number(data.invited_count)}</b> 人</span><span>累计奖励 <b>{number(data.earned_credits)}</b> 积分</span></div>
-        <button type="button" className={styles.action} onClick={() => void copy()}>{copied ? <><Check size={17} />链接已复制</> : <><Copy size={16} />复制邀请链接</>}</button>
-        {copyFallback && <label className={styles.copyFallback}>长按或选择复制<input readOnly aria-label="邀请链接" value={data.invite_url ?? ""} onFocus={event => event.currentTarget.select()} /></label>}
+        <Link href="/account#invitations" className={styles.action}>进入邀请中心<ArrowUpRight size={17} /></Link>
       </section>}
     </div>
     <div className={styles.footnote}>

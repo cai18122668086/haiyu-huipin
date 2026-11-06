@@ -62,7 +62,7 @@ export function AccountStatusMenu() {
         </div>
         {(rewards.data?.checkin_enabled || rewards.data?.referral_enabled) && <div className={styles.rewardActions}>
           {rewards.data.checkin_enabled && <button type="button" disabled={rewards.data.checked_in || checkin.isPending} onClick={() => checkin.mutate()}>{checkin.isPending ? <LoaderCircle className="spin" size={15} /> : rewards.data.checked_in ? <Check size={15} /> : <CalendarCheck2 size={15} />}{rewards.data.checked_in ? "今日已签到" : `签到 +${rewards.data.daily_credits}`}</button>}
-          {rewards.data.referral_enabled && <Link href="/account#rewards" onClick={() => setOpen(false)}><Gift size={15} />邀请返 {rewards.data.reward_percent}% 积分</Link>}
+          {rewards.data.referral_enabled && <Link href="/account#invitations" onClick={() => setOpen(false)}><Gift size={15} />邀请中心 · 返 {rewards.data.reward_percent}% 积分</Link>}
         </div>}
         {checkin.isError && <p className={styles.rewardError} role="alert">{errorMessage(checkin.error)}</p>}
         {(!!member.data?.monthly_credits || !!member.data?.expiring_credits) && <details className={styles.entitlements}>

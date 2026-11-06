@@ -2,9 +2,11 @@
 
 import Link from "@/components/seo-link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { authErrorMessage, normalizeLoginPhone, sendPhoneLoginCode, signInWithPhoneCode } from "@/features/auth/api/auth";
 import { LEGAL_ROUTES } from "@/lib/auth/routes";
+import { readInvitationCode, subscribeInvitationCode } from "@/lib/auth/invitation";
+import invitationStyles from "./phone-invitation.module.css";
 
 export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: string; flow?: "login" | "register" | "reset" }) {
   const router = useRouter();
@@ -19,6 +21,9 @@ export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: 
   const [notice, setNotice] = useState<string>();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [manualInvitationCode, setInvitationCode] = useState<string | null>(null);
+  const capturedInvitationCode = useSyncExternalStore(subscribeInvitationCode, readInvitationCode, () => undefined);
+  const invitationCode = manualInvitationCode ?? capturedInvitationCode ?? "";
   const submissionLocked = useRef(false);
   const [completed, setCompleted] = useState(false);
   const needsPassword = flow !== "login";
@@ -58,10 +63,11 @@ export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: 
     if (!accepted) { setError("请先阅读并同意用户协议和隐私政策。"); return; }
     if (!sentPhone || sentPhone !== normalizeLoginPhone(phone)) { setError("请先获取当前手机号的验证码。"); return; }
     if (needsPassword && (!validPassword || password !== confirmation)) { setError("请设置包含字母和数字的 8 至 99 位密码，并确保两次输入一致。"); return; }
+    if (flow === "register" && invitationCode && !/^HY[A-F0-9]{10}$/.test(invitationCode)) { setError("请输入HY开头的12位邀请码，或留空继续注册。"); return; }
     submissionLocked.current = true;
     setSubmitting(true);
     try {
-      const result = await signInWithPhoneCode(code, flow, needsPassword ? password : undefined);
+      const result = await signInWithPhoneCode(code, flow, needsPassword ? password : undefined, flow === "register" ? invitationCode : undefined);
       if (result.status === "OK") { setCompleted(true); router.replace(returnTo); router.refresh(); return; }
       submissionLocked.current = false;
       if (result.status === "SIGN_IN_UP_NOT_ALLOWED") setError(result.reason);
@@ -85,6 +91,7 @@ export function PhoneLoginForm({ returnTo = "/", flow = "login" }: { returnTo?: 
       <label className="auth-field"><span>设置密码</span><input aria-label="设置密码" autoComplete="new-password" type="password" minLength={8} maxLength={99} placeholder="8–99 位，包含字母和数字" required value={password} disabled={busy} onChange={(event) => setPassword(event.target.value)} /></label>
       <label className="auth-field"><span>确认密码</span><input aria-label="确认密码" autoComplete="new-password" type="password" maxLength={99} placeholder="请再次输入密码" required value={confirmation} disabled={busy} onChange={(event) => setConfirmation(event.target.value)} /></label>
     </> : null}
+    {flow === "register" && <details className={invitationStyles.field}><summary>邀请码（选填）{invitationCode && <span>已填写</span>}</summary><label><span>好友邀请码</span><input aria-label="邀请码" autoComplete="off" maxLength={12} placeholder="填写好友的12位邀请码" value={invitationCode} disabled={busy} onChange={event=>{setInvitationCode(event.target.value.replace(/[^A-Za-z0-9]/g,"").toUpperCase());setError(undefined);}} /></label></details>}
     {notice ? <p className="sms-notice" role="status">{notice}</p> : null}
     {error ? <p className="auth-form__error" role="alert">{error}</p> : null}
     <button className="auth-button auth-button--primary auth-button--full" disabled={!validPhone || code.length !== 6 || !accepted || busy || !sentPhone || (needsPassword && (!validPassword || password !== confirmation))} type="submit">{submitting ? "正在验证…" : flow === "register" ? "注册并登录" : flow === "reset" ? "重置密码" : "登录 / 注册"}</button>

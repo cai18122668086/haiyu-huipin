@@ -1,6 +1,8 @@
 "use client";
 import { SupportCases } from "@/components/support-cases";
 import { AccountStatusMenu } from "@/components/account-status-menu";
+import { RewardsNavigation } from "@/components/rewards-navigation";
+import { InvitationCenter } from "./invitation-center";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
 import { RewardsCenter } from "./rewards-center";
@@ -31,6 +33,7 @@ import {
   FileText,
   FolderOpen,
   Gift,
+  UsersRound,
   Image as ImageIcon,
   Layers3,
   LayoutDashboard,
@@ -83,6 +86,7 @@ type Page =
   | "overview"
   | "membership"
   | "rewards"
+  | "invitations"
   | "credits"
   | "orders"
   | "creations"
@@ -93,6 +97,7 @@ const pages: { id: Page; label: string; icon: LucideIcon; group?: string }[] = [
   { id: "overview", label: "账户概览", icon: LayoutDashboard },
   { id: "membership", label: "会员与充值", icon: Crown },
   { id: "rewards", label: "我的福利", icon: Gift },
+  { id: "invitations", label: "邀请中心", icon: UsersRound },
   { id: "credits", label: "积分明细", icon: Coins },
   { id: "orders", label: "订单与发票", icon: FileText },
   { id: "creations", label: "创作记录", icon: Layers3, group: "我的创作" },
@@ -101,6 +106,7 @@ const pages: { id: Page; label: string; icon: LucideIcon; group?: string }[] = [
   { id: "settings", label: "账户设置", icon: Settings2, group: "其他" },
 ];
 const subtitles: Record<Page, string> = {
+  invitations: "分享好工具，每一份邀请都有回响。",
   rewards: "签到与邀请奖励，都在这里。",
   overview: "管理你的创作、积分与会员，一切都在这里。",
   membership: "选择适合你的创作节奏，让每一次上新更从容。",
@@ -356,7 +362,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
               海宇绘品<small>HAIYU HUIPIN</small>
             </span>
           </Link>
-          <div className="topbar-right"><Link className="account-button" href="/jobs">任务中心</Link><AccountStatusMenu />
+          <div className="topbar-right"><RewardsNavigation /><Link className={`account-button ${styles.taskEntry}`} href="/jobs" aria-label="任务中心"><span className={styles.desktopTaskLabel}>任务中心</span><span className={styles.mobileTaskLabel}>任务</span></Link><AccountStatusMenu />
             <button
               ref={menuRef}
               className="icon-button mobile-menu"
@@ -382,7 +388,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
             个人中心<span>MY SPACE</span>
           </div>
           <nav aria-label="个人中心导航">
-            {pages.filter(item => item.id !== "rewards" || rewards.data?.checkin_enabled || rewards.data?.referral_enabled).map((item) => (
+            {pages.filter(item => item.id === "invitations" ? rewards.data?.referral_enabled : item.id !== "rewards" || rewards.data?.checkin_enabled || rewards.data?.referral_enabled).map((item) => (
               <div key={item.id}>
                 {item.group && <div className="nav-group">{item.group}</div>}
                 <button
@@ -430,6 +436,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
             />
           )}
           {page === "rewards" && <RewardsCenter workspaceId={workspaceId} />}
+          {page === "invitations" && <InvitationCenter workspaceId={workspaceId} />}
           {page === "credits" && (
             <Ledger workspaceId={workspaceId} recharge={recharge} />
           )}
@@ -705,6 +712,17 @@ function Membership({
     create = useCreatePurchase(workspaceId);
   const currentMembership = useMembership(workspaceId);
   const newcomer = catalog.data?.packages.find((product) => product.first_purchase_only);
+  const offerHandled = useRef(false);
+  useEffect(() => {
+    if (!newcomer || !catalog.data?.enabled || offerHandled.current || new URLSearchParams(window.location.search).get("offer") !== "newcomer") return;
+    offerHandled.current = true;
+    create.newIntent();
+    setChannel(catalog.data.channels[0] ?? "alipay");
+    setSelected(newcomer);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("offer");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, [newcomer, catalog.data, create]);
   const products =
     catalog.data?.packages.filter((pack) =>
       !pack.first_purchase_only && (tab === "pack"

@@ -47,6 +47,7 @@ from .ecommerce_routes import router as ecommerce_router
 from .ecommerce_session import EcommerceSessionManager
 from .ecommerce_worker_routes import router as ecommerce_worker_router
 from .errors import ApiError
+from .growth_center_routes import router as growth_center_router
 from .growth_routes import router as growth_router
 from .inspiration_routes import router as inspiration_router
 from .legacy_detail_proxy import LegacyDetailProxy
@@ -552,6 +553,7 @@ def create_app(
     application.include_router(replica_router)
     application.include_router(promotion_router)
     application.include_router(growth_router)
+    application.include_router(growth_center_router)
     application.include_router(ecommerce_account_router)
     application.include_router(ecommerce_crawl_tasks_router)
     application.include_router(ecommerce_worker_router)

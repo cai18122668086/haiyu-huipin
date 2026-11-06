@@ -4970,3 +4970,5 @@
     padding: 18px;
   }
 }
+
+.taskEntry{white-space:nowrap}.mobileTaskLabel{display:none}@media(max-width:640px){.desktopTaskLabel{display:none}.mobileTaskLabel{display:inline}}

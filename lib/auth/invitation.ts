@@ -20,6 +20,7 @@ export function captureInvitation(search: string) {
   try {
     if (parseInvitation(window.localStorage.getItem(KEY))) return;
     window.localStorage.setItem(KEY, JSON.stringify({ code, capturedAt: Date.now() }));
+    if (typeof window.dispatchEvent === "function") window.dispatchEvent(new Event("huipin:invitation-change"));
   } catch { /* Storage can be unavailable in private or restricted browsers. */ }
 }
 
@@ -30,4 +31,11 @@ export function readInvitationCode(): string | undefined {
 
 export function clearInvitationCode() {
   try { window.localStorage.removeItem(KEY); } catch { /* Registration already succeeded. */ }
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") window.dispatchEvent(new Event("huipin:invitation-change"));
+}
+
+export function subscribeInvitationCode(notify: () => void) {
+  window.addEventListener("storage", notify);
+  window.addEventListener("huipin:invitation-change", notify);
+  return () => { window.removeEventListener("storage", notify); window.removeEventListener("huipin:invitation-change", notify); };
 }
