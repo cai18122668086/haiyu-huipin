@@ -6,11 +6,13 @@ import { RegisterForm } from "@/features/auth/components/register-form";
 import { ForgotPasswordForm } from "@/features/auth/components/password-reset-form";
 import { useBodyScrollLock } from "@/lib/hooks/use-body-scroll-lock";
 import { AUTH_ROUTES } from "@/lib/auth/routes";
+import { ReplicaWelcomeOffer, REPLICA_OFFER_PREVIEW_QUERY } from "../replica-welcome-offer";
 import styles from "./auth-shell.module.css";
 
 export function AuthDialog({ returnTo, onClose }: { returnTo: string; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [view, setView] = useState<"login" | "register" | "reset">("login");
+  const welcomePreview = process.env.NODE_ENV !== "production" && new URL(returnTo, "http://localhost").searchParams.get(REPLICA_OFFER_PREVIEW_QUERY) === "1";
+  const [view, setView] = useState<"login" | "register" | "reset">(welcomePreview ? "register" : "login");
   useBodyScrollLock(true);
   useEffect(() => {
     const dialog = ref.current;
@@ -34,6 +36,7 @@ export function AuthDialog({ returnTo, onClose }: { returnTo: string; onClose: (
     onClick={(event) => { const r = event.currentTarget.getBoundingClientRect(); if (event.target === event.currentTarget && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) onClose(); }}>
     <button type="button" className={styles.close} onClick={onClose} aria-label="关闭登录">×</button>
     <div className={styles.heading}><h2 id="login-dialog-title">{title}</h2>{view === "login" && <p>让每一个好商品，都有一张好图片。</p>}</div>
+    {welcomePreview && view !== "reset" && <ReplicaWelcomeOffer compact />}
     {view === "register" ? <RegisterForm returnTo={returnTo} /> : view === "reset" ? <ForgotPasswordForm returnTo={returnTo} /> : <LoginForm returnTo={returnTo} />}
     <p className={styles.brandNote}>海宇绘品 · HAIYU HUIPIN</p>
   </dialog>;

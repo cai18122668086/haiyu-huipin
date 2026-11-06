@@ -22,6 +22,7 @@ import {
 import { HOT_FEATURE_IDS } from "@/lib/feature-priorities";
 import { HaiyuStartHub } from "@/components/haiyu-start-hub";
 import { FeatureCaseArt } from "./feature-case-art";
+import { ReplicaWelcomeOfferPreview } from "./replica-welcome-offer";
 import { getFeatureCaseArt } from "@/lib/feature-case-art";
 
 const FEATURE_PRESENTATION_OVERRIDES: Record<
@@ -286,6 +287,7 @@ export function ToolDirectory() {
 
   return (
     <section className="focus-home">
+      <ReplicaWelcomeOfferPreview />
       <HaiyuHero />
       <HaiyuStartHub />
 
