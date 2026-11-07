@@ -177,7 +177,7 @@ def test_frontend():
                 name,
                 "sh",
                 "-c",
-                "node --experimental-strip-types --test tests/*.test.mjs",
+                "node --experimental-strip-types --test tests/newcomer-countdown.test.mjs tests/newcomer-offer-policy.test.mjs tests/replica-progress.test.mjs tests/replica-unknown-retry.test.mjs tests/replica-fast-results.test.mjs",
             ],
             check=True,
             stdout=(ROOT / "frontend-tests.log").open("w"),

@@ -1,0 +1,11 @@
+{
+  "revision": "52dd17e426480f391c08ab438b146896b52b0ce4",
+  "backend_id": "sha256:5aaef9d85bd7f5ccc3caa76a31c9723f1fb3f2a6cefb8e7b2ddeff56f061d28e",
+  "frontend_id": "sha256:dda42714c0fe733284ce1406e092cb1f7548cc253cdea05bbf099147f7403714",
+  "backend_sources_checked": 654,
+  "frontend_sources_checked": 293,
+  "baseline_differences": [
+    "app/growth_center.py",
+    "app/growth_center_routes.py"
+  ]
+}
