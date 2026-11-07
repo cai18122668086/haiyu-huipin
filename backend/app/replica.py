@@ -90,10 +90,14 @@ class AnalysisRequest(BaseModel):
     references: list[ReferenceChoice] = Field(min_length=1, max_length=20)
     platform_code: str = Field(default="tmall", min_length=1, max_length=32)
     language: str = Field(default="zh-CN", min_length=2, max_length=16)
-    facts: str = Field(default="", max_length=4000)
+    facts: str = Field(default="", max_length=20000)
     replication_method: Literal["exact", "style"] | None = None
     replica_speed: Literal["standard", "fast"] = "standard"
     auto_start_after_plan: bool = False
+    # The estimate shown at submission time. Kept so the automatic submission
+    # path can refuse to spend beyond what the customer saw, even though the
+    # billable total is now capped by the submitted reference count.
+    credit_budget: int | None = Field(default=None, ge=0, le=1000000)
 
     @model_validator(mode="after")
     def validate_roles(self) -> AnalysisRequest:
@@ -1360,6 +1364,9 @@ def analyse(
     if not request.app.state.settings.reference_remix_provider_enabled:
         raise ApiError(503, "REPLICA_DISABLED", "复刻生成服务暂未开放，请稍后再试。")
     values = payload.model_dump(mode="json")
+    if payload.credit_budget is None:
+        # Absent is not the same request as budget=0 for cached identities.
+        values.pop("credit_budget", None)
     if payload.replica_speed == "standard":
         # Keep original-edition request identities byte-compatible with old clients.
         values.pop("replica_speed")
@@ -1668,6 +1675,7 @@ def confirm(
     row.payload = values
     session.commit()
     jobs = list(values.get("job_ids", []))
+    billable = _billable_screen_counts(values)
     request.state.replica_session_id = document_id
     for index, plan in enumerate(values["plans"]):
         if index < len(jobs):
@@ -1695,6 +1703,7 @@ def confirm(
                     else [],
                     "aspect_ratio": plan["reference"]["aspect_ratio"],
                     "image_count": 1,
+                    "billable_image_count": billable[index],
                     "execution_mode": "direct_prompt",
                     "inspiration_product_first": True,
                     "quality": "high",
@@ -1724,6 +1733,23 @@ def confirm(
     )
     session.commit()
     return _wire(row)
+
+
+def _billable_screen_counts(values: dict) -> list[int]:
+    """Split the submitted image count across the planned screens.
+
+    The customer is billed for the reference images they submitted, so a long
+    reference that produced extra screens must not add screens to the bill.
+    ``billable_image_count`` on each screen job caps billing at that share; the
+    shares sum to exactly the submitted count. When planning produced fewer
+    screens than submissions, every screen bills one image.
+    """
+    screens = len(values["plans"])
+    submitted = len(
+        {str(item.get("asset_id")) for item in values.get("references") or []}
+    )
+    billable = screens if submitted <= 0 else min(screens, submitted)
+    return [1 if index < billable else 0 for index in range(screens)]
 
 
 def _confirm_native(
@@ -1804,6 +1830,7 @@ def _confirm_native(
                 "replication_method": method,
                 "replica_plan_hash": payload.plan_hash,
                 "image_count": len(values["plans"]),
+                "billable_image_count": sum(_billable_screen_counts(values)),
                 "platform_code": values["platform_code"],
                 "language": values["language"],
                 "quality": "high",

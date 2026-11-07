@@ -499,3 +499,75 @@ def test_different_jobs_settle_and_release_same_wallet_concurrently(client):
         account = session.get(WorkspaceCreditAccountRecord, WORKSPACE)
         assert account.balance_credits == original - 30
         assert account.reserved_credits == 0
+
+
+@pytest.mark.parametrize(
+    "submitted,screens,expected",
+    [
+        # A long reference split into more screens than were submitted must not
+        # add screens to the bill.
+        (4, 6, 60),
+        (10, 20, 150),
+        # Fewer screens than submissions still bills one image per screen.
+        (5, 5, 75),
+        (6, 4, 60),
+        # Every screen bills when the session recorded no unique reference.
+        (0, 3, 45),
+    ],
+)
+def test_replica_bills_submitted_references_not_split_screens(
+    client, submitted, screens, expected
+):
+    from app.replica import _billable_screen_counts
+
+    values = {
+        "plans": [{"reference": {"asset_id": "a"}} for _ in range(screens)],
+        "references": [{"asset_id": f"ref-{i}"} for i in range(submitted)],
+    }
+    counts = _billable_screen_counts(values)
+    assert len(counts) == screens
+    billable = screens if submitted <= 0 else min(screens, submitted)
+    assert sum(counts) == billable
+    assert sum(counts) * 15 == expected
+
+
+def test_replica_screen_job_reserves_only_its_submitted_share(client):
+    with client.app.state.session_factory() as session:
+        # Two screens were planned from one submitted reference: the first
+        # screen carries the single charge and the extra screen is free.
+        job, items = seed_job(
+            session,
+            kind="reference_remix",
+            count=1,
+            configuration={"settings": {"billable_image_count": 0}},
+        )
+        services.reserve_image_credits(session, WORKSPACE, job)
+        assert job.estimated_credits == 0
+
+        paid, paid_items = seed_job(
+            session,
+            kind="reference_remix",
+            count=1,
+            configuration={"settings": {"billable_image_count": 1}},
+        )
+        services.reserve_image_credits(session, WORKSPACE, paid)
+        assert paid.estimated_credits == 15
+
+
+def test_replica_split_screen_settles_at_the_submitted_cap(client):
+    from app.credit_billing import successful_image_credits
+
+    with client.app.state.session_factory() as session:
+        job, items = seed_job(
+            session,
+            kind="reference_remix",
+            count=2,
+            configuration={"settings": {"billable_image_count": 1}},
+        )
+        services.reserve_image_credits(session, WORKSPACE, job)
+        assert job.estimated_credits == 15
+        for item in items:
+            item.status = "succeeded"
+        session.flush()
+        # Two deliverable outputs exist, but the cap keeps the charge at one.
+        assert successful_image_credits(session, job) == 15

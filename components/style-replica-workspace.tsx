@@ -5,6 +5,7 @@ import { GenerationRecommendation } from "@/components/generation-recommendation
 import { CreditCostHint } from "@/features/billing/components/credit-account";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { WorkspaceVisualPreview } from "./workspace-visual-preview";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,7 +30,7 @@ type AssetChoice = { id: string; name: string };
 type Product = { title: string | null; platform: string; targetPlatform?: string; imageUrls: string[]; descImageUrls: string[]; skuImageUrls: string[] };
 type Plan = { reference: { asset_id: string; title: string; aspect_ratio: string }; analysis: Record<string, unknown>; prompt: string };
 type ExecutionProgress = { post_generation_review?: "disabled"; generated?: number; percentage: number; total: number; reviewed: number; accepted: number; rejected: number; current_module: number; phase: string; modules: { id: string; status: string; attempts: number; reasons: string[] }[] };
-type ReplicaDocument = { id: string; kind: string; status: string; created_at: string; updated_at?: string; payload: { segmentation_restart_available?: boolean; segmentation_repair_available?: boolean; segmentation_diagnostics?: { coverage_valid: boolean; columns: { reference_index: number | null; split_count: number; inventory_count: number; reason?: string }[] }; execution_resume_available?: boolean; error_code?: string; analysis_attempt_id?: string; analysis_resume_available?: boolean; analysis_revision_available?: boolean; analysis_progress?: { stage: string; total: number; planned: number; reviewed: number; accepted: number; pending_corrections: number }; execution_progress?: ExecutionProgress; auto_start_after_plan?: boolean; automatic_submission_error?: string; replica_speed?: "standard" | "fast"; replication_method?: "exact" | "style"; analysis_stage?: string; skill_id?: string; product?: Product; product_asset_ids?: string[]; references?: Plan["reference"][]; plans?: Plan[]; plan_hash?: string; job_ids?: string[]; progress?: number; error?: string; facts?: string; confirmed_instructions?: string[]; submission_complete?: boolean; platform_code?: string; language?: string } };
+type ReplicaDocument = { id: string; kind: string; status: string; created_at: string; updated_at?: string; payload: { segmentation_restart_available?: boolean; segmentation_repair_available?: boolean; segmentation_diagnostics?: { coverage_valid: boolean; columns: { reference_index: number | null; split_count: number; inventory_count: number; reason?: string }[] }; execution_resume_available?: boolean; error_code?: string; analysis_attempt_id?: string; analysis_resume_available?: boolean; analysis_revision_available?: boolean; analysis_progress?: { stage: string; total: number; planned: number; reviewed: number; accepted: number; pending_corrections: number }; execution_progress?: ExecutionProgress; auto_start_after_plan?: boolean; automatic_submission_error?: string; credit_budget?: number; credit_budget_exceeded?: boolean; credit_quote?: { image_count: number; estimated_credits: number }; replica_speed?: "standard" | "fast"; replication_method?: "exact" | "style"; analysis_stage?: string; skill_id?: string; product?: Product; product_asset_ids?: string[]; references?: Plan["reference"][]; plans?: Plan[]; plan_hash?: string; job_ids?: string[]; progress?: number; error?: string; facts?: string; confirmed_instructions?: string[]; submission_complete?: boolean; platform_code?: string; language?: string } };
 const STEPS = ["选图", "分析中", "商品信息", "后台规划", "生成中", "完成"];
 
 async function replicaRequest<T>(workspaceId: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
@@ -52,7 +53,7 @@ function AssetImage({ workspaceId, assetId, className, onClick }: { workspaceId:
 
 }
 
-function ResultCard({ workspaceId, jobId, sessionId, outputIndex = 0, title, onPreview, onStatus, onRetry, retrying, retryWhole = false, resumeWhole = false, fastSuite = false, moduleProgress }: { workspaceId: string; jobId: string; sessionId: string; outputIndex?: number; title: string; onPreview: (url: string) => void; onStatus: (id: string, status: string) => void; onRetry: (id: string) => void; retrying: boolean; retryWhole?: boolean; resumeWhole?: boolean; fastSuite?: boolean; moduleProgress?: ExecutionProgress["modules"][number] }) {
+function ResultCard({ workspaceId, jobId, outputIndex = 0, title, onPreview, onStatus, onRetry, retrying, retryWhole = false, resumeWhole = false, fastSuite = false, moduleProgress }: { workspaceId: string; jobId: string; outputIndex?: number; title: string; onPreview: (url: string) => void; onStatus: (id: string, status: string) => void; onRetry: (id: string) => void; retrying: boolean; retryWhole?: boolean; resumeWhole?: boolean; fastSuite?: boolean; moduleProgress?: ExecutionProgress["modules"][number] }) {
   const job = useJob(workspaceId, jobId);
   const [error, setError] = useState("");
   const data = job.data;
@@ -66,13 +67,20 @@ function ResultCard({ workspaceId, jobId, sessionId, outputIndex = 0, title, onP
     <div className={styles.resultMedia}>{asset ? <AssetImage workspaceId={workspaceId} assetId={asset.asset_id} onClick={onPreview} /> : <div className={styles.generating}>{terminal ? <CircleHelp size={26} /> : <LoaderCircle className="spin" size={28} />}<span>{moduleProgress ? moduleLabel : terminal ? "本张暂未完成" : "正在绘制你的商品"}</span><small>{terminal ? (needsReconciliation ? "原生图请求结果尚未核实，请先找回原任务，避免重复生成。" : resumeWhole ? "已保留当前进度，可继续处理剩余步骤。" : data?.error_message ?? data?.items.find(item => item.error_message)?.error_message) : `${data?.progress ?? 0}% · 可离开页面，稍后在记录中查看`}</small></div>}</div>
     {!!moduleProgress?.reasons.length && <details className={styles.auditReasons}><summary>查看本屏审图原因</summary><ul>{moduleProgress.reasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul></details>}
     <div className={styles.resultMeta}><strong>{title}</strong><span>{data?.status === "completed" ? "已完成" : needsReconciliation ? "待核查" : terminal ? "需重试" : "生成中"}</span></div>
-    <div className={styles.resultActions}>{asset && <button onClick={() => void download()}><Download size={14} />下载</button>}{terminal && !asset && (outputIndex === 0 || fastSuite) && <button disabled={retrying || needsReconciliation} onClick={() => onRetry(jobId)}><RotateCcw size={13} />{needsReconciliation ? "原任务待核查" : retrying ? "正在提交" : resumeWhole ? "继续处理剩余步骤" : fastSuite ? "重试未完成图片" : retryWhole ? "重新复刻整组" : "重新生成"}</button>}<Link href={`/style-replica?sessionId=${encodeURIComponent(sessionId)}`}>查看任务<ChevronRight size={13} /></Link></div>
+    <div className={styles.resultActions}>{asset && <button onClick={() => void download()}><Download size={14} />下载</button>}{terminal && !asset && (outputIndex === 0 || fastSuite) && <button disabled={retrying || needsReconciliation} onClick={() => onRetry(jobId)}><RotateCcw size={13} />{needsReconciliation ? "原任务待核查" : retrying ? "正在提交" : resumeWhole ? "继续处理剩余步骤" : fastSuite ? "重试未完成图片" : retryWhole ? "重新复刻整组" : "重新生成"}</button>}<Link href={`/jobs?jobId=${encodeURIComponent(jobId)}`}>查看任务<ChevronRight size={13} /></Link></div>
     {error && <p className={styles.error}>{error}</p>}
   </article>;
 }
 
 export function StyleReplicaWorkspace() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Read the target document from the router rather than window.location: a
+  // client-side <Link> navigation updates the RSC search params but never
+  // dispatches popstate, so a popstate-only reader silently ignored task jumps.
+  const requestedSessionId = searchParams.get("sessionId")?.trim() || undefined;
+  const requestedJobId = searchParams.get("jobId")?.trim() || undefined;
   const { workspace } = useWorkspace();
   const workspaceId = workspace?.id;
   const upload = useUploadAsset(workspaceId);
@@ -98,6 +106,7 @@ export function StyleReplicaWorkspace() {
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
   const actionLock = useRef(false);
   const draftGeneration = useRef(0);
+  const sessionDocIdRef = useRef<string | undefined>(undefined);
   const retryIntents = useRef<Record<string, string>>({});
   const [facts, setFacts] = useState("");
   const [analysisRequestId, setAnalysisRequestId] = useState("");
@@ -133,7 +142,7 @@ export function StyleReplicaWorkspace() {
   const hideSource = (src: string) => { setHiddenSources(current => current.includes(src) ? current : [...current, src]); setSelected(current => current.filter(value => value !== src)); };
   const selectReplicationMethod = (value: "exact" | "style") => {
     if (working || actionLock.current || value === replicationMethod) return;
-    window.history.replaceState(null, "", "/style-replica");
+    sessionDocIdRef.current = undefined; router.replace("/style-replica", { scroll: false });
     setReplicationMethod(value); setAnalysisRequestId(crypto.randomUUID());
     setSessionDoc(undefined); setInstructions([]); setJobStatuses({}); setError("");
     retryIntents.current = {};
@@ -141,13 +150,19 @@ export function StyleReplicaWorkspace() {
 
   const selectReplicaSpeed = (value: "standard" | "fast") => {
     if (working || actionLock.current || value === replicaSpeed) return;
-    window.history.replaceState(null, "", "/style-replica");
+    sessionDocIdRef.current = undefined; router.replace("/style-replica", { scroll: false });
     setReplicaSpeed(value); setAnalysisRequestId(crypto.randomUUID());
     setSessionDoc(undefined); setInstructions([]); setJobStatuses({}); setError("");
     retryIntents.current = {};
   };
 
   const plans = sessionDoc?.payload.plans ?? [];
+  // Charge the references the customer submitted, never the screens the
+  // planner split them into. Mirrors _billable_screen_counts on the server.
+  const billableUnits = (() => {
+    const submitted = new Set((sessionDoc?.payload.references ?? []).map(item => item.asset_id)).size;
+    return submitted > 0 ? Math.min(submitted, plans.length) : plans.length;
+  })();
   const native = !!sessionDoc?.payload.replication_method;
   const jobs = sessionDoc?.payload.job_ids ?? [];
   const complete = jobs.length > 0 && sessionDoc?.payload.submission_complete !== false && jobs.every(id => ["completed", "partial", "failed", "cancelled"].includes(jobStatuses[id]));
@@ -199,27 +214,35 @@ export function StyleReplicaWorkspace() {
 
   useEffect(() => {
     if (!workspaceId || hydratedWorkspace !== workspaceId) return;
+    const generation = draftGeneration.current;
+    const path = requestedSessionId ? `/documents/${encodeURIComponent(requestedSessionId)}` : requestedJobId ? `/jobs/${encodeURIComponent(requestedJobId)}/session` : null;
+    // No requested document means a client-side jump back to the blank
+    // workspace; drop the previously loaded session so the draft form returns.
+    if (!path) { setSessionDoc(current => (current ? undefined : current)); return; }
     const controller = new AbortController();
-    const load = () => {
-      const generation = draftGeneration.current;
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("sessionId"), jobId = params.get("jobId");
-      const path = id ? `/documents/${encodeURIComponent(id)}` : jobId ? `/jobs/${encodeURIComponent(jobId)}/session` : null;
-      if (path) void replicaRequest<ReplicaDocument>(workspaceId, path, undefined, controller.signal)
-        .then(item => { if (!controller.signal.aborted && generation === draftGeneration.current && item.kind === "session") {
-          setSessionDoc(item); setReplicationMethod(item.payload.replication_method ?? "exact"); setReplicaSpeed(item.payload.replica_speed === "fast" ? "fast" : "standard"); setInstructions(item.payload.confirmed_instructions ?? []);
-          setProducts((item.payload.product_asset_ids ?? []).map((assetId, index) => ({id: assetId, name: `产品图 ${index + 1}`})));
-          const ids = [...new Set((item.payload.references ?? []).map(value => value.asset_id))];
-          setReferences(ids.map((assetId, index) => ({id: assetId, name: `参考图 ${index + 1}`}))); setSelectedReferences(ids);
-          setMode("image"); setFacts(item.payload.facts ?? ""); setPlatform(item.payload.platform_code ?? "auto"); setLanguage(item.payload.language ?? "zh-CN"); setProductDoc(undefined); setSelected([]);
-        } })
-        .catch(caught => { if (!controller.signal.aborted && generation === draftGeneration.current) setError(caught.message); });
-    };
-    load(); window.addEventListener("popstate", load);
-    return () => { controller.abort(); window.removeEventListener("popstate", load); };
-  }, [workspaceId, hydratedWorkspace]);
+    // Returning to the document that is already on screen must not refetch: an
+    // in-flight generation would otherwise be replaced by a stale snapshot.
+    if (sessionDocIdRef.current === requestedSessionId) return;
+    void replicaRequest<ReplicaDocument>(workspaceId, path, undefined, controller.signal)
+      .then(item => { if (!controller.signal.aborted && generation === draftGeneration.current && item.kind === "session") {
+        sessionDocIdRef.current = item.id;
+        setSessionDoc(item); setReplicationMethod(item.payload.replication_method ?? "exact"); setReplicaSpeed(item.payload.replica_speed === "fast" ? "fast" : "standard"); setInstructions(item.payload.confirmed_instructions ?? []);
+        setProducts((item.payload.product_asset_ids ?? []).map((assetId, index) => ({id: assetId, name: `产品图 ${index + 1}`})));
+        const ids = [...new Set((item.payload.references ?? []).map(value => value.asset_id))];
+        setReferences(ids.map((assetId, index) => ({id: assetId, name: `参考图 ${index + 1}`}))); setSelectedReferences(ids);
+        setMode("image"); setFacts(item.payload.facts ?? ""); setPlatform(item.payload.platform_code ?? "auto"); setLanguage(item.payload.language ?? "zh-CN"); setProductDoc(undefined); setSelected([]);
+      } })
+      .catch(caught => { if (!controller.signal.aborted && generation === draftGeneration.current) setError(caught.message); });
+    return () => { controller.abort(); };
+  }, [workspaceId, hydratedWorkspace, requestedSessionId, requestedJobId]);
   const currentSessionId = sessionDoc?.id;
-  useEffect(() => { if (currentSessionId) window.history.replaceState(null, "", `/style-replica?sessionId=${encodeURIComponent(currentSessionId)}`); }, [currentSessionId]);
+  useEffect(() => { sessionDocIdRef.current = currentSessionId; }, [currentSessionId]);
+  useEffect(() => {
+    // Keep the address bar and the router in sync. replaceState alone left the
+    // router's search params stale, so a later task jump to this session looked
+    // like no navigation at all.
+    if (currentSessionId && currentSessionId !== requestedSessionId) router.replace(`/style-replica?sessionId=${encodeURIComponent(currentSessionId)}`, { scroll: false });
+  }, [currentSessionId, requestedSessionId, router]);
 
   const perform = async (label: string, action: (isCurrent: () => boolean) => Promise<void>) => {
     if (actionLock.current) return;
@@ -276,7 +299,11 @@ export function StyleReplicaWorkspace() {
     }
     if (!products.length) throw new Error("请上传自己的产品图。");
     setInstructions([]); setJobStatuses({});
-    const result = await replicaRequest<ReplicaDocument>(workspaceId, "/sessions", { request_id: analysisRequestId || crypto.randomUUID(), product_asset_ids: products.map(item => item.id), references: choices, replication_method: replicationMethod, replica_speed: replicaSpeed, auto_start_after_plan: true, platform_code: platform === "auto" ? product?.targetPlatform ?? product?.platform ?? "tmall" : platform, language, facts });
+    // Billable units are the reference images chosen here, not the screens the
+    // planner later derives from them. The budget mirrors that so a long
+    // reference which splits into extra screens still auto-starts.
+    const billableCount = Math.max(1, choices.length);
+    const result = await replicaRequest<ReplicaDocument>(workspaceId, "/sessions", { request_id: analysisRequestId || crypto.randomUUID(), product_asset_ids: products.map(item => item.id), references: choices, replication_method: replicationMethod, replica_speed: replicaSpeed, auto_start_after_plan: true, credit_budget: billableCount * (replicaSpeed === "fast" ? 8 : 15), platform_code: platform === "auto" ? product?.targetPlatform ?? product?.platform ?? "tmall" : platform, language, facts });
     if (isCurrent()) setSessionDoc(result);
     // The session is durable before image jobs exist; update the global task
     // centre immediately rather than waiting for its next polling interval.
@@ -284,7 +311,7 @@ export function StyleReplicaWorkspace() {
   });
   const confirm = () => workspaceId && sessionDoc && perform("提交生成", async isCurrent => { try { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/confirm`, { plan_hash: sessionDoc.payload.plan_hash, instructions: sessionDoc.payload.confirmed_instructions ?? instructions }); if (isCurrent()) setSessionDoc(value); } catch (caught) { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/documents/${sessionDoc.id}`); if (isCurrent()) setSessionDoc(value); throw caught; } });
   const retryImage = (jobId: string) => workspaceId && sessionDoc && perform("重新生成", async isCurrent => { const requestId = retryIntents.current[jobId] ?? crypto.randomUUID(); retryIntents.current[jobId] = requestId; const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/jobs/${jobId}/retry`, { request_id: requestId }); if (isCurrent()) setSessionDoc(value); });
-  const restoreSession = (item: ReplicaDocument) => { if (sessionDoc?.id !== item.id) draftGeneration.current += 1; actionLock.current = false; uploadBatchLock.current = false; setBusy(""); window.history.replaceState(null, "", `/style-replica?sessionId=${encodeURIComponent(item.id)}`); setSessionDoc(item); setReplicationMethod(item.payload.replication_method ?? "exact"); setReplicaSpeed(item.payload.replica_speed === "fast" ? "fast" : "standard"); setInstructions(item.payload.confirmed_instructions ?? []); setProducts((item.payload.product_asset_ids ?? []).map((id, index) => ({ id, name: `产品图 ${index + 1}` }))); const referenceIds = [...new Set((item.payload.references ?? []).map(value => value.asset_id))]; setReferences(referenceIds.map((id, index) => ({ id, name: `参考图 ${index + 1}` }))); setSelectedReferences(referenceIds); setMode("image"); setFacts(item.payload.facts ?? ""); setPlatform(item.payload.platform_code ?? "auto"); setLanguage(item.payload.language ?? "zh-CN"); setProductDoc(undefined); setSelected([]); setError(""); setModal(null); };
+  const restoreSession = (item: ReplicaDocument) => { if (sessionDoc?.id !== item.id) draftGeneration.current += 1; actionLock.current = false; uploadBatchLock.current = false; setBusy(""); sessionDocIdRef.current = item.id; router.replace(`/style-replica?sessionId=${encodeURIComponent(item.id)}`, { scroll: false }); setSessionDoc(item); setReplicationMethod(item.payload.replication_method ?? "exact"); setReplicaSpeed(item.payload.replica_speed === "fast" ? "fast" : "standard"); setInstructions(item.payload.confirmed_instructions ?? []); setProducts((item.payload.product_asset_ids ?? []).map((id, index) => ({ id, name: `产品图 ${index + 1}` }))); const referenceIds = [...new Set((item.payload.references ?? []).map(value => value.asset_id))]; setReferences(referenceIds.map((id, index) => ({ id, name: `参考图 ${index + 1}` }))); setSelectedReferences(referenceIds); setMode("image"); setFacts(item.payload.facts ?? ""); setPlatform(item.payload.platform_code ?? "auto"); setLanguage(item.payload.language ?? "zh-CN"); setProductDoc(undefined); setSelected([]); setError(""); setModal(null); };
   const openHistorySession = (item: ReplicaDocument) => workspaceId && perform("读取任务", async isCurrent => { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/documents/${item.id}`); if (isCurrent()) restoreSession(value); });
   const showHistory = () => workspaceId && perform("读取历史", async isCurrent => { const value = await replicaRequest<ReplicaDocument[]>(workspaceId, "/sessions"); if (isCurrent()) { setHistory(value); setModal("history"); } });
   const retryAnalysis = () => workspaceId && sessionDoc && perform("重试分析", async isCurrent => { const value = await replicaRequest<ReplicaDocument>(workspaceId, `/sessions/${sessionDoc.id}/retry`, {}); if (isCurrent()) setSessionDoc(value); });
@@ -292,7 +319,7 @@ export function StyleReplicaWorkspace() {
   const editSources = () => {
     draftGeneration.current += 1; actionLock.current = false; uploadBatchLock.current = false;
     setBusy(""); setProductDoc(current => current?.status === "fetching" ? undefined : current);
-    window.history.replaceState(null, "", "/style-replica"); setAnalysisRequestId(crypto.randomUUID());
+    sessionDocIdRef.current = undefined; router.replace("/style-replica", { scroll: false }); setAnalysisRequestId(crypto.randomUUID());
     setSessionDoc(undefined); setInstructions([]); setError(""); setJobStatuses({}); retryIntents.current = {};
   };
   const reset = () => {
@@ -336,7 +363,7 @@ export function StyleReplicaWorkspace() {
         <label className={styles.field}><span><em>*</em>目标语言</span><ReplicaSelect label="目标语言" value={language} onChange={setLanguage} disabled={working || !!sessionDoc} options={[["zh-CN", "中文（简体）"], ["zh-TW", "中文（繁体）"], ["en-US", "英语"], ["ja-JP", "日语"], ["ko-KR", "韩语"], ["de-DE", "德语"], ["fr-FR", "法语"], ["es-ES", "西班牙语"], ["ar-SA", "阿拉伯语"], ["ru-RU", "俄语"]]} /></label>
         </div></div>
         <p className={styles.hint}>{replicaSpeed === "fast" ? "快速完成整套画面，参考长图会拆成独立图片。" : replicationMethod === "exact" ? "按参考图逐屏保留构图和比例，长图会先拆屏。" : "根据参考内容选择画幅；连续详情按相邻双屏生成。"}后台按所选参考图完成拆屏和画幅校验。</p>
-        </fieldset><FormDisclosure title="补充商品信息与要求" summary={facts.trim() ? "已添加商品信息" : "选填 · 品牌、卖点与希望保留的构图"}><label className={styles.field}><span>商品卖点与复刻要求</span><textarea disabled={working || !!sessionDoc} value={facts} onChange={event => setFacts(event.target.value)} placeholder="写下自己的品牌、卖点、参数，或希望保留的构图。留空也可以开始。" maxLength={4000} rows={3} /></label></FormDisclosure>
+        </fieldset><FormDisclosure title="补充商品信息与要求" summary={facts.trim() ? "已添加商品信息" : "选填 · 品牌、卖点与希望保留的构图"}><label className={styles.field}><span>商品卖点与复刻要求</span><textarea disabled={working || !!sessionDoc} value={facts} onChange={event => setFacts(event.target.value)} placeholder="写下自己的品牌、卖点、参数，或希望保留的构图。留空也可以开始。" maxLength={20000} rows={3} /></label></FormDisclosure>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <div className={styles.sidebarFooter}><button className={styles.startButton} disabled={!!sessionDoc || working || !workspaceId || !products.length || (mode === "image" ? !selectedReferenceCount : !selected.length)} onClick={() => void analyse()}>{working ? <><LoaderCircle className="spin" size={16} />{busy || (status === "analysing" ? "正在诊断" : "正在拉取商品")}</> : <><Sparkles size={16} />生成同行套图</>}</button>
         <p className={styles.footerNote}>{mode === "image" ? `已选择 ${selectedReferenceCount} 张参考图` : `已选择 ${selected.length} 张参考图`} · 选哪张，复刻哪张</p></div>
@@ -349,10 +376,10 @@ export function StyleReplicaWorkspace() {
         {mode === "image" && references.length > 0 && !sessionDoc && workspaceId && <div className={styles.sourcePanel}><div className={styles.sourceHeading}><strong>选择想要复刻的参考图</strong><span>已选 {selectedReferenceCount}/{references.length}</span></div><div className={styles.selectionActions}><span>全部选中参考均纳入分析，长图会拆屏</span><button onClick={() => setSelectedReferences(references.map(item => item.id))}>全选</button><button onClick={() => setSelectedReferences([])}>清空选择</button></div><div className={styles.sourceGrid}>{references.map((item, index) => <div key={item.id} className={`${styles.sourceTile} ${selectedReferences.includes(item.id) ? styles.sourceSelected : ""}`}><AssetImage workspaceId={workspaceId} assetId={item.id} onClick={() => setSelectedReferences(selectedReferences.includes(item.id) ? selectedReferences.filter(id => id !== item.id) : [...selectedReferences, item.id])} /><button aria-label={`${selectedReferences.includes(item.id) ? "取消选择" : "选择"}参考图 ${index + 1}`} onClick={() => setSelectedReferences(selectedReferences.includes(item.id) ? selectedReferences.filter(id => id !== item.id) : [...selectedReferences, item.id])}>{selectedReferences.includes(item.id) ? <Check size={13} /> : index + 1}</button></div>)}</div></div>}
         {status === "analysing" && <div className={styles.analysisState}><div className={styles.orbit}><Sparkles size={28} /></div><h2>正在准备你的整套画面</h2><p>保留参考顺序，逐屏规划商品表达。可离开页面，稍后从历史继续查看。</p><progress max={100} value={overallProgress} /><small>{native ? replicaAnalysisMessage(sessionDoc!) ?? sessionDoc?.payload.analysis_stage ?? "正在准备复刻方案" : `${plans.length} / ${sessionDoc?.payload.references?.length ?? 0} 张方案已完成`}</small></div>}
         {status === "failed" && !jobs.length && <div className={styles.emptyState}><CircleHelp size={38} /><h2>{planFailure?.title ?? segmentationFailure?.title ?? "本次处理暂未完成"}</h2><p>{planFailure?.message ?? segmentationFailure?.message ?? sessionDoc?.payload.error}</p>{planFailure && sessionDoc?.payload.analysis_revision_available && <button disabled={!!busy} onClick={() => void reviseAnalysis()}>{sessionDoc?.payload.replication_method === "style" ? "保留分析，修正风格方案" : "保留已通过方案，调整剩余屏"}</button>}{!planFailure && <>{sessionDoc?.payload.analysis_resume_available && <small>已完成的步骤已保留，继续时会复用仍然有效的方案与校验结果。</small>}{(!segmentationFailure || sessionDoc?.payload.segmentation_repair_available || sessionDoc?.payload.segmentation_restart_available) && <button disabled={!!busy} onClick={() => void retryAnalysis()}>{sessionDoc?.payload.segmentation_repair_available ? "保留素材，校正拆屏" : sessionDoc?.payload.segmentation_restart_available ? "重新诊断参考图" : sessionDoc?.payload.analysis_resume_available ? "继续处理剩余步骤" : "重试未完成的分析"}</button>}</>}<button onClick={editSources}>{planFailure && sessionDoc?.payload.replication_method === "style" && !sessionDoc?.payload.analysis_revision_available ? "保留素材，重新诊断" : "返回修改选图"}</button></div>}
-        {status === "awaiting_confirmation" && !sessionDoc?.payload.auto_start_after_plan && <div className={styles.planPanel}><div className={styles.planIntro}><div><span className={styles.eyebrow}>你的专属复刻方案</span><h2>灵感已就位，确认后开始绘制</h2><p>你的产品图决定真实外观。确认拆屏与方案后开始生成；补充要求请返回修改并重新诊断。</p></div><button className={styles.textButton} onClick={editSources}><RotateCcw size={14} />返回修改</button></div><div className={styles.plans}>{plans.map((plan, index) => <article className={styles.planCard} key={index}><div className={styles.planReference}>{workspaceId && <AssetImage workspaceId={workspaceId} assetId={plan.reference.asset_id} onClick={setPreview} />}</div><div><span className={styles.eyebrow}>方案 {String(index + 1).padStart(2, "0")}</span><h3>{plan.reference.title}</h3><p>{analysisText(plan.analysis.commercial_intent) || "保留参考构图、光影与色调，用你的商品重新演绎。"}</p><details><summary>查看画面方案</summary><p>{plan.prompt}</p></details>{!native && <textarea rows={2} disabled={sessionDoc?.payload.confirmed_instructions !== undefined} value={sessionDoc?.payload.confirmed_instructions?.[index] ?? instructions[index] ?? ""} maxLength={4000} onChange={event => setInstructions(current => plans.map((_, position) => position === index ? event.target.value : current[position] ?? ""))} placeholder="补充本张图的要求（选填）" aria-label={`方案${index + 1}补充要求`} />}</div></article>)}</div><div className={styles.confirmBar}><div><strong>共 {plans.length} 张独立图片</strong><CreditCostHint jobType="reference_remix" count={plans.length} /><small>生成结果自动进入个人素材库与生成记录</small></div><button disabled={!!busy} className={styles.startButton} onClick={() => void confirm()}>{busy ? <LoaderCircle className="spin" size={16} /> : <Sparkles size={16} />}确认方案并生成</button></div></div>}
+        {status === "awaiting_confirmation" && !sessionDoc?.payload.auto_start_after_plan && <div className={styles.planPanel}><div className={styles.planIntro}><div><span className={styles.eyebrow}>你的专属复刻方案</span><h2>灵感已就位，确认后开始绘制</h2><p>{sessionDoc?.payload.credit_budget_exceeded ? "方案拆出的屏数超出发起时的预估，确认后将按提交的参考图张数计费。" : "你的产品图决定真实外观。确认拆屏与方案后开始生成；补充要求请返回修改并重新诊断。"}</p></div><button className={styles.textButton} onClick={editSources}><RotateCcw size={14} />返回修改</button></div><div className={styles.plans}>{plans.map((plan, index) => <article className={styles.planCard} key={index}><div className={styles.planReference}>{workspaceId && <AssetImage workspaceId={workspaceId} assetId={plan.reference.asset_id} onClick={setPreview} />}</div><div><span className={styles.eyebrow}>方案 {String(index + 1).padStart(2, "0")}</span><h3>{plan.reference.title}</h3><p>{analysisText(plan.analysis.commercial_intent) || "保留参考构图、光影与色调，用你的商品重新演绎。"}</p><details><summary>查看画面方案</summary><p>{plan.prompt}</p></details>{!native && <textarea rows={2} disabled={sessionDoc?.payload.confirmed_instructions !== undefined} value={sessionDoc?.payload.confirmed_instructions?.[index] ?? instructions[index] ?? ""} maxLength={4000} onChange={event => setInstructions(current => plans.map((_, position) => position === index ? event.target.value : current[position] ?? ""))} placeholder="补充本张图的要求（选填）" aria-label={`方案${index + 1}补充要求`} />}</div></article>)}</div><div className={styles.confirmBar}><div><strong>共 {plans.length} 张独立图片</strong><CreditCostHint jobType="reference_remix" count={billableUnits} /><small>{billableUnits < plans.length ? `按提交的 ${billableUnits} 张参考图计费，多出的 ${plans.length - billableUnits} 屏不额外收费` : "生成结果自动进入个人素材库与生成记录"}</small></div><button disabled={!!busy} className={styles.startButton} onClick={() => void confirm()}>{busy ? <LoaderCircle className="spin" size={16} /> : <Sparkles size={16} />}确认方案并生成</button></div></div>}
         {status === "awaiting_confirmation" && sessionDoc?.payload.auto_start_after_plan && <div className={styles.emptyState}><LoaderCircle className={sessionDoc.payload.automatic_submission_error ? "" : "spin"} size={28} /><h2>{sessionDoc.payload.automatic_submission_error ? "生成任务暂未提交成功" : "正在准备生成套图"}</h2><p>{sessionDoc.payload.automatic_submission_error || "图片方案校验完成后，将自动开始绘制。"}</p>{sessionDoc.payload.automatic_submission_error && <button disabled={!!busy} onClick={() => void confirm()}>重试提交生成</button>}</div>}
-        {jobs.length > 0 && workspaceId && <div className={styles.results}><div className={styles.planIntro}><div><span className={styles.eyebrow}>生成结果</span><h2>{sessionDoc?.payload.submission_complete === false ? `还有 ${plans.length - jobs.length} 张待生成` : complete ? (jobs.every(id => jobStatuses[id] === "completed") ? "你的商品图已完成" : executionResume ? "处理已中断，可继续剩余步骤" : "部分图片暂未通过验收，可重试") : "灵感正在成为新画面"}</h2><p>点击图片放大，下载保存，或进入任务继续编辑。</p></div><div>{sessionDoc?.payload.submission_complete === false && <button disabled={!!busy} className={styles.textButton} onClick={() => void confirm()}>继续提交剩余图片</button>}<button className={styles.textButton} onClick={reset}><Plus size={14} />新建复刻</button></div></div><div className={styles.resultGrid}>{(native ? plans.map((_, index) => ({ id: jobs[0], index })) : jobs.map((id, index) => ({ id, index }))).map(({id, index}) => <ResultCard key={`${id}-${index}`} workspaceId={workspaceId} jobId={id} sessionId={sessionDoc!.id} outputIndex={native ? index : 0} retryWhole={native} fastSuite={sessionDoc?.payload.replica_speed === "fast"} resumeWhole={executionResume} moduleProgress={native ? executionProgress?.modules[index] : undefined} title={plans[index]?.reference.title ?? `商品图 ${index + 1}`} onPreview={setPreview} onStatus={reportStatus} onRetry={id => void retryImage(id)} retrying={busy === "重新生成"} />)}</div></div>}
-        {!sessionDoc && (mode === "link" ? !product : !references.length) && <div className={styles.emptyState}><WorkspaceVisualPreview /><h2>好构图，换成你的好商品</h2><p>上传产品图，添加商品链接或风格参考图<br />点击「生成同行套图」，自动完成规划与创作</p><div className={styles.emptySteps}><span>01 上传产品</span><ChevronRight size={13} /><span>02 选择参考</span><ChevronRight size={13} /><span>03 查看成图</span></div></div>}
+        {jobs.length > 0 && workspaceId && <div className={styles.results}><div className={styles.planIntro}><div><span className={styles.eyebrow}>生成结果</span><h2>{sessionDoc?.payload.submission_complete === false ? `还有 ${plans.length - jobs.length} 张待生成` : complete ? (jobs.every(id => jobStatuses[id] === "completed") ? "你的商品图已完成" : executionResume ? "处理已中断，可继续剩余步骤" : "部分图片暂未通过验收，可重试") : "灵感正在成为新画面"}</h2><p>点击图片放大，下载保存，或进入任务继续编辑。</p></div><div>{sessionDoc?.payload.submission_complete === false && <button disabled={!!busy} className={styles.textButton} onClick={() => void confirm()}>继续提交剩余图片</button>}<button className={styles.textButton} onClick={reset}><Plus size={14} />新建复刻</button></div></div><div className={styles.resultGrid}>{(native ? plans.map((_, index) => ({ id: jobs[0], index })) : jobs.map((id, index) => ({ id, index }))).map(({id, index}) => <ResultCard key={`${id}-${index}`} workspaceId={workspaceId} jobId={id} outputIndex={native ? index : 0} retryWhole={native} fastSuite={sessionDoc?.payload.replica_speed === "fast"} resumeWhole={executionResume} moduleProgress={native ? executionProgress?.modules[index] : undefined} title={plans[index]?.reference.title ?? `商品图 ${index + 1}`} onPreview={setPreview} onStatus={reportStatus} onRetry={id => void retryImage(id)} retrying={busy === "重新生成"} />)}</div></div>}
+        {!sessionDoc && (mode === "link" ? !product : !references.length) && <div className={styles.emptyState}><WorkspaceVisualPreview method={replicationMethod} /><h2>好构图，换成你的好商品</h2><p>先上传自己的产品图，再添加想模仿的商品链接或参考图<br />点击「生成同行套图」，自动完成规划与创作</p><div className={styles.emptySteps}><span>01 上传产品</span><ChevronRight size={13} /><span>02 选择参考</span><ChevronRight size={13} /><span>03 查看成图</span></div></div>}
       </section>
     </div>
     {modal && <div className={styles.overlay} onClick={() => setModal(null)}><section className={styles.modal} role="dialog" aria-modal="true" aria-label={modal === "history" ? "复刻历史" : modal === "fees" ? "用量说明" : "使用教程"} onClick={event => event.stopPropagation()}><button className={styles.closeModal} onClick={() => setModal(null)} aria-label="关闭"><X size={20} /></button>{modal === "history" ? <><h2>复刻历史</h2>{history.length ? history.map(item => <button className={styles.historyRow} key={item.id} onClick={() => void openHistorySession(item)}><span>{formatBeijingDate(item.created_at, { dateStyle: "short", timeStyle: "medium" })}<small>{item.payload.replica_speed === "fast" ? "快速版" : "精致版"} · {item.payload.plans?.length ?? item.payload.references?.length ?? 0} 张图片</small></span><b>{item.status === "awaiting_confirmation" ? "待确认" : item.status === "analysing" ? "诊断中" : item.status === "failed" ? "未完成" : "查看结果"}</b><ChevronRight size={16} /></button>) : <p>还没有复刻记录，提交后即可在这里查看。</p>}</> : modal === "fees" ? <><h2>用量说明</h2><p>商品拉取通过第三方数据服务完成；同一商品当天再次查询会复用已有结果。</p><p>一键复刻按成功生成图片每张 15 积分结算；提交时预留，失败或未执行部分释放。重新生成会创建新的计费任务。</p><Link href="/dashboard">查看创作记录与进度 <ChevronRight size={14} /></Link></> : <><h2>把参考风格，变成你的商品图</h2><ol><li>上传自己的产品图，让外观、材质与品牌清晰可见。</li><li>粘贴商品链接选图，或直接上传风格参考图。</li><li>选择目标平台与语言，可补充自己的真实卖点。</li><li>提交素材后自动分析、规划与生成。</li><li>查看成图，结果保存在素材库和生成记录中。</li></ol><p>参考图用于学习构图、光影和排版。商品参数、认证与售后承诺请以自己的真实信息为准。</p></>}</section></div>}

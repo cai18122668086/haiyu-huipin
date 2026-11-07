@@ -473,6 +473,16 @@ def confirm(
                     "platform_code": plan["platform_code"],
                     "language": plan["language"],
                     "image_count": len(plan["units"]),
+                    "billable_image_count": min(
+                        len(plan["units"]),
+                        len(
+                            {
+                                str(item.get("asset_id"))
+                                for item in values.get("references") or []
+                            }
+                        )
+                        or len(plan["units"]),
+                    ),
                     "quality": "high",
                     "aspect_ratio": "follow-reference",
                 },

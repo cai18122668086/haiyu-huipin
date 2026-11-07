@@ -70,6 +70,7 @@ import {
   jobTitle,
   jobTypeLabel,
 } from "@/lib/jobs/presentation";
+import { jobWorkspaceHref } from "@/lib/jobs/workspace-link";
 import styles from "./account-center.module.css";
 
 type Page =
@@ -115,9 +116,17 @@ const date = (value: string | null | undefined) =>
         minute: "2-digit",
       }).format(new Date(value))
     : "—";
-const recordHref = (job: Pick<Job, "id">) =>
-  job.id.startsWith("rep_")
-    ? `/style-replica?sessionId=${encodeURIComponent(job.id)}`
+// Resolve through the shared job->workspace registry so every entry point
+// agrees; replica ids used to be matched by name here and drifted from it.
+const recordHref = (
+  job: Pick<Job, "id"> & Partial<Pick<Job, "type" | "task_preset">>,
+) =>
+  job.type
+    ? jobWorkspaceHref({
+        id: job.id,
+        type: job.type,
+        task_preset: job.task_preset,
+      })
     : `/jobs?jobId=${encodeURIComponent(job.id)}`;
 function Button({
   children,

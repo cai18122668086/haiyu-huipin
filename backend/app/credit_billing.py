@@ -62,12 +62,36 @@ def bind_image_reservation(
         raise ApiError(
             409, "CREDIT_ITEMS_NOT_READY", "创作图片数量尚未确定，请重新提交。"
         )
-    job.estimated_credits = unit * len(ids)
+    job.estimated_credits = unit * billable_units(job, len(ids))
     return job.estimated_credits, {
         "version": PRICING_VERSION,
         "credits_per_image": unit,
         "item_ids": ids,
+        "billable_units": billable_units(job, len(ids)),
     }
+
+
+def billable_units(job: JobRecord, runnable: int) -> int:
+    """Charge what the customer submitted, not how many screens it split into.
+
+    One-click replica holds the reference images the customer chose. Long
+    references are cut into extra screens downstream, so counting runnable
+    items would bill the customer for the split. ``billable_image_count`` is
+    written by the replica session that owns the charge and caps the bill at
+    the submitted count; every other job type keeps item-based billing.
+    """
+    cap = _settings(job.configuration).get("billable_image_count")
+    if isinstance(cap, int) and not isinstance(cap, bool) and cap >= 0:
+        return min(runnable, cap)
+    return runnable
+
+
+def _settings(configuration: Mapping[str, Any] | None) -> Mapping[str, Any]:
+    """Job configuration nests the request under ``settings``."""
+    if not isinstance(configuration, Mapping):
+        return {}
+    nested = configuration.get("settings")
+    return nested if isinstance(nested, Mapping) else configuration
 
 
 def successful_image_credits(session: Session, job: JobRecord) -> int | None:
@@ -92,6 +116,7 @@ def successful_image_credits(session: Session, job: JobRecord) -> int | None:
         return reservation.settled_credits
     unit = pricing["credits_per_image"]
     ids = pricing["item_ids"]
+    billable = pricing.get("billable_units")
     succeeded = (
         session.scalar(
             select(func.count(func.distinct(JobItemRecord.id)))
@@ -112,6 +137,10 @@ def successful_image_credits(session: Session, job: JobRecord) -> int | None:
         )
         or 0
     )
+    # A capped reservation (replica screens beyond the submitted count) settles
+    # on the same ceiling it reserved, so a partial run can never overcharge.
+    if isinstance(billable, int) and not isinstance(billable, bool):
+        succeeded = min(int(succeeded), billable)
     return int(succeeded) * int(unit)
 
 

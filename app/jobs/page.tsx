@@ -70,7 +70,10 @@ export default function JobsPage() {
   const allJobs = jobsQuery.data?.items ?? [];
   const actionError = cancel.error ?? retry.error ?? confirmPlan.error;
   const activeJobId = requestedJobId;
-  const openJob = (id: string) => router.push(id.startsWith("rep_") ? `/style-replica?sessionId=${encodeURIComponent(id)}` : `/jobs?jobId=${encodeURIComponent(id)}`, { scroll: false });
+  // Selecting a record opens its detail panel in place; only the explicit
+  // "open workspace" link navigates away through jobWorkspaceHref. Special-
+  // casing replica ids here sent users out of the task centre by accident.
+  const openJob = (id: string) => router.push(`/jobs?jobId=${encodeURIComponent(id)}`, { scroll: false });
 
   const runCancel = (job: Job | JobDetail) => {
     if (

@@ -292,6 +292,12 @@ MAX_PAGE_RETRIES = 2
 # structured completion, so the old 15-minute lease expired while valid work
 # was still running and was misclassified as PLANNER_OUTCOME_UNKNOWN.
 PLANNER_LEASE_SECONDS = 3600
+# The image endpoint rejects a single multipart text part past roughly 32KB
+# with a 400 that costs a billed, unrecoverable request. Measured ceiling is
+# between 32000 and 34000 bytes; guard below it so long evidence compacts
+# instead of failing upstream.
+MAX_MULTIPART_TEXT_BYTES = 30_000
+MULTIPART_FIELD_TOO_LARGE = "PROVIDER_FIELD_TOO_LARGE"
 _MISSING_JSON_VALUE = object()
 # Aurora's pair prompts deliberately carry the complete screen contract so a
 # resumed worker can regenerate a pair without consulting transient planner
@@ -2134,6 +2140,7 @@ class UrllibOpenAITransport:
         files: Sequence[tuple[str, str, str, bytes]],
         timeout_seconds: float,
     ) -> tuple[int, dict[str, Any]]:
+        _guard_text_fields(fields)
         boundary = f"polaris-{secrets.token_hex(16)}"
         body = _encode_multipart(boundary, fields, files)
         request_headers = {
@@ -2941,9 +2948,14 @@ class TengliOpenAICompatibleGateway:
         )
 
         attempts: list[dict[str, Any]] = []
+        # The prompt is the only part that grows with evidence. Keep a local
+        # copy so an oversized prompt can be compacted without mutating the
+        # frozen request, then resent once on the same route.
+        effective_prompt = request.prompt
+        shrunk = False
         fields = [
             ("model", self.image_model),
-            ("prompt", request.prompt),
+            ("prompt", effective_prompt),
             ("n", "1"),
             ("size", _gateway_request_size(request.size)),
             ("quality", request.quality),
@@ -3004,6 +3016,17 @@ class TengliOpenAICompatibleGateway:
                         "request_id": error.provider_request_id,
                         "error": _agent_error_summary(error),
                     })
+                    # Long evidence can exceed the upstream text-part limit. The
+                    # request never left the process, so shrinking the prompt and
+                    # resending the same route costs nothing and keeps the job
+                    # alive instead of failing after a paid analysis.
+                    if error.code == MULTIPART_FIELD_TOO_LARGE and not shrunk:
+                        shrunk = True
+                        effective_prompt = compact_prompt_for_transport(
+                            effective_prompt, MAX_MULTIPART_TEXT_BYTES
+                        )
+                        route_fields[1] = ("prompt", effective_prompt)
+                        continue
                     raise
                 attempts.append({
                     "route": route.name, "host": urlparse(route.image_base_url).hostname,
@@ -13389,6 +13412,77 @@ def _provider_error_summary(payload: Mapping[str, Any]) -> dict[str, str]:
     from .provider_diagnostics import error_summary
 
     return error_summary(payload)
+
+
+def compact_prompt_for_transport(prompt: str, limit: int) -> str:
+    """Shrink an oversized prompt to the transport limit without losing rules.
+
+    Evidence blocks (reference notes, binding tables) sit between the opening
+    instruction and the closing constraints. Keep both ends verbatim and drop
+    whole middle lines from the largest block first, so the model still sees
+    what to draw and how it is judged. A marker records the omission so the
+    model does not assume the evidence was complete.
+    """
+    encoded = prompt.encode("utf-8")
+    if len(encoded) <= limit:
+        return prompt
+    marker = "\n[EVIDENCE TRUNCATED: reference detail omitted to fit the request limit]\n"
+    marker_size = len(marker.encode("utf-8"))
+    lines = prompt.splitlines(keepends=True)
+    if not lines:
+        return prompt
+    # Reserve a quarter for the opening instruction and a quarter for the
+    # closing constraints; the middle is the part that can absorb the cut.
+    budget = limit - marker_size
+    head_size = tail_size = budget // 4
+    head: list[str] = []
+    for line in lines:
+        if len("".join(head + [line]).encode("utf-8")) > head_size:
+            break
+        head.append(line)
+    tail: list[str] = []
+    for line in reversed(lines):
+        if len("".join([line] + tail).encode("utf-8")) > tail_size:
+            break
+        tail.insert(0, line)
+    middle = lines[len(head) : len(lines) - len(tail)] if tail else lines[len(head) :]
+    # Largest lines go first: they carry the verbose evidence, not the rules.
+    remaining = budget - len("".join(head + tail).encode("utf-8"))
+    kept: list[str] = []
+    for line in sorted(middle, key=lambda item: len(item.encode("utf-8"))):
+        size = len(line.encode("utf-8"))
+        if size > remaining:
+            continue
+        kept.append(line)
+        remaining -= size
+    # Kept evidence follows the opening instruction in its original order so
+    # the model still reads the rules before the material they govern.
+    order = {id(line): index for index, line in enumerate(middle)}
+    kept.sort(key=lambda line: order[id(line)])
+    compact = "".join(head) + "".join(kept) + marker + "".join(tail)
+    result = compact.encode("utf-8")[:limit]
+    return result.decode("utf-8", errors="ignore")
+
+
+def _guard_text_fields(fields: Sequence[tuple[str, str]]) -> None:
+    """Fail loudly before sending a text part the upstream will reject.
+
+    The image endpoint rejects any single multipart text part beyond roughly
+    32KB with a 400 "multipart field limit exceeded" that only surfaces after
+    the request is queued and billed. Checking the encoded size here turns a
+    paid, unrecoverable provider failure into a local, retryable one.
+    """
+    for name, value in fields:
+        size = len(value.encode("utf-8"))
+        if size > MAX_MULTIPART_TEXT_BYTES:
+            raise XingheAgentError(
+                MULTIPART_FIELD_TOO_LARGE,
+                (
+                    f"请求文本字段超出上游限制（{name}: {size} 字节，"
+                    f"上限 {MAX_MULTIPART_TEXT_BYTES} 字节）。"
+                ),
+                retryable=True,
+            )
 
 
 def _encode_multipart(

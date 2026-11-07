@@ -280,6 +280,9 @@ class ReferenceRemixConfiguration(BaseModel):
         "follow-reference", "1:1", "3:4", "4:3", "4:5", "9:16", "16:9"
     ] = "follow-reference"
     image_count: int = Field(default=1, ge=1, le=60)
+    # Caps billing at the images the customer submitted when planning split a
+    # long reference into more screens. Omitted means bill per runnable image.
+    billable_image_count: int | None = Field(default=None, ge=0, le=60)
     execution_mode: Literal["planner", "direct_prompt"] = "planner"
     inspiration_product_first: bool = False
     quality: Literal["low", "medium", "high"] = "high"
