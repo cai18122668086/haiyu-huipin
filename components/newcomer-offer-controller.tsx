@@ -104,8 +104,7 @@ export function NewcomerOfferController() {
       }).catch(() => router.push("/account?offer=newcomer#membership")).finally(() => { inFlight.current = false; });
     }}><TicketPercent size={23}/><span className={styles.floatingContent}>
       <span className={styles.floatingHeading}><strong>限时福利</strong><b>¥{query.data.amount_fen / 100}</b></span>
-      <small>{query.data.credits}积分 · 新客首单专享</small>
-      <span className={styles.floatingClock}><small>倒计时</small><time aria-label={`优惠剩余${floatingTime?.parts.join(":")}`}>{floatingTime?.parts.join(":")}</time></span>
+      <span className={styles.floatingClock}><time aria-label={`优惠剩余${floatingTime?.parts.join(":")}`}>{floatingTime?.parts.join(":")}</time></span>
     </span><ArrowUpRight size={17}/></button>}
   </>;
 }
@@ -118,7 +117,7 @@ export function NewcomerOfferModal({offer,receivedAt,now,onClose}:{offer:Offer;r
   useEffect(()=>{if(time.seconds===0)onClose();},[time.seconds,onClose]);
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby="newcomer-offer-title" onCancel={event=>{event.preventDefault();onClose();}} onClick={event=>{if(event.target===event.currentTarget){const r=event.currentTarget.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)onClose();}}}>
     <button type="button" className={styles.close} aria-label="关闭新人优惠" onClick={onClose}><X size={20}/></button>
-    <div className={styles.top}><span className={styles.badge}><TicketPercent size={15}/>新客首单专享</span><Sparkles className={styles.sparkle} size={38}/><h2 id="newcomer-offer-title">限时福利</h2><p>新客首单专享 · 160积分优惠体验</p></div>
+    <div className={styles.top}><span className={styles.badge}><TicketPercent size={15}/>新客首单专享</span><Sparkles className={styles.sparkle} size={38}/><h2 id="newcomer-offer-title">限时福利</h2></div>
     <div className={styles.coupon}>
       <div className={styles.price}>
         <small className={styles.originalPrice}>常规价 <s>¥{(offer.regular_amount_fen/100).toFixed(1)}</s></small>
@@ -132,7 +131,7 @@ export function NewcomerOfferModal({offer,receivedAt,now,onClose}:{offer:Offer;r
       </div>
       <div className={styles.perImage}>首单立省 <strong>¥{offer.savings_fen/100}</strong></div>
     </div>
-    <div className={styles.countdown}><span>本轮福利倒计时</span><div aria-label={`剩余${time.parts[0]}小时${time.parts[1]}分${time.parts[2]}秒`}>{time.parts.map((part,index)=><span key={index}>{index>0&&<i>:</i>}<b>{part}</b></span>)}</div></div>
+    <div className={styles.countdown}><div aria-label={`剩余${time.parts[0]}小时${time.parts[1]}分${time.parts[2]}秒`}>{time.parts.map((part,index)=><span key={index}>{index>0&&<i>:</i>}<b>{part}</b></span>)}</div></div>
     <Link className={styles.buy} href="/account?offer=newcomer#membership" onClick={onClose}>¥9.9 立即抢购<ArrowUpRight size={20}/></Link>
     <div className={styles.bottom}><span>一次购买 · 无自动续费</span><details><summary>活动规则</summary><p>未付费用户首单专享，每人限购一次。每24小时更新一轮福利，未购买用户可继续参与；每天最多提醒一次。160积分到账后30天有效。</p></details></div>
   </dialog>;

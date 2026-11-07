@@ -36,3 +36,5 @@
 @media(max-width:480px){.priceValue>strong,.creditValue>strong{font-size:48px;letter-spacing:-1px}}
 @media(max-width:374px){.priceValue>strong,.creditValue>strong{font-size:44px}}
 @media(max-width:340px){.priceValue>strong,.creditValue>strong{font-size:40px}}
+
+.top h2{margin-bottom:24px}.floating .floatingHeading{align-items:baseline;gap:12px}.floatingHeading>b{padding:4px 8px;font-size:22px;font-weight:750;line-height:1.1;letter-spacing:.2px;background:#fff0d21a;border-color:#edcea66b}.floating .floatingClock{justify-content:center;margin-top:4px}@media(max-width:640px){.floatingHeading>b{font-size:21px}}
