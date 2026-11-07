@@ -1,0 +1,12 @@
+{
+  "revision": "cfaf90f34031cd18ee1d8deb93510ee8b2fa3f83",
+  "backend_id": "sha256:8be1ac68cd8ae10326a44d69462ac8af1cd7acb4e3735ca99406f6852f027a71",
+  "frontend_id": "sha256:ba8e43f01c5453a1355d4b71be19ce09de67c306fc0c4ac3cbfc6874dfe416c1",
+  "backend_sources_checked": 654,
+  "frontend_sources_checked": 297,
+  "baseline_differences": [
+    "app/replica.py",
+    "app/replica_retry.py",
+    "app/routes_v1.py"
+  ]
+}

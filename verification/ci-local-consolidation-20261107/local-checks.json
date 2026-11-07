@@ -1,0 +1,21 @@
+{
+  "application_revision": "cfaf90f34031cd18ee1d8deb93510ee8b2fa3f83",
+  "frontend_tests_passed": 258,
+  "retry_regression_tests_passed": 38,
+  "ruff": "passed",
+  "typescript": "passed",
+  "mypy": {
+    "status": "passed",
+    "source_files": 406
+  },
+  "lint": {
+    "errors": 0,
+    "existing_warnings": 2
+  },
+  "isolated_candidate_tests_passed": 381,
+  "candidate_frontend_source_files": 297,
+  "candidate_public_assets": 75,
+  "development_case_preview": "passed",
+  "production_mutations_during_tests": false,
+  "real_sms_payment_or_generation": false
+}

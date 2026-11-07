@@ -1,0 +1,13 @@
+{
+  "status": "activated",
+  "revision": "cfaf90f34031cd18ee1d8deb93510ee8b2fa3f83",
+  "backend_image": "huipin-ci-consolidation/backend:cfaf90f34031cd18ee1d8deb93510ee8b2fa3f83",
+  "frontend_image": "huipin-ci-consolidation/frontend:cfaf90f34031cd18ee1d8deb93510ee8b2fa3f83",
+  "backup_bytes": 4633563,
+  "backup_sha256": "c95a770cdf182f9981d1055e6b20950c2bea5d01da1411a2436115a52088f9a8",
+  "schema_and_campaigns_preserved": true,
+  "runtime_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 297,
+  "matched_public_assets": 75
+}
