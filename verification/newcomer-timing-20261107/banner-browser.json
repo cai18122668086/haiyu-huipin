@@ -1,0 +1,15 @@
+{
+  "headline": "注册就送整套商品图",
+  "subtitle": "2000元级美工效果",
+  "cta": "立即领取",
+  "viewport_widths": [
+    1280,
+    390,
+    320
+  ],
+  "title_button_overlap": false,
+  "claim_opens_registration_dialog": true,
+  "production_homepage_loaded": true,
+  "production_frontend_revision": "82e508a6da01f95ea528e4a33274399efdeef0ed",
+  "new_real_sms_payment_generation": false
+}
