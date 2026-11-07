@@ -35,6 +35,11 @@ def welcome_state(
                 if jobs and all(job and job.status == "completed" for job in jobs)
                 else "in_progress"
             )
+            if document and jobs and all(jobs):
+                from .replica_free_restart import available
+
+                if any(available(session, document, job) for job in jobs if job):
+                    state = "recoverable"
         else:
             state = (
                 "available"
@@ -47,6 +52,10 @@ def welcome_state(
     return {
         "enabled": campaign_enabled(session),
         "status": state,
+        "remaining_tasks": 1
+        if state in {"available", "in_progress", "recoverable"}
+        else 0,
+        "recovery_available": state == "recoverable",
         "newcomer_available": newcomer_eligible(
             session, workspace.principal.user_id, workspace.workspace_id
         ),

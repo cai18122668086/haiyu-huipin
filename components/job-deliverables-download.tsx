@@ -1,6 +1,8 @@
 "use client";
 
 import { Archive, LoaderCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { recordNewcomerInteraction } from "@/features/billing/hooks/use-newcomer-result";
 import { useState } from "react";
 
 import { getJobDeliverablesArchive } from "@/features/jobs/api/jobs";
@@ -14,6 +16,7 @@ export function JobDeliverablesDownload({
   workspaceId?: string;
   jobId: string;
 }) {
+  const cache = useQueryClient();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string>();
 
@@ -30,6 +33,7 @@ export function JobDeliverablesDownload({
       document.body.append(anchor);
       anchor.click();
       anchor.remove();
+      void recordNewcomerInteraction(cache, workspaceId, { job_id: jobId, event: "downloaded" });
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (error) {
       setDownloadError(errorMessage(error));

@@ -1,4 +1,5 @@
 "use client";
+import { NewcomerStageHint } from "@/components/newcomer-offer-controller";
 import { JobCreditSettlement } from "@/components/job-credit-settlement";
 
 import {
@@ -90,7 +91,7 @@ export function JobDetailPanel({
   return (
     <>
       <button className="drawer-overlay" onClick={onClose} aria-label="关闭任务详情" />
-      <aside className="task-drawer open job-detail-drawer" role="dialog" aria-modal="true" aria-label="任务详情">
+      <aside className="task-drawer open job-detail-drawer" role="dialog" aria-modal="true" aria-label="任务详情" data-newcomer-result-detail="true">
         <div className="drawer-head">
           <div><p>生成记录</p><strong>{job ? jobTitle(job) : "正在加载任务"}</strong></div>
           <button className="icon-button" onClick={onClose} aria-label="关闭任务详情"><X size={19} /></button>
@@ -111,7 +112,8 @@ export function JobDetailPanel({
               </button>
             </div>
             <JobProgress job={job} error={detail.error} lastSyncedAt={detail.dataUpdatedAt} refreshing={detail.isFetching} onRefresh={() => void detail.refetch()} />
-            <Link className="secondary-button" href={jobWorkspaceHref(job)}>打开对应工作台</Link><JobCreditSettlement workspaceId={workspaceId} jobId={job.id} />
+            {job.type === "reference_remix" && ["queued", "planning", "processing"].includes(job.status) && <NewcomerStageHint stage="waiting" />}
+            <Link className="secondary-button" href={jobWorkspaceHref(job)}>{job.type === "reference_remix" && ["failed", "cancelled"].includes(job.status) ? "恢复复刻任务" : "打开对应工作台"}</Link><JobCreditSettlement workspaceId={workspaceId} jobId={job.id} />
 
             <section className="job-detail-section">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">任务信息</span><h3>任务概况</h3></div><small>{detail.isFetching ? "更新中…" : "实时更新"}</small></div>
@@ -150,6 +152,7 @@ export function JobDetailPanel({
                         key={`${asset.asset_id}-${asset.ordinal}`}
                         workspaceId={workspaceId}
                         assetId={asset.asset_id}
+                        jobId={job.type === "reference_remix" ? job.id : undefined}
                         alt={`${jobTitle(job)} 输出结果 ${index + 1}`}
                         label={`${index + 1}. ${jobAssetRoleLabel(asset.role)}`}
                       />

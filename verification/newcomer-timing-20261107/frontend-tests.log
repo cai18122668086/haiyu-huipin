@@ -1,0 +1,29 @@
+✔ newcomer countdown uses server deadline and ticks each second without resetting (2.737822ms)
+✔ first result is ready at thirty seconds without waiting for the next poll (1.286604ms)
+✔ a closed or cross-tab claimed reminder stays suppressed and missing results never trigger (0.23129ms)
+✔ task details permit the reminder while image, login and payment dialogs block (0.411217ms)
+✔ generation history uses the grouped replica session while task details use the job (1.075299ms)
+✔ a failed first screen cannot display the successful second screen (1.942189ms)
+✔ out-of-order completion and private artifacts preserve screen identity (0.285741ms)
+✔ a retried screen uses the new job item while a reused screen keeps its position (0.309646ms)
+✔ exhausted quality reviews explain retained plans instead of suggesting another transport retry (2.235897ms)
+✔ planning progress explains retained work without presenting a failed screen as a restart (0.391286ms)
+✔ replanning and delayed poll responses do not move progress backwards (0.646525ms)
+✔ SQLite timestamps and UTC creation responses preserve polling order in every browser timezone (301.400871ms)
+✔ an explicitly new analysis or job may reset progress (0.332167ms)
+✔ a terminal failure is not revived by an old generating reply (0.252428ms)
+✔ a delayed reply for the old job cannot replace a newer retry (1.058364ms)
+✔ analysis completion and generation share one scale, failure is not success 100% (0.259375ms)
+✔ failed, partial and cancelled suites never mark successful delivery in the stepper (0.352096ms)
+✔ segmentation failures explain affected references without advertising a blind resume (0.565033ms)
+✔ legacy style failures retain materials without claiming a missing analysis checkpoint (0.240059ms)
+✔ unknown original image requests are reconciled rather than cloned into retries (1.247965ms)
+✔ zero-delivery free trials offer an explicit restart while paid and active jobs remain fenced (0.318275ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 506.593055

@@ -4214,6 +4214,27 @@
         "title": "FinalizeJobRequest",
         "type": "object"
       },
+      "FreeRestartRequest": {
+        "properties": {
+          "confirm_new_generation": {
+            "const": true,
+            "title": "Confirm New Generation",
+            "type": "boolean"
+          },
+          "request_id": {
+            "maxLength": 80,
+            "minLength": 8,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "confirm_new_generation"
+        ],
+        "title": "FreeRestartRequest",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -6167,6 +6188,10 @@
             "title": "Regular Amount Fen",
             "type": "integer"
           },
+          "reminded_today": {
+            "title": "Reminded Today",
+            "type": "boolean"
+          },
           "savings_fen": {
             "title": "Savings Fen",
             "type": "integer"
@@ -6202,6 +6227,7 @@
         "required": [
           "eligible",
           "trial_viewed",
+          "reminded_today",
           "should_show",
           "server_now",
           "ready_at",
@@ -6214,6 +6240,17 @@
           "validity_days"
         ],
         "title": "NewcomerOffer",
+        "type": "object"
+      },
+      "OfferImpression": {
+        "properties": {
+          "manual": {
+            "default": false,
+            "title": "Manual",
+            "type": "boolean"
+          }
+        },
+        "title": "OfferImpression",
         "type": "object"
       },
       "PasswordChangeBody": {
@@ -7812,16 +7849,43 @@
       },
       "ViewedTrial": {
         "properties": {
-          "session_id": {
-            "maxLength": 40,
-            "minLength": 1,
-            "title": "Session Id",
+          "event": {
+            "default": "viewed",
+            "enum": [
+              "viewed",
+              "downloaded",
+              "continue"
+            ],
+            "title": "Event",
             "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
           }
         },
-        "required": [
-          "session_id"
-        ],
         "title": "ViewedTrial",
         "type": "object"
       },
@@ -18397,6 +18461,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/OfferImpression"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -19200,6 +19281,83 @@
           }
         ],
         "summary": "Recover Images",
+        "tags": [
+          "one-click-replica"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/replica/sessions/{document_id}/jobs/{job_id}/restart-free": {
+      "post": {
+        "operationId": "restart_free_trial_api_v1_workspaces__workspace_id__replica_sessions__document_id__jobs__job_id__restart_free_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreeRestartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Restart Free Trial Api V1 Workspaces  Workspace Id  Replica Sessions  Document Id  Jobs  Job Id  Restart Free Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SuperTokensSession": []
+          }
+        ],
+        "summary": "Restart Free Trial",
         "tags": [
           "one-click-replica"
         ]

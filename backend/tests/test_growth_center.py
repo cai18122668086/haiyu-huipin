@@ -13,6 +13,7 @@ from app.models import (
     JobRecord,
     NewcomerOfferRecord,
     PromotionCampaignRecord,
+    ReplicaDocumentRecord,
     ReplicaWelcomeGrantRecord,
     UserRecord,
     utc_now,
@@ -154,7 +155,7 @@ def test_reminder_rejects_pending_or_missing_trial_outputs(
     assert not offer(center_client).json()["trial_viewed"]
 
 
-def test_reminder_starts_when_delivered_results_are_viewed_and_waits_two_minutes(
+def test_reminder_starts_when_delivered_results_are_viewed_and_waits_thirty_seconds(
     center_client, monkeypatch
 ):
     session_id = delivered_trial(center_client)
@@ -165,11 +166,11 @@ def test_reminder_starts_when_delivered_results_are_viewed_and_waits_two_minutes
     viewed = offer(center_client, "/viewed", "post", {"session_id": session_id}).json()
     assert viewed["trial_viewed"] and not viewed["should_show"]
     assert aware(datetime.fromisoformat(viewed["ready_at"])) == aware(now) + timedelta(
-        seconds=120
+        seconds=30
     )
-    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=119))
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=29))
     assert not offer(center_client, "/impression", "post").json()["should_show"]
-    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=121))
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=31))
     assert offer(center_client, "/impression", "post").json()["should_show"]
     assert not offer(center_client, "/impression", "post").json()["should_show"]
     duplicate = offer(
@@ -289,3 +290,128 @@ def test_regular_price_matches_real_repeatable_pack_and_refund(center_client):
     assert wallet(center_client, BUYER) == 160
     assert wallet(center_client, INVITER) == 16
     assert not offer(center_client).json()["eligible"]
+
+
+@pytest.mark.parametrize("event", ["downloaded", "continue"])
+def test_result_actions_accelerate_without_resetting_deadline_or_daily_limit(
+    center_client, monkeypatch, event
+):
+    session_id = delivered_trial(center_client)
+    now = utc_now()
+    monkeypatch.setattr(center, "utc_now", lambda: now)
+    viewed = offer(center_client, "/viewed", "post", {"session_id": session_id}).json()
+    with center_client.app.state.session_factory() as session:
+        job_id = session.get(ReplicaDocumentRecord, session_id).payload["job_ids"][0]
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=10))
+    action = offer(center_client, "/viewed", "post", {"job_id": job_id, "event": event})
+    assert action.status_code == 200
+    accelerated = action.json()
+    assert aware(datetime.fromisoformat(accelerated["ready_at"])) == aware(
+        now
+    ) + timedelta(seconds=15)
+    assert accelerated["window_ends_at"] == viewed["window_ends_at"]
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=14))
+    assert not offer(center_client, "/impression", "post").json()["should_show"]
+    repeated = offer(
+        center_client, "/viewed", "post", {"job_id": job_id, "event": event}
+    ).json()
+    assert repeated["ready_at"] == accelerated["ready_at"]
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=15))
+    assert offer(center_client, "/impression", "post").json()["should_show"]
+    after = offer(center_client).json()
+    assert after["eligible"] and after["reminded_today"] and not after["should_show"]
+    # Closing/reopening is client-side; later downloads cannot claim again today.
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=45))
+    offer(center_client, "/viewed", "post", {"job_id": job_id, "event": "downloaded"})
+    assert not offer(center_client, "/impression", "post").json()["should_show"]
+
+
+def test_history_job_identifier_starts_first_view_and_accepts_real_partial_delivery(
+    center_client,
+):
+    session_id = delivered_trial(center_client)
+    with center_client.app.state.session_factory() as session:
+        job_id = session.get(ReplicaDocumentRecord, session_id).payload["job_ids"][0]
+        job = session.get(JobRecord, job_id)
+        job.status = "partial"
+        job.expected_item_count = 2
+        job.failed_item_count = 1
+        session.commit()
+    viewed = offer(center_client, "/viewed", "post", {"job_id": job_id})
+    assert viewed.status_code == 200 and viewed.json()["trial_viewed"]
+    assert not viewed.json()["reminded_today"]
+
+
+def test_result_event_rejects_unrelated_jobs_missing_sources_and_invalid_actions(
+    center_client,
+):
+    session_id = delivered_trial(center_client)
+    for body, status in [
+        ({}, 422),
+        ({"job_id": "job_someone_else"}, 409),
+        ({"session_id": "another_session"}, 409),
+        (
+            {
+                "session_id": session_id,
+                "job_id": "job_someone_else",
+                "event": "downloaded",
+            },
+            409,
+        ),
+        ({"session_id": session_id, "event": "paid"}, 422),
+    ]:
+        assert offer(center_client, "/viewed", "post", body).status_code == status
+    assert not offer(center_client).json()["trial_viewed"]
+
+
+def test_download_must_have_real_deliverable_and_does_not_delay_an_earlier_reminder(
+    center_client, monkeypatch
+):
+    session_id = delivered_trial(center_client, output=False)
+    assert (
+        offer(
+            center_client,
+            "/viewed",
+            "post",
+            {"session_id": session_id, "event": "downloaded"},
+        ).status_code
+        == 409
+    )
+    session_id = delivered_trial(center_client)
+    now = utc_now()
+    monkeypatch.setattr(center, "utc_now", lambda: now)
+    viewed = offer(center_client, "/viewed", "post", {"session_id": session_id}).json()
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=29))
+    action = offer(
+        center_client,
+        "/viewed",
+        "post",
+        {"session_id": session_id, "event": "downloaded"},
+    ).json()
+    assert action["ready_at"] == viewed["ready_at"]
+
+
+def test_manual_open_before_timer_suppresses_automatic_reminders_but_can_reopen(
+    center_client, monkeypatch
+):
+    assert not offer(center_client, "/impression", "post", {"manual": True}).json()[
+        "should_show"
+    ]
+    session_id = delivered_trial(center_client)
+    now = utc_now()
+    monkeypatch.setattr(center, "utc_now", lambda: now)
+    viewed = offer(center_client, "/viewed", "post", {"session_id": session_id}).json()
+    assert offer(center_client, "/impression", "post", {"manual": True}).json()[
+        "should_show"
+    ]
+    assert offer(center_client).json()["reminded_today"]
+    monkeypatch.setattr(center, "utc_now", lambda: now + timedelta(seconds=60))
+    assert not offer(center_client, "/impression", "post").json()["should_show"]
+    assert offer(center_client, "/impression", "post", {"manual": True}).json()[
+        "should_show"
+    ]
+    assert offer(center_client).json()["window_ends_at"] == viewed["window_ends_at"]
+    paid(center_client)
+    assert not offer(center_client, "/impression", "post", {"manual": True}).json()[
+        "should_show"
+    ]

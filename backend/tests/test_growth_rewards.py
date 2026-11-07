@@ -175,6 +175,12 @@ def test_daily_checkin_updates_wallet_once_and_has_real_expiry(rewards_client):
 
 
 def test_beijing_midnight_not_browser_or_utc_day(rewards_client, monkeypatch):
+    # The calendar boundary is fixed; its campaign must predate the fixed clock.
+    with rewards_client.app.state.session_factory() as session:
+        session.get(PromotionCampaignRecord, growth.CHECKIN).starts_at = datetime(
+            2026, 11, 5, tzinfo=UTC
+        )
+        session.commit()
     monkeypatch.setattr(
         growth, "utc_now", lambda: datetime(2026, 11, 6, 15, 59, 59, tzinfo=UTC)
     )

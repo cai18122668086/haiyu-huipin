@@ -506,7 +506,8 @@ def test_journal_refuses_changed_inputs_under_the_same_key(tmp_path, monkeypatch
 
 
 @pytest.mark.parametrize("masked", [False, True])
-def test_async_terminal_failure_does_not_purchase_a_fallback_image(masked):
+@pytest.mark.parametrize("single", [False, True])
+def test_async_terminal_failure_does_not_purchase_a_fallback_image(masked, single):
     delegate = Transport([(202, {"id": "failed-task", "status": "queued"})])
     transport = PollingTransport(
         delegate,
@@ -520,11 +521,12 @@ def test_async_terminal_failure_does_not_purchase_a_fallback_image(masked):
             )
         ],
     )
-    result = dispatch(transport, masked=masked)
+    result = dispatch(transport, masked=masked, single=single)
     assert result.outcome == ProviderOutcome.FAILED
     assert result.error_code == "IMAGE_ASYNC_TASK_FAILED"
     assert result.provider_request_id == "failed-task"
     assert result.retryable is False
+    assert result.raw_usage["metrics"]["provider_error"]["code"] == "render_failed"
     assert len(delegate.calls) == 1
 
 

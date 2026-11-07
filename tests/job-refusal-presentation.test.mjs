@@ -18,3 +18,11 @@ test("technical rejection and unknown outcome keep their distinct recovery messa
   assert.match(safeJobFailureSummary("PROVIDER_OUTCOME_UNKNOWN"), /结果尚未确认/);
   assert.match(safeJobFailureSummary("PROVIDER_OUTCOME_UNKNOWN", { provider_error: { code: "content_policy_violation" } }), /结果尚未确认/);
 });
+
+test("failed original async tasks show the upstream failure without inviting a duplicate", () => {
+  const summary = safeJobFailureSummary("IMAGE_ASYNC_TASK_FAILED");
+  assert.match(summary, /生成服务报告原任务异常/);
+  assert.match(summary, /核查原任务/);
+  assert.doesNotMatch(summary, /结果尚未确认|稍后重试/);
+  assert.equal(jobNote({ status: "failed", items: [{ status: "failed", error_code: "IMAGE_ASYNC_TASK_FAILED" }] }), summary);
+});

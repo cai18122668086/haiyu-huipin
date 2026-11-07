@@ -1,0 +1,12 @@
+{
+  "image_id": "sha256:dda42714c0fe733284ce1406e092cb1f7548cc253cdea05bbf099147f7403714",
+  "status": "passed",
+  "public_pages": 20,
+  "public_tools": 16,
+  "private_pages": 4,
+  "crawl_files": 2,
+  "cache_checks": 4,
+  "illustration_assets": 7,
+  "paired_tools": 16,
+  "matched_files": 293
+}

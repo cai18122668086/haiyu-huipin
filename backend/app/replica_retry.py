@@ -11,6 +11,19 @@ from typing import Any
 from .replica_native import ReplicaNativeError, contained, digest
 
 
+def reconciliation_error_codes(values: dict[str, Any]) -> set[str]:
+    """Fast accepted failures retain their receipt and cannot be cloned.
+
+    Standard per-screen completion can explicitly retry a known failed screen.
+    The fast provider instead fences accepted async tasks, including terminal
+    supplier errors; those require reconciliation of the original receipt.
+    """
+    codes = {"PROVIDER_OUTCOME_UNKNOWN", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED"}
+    if values.get("replica_speed") == "fast":
+        codes.add("IMAGE_ASYNC_TASK_FAILED")
+    return codes
+
+
 @dataclass(frozen=True)
 class PriorPixelReview:
     source_job_id: str

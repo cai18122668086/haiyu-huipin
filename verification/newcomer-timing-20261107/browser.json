@@ -1,0 +1,42 @@
+{
+  "environment": "localhost synthetic account and existing brand image",
+  "task_detail_auto_popup": "passed",
+  "generation_history_grouped_session_source": "passed",
+  "download_acceleration": {
+    "normal_ready_at": "2026-11-07T10:21:37.591345+08:00",
+    "accelerated_ready_at": "2026-11-07T10:21:19.511309+08:00",
+    "observed_popup": true
+  },
+  "close_and_refresh": "floating entry only; no automatic dialog",
+  "manual_reopen": "passed",
+  "purchase_destination": "/account?offer=newcomer#membership",
+  "floating_countdown": "ticks each second; same server deadline as dialog",
+  "removed_result_purchase_card": true,
+  "account_card": "purple and gold, prominent 160 credits",
+  "button": "¥9.9 立即抢购",
+  "removed_painting_and_image_count_copy": true,
+  "viewports": [
+    "default desktop",
+    "390x844"
+  ],
+  "no_customer_account_operations": true,
+  "heading": "限时福利",
+  "heading_alignment": "center",
+  "heading_font_mobile": "40px",
+  "heading_font_desktop": "44px",
+  "credit_label_mobile": "21px",
+  "credit_label_desktop": "24px",
+  "amount_alignment": "identical numeral font and line height; top and bottom differences both zero at 320, 390 and 1280px",
+  "extra_small_viewport": "320x740: no horizontal overflow",
+  "floating_title": "限时福利",
+  "floating_timer_mobile": {
+    "fontSize": "20px",
+    "fontWeight": "800",
+    "background": "warm gold"
+  },
+  "offer_subtitle_removed": true,
+  "floating_description_removed": true,
+  "visible_countdown_caption_removed": true,
+  "floating_price_font_mobile": "21px",
+  "floating_price_font_desktop": "22px"
+}

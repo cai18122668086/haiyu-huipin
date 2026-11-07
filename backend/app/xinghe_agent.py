@@ -3077,12 +3077,17 @@ class TengliOpenAICompatibleGateway:
                 http_status=status,
             )
         except XingheAgentError as exc:
-            unknown = request.single_dispatch or exc.code in {
-                "PROVIDER_TRANSPORT_FAILED",
-                "PROVIDER_RESPONSE_INVALID",
-                "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
-                "IMAGE_TASK_QUERY_UNCONFIRMED",
-            }
+            # Preserve an original async task's reported terminal failure.
+            # Single dispatch prevents another purchase, not truthful status.
+            unknown = exc.code != "IMAGE_ASYNC_TASK_FAILED" and (
+                request.single_dispatch
+                or exc.code in {
+                    "PROVIDER_TRANSPORT_FAILED",
+                    "PROVIDER_RESPONSE_INVALID",
+                    "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
+                    "IMAGE_TASK_QUERY_UNCONFIRMED",
+                }
+            )
             return ImageCallResult(
                 outcome=(
                     ProviderOutcome.OUTCOME_UNKNOWN if unknown else ProviderOutcome.FAILED

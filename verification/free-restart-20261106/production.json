@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "revision": "525d8d1fcc7d8a0ec3dfa710f3d9e5f0f64cf8fe",
+  "backend_image": "huipin-free-restart/backend:525d8d1fcc7d8a0ec3dfa710f3d9e5f0f64cf8fe",
+  "frontend_image": "huipin-free-restart/frontend:525d8d1fcc7d8a0ec3dfa710f3d9e5f0f64cf8fe",
+  "backup_bytes": 4618661,
+  "backup_sha256": "77eae36f047f9125224db4d102b84e553ea7edcc03121df2ef8ac752599f9cb3",
+  "schema_and_campaigns_preserved": true,
+  "runtime_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 291
+}

@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "revision": "5adf9fea248a35486816ba67f0fa67c6be912dea",
+  "backend_image": "huipin-provider-failure/backend:5adf9fea248a35486816ba67f0fa67c6be912dea",
+  "frontend_image": "huipin-provider-failure/frontend:5adf9fea248a35486816ba67f0fa67c6be912dea",
+  "backup_bytes": 4618661,
+  "backup_sha256": "52dde1efffdd6619ff0a49210f6edf52598106f822a7272b7a458b7b4b6a8d7c",
+  "schema_and_campaigns_preserved": true,
+  "runtime_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 291
+}

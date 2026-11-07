@@ -21,6 +21,7 @@ from .models import (
 )
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
+from .provider_diagnostics import retained_metrics, safe_text
 from .replica_exact_contracts import canonical_hash
 from .replica_fast import (
     SKILLS,
@@ -190,8 +191,20 @@ class FastReplicaProvider:
                         409, "FAST_REPLICA_SCOPE_INVALID", "已有图片归属无效。"
                     )
                 return old
-            if old and (
-                old.get("state") != "rejected" or old.get("job_id") == request.job_id
+            explicit_free_restart = (
+                job.configuration.get("_free_replica_restart_from")
+                == job.retry_of_job_id
+                == old.get("job_id")
+                and job.retry_of_job_id is not None
+                and row.payload.get("use_welcome_trial") is True
+            )
+            if (
+                old
+                and not explicit_free_restart
+                and (
+                    old.get("state") != "rejected"
+                    or old.get("job_id") == request.job_id
+                )
             ):
                 raise ApiError(
                     409,
@@ -203,6 +216,7 @@ class FastReplicaProvider:
                 "job_id": request.job_id,
                 "attempt_id": request.attempt_id,
                 "plan_hash": canonical_hash(plan),
+                **({"previous_invocation": old} if explicit_free_restart else {}),
             }
             row.payload = {**row.payload, "_fast_invocations": receipts}
             row.updated_at = utc_now()
@@ -238,10 +252,7 @@ class FastReplicaProvider:
             fmt = image.format
         if (
             fmt not in {"PNG", "JPEG", "WEBP"}
-            or not (
-                min(w, h) >= 1024
-                or (min(w, h) >= 768 and w * h >= 1_500_000)
-            )
+            or not (min(w, h) >= 1024 or (min(w, h) >= 768 and w * h >= 1_500_000))
             or abs((w / h) / (canvas[0] / canvas[1]) - 1) > 0.01
         ):
             raise ApiError(
@@ -383,6 +394,7 @@ class FastReplicaProvider:
                 "replica_speed": "fast",
                 "planning_rounds": 1,
                 "metrics": {
+                    **retained_metrics(result.raw_usage),
                     "api_latency_seconds": result.api_latency_seconds,
                     "skill_id": plan["skill_id"],
                     "skill_content_hash": plan["skill_content_hash"],
@@ -400,7 +412,13 @@ class FastReplicaProvider:
                     unit,
                     request,
                     {
-                        "state": "unknown" if unknown else "rejected",
+                        "state": "unknown"
+                        if unknown
+                        else (
+                            "failed"
+                            if result.error_code == "IMAGE_ASYNC_TASK_FAILED"
+                            else "rejected"
+                        ),
                         "provider_request_id": result.provider_request_id,
                         "usage": usage,
                         "actual_cost_micros": result.actual_cost_micros,
@@ -415,7 +433,7 @@ class FastReplicaProvider:
                     else result.error_code or "FAST_REPLICA_IMAGE_FAILED",
                     error_message="原生图结果尚未核实，请先核查原任务。"
                     if unknown
-                    else "本屏生成未完成，可重试。",
+                    else safe_text(result.error_message or "本屏生成未完成，可重试。"),
                     provider_request_id=result.provider_request_id,
                     raw_usage=usage,
                     usage_reported=bool(usage.get("reported")),

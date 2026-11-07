@@ -2684,6 +2684,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/replica/sessions/{document_id}/jobs/{job_id}/restart-free": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart Free Trial */
+        post: operations["restart_free_trial_api_v1_workspaces__workspace_id__replica_sessions__document_id__jobs__job_id__restart_free_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/replica/sessions/{document_id}/jobs/{job_id}/retry": {
         parameters: {
             query?: never;
@@ -4383,6 +4400,16 @@ export interface components {
             /** Final Review Sha256 */
             final_review_sha256?: string | null;
         };
+        /** FreeRestartRequest */
+        FreeRestartRequest: {
+            /**
+             * Confirm New Generation
+             * @constant
+             */
+            confirm_new_generation: true;
+            /** Request Id */
+            request_id: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -5110,6 +5137,8 @@ export interface components {
             ready_at: string | null;
             /** Regular Amount Fen */
             regular_amount_fen: number;
+            /** Reminded Today */
+            reminded_today: boolean;
             /** Savings Fen */
             savings_fen: number;
             /** Server Now */
@@ -5122,6 +5151,14 @@ export interface components {
             validity_days: number;
             /** Window Ends At */
             window_ends_at: string | null;
+        };
+        /** OfferImpression */
+        OfferImpression: {
+            /**
+             * Manual
+             * @default false
+             */
+            manual: boolean;
         };
         /** PasswordChangeBody */
         PasswordChangeBody: {
@@ -5701,8 +5738,16 @@ export interface components {
         };
         /** ViewedTrial */
         ViewedTrial: {
+            /**
+             * Event
+             * @default viewed
+             * @enum {string}
+             */
+            event: "viewed" | "downloaded" | "continue";
+            /** Job Id */
+            job_id?: string | null;
             /** Session Id */
-            session_id: string;
+            session_id?: string | null;
         };
         /** WorkerAccountSessionRequest */
         WorkerAccountSessionRequest: {
@@ -11090,7 +11135,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OfferImpression"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -11542,6 +11591,45 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restart_free_trial_api_v1_workspaces__workspace_id__replica_sessions__document_id__jobs__job_id__restart_free_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                job_id: string;
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FreeRestartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

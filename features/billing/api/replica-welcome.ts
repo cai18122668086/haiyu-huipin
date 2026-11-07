@@ -6,7 +6,9 @@ import { isLocalDevelopmentAuthEnabled, LOCAL_DEV_AUTH_USER_ID } from "@/lib/aut
 
 export type ReplicaWelcomeState = {
   enabled: boolean;
-  status: "available" | "in_progress" | "used" | "expired" | "unavailable";
+  status: "available" | "in_progress" | "recoverable" | "used" | "expired" | "unavailable";
+  remaining_tasks?: number;
+  recovery_available?: boolean;
   session_id: string | null;
   expires_at: string | null;
   newcomer_available: boolean;

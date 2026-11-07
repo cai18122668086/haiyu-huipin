@@ -1,0 +1,26 @@
+[
+  {
+    "bottomDifference": 0,
+    "creditFont": "48px",
+    "overflow": 0,
+    "priceFont": "48px",
+    "topDifference": 0,
+    "viewport": 390
+  },
+  {
+    "bottomDifference": 0,
+    "creditFont": "40px",
+    "overflow": 0,
+    "priceFont": "40px",
+    "topDifference": 0,
+    "viewport": 320
+  },
+  {
+    "bottomDifference": 0,
+    "creditFont": "70px",
+    "overflow": 0,
+    "priceFont": "70px",
+    "topDifference": 0,
+    "viewport": 1280
+  }
+]

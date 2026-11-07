@@ -1,0 +1,12 @@
+{
+  "frontend_tests": 258,
+  "targeted_backend_passed": 33,
+  "targeted_backend_postgres_skipped_locally": 1,
+  "growth_and_calendar_passed": 38,
+  "typecheck": "passed",
+  "production_build": "passed",
+  "targeted_eslint": "0 errors; pre-existing account navigation warning",
+  "ruff": "passed",
+  "targeted_mypy": "passed",
+  "no_real_sms_payment_or_generation": true
+}

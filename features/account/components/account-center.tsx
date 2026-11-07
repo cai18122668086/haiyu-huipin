@@ -5,6 +5,7 @@ import { RewardsNavigation } from "@/components/rewards-navigation";
 import { InvitationCenter } from "./invitation-center";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
+import { NewcomerOfferCountdown } from "@/components/newcomer-offer-controller";
 import { RewardsCenter } from "./rewards-center";
 import { useRewards } from "@/features/billing/api/rewards";
 
@@ -757,8 +758,20 @@ function Membership({
         </div>
       </div>
       {newcomer && <section className={newcomerStyles.offer} aria-label="新人首单体验包">
-        <div><span>新人首单</span><h3>继续创作，低价体验更多好图</h3><p>{newcomer.credits} 积分 · {newcomer.validity_days} 天有效</p></div>
-        <div className={newcomerStyles.action}><div className={newcomerStyles.price}>{starter && starter.credits === newcomer.credits && starter.validity_days === newcomer.validity_days && <small>常规价 <s>¥{money(starter.amount_fen)}</s></small>}<strong>¥{money(newcomer.amount_fen)}</strong></div><Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>立即体验<ArrowUpRight size={16} /></Button></div>
+        <div className={newcomerStyles.copy}>
+          <span className={newcomerStyles.badge}><Gift size={14}/>新客首单专享</span>
+          <h3><strong>{newcomer.credits}</strong><span>积分</span></h3>
+          <p>生成更多商品图 · 到账后{newcomer.validity_days}天有效</p>
+          <NewcomerOfferCountdown className={newcomerStyles.countdown}/>
+        </div>
+        <div className={newcomerStyles.action}>
+          <div className={newcomerStyles.price}>
+            {starter && starter.credits === newcomer.credits && starter.validity_days === newcomer.validity_days && <small>常规价 <s>¥{money(starter.amount_fen)}</s><b>立省 ¥{money(starter.amount_fen-newcomer.amount_fen)}</b></small>}
+            <strong><span>¥</span>{money(newcomer.amount_fen)}</strong>
+          </div>
+          <Button disabled={!catalog.data?.enabled} onClick={() => { setChannel(catalog.data?.channels[0] ?? "alipay"); select(newcomer); }}>¥{money(newcomer.amount_fen)} 立即抢购<ArrowUpRight size={18}/></Button>
+          <small className={newcomerStyles.note}>每人限购一次 · 无自动续费</small>
+        </div>
       </section>}
       <div className="pricing-toolbar">
         <div className="purchase-tabs" role="tablist" aria-label="购买方式">
@@ -1025,7 +1038,7 @@ function OrderDialog({
   const member = useMembership(workspaceId);
   useEffect(() => {
     if (order.data?.status !== "paid") return;
-    for (const key of ["credits", "credit-membership", "credit-ledger-history", "credit-orders"]) void client.invalidateQueries({ queryKey: [key, workspaceId] });
+    for (const key of ["credits", "credit-membership", "credit-ledger-history", "credit-orders", "newcomer-offer", "replica-welcome", "credit-products"]) void client.invalidateQueries({ queryKey: [key, workspaceId] });
   }, [order.data?.status, client, workspaceId]);
   const reconcile = useReconcilePurchase(workspaceId, orderId);
   const refunds = useRefundHistory(workspaceId, orderId);

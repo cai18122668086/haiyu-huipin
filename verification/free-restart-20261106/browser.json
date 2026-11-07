@@ -1,0 +1,10 @@
+{
+  "authenticated_original_session": true,
+  "remaining_free_tasks": 1,
+  "whole_task_free_button_enabled": true,
+  "per_card_free_buttons_enabled": 10,
+  "misleading_80_credit_estimate": false,
+  "wallet_credits_displayed": 10,
+  "customer_generation_clicked": false,
+  "old_images_retrieved": false
+}

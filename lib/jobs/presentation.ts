@@ -130,6 +130,9 @@ export function jobNote(job: Job | JobDetail): string {
 }
 
 export function safeJobFailureSummary(errorCode?: string | null, errorDetails?: unknown): string {
+  if (errorCode === "IMAGE_ASYNC_TASK_FAILED") {
+    return "生成服务报告原任务异常，本站尚未取得图片。原任务编号和素材已保留，请先核查原任务，避免重复生成。";
+  }
   if (errorCode === "PROVIDER_OUTCOME_UNKNOWN") {
     return "生成请求的结果尚未确认，系统已停止自动重试，请联系管理员核查，避免重复生成。";
   }

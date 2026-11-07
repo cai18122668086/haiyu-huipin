@@ -716,7 +716,8 @@ class HaiyuTransport:
                 # is not a routing rejection and must not buy another image.
                 raise XingheAgentError(
                     "IMAGE_ASYNC_TASK_FAILED",
-                    "上游图片任务未完成，原任务编号已保留，请核查后再决定是否重新生成。",
+                    "生成服务报告原任务异常，本站尚未取得可交付图片；"
+                    "原任务编号已保留，请核查后再决定是否重新生成。",
                     provider_request_id=task_id,
                     provider_error=error_summary({"error": error}),
                 )
