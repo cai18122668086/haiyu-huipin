@@ -94,7 +94,7 @@ export function NewcomerOfferController() {
   const floatingTime = query.data ? newcomerCountdown(query.data.window_ends_at, query.data.server_now, tick - query.dataUpdatedAt) : null;
   return <>
     {visible && <NewcomerOfferModal offer={offer.data} receivedAt={offer.receivedAt} now={tick || offer.receivedAt} onClose={() => setOffer(null)}/>}
-    {floating && query.data && <button type="button" className={styles.floating} aria-label="查看新人首单9.9元优惠" onClick={() => {
+    {floating && query.data && <button type="button" className={styles.floating} aria-label="查看限时福利，首单9.9元" onClick={() => {
       if (!workspace?.id || inFlight.current) return;
       const id = workspace.id;
       inFlight.current = true;
@@ -102,7 +102,11 @@ export function NewcomerOfferController() {
         cache.setQueryData(newcomerOfferKey(id), {...result, should_show: false, reminded_today: result.should_show || result.reminded_today});
         if (result.should_show) setOffer({data: result, receivedAt: Date.now(), workspaceId: id});
       }).catch(() => router.push("/account?offer=newcomer#membership")).finally(() => { inFlight.current = false; });
-    }}><TicketPercent size={21}/><span><strong>首单 ¥{query.data.amount_fen / 100}</strong><small>{query.data.credits}积分 · 优惠剩余 <time>{floatingTime?.parts.join(":")}</time></small></span><ArrowUpRight size={17}/></button>}
+    }}><TicketPercent size={23}/><span className={styles.floatingContent}>
+      <span className={styles.floatingHeading}><strong>限时福利</strong><b>¥{query.data.amount_fen / 100}</b></span>
+      <small>{query.data.credits}积分 · 新客首单专享</small>
+      <span className={styles.floatingClock}><small>倒计时</small><time aria-label={`优惠剩余${floatingTime?.parts.join(":")}`}>{floatingTime?.parts.join(":")}</time></span>
+    </span><ArrowUpRight size={17}/></button>}
   </>;
 }
 

@@ -26,3 +26,13 @@
 @media(max-width:340px){.dialog{padding-inline:16px}.coupon{--credit-inset:8px;padding-inline:14px;gap:7px 10px}.priceValue>span{font-size:20px}.priceValue>strong{font-size:52px}.creditValue>strong{font-size:36px}.creditValue>span{font-size:17px}}
 
 .top{text-align:center}.top h2{margin:22px 0 12px;font-size:44px;line-height:1.2;font-weight:750;letter-spacing:3px;color:#f5ddbc}.top p{margin-bottom:24px}.sparkle{right:4px;top:77px;width:29px;height:29px;opacity:.75}@media(max-width:480px){.top h2{font-size:40px;margin-top:22px;letter-spacing:2px}.top p{font-size:12px;margin-bottom:22px}.sparkle{right:-3px;top:77px;width:23px;height:23px}}@media(max-width:340px){.top h2{font-size:36px}.sparkle{right:0;width:20px;height:20px}}
+
+/* Equal numeral metrics align the tops, baselines and visual centers. */
+.coupon{grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr)}
+.priceValue>strong,.creditValue>strong{font-size:70px;line-height:1;letter-spacing:-2px}
+.floating{gap:12px;padding:14px 16px;border-color:#e5c39280;box-shadow:0 8px 32px #2713373d}
+.floating>.floatingContent{display:grid;gap:5px}.floating .floatingHeading{display:flex;align-items:center;gap:10px}.floatingHeading>strong{font-size:19px;letter-spacing:.6px}.floatingHeading>b{padding:3px 7px;border:1px solid #f6d7a84d;border-radius:5px;background:#fff0d20d;color:#ffe2b4;font-size:12px;line-height:1.2}.floating .floatingClock{display:flex;align-items:center;gap:7px;margin-top:2px}.floatingClock>small{font-size:11px;color:#dac8e6}.floating .floatingClock time{margin:0;padding:6px 9px;border:1px solid #ffe9bd;border-radius:7px;background:linear-gradient(110deg,#eac397,#fff0d2);color:#4b2e3f;font-size:21px;font-weight:800;line-height:1;letter-spacing:1.1px;font-variant-numeric:tabular-nums;box-shadow:0 3px 12px #e5bc921c}
+@media(max-width:640px){.floating{gap:9px;padding:12px}.floatingHeading>strong{font-size:18px}.floating .floatingClock time{font-size:20px;padding:6px 8px}}
+@media(max-width:480px){.priceValue>strong,.creditValue>strong{font-size:48px;letter-spacing:-1px}}
+@media(max-width:374px){.priceValue>strong,.creditValue>strong{font-size:44px}}
+@media(max-width:340px){.priceValue>strong,.creditValue>strong{font-size:40px}}
