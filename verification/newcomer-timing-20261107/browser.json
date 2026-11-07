@@ -33,5 +33,10 @@
     "fontSize": "20px",
     "fontWeight": "800",
     "background": "warm gold"
-  }
+  },
+  "offer_subtitle_removed": true,
+  "floating_description_removed": true,
+  "visible_countdown_caption_removed": true,
+  "floating_price_font_mobile": "21px",
+  "floating_price_font_desktop": "22px"
 }
