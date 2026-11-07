@@ -1982,13 +1982,9 @@ async def retry_image(
     jobs = list(values.get("job_ids", []))
     if job_id not in jobs:
         raise ApiError(404, "REPLICA_JOB_NOT_FOUND", "请从当前复刻结果选择图片。")
-    # A terminal async failure is a known outcome. Keep the same policy as
-    # the generic retry endpoint: only uncertain or unconfirmed results need
-    # reconciliation before an explicit retry of the missing images.
-    unknown_codes = {
-        "PROVIDER_OUTCOME_UNKNOWN",
-        "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
-    }
+    from .replica_retry import reconciliation_error_codes
+
+    unknown_codes = reconciliation_error_codes(values)
     original = session.scalar(
         select(JobRecord).where(
             JobRecord.id == job_id, JobRecord.workspace_id == workspace.workspace_id

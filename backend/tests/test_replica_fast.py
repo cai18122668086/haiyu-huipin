@@ -278,7 +278,10 @@ def test_unknown_image_outcome_blocks_resubmission(client):
     assert len(gateway.images) == 1
 
 
-def test_async_failure_keeps_original_error_and_blocks_another_purchase(client):
+@pytest.mark.parametrize("generic", [False, True])
+def test_async_failure_keeps_original_error_and_blocks_another_purchase(
+    client, generic
+):
     from app.xinghe_agent import TengliOpenAICompatibleGateway
 
     from .test_haiyu_transport import PollingTransport, Transport
@@ -325,10 +328,12 @@ def test_async_failure_keeps_original_error_and_blocks_another_purchase(client):
     assert job["error_details"]["provider_error"]["code"] == "supplier_request_failed"
     assert job["error_details"]["provider_attempts"][0]["request_id"] == "original-task"
     retry = client.post(
-        ROUTE + f"/sessions/{doc['id']}/jobs/{job_id}/retry",
-        json={"request_id": str(uuid4())},
+        f"/api/v1/workspaces/ws_test/jobs/{job_id}/retry"
+        if generic else ROUTE + f"/sessions/{doc['id']}/jobs/{job_id}/retry",
+        headers={"Idempotency-Key": str(uuid4())},
+        json={"scope": "failed"} if generic else {"request_id": str(uuid4())},
     )
-    assert retry.status_code == 409
+    assert retry.status_code == 409, retry.text
     assert len(delegate.calls) == 1
 
 

@@ -2270,10 +2270,9 @@ async def retry_job(
                 "REPLICA_RETRY_SUPERSEDED",
                 "请从当前复刻任务重试，旧任务已被接续。",
             )
-        unknown_codes = {
-            "PROVIDER_OUTCOME_UNKNOWN",
-            "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
-        }
+        from .replica_retry import reconciliation_error_codes
+
+        unknown_codes = reconciliation_error_codes(replica_document.payload)
         unknown = session.scalar(
             select(JobItemRecord.id)
             .where(
