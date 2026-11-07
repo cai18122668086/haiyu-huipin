@@ -91,3 +91,6 @@ next-env.d.ts
 # Hosting bindings and private local operations reports are machine-specific.
 /.openai/
 /local-reports/
+
+# Local type-checker cache
+/.mypy_cache/
