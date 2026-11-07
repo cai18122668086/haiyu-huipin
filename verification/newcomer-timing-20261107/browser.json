@@ -26,6 +26,12 @@
   "heading_font_desktop": "44px",
   "credit_label_mobile": "21px",
   "credit_label_desktop": "24px",
-  "amount_alignment": "shared grid row and baseline",
-  "extra_small_viewport": "320x740: no horizontal overflow"
+  "amount_alignment": "identical numeral font and line height; top and bottom differences both zero at 320, 390 and 1280px",
+  "extra_small_viewport": "320x740: no horizontal overflow",
+  "floating_title": "限时福利",
+  "floating_timer_mobile": {
+    "fontSize": "20px",
+    "fontWeight": "800",
+    "background": "warm gold"
+  }
 }

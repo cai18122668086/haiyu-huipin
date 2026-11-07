@@ -1,0 +1,14 @@
+{
+  "status": "activated",
+  "revision": "77408f408ed969763339a3233381da50f880171a",
+  "frontend_image": "huipin-newcomer-timing/frontend-mobile:77408f408ed969763339a3233381da50f880171a",
+  "previous_image": "huipin-newcomer-timing/frontend-mobile:f7bcf0b185812482bfd955828cac665d8af9437d",
+  "backend_restarted": false,
+  "database_changed": false,
+  "other_services_preserved": true,
+  "runtime_environment_preserved": true,
+  "protected_configuration_preserved": true,
+  "public_routes_verified": 6,
+  "public_original_assets_verified": 0,
+  "matched_files": 293
+}
