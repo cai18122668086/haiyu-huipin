@@ -114,7 +114,7 @@ export function NewcomerOfferModal({offer,receivedAt,now,onClose}:{offer:Offer;r
   useEffect(()=>{if(time.seconds===0)onClose();},[time.seconds,onClose]);
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby="newcomer-offer-title" onCancel={event=>{event.preventDefault();onClose();}} onClick={event=>{if(event.target===event.currentTarget){const r=event.currentTarget.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)onClose();}}}>
     <button type="button" className={styles.close} aria-label="关闭新人优惠" onClick={onClose}><X size={20}/></button>
-    <div className={styles.top}><span className={styles.badge}><TicketPercent size={15}/>新客首单专享</span><Sparkles className={styles.sparkle} size={38}/><h2 id="newcomer-offer-title">继续生成商品图<br/><em>新客首单更划算</em></h2><p>新客专享体验价 · 生成更多商品图</p></div>
+    <div className={styles.top}><span className={styles.badge}><TicketPercent size={15}/>新客首单专享</span><Sparkles className={styles.sparkle} size={38}/><h2 id="newcomer-offer-title">限时福利</h2><p>新客首单专享 · 160积分优惠体验</p></div>
     <div className={styles.coupon}>
       <div className={styles.price}>
         <small className={styles.originalPrice}>常规价 <s>¥{(offer.regular_amount_fen/100).toFixed(1)}</s></small>
