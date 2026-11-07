@@ -15,3 +15,5 @@ CI #67 的 Frontend quality、API contract 和三个容器构建均成功；Back
 四个应用服务健康，654份后端和297份前端源码及75份新增图片核对一致，另抽查2份公网新增素材的原始字节哈希通过。迁移0040、活动与运行参数保持，备份4,633,563字节且pg_restore目录校验通过，其他服务没有更换。证据见 verification/ci-local-consolidation-20261107/。
 
 CI：[修复后的完整运行](https://github.com/cai18122668086/haiyu-huipin/actions/runs/42340148097)；合并：[PR #13](https://github.com/cai18122668086/haiyu-huipin/pull/13)。
+
+合并后的main自动CI也已完成，14项检查全部成功：[主线CI](https://github.com/cai18122668086/haiyu-huipin/actions/runs/42342170980)。已核对25个工作区，当前维护的24个工作区均干净且HEAD已进入main；仅按项目约定保留短信历史备份工作区的旧改动。
