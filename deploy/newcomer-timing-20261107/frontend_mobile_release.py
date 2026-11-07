@@ -154,7 +154,9 @@ def test():
             state = inspect(name)["State"]
             assert state["Running"], "Candidate did not start"
             result = subprocess.run(
-                ["docker", "exec", name, "node", "-e", check], capture_output=True
+                ["docker", "exec", name, "node", "-e", check],
+                capture_output=True,
+                check=False,
             )
             if result.returncode == 0:
                 break
