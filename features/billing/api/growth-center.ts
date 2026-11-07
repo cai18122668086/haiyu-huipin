@@ -11,12 +11,14 @@ export function useNewcomerOffer(workspaceId: string | undefined) {
     queryFn:async({signal})=>unwrapApiResponse(await apiClient.GET("/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer",{params:{path:{workspace_id:workspaceId!}},signal}))});
 }
 
-export async function markTrialViewed(workspaceId:string, sessionId:string) {
-  return unwrapApiResponse(await apiClient.POST("/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/viewed",{params:{path:{workspace_id:workspaceId}},body:{session_id:sessionId}}));
+export type TrialInteraction = { session_id?: string; job_id?: string; event?: "viewed" | "downloaded" | "continue" };
+
+export async function markTrialViewed(workspaceId:string, interaction:TrialInteraction) {
+  return unwrapApiResponse(await apiClient.POST("/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/viewed",{params:{path:{workspace_id:workspaceId}},body:{event:"viewed", ...interaction}}));
 }
 
-export async function claimOfferImpression(workspaceId:string) {
-  return unwrapApiResponse(await apiClient.POST("/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/impression",{params:{path:{workspace_id:workspaceId}}}));
+export async function claimOfferImpression(workspaceId:string, manual = false) {
+  return unwrapApiResponse(await apiClient.POST("/api/v1/workspaces/{workspace_id}/promotions/newcomer-offer/impression",{params:{path:{workspace_id:workspaceId}},body:{manual}}));
 }
 
 export type InvitationFilter = "all"|"paid"|"unpaid"|"refunded";

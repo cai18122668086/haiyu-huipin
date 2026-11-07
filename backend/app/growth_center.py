@@ -1,5 +1,6 @@
 """Private invitation reporting and reminders after a delivered free trial."""
 
+from contextlib import suppress
 from datetime import datetime, timedelta
 from hashlib import sha256
 from zoneinfo import ZoneInfo
@@ -27,7 +28,8 @@ from .onboarding import personal_workspace_id
 from .replica_welcome import NEWCOMER_PACK, newcomer_eligible
 
 REMINDER = "newcomer-reminder-v1"
-VIEWING_SECONDS = 120
+VIEWING_SECONDS = 30
+ACTION_SECONDS = 5
 WINDOW_SECONDS = 24 * 60 * 60
 PAID = ["paid", "partially_refunded", "refunded"]
 
@@ -173,13 +175,25 @@ def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
         session, user.id, workspace_id
     )
     row = session.get(NewcomerOfferRecord, user.id) if enabled else None
-    ready = (
+    anchor = (
         aware(row.first_viewed_at) + timedelta(seconds=VIEWING_SECONDS) if row else None
     )
+    ready = anchor
+    if row and ready:
+        document = session.get(ReplicaDocumentRecord, row.session_id)
+        action_at = document.payload.get("newcomer_action_at") if document else None
+        if isinstance(action_at, str):
+            with suppress(ValueError):
+                ready = min(
+                    ready,
+                    aware(datetime.fromisoformat(action_at))
+                    + timedelta(seconds=ACTION_SECONDS),
+                )
     window = (
-        max(0, int((now - ready).total_seconds()) // WINDOW_SECONDS) if ready else 0
+        max(0, int((now - anchor).total_seconds()) // WINDOW_SECONDS) if anchor else 0
     )
-    end = ready + timedelta(seconds=(window + 1) * WINDOW_SECONDS) if ready else None
+    # Accelerating a first reminder must not restart the daily offer's deadline.
+    end = anchor + timedelta(seconds=(window + 1) * WINDOW_SECONDS) if anchor else None
     shown_today = bool(
         row
         and row.last_shown_window >= 0
@@ -189,6 +203,7 @@ def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
     return {
         "eligible": bool(enabled),
         "trial_viewed": row is not None,
+        "reminded_today": shown_today,
         "should_show": bool(
             row
             and ready
@@ -209,17 +224,21 @@ def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
 
 
 def mark_trial_viewed(
-    session: Session, user: UserRecord, workspace_id: str, session_id: str
+    session: Session,
+    user: UserRecord,
+    workspace_id: str,
+    session_id: str | None,
+    *,
+    job_id: str | None = None,
+    event: str = "viewed",
 ) -> dict:
     if not rewards.active(session, REMINDER) or not newcomer_eligible(
         session, user.id, workspace_id
     ):
         return offer_state(session, user, workspace_id)
-    existing = session.get(NewcomerOfferRecord, user.id)
-    if existing:
-        return offer_state(session, user, workspace_id)
     grant = session.get(ReplicaWelcomeGrantRecord, user.id)
-    document = session.get(ReplicaDocumentRecord, session_id)
+    session_id = session_id or (grant.session_id if grant else None)
+    document = session.get(ReplicaDocumentRecord, session_id) if session_id else None
     if (
         not grant
         or grant.session_id != session_id
@@ -234,24 +253,22 @@ def mark_trial_viewed(
     ids = document.payload.get("job_ids", [])
     if not isinstance(ids, list) or not 0 < len(ids) <= 100:
         raise ApiError(409, "TRIAL_NOT_DELIVERED", "免费套图还在生成中。")
-    jobs = (
-        list(session.scalars(select(JobRecord).where(JobRecord.id.in_(ids))))
-        if isinstance(ids, list) and 0 < len(ids) <= 100
-        else []
-    )
-    if (
-        len(jobs) != len(ids)
-        or not jobs
-        or any(
-            job.workspace_id != workspace_id
-            or job.status != "completed"
-            or job.configuration.get("replica_session_id") != session_id
-            for job in jobs
+    if job_id and job_id not in ids:
+        raise ApiError(409, "TRIAL_NOT_DELIVERED", "请查看本人的免费套图结果。")
+    jobs = list(
+        session.scalars(
+            select(JobRecord).where(JobRecord.id.in_([job_id] if job_id else ids))
         )
-    ):
-        raise ApiError(409, "TRIAL_NOT_DELIVERED", "免费套图还在生成中。")
+    )
+    delivered = False
     for job in jobs:
-        if not session.scalar(
+        if (
+            job.workspace_id != workspace_id
+            or job.status not in ("completed", "partial")
+            or job.configuration.get("replica_session_id") != session_id
+        ):
+            continue
+        if session.scalar(
             select(JobAssetRecord.id)
             .where(
                 JobAssetRecord.job_id == job.id,
@@ -261,21 +278,38 @@ def mark_trial_viewed(
             )
             .limit(1)
         ):
-            raise ApiError(409, "TRIAL_NOT_DELIVERED", "免费套图还在准备中。")
-    session.add(
-        NewcomerOfferRecord(
-            user_id=user.id,
-            session_id=session_id,
-            first_viewed_at=utc_now(),
-            last_shown_window=-1,
+            delivered = True
+            break
+    if not delivered:
+        raise ApiError(409, "TRIAL_NOT_DELIVERED", "免费套图还在生成中。")
+    existing = session.get(NewcomerOfferRecord, user.id)
+    if not existing:
+        session.add(
+            NewcomerOfferRecord(
+                user_id=user.id,
+                session_id=session_id,
+                first_viewed_at=utc_now(),
+                last_shown_window=-1,
+            )
         )
-    )
+    if event in ("downloaded", "continue") and not document.payload.get(
+        "newcomer_action_at"
+    ):
+        # Server-owned metadata on the verified trial avoids changing the schema.
+        document.payload = {
+            **document.payload,
+            "newcomer_action_at": aware(utc_now()).isoformat(),
+        }
     session.flush()
     return offer_state(session, user, workspace_id)
 
 
-def claim_impression(session: Session, user: UserRecord, workspace_id: str) -> dict:
+def claim_impression(
+    session: Session, user: UserRecord, workspace_id: str, *, manual: bool = False
+) -> dict:
     result = offer_state(session, user, workspace_id)
+    if manual:
+        result["should_show"] = result["eligible"] and result["trial_viewed"]
     if result["should_show"]:
         row = session.get(NewcomerOfferRecord, user.id)
         assert row is not None

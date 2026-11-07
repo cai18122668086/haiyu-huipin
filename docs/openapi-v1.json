@@ -6188,6 +6188,10 @@
             "title": "Regular Amount Fen",
             "type": "integer"
           },
+          "reminded_today": {
+            "title": "Reminded Today",
+            "type": "boolean"
+          },
           "savings_fen": {
             "title": "Savings Fen",
             "type": "integer"
@@ -6223,6 +6227,7 @@
         "required": [
           "eligible",
           "trial_viewed",
+          "reminded_today",
           "should_show",
           "server_now",
           "ready_at",
@@ -6235,6 +6240,17 @@
           "validity_days"
         ],
         "title": "NewcomerOffer",
+        "type": "object"
+      },
+      "OfferImpression": {
+        "properties": {
+          "manual": {
+            "default": false,
+            "title": "Manual",
+            "type": "boolean"
+          }
+        },
+        "title": "OfferImpression",
         "type": "object"
       },
       "PasswordChangeBody": {
@@ -7833,16 +7849,43 @@
       },
       "ViewedTrial": {
         "properties": {
-          "session_id": {
-            "maxLength": 40,
-            "minLength": 1,
-            "title": "Session Id",
+          "event": {
+            "default": "viewed",
+            "enum": [
+              "viewed",
+              "downloaded",
+              "continue"
+            ],
+            "title": "Event",
             "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
           }
         },
-        "required": [
-          "session_id"
-        ],
         "title": "ViewedTrial",
         "type": "object"
       },
@@ -18418,6 +18461,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/OfferImpression"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {

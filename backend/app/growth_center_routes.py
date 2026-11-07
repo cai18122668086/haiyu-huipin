@@ -1,7 +1,7 @@
-from typing import Literal
+from typing import Literal, Self
 
 from fastapi import APIRouter, Query, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from . import growth_center as center
 from .auth import SessionDependency, WorkspaceDependency, WorkspaceWriteDependency
@@ -37,6 +37,7 @@ class InvitationCenter(BaseModel):
 class NewcomerOffer(BaseModel):
     eligible: bool
     trial_viewed: bool
+    reminded_today: bool
     should_show: bool
     server_now: str
     ready_at: str | None
@@ -50,7 +51,19 @@ class NewcomerOffer(BaseModel):
 
 
 class ViewedTrial(BaseModel):
-    session_id: str = Field(min_length=1, max_length=40)
+    session_id: str | None = Field(default=None, min_length=1, max_length=40)
+    job_id: str | None = Field(default=None, min_length=1, max_length=40)
+    event: Literal["viewed", "downloaded", "continue"] = "viewed"
+
+    @model_validator(mode="after")
+    def require_source(self) -> Self:
+        if not self.session_id and not self.job_id:
+            raise ValueError("A result session or job is required")
+        return self
+
+
+class OfferImpression(BaseModel):
+    manual: bool = False
 
 
 @router.get(
@@ -104,7 +117,12 @@ def trial_viewed(
         session, workspace.principal.user_id, workspace.workspace_id, lock=True
     )
     result = center.mark_trial_viewed(
-        session, user, workspace.workspace_id, payload.session_id
+        session,
+        user,
+        workspace.workspace_id,
+        payload.session_id,
+        job_id=payload.job_id,
+        event=payload.event,
     )
     session.commit()
     return NewcomerOffer.model_validate(result)
@@ -115,12 +133,17 @@ def trial_viewed(
     response_model=NewcomerOffer,
 )
 def impression(
-    workspace: WorkspaceWriteDependency, session: SessionDependency, response: Response
+    workspace: WorkspaceWriteDependency,
+    session: SessionDependency,
+    response: Response,
+    payload: OfferImpression | None = None,
 ) -> NewcomerOffer:
     response.headers["Cache-Control"] = "no-store"
     user = center.personal_user(
         session, workspace.principal.user_id, workspace.workspace_id, lock=True
     )
-    result = center.claim_impression(session, user, workspace.workspace_id)
+    result = center.claim_impression(
+        session, user, workspace.workspace_id, manual=bool(payload and payload.manual)
+    )
     session.commit()
     return NewcomerOffer.model_validate(result)

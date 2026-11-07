@@ -5137,6 +5137,8 @@ export interface components {
             ready_at: string | null;
             /** Regular Amount Fen */
             regular_amount_fen: number;
+            /** Reminded Today */
+            reminded_today: boolean;
             /** Savings Fen */
             savings_fen: number;
             /** Server Now */
@@ -5149,6 +5151,14 @@ export interface components {
             validity_days: number;
             /** Window Ends At */
             window_ends_at: string | null;
+        };
+        /** OfferImpression */
+        OfferImpression: {
+            /**
+             * Manual
+             * @default false
+             */
+            manual: boolean;
         };
         /** PasswordChangeBody */
         PasswordChangeBody: {
@@ -5728,8 +5738,16 @@ export interface components {
         };
         /** ViewedTrial */
         ViewedTrial: {
+            /**
+             * Event
+             * @default viewed
+             * @enum {string}
+             */
+            event: "viewed" | "downloaded" | "continue";
+            /** Job Id */
+            job_id?: string | null;
             /** Session Id */
-            session_id: string;
+            session_id?: string | null;
         };
         /** WorkerAccountSessionRequest */
         WorkerAccountSessionRequest: {
@@ -11117,7 +11135,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OfferImpression"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
