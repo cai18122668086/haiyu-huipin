@@ -7,6 +7,20 @@
 
 .floating time{display:inline-block;margin-left:3px;padding:2px 5px;border:1px solid #f0d2a64d;border-radius:4px;background:#fff0d214;color:#ffe4b8;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:.6px}.floating small{color:#d8c4e6}.floating strong{color:#ffe2b4}
 
-.benefit>strong{font-size:48px;letter-spacing:-1px}.benefit small{font-size:14px}.benefit>span{font-size:11px;line-height:1.7}.perImage{font-size:12px}.perImage strong{font-size:16px}@media(max-width:480px){.benefit>strong{font-size:43px}.benefit{padding-left:12px}.benefit>span{font-size:10px}}
-
-@media(max-width:480px){.benefit>strong{display:flex;flex-direction:column;align-items:flex-start;gap:5px;line-height:1}.benefit small{margin-left:0;white-space:nowrap;font-size:12px;line-height:1.2}}
+/* Share the same grid rows so the price, credit amount and captions align. */
+.coupon{--credit-inset:18px;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:baseline;gap:8px 18px}
+.price,.benefit{display:contents}
+.price>.originalPrice{grid-column:1;grid-row:1;margin:0;line-height:20px;white-space:nowrap}
+.priceValue{grid-column:1;grid-row:2;display:flex;align-items:baseline;gap:3px;white-space:nowrap}
+.priceValue>span{font-size:26px;line-height:1;font-weight:700}
+.priceValue>strong{font-size:76px;line-height:1;letter-spacing:-5px;font-weight:750;color:#7b3c57;font-variant-numeric:tabular-nums}
+.price>b{grid-column:1;grid-row:3;justify-self:start;margin:0;line-height:1.4}
+.benefit>.creditsLabel{grid-column:2;grid-row:1;padding-left:var(--credit-inset);font-size:12px;line-height:20px;color:#987867}
+.creditValue{grid-column:2;grid-row:2;display:flex;align-items:baseline;gap:6px;padding-left:var(--credit-inset);border-left:1px dashed #ad8c6e80;white-space:nowrap;color:#492b35}
+.creditValue>strong{font-size:60px;line-height:1;font-weight:750;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.creditValue>span{font-size:24px;line-height:1;font-weight:650;letter-spacing:0}
+.benefit>.validity{grid-column:2;grid-row:3;padding-left:var(--credit-inset);font-size:11px;line-height:1.4;white-space:nowrap}
+.perImage{grid-row:4;margin-top:5px;font-size:12px}.perImage strong{font-size:16px}
+@media(max-width:480px){.coupon{--credit-inset:12px;gap:8px 13px}.priceValue>span{font-size:24px}.priceValue>strong{font-size:64px;letter-spacing:-4px}.creditValue{gap:5px}.creditValue>strong{font-size:44px;letter-spacing:-1px}.creditValue>span{font-size:21px}.benefit>.validity{font-size:10px}}
+@media(max-width:374px){.coupon{gap:7px 12px}.priceValue{gap:2px}.priceValue>span{font-size:22px}.priceValue>strong{font-size:58px}.creditValue{gap:4px}.creditValue>strong{font-size:38px}.creditValue>span{font-size:18px}}
+@media(max-width:340px){.dialog{padding-inline:16px}.coupon{--credit-inset:8px;padding-inline:14px;gap:7px 10px}.priceValue>span{font-size:20px}.priceValue>strong{font-size:52px}.creditValue>strong{font-size:36px}.creditValue>span{font-size:17px}}

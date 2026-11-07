@@ -115,7 +115,19 @@ export function NewcomerOfferModal({offer,receivedAt,now,onClose}:{offer:Offer;r
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby="newcomer-offer-title" onCancel={event=>{event.preventDefault();onClose();}} onClick={event=>{if(event.target===event.currentTarget){const r=event.currentTarget.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)onClose();}}}>
     <button type="button" className={styles.close} aria-label="关闭新人优惠" onClick={onClose}><X size={20}/></button>
     <div className={styles.top}><span className={styles.badge}><TicketPercent size={15}/>新客首单专享</span><Sparkles className={styles.sparkle} size={38}/><h2 id="newcomer-offer-title">继续生成商品图<br/><em>新客首单更划算</em></h2><p>新客专享体验价 · 生成更多商品图</p></div>
-    <div className={styles.coupon}><div className={styles.price}><small className={styles.originalPrice}>常规价 <s>¥{(offer.regular_amount_fen/100).toFixed(1)}</s></small><span>¥</span><strong>{(offer.amount_fen/100).toFixed(1)}</strong><b>首单约{Math.round(offer.amount_fen/offer.regular_amount_fen*10)}折</b></div><div className={styles.benefit}><strong>{offer.credits}<small>积分</small></strong><span>积分到账后 {offer.validity_days} 天有效</span></div><div className={styles.perImage}>首单立省 <strong>¥{offer.savings_fen/100}</strong></div></div>
+    <div className={styles.coupon}>
+      <div className={styles.price}>
+        <small className={styles.originalPrice}>常规价 <s>¥{(offer.regular_amount_fen/100).toFixed(1)}</s></small>
+        <div className={styles.priceValue}><span>¥</span><strong>{(offer.amount_fen/100).toFixed(1)}</strong></div>
+        <b>首单约{Math.round(offer.amount_fen/offer.regular_amount_fen*10)}折</b>
+      </div>
+      <div className={styles.benefit}>
+        <span className={styles.creditsLabel}>充值即得</span>
+        <div className={styles.creditValue}><strong>{offer.credits}</strong><span>积分</span></div>
+        <span className={styles.validity}>到账后{offer.validity_days}天有效</span>
+      </div>
+      <div className={styles.perImage}>首单立省 <strong>¥{offer.savings_fen/100}</strong></div>
+    </div>
     <div className={styles.countdown}><span>本轮福利倒计时</span><div aria-label={`剩余${time.parts[0]}小时${time.parts[1]}分${time.parts[2]}秒`}>{time.parts.map((part,index)=><span key={index}>{index>0&&<i>:</i>}<b>{part}</b></span>)}</div></div>
     <Link className={styles.buy} href="/account?offer=newcomer#membership" onClick={onClose}>¥9.9 立即抢购<ArrowUpRight size={20}/></Link>
     <div className={styles.bottom}><span>一次购买 · 无自动续费</span><details><summary>活动规则</summary><p>未付费用户首单专享，每人限购一次。每24小时更新一轮福利，未购买用户可继续参与；每天最多提醒一次。160积分到账后30天有效。</p></details></div>
