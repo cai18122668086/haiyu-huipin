@@ -19,5 +19,13 @@
     "default desktop",
     "390x844"
   ],
-  "no_customer_account_operations": true
+  "no_customer_account_operations": true,
+  "heading": "限时福利",
+  "heading_alignment": "center",
+  "heading_font_mobile": "40px",
+  "heading_font_desktop": "44px",
+  "credit_label_mobile": "21px",
+  "credit_label_desktop": "24px",
+  "amount_alignment": "shared grid row and baseline",
+  "extra_small_viewport": "320x740: no horizontal overflow"
 }
