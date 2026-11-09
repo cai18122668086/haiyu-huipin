@@ -87,7 +87,7 @@ def wallet(client, user_id=INVITER):
     ).json()["balance_credits"]
 
 
-def paid(client, product="pack_medium", money="99.00", *, user_id=BUYER):
+def paid(client, product="pack_medium", money="299.00", *, user_id=BUYER):
     response = client.post(
         path(user_id) + "/credits/purchases",
         headers={"Idempotency-Key": uuid4().hex, "X-User-Id": user_id},
@@ -340,16 +340,16 @@ def test_signed_payment_rewards_ten_percent_once_and_no_reward_on_checkin(
     rewards_client,
 ):
     order, fields = paid(rewards_client)
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     assert rewards_client.post(NOTIFY, data=fields).text == "success"
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     assert (
         rewards_client.post(path() + "/rewards/check-in").json()["credited_credits"]
         == 10
     )
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     state = reward_state(rewards_client)
-    assert state["invited_count"] == 1 and state["earned_credits"] == 110
+    assert state["invited_count"] == 1 and state["earned_credits"] == 600
     with rewards_client.app.state.session_factory() as session:
         assert (
             session.scalar(select(func.count()).select_from(ReferralRewardRecord)) == 1
@@ -406,11 +406,11 @@ def test_paid_snapshot_honored_after_campaign_paused(rewards_client):
         session.commit()
     assert (
         rewards_client.post(
-            NOTIFY, data=paid_fields(order, money="29.90", trade="pause_" + order["id"])
+            NOTIFY, data=paid_fields(order, money="99.00", trade="pause_" + order["id"])
         ).text
         == "success"
     )
-    assert wallet(rewards_client, INVITER) == 30
+    assert wallet(rewards_client, INVITER) == 180
 
 
 def test_refund_reclaims_unused_reward_and_duplicate_settlement_is_safe(rewards_client):
@@ -430,13 +430,13 @@ def test_refund_reclaims_unused_reward_and_duplicate_settlement_is_safe(rewards_
 def test_failed_refund_preserves_reward(rewards_client):
     order, _ = paid(rewards_client)
     refund_order(rewards_client, order, status="failed")
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
 
 
 def test_spent_reward_adjusts_future_gifts_without_negative_or_paid_wallet(
     rewards_client, monkeypatch
 ):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     finish(rewards_client, reserve(rewards_client, INVITER, 30), 30)
     refund_order(rewards_client, order)
     assert wallet(rewards_client, INVITER) == 0
@@ -456,7 +456,7 @@ def test_spent_reward_adjusts_future_gifts_without_negative_or_paid_wallet(
 def test_refund_does_not_cancel_active_task_and_reconciles_held_bonus_on_finish(
     rewards_client,
 ):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     reservation = reserve(rewards_client, INVITER, 30)
     refund_order(rewards_client, order)
     assert wallet(rewards_client, INVITER) == 30
@@ -466,7 +466,7 @@ def test_refund_does_not_cancel_active_task_and_reconciles_held_bonus_on_finish(
 
 
 def test_expired_unused_bonus_never_creates_adjustment(rewards_client):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     with rewards_client.app.state.session_factory() as session:
         lot = session.scalar(
             select(CreditGrantRecord).where(CreditGrantRecord.kind == "referral_bonus")
@@ -532,7 +532,7 @@ def test_partial_unused_refund_only_adjusts_corresponding_reward(rewards_client)
 
 
 def test_expired_bonus_only_adjusts_consumed_benefit(rewards_client):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     finish(rewards_client, reserve(rewards_client, INVITER, 8), 8)
     with rewards_client.app.state.session_factory() as session:
         lot = session.scalar(
@@ -566,7 +566,7 @@ def test_referral_reward_is_only_one_level(rewards_client):
         growth.bind_signup_invitation(session, session.get(UserRecord, INVITER), code)
         session.commit()
     paid(rewards_client)
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     with rewards_client.app.state.session_factory() as session:
         assert (
             session.get(
@@ -577,17 +577,17 @@ def test_referral_reward_is_only_one_level(rewards_client):
 
 
 def test_refund_adjustment_never_takes_inviter_paid_credits(rewards_client):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
-    finish(rewards_client, reserve(rewards_client, INVITER, 30), 30)
-    paid(rewards_client, "pack_small", "29.90", user_id=INVITER)
-    assert wallet(rewards_client, INVITER) == 300
+    order, _ = paid(rewards_client, "pack_small", "99.00")
+    finish(rewards_client, reserve(rewards_client, INVITER, 180), 180)
+    paid(rewards_client, "pack_small", "99.00", user_id=INVITER)
+    assert wallet(rewards_client, INVITER) == 1800
     refund_order(rewards_client, order)
-    assert wallet(rewards_client, INVITER) == 300
+    assert wallet(rewards_client, INVITER) == 1800
     rewards_client.post(
         path(INVITER) + "/rewards/check-in", headers={"X-User-Id": INVITER}
     )
-    assert wallet(rewards_client, INVITER) == 300
-    assert reward_state(rewards_client)["pending_adjustment_credits"] == 20
+    assert wallet(rewards_client, INVITER) == 1800
+    assert reward_state(rewards_client)["pending_adjustment_credits"] == 170
 
 
 def test_membership_future_refund_keeps_reward_for_consumed_paid_period(rewards_client):
@@ -617,7 +617,7 @@ def test_membership_future_refund_keeps_reward_for_consumed_paid_period(rewards_
 def test_full_goodwill_refund_reverses_reward_even_if_buyer_spent_credits(
     rewards_client,
 ):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     finish(rewards_client, reserve(rewards_client, BUYER, 300), 300)
     refund_order(rewards_client, order, policy="goodwill")
     assert wallet(rewards_client, INVITER) == 0
@@ -636,7 +636,7 @@ def test_payment_for_another_workspace_does_not_create_personal_referral_reward(
     assert (
         rewards_client.post(
             NOTIFY,
-            data=paid_fields(order, money="29.90", trade="workspace_" + order["id"]),
+            data=paid_fields(order, money="99.00", trade="workspace_" + order["id"]),
         ).text
         == "success"
     )

@@ -5,7 +5,7 @@ from tests.test_credit_payments import BASE, OTHER, balance, paid_fields, purcha
 from tests.test_credit_payments import pilot_client as pilot_client  # noqa: F401
 
 
-def test_catalog_preserves_original_packs(pilot_client):
+def test_catalog_lists_four_approved_recharge_tiers(pilot_client):
     catalog = pilot_client.get(BASE + "/packages?include_memberships=true").json()
     packs = [p for p in catalog["packages"] if p["kind"] == "pack"]
     assert [
@@ -13,16 +13,16 @@ def test_catalog_preserves_original_packs(pilot_client):
         for p in packs
         if p["id"] != "pack_starter_160"
     ] == [
-        ("pack_small", 2990, 300, 12),
-        ("pack_medium", 9900, 1100, 12),
-        ("pack_large", 29900, 3600, 12),
+        ("pack_small", 9900, 1800, 12),
+        ("pack_medium", 29900, 6000, 12),
+        ("pack_large", 79900, 18000, 12),
     ]
     assert catalog["channels"] == ["alipay", "wechat"]
     starter = next(p for p in packs if p["id"] == "pack_starter_160")
-    assert (starter["amount_fen"], starter["credits"], starter["validity_days"]) == (
-        1990,
-        160,
-        30,
+    assert (starter["amount_fen"], starter["credits"], starter["validity_months"]) == (
+        4900,
+        800,
+        12,
     )
     assert not starter["first_purchase_only"]
 

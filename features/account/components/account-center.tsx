@@ -692,6 +692,7 @@ const planCopy: Record<string, { name: string; description: string }> = {
   light: { name: "轻享版", description: "偶尔上新，也能从容出图" },
   pro: { name: "专业版", description: "为持续上新的商家准备" },
   team: { name: "团队版", description: "为高频创作准备更多额度" },
+  flagship: { name: "旗舰版", description: "满足多店铺与批量上新需求" },
 };
 function Membership({
   workspaceId,
@@ -831,7 +832,7 @@ function Membership({
       ) : !products.length ? (
         <Empty>当前暂无可购买的套餐</Empty>
       ) : (
-        <div className={`plan-grid ${tab === "pack" ? "pack-grid" : ""}`}>
+        <div className={`plan-grid pack-grid`}>
           {products.map((product, index) => {
             const copy = product.plan_id
               ? planCopy[product.plan_id]

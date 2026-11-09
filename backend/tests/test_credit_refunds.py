@@ -216,7 +216,7 @@ def test_failed_refund_does_not_restore_expired_lots(pilot_client, monkeypatch):
     from app.models import utc_now
 
     enable_admin(pilot_client)
-    order = paid(pilot_client, "pack_medium")
+    order = paid(pilot_client, "pack_medium", "299.00")
     monkeypatch.setattr(
         payments, "create_refund", lambda *args: {"status": "processing"}
     )

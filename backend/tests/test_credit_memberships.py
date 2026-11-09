@@ -48,6 +48,8 @@ def buy(client, product="pro_monthly", money="99.00", trade=None):
         ("light_annual", "468.00", 1000, 12),
         ("pro_annual", "948.00", 2400, 12),
         ("team_annual", "2868.00", 8000, 12),
+        ("flagship_monthly", "799.00", 24000, 1),
+        ("flagship_annual", "7668.00", 24000, 12),
     ],
 )
 def test_approved_membership_catalog_and_first_period_only(
@@ -73,6 +75,85 @@ def test_calendar_months_use_china_timezone_and_restore_month_end_anchor():
     assert add_months(datetime(2024, 1, 31, 20, tzinfo=UTC), 1) == datetime(
         2024, 2, 29, 20, tzinfo=UTC
     )
+
+
+@pytest.mark.parametrize(
+    "product,price,credits",
+    [
+        ("pack_starter_160", "49.00", 800),
+        ("pack_small", "99.00", 1800),
+        ("pack_medium", "299.00", 6000),
+        ("pack_large", "799.00", 18000),
+    ],
+)
+def test_recharge_tiers_settle_once_with_twelve_month_validity(
+    pilot_client, product, price, credits
+):
+    order, fields = buy(pilot_client, product, price)
+    assert order["credits"] == balance(pilot_client) == credits
+    assert order["amount_fen"] == round(float(price) * 100)
+    assert pilot_client.post(NOTIFY, data=fields).status_code == 200
+    assert balance(pilot_client) == credits
+    with pilot_client.app.state.session_factory() as session:
+        lot = session.scalar(select(CreditGrantRecord))
+        paid = session.get(CreditPurchaseRecord, order["id"])
+        assert (
+            abs((aware(lot.expires_at) - add_months(paid.paid_at, 12)).total_seconds())
+            < 2
+        )
+
+
+def test_repricing_keeps_pending_starter_price_credits_and_expiry(
+    pilot_client, monkeypatch
+):
+    from dataclasses import replace
+
+    from app.credit_products import PRODUCTS, STARTER_PACK_ID
+
+    current = PRODUCTS[STARTER_PACK_ID]
+    with monkeypatch.context() as old_catalog:
+        old_catalog.setitem(
+            PRODUCTS,
+            STARTER_PACK_ID,
+            replace(
+                current,
+                amount_fen=1990,
+                credits=160,
+                validity_months=0,
+                validity_days=30,
+            ),
+        )
+        response = pilot_client.post(
+            BASE + "/purchases",
+            headers={"Idempotency-Key": str(uuid4())},
+            json={"package_id": STARTER_PACK_ID},
+        )
+        assert response.status_code == 201
+        old_order = response.json()
+    assert (current.amount_fen, current.credits, current.validity_months) == (
+        4900,
+        800,
+        12,
+    )
+    assert (
+        pilot_client.post(
+            NOTIFY, data=paid_fields(old_order, money="19.90")
+        ).status_code
+        == 200
+    )
+    assert balance(pilot_client) == 160
+    with pilot_client.app.state.session_factory() as session:
+        lot = session.scalar(select(CreditGrantRecord))
+        paid = session.get(CreditPurchaseRecord, old_order["id"])
+        assert (paid.amount_fen, paid.credits) == (1990, 160)
+        assert (
+            abs(
+                (
+                    aware(lot.expires_at) - aware(paid.paid_at) - timedelta(days=30)
+                ).total_seconds()
+            )
+            < 2
+        )
 
 
 def test_yearly_issues_monthly_expires_old_period_and_replays_once(pilot_client):

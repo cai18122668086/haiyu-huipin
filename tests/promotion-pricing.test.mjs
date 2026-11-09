@@ -12,7 +12,12 @@ test("unit prices use five credits and all twelve annual grants", () => {
   assert.equal(price(46800, 1000, 12), "0.20");
   assert.equal(price(94800, 2400, 12), "0.16");
   assert.equal(price(286800, 8000, 12), "0.15");
-  assert.equal(price(2990, 300, 0, "pack"), "0.50");
+  assert.equal(price(79900, 24000), "0.17");
+  assert.equal(price(766800, 24000, 12), "0.13");
+  assert.equal(price(4900, 800, 0, "pack"), "0.31");
+  assert.equal(price(9900, 1800, 0, "pack"), "0.28");
+  assert.equal(price(29900, 6000, 0, "pack"), "0.25");
+  assert.equal(price(79900, 18000, 0, "pack"), "0.22");
   assert.equal(price(990, 0), "—");
 });
 
