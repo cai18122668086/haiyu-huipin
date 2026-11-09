@@ -1,0 +1,13 @@
+{
+  "status": "activated",
+  "revision": "31f74afe867348bdf2695e458653193e412c205d",
+  "backend_image": "huipin-red-gold/backend:31f74afe867348bdf2695e458653193e412c205d",
+  "frontend_image": "huipin-red-gold/frontend:31f74afe867348bdf2695e458653193e412c205d",
+  "backup_bytes": 4635152,
+  "backup_sha256": "596c40ddfb2e2e0c69ffd3813f619282ae34d7e1ad93917f24d73d5cf90bcc6a",
+  "schema_and_campaigns_preserved": true,
+  "runtime_preserved": true,
+  "customer_tasks_restarted": false,
+  "matched_files": 301,
+  "matched_public_assets": 0
+}

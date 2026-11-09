@@ -1,0 +1,33 @@
+{
+  "exit_code": 0,
+  "image_id": "sha256:36b7e8127e90cee4ad99e117eba141dc96c1c93d3006f4e866d6b02baf155084",
+  "isolated_database": true,
+  "tests": [
+    "tests/test_replica_partial_delivery.py",
+    "tests/test_replica_unknown_retry.py",
+    "tests/test_haiyu_prompt.py",
+    "tests/test_replica_free_restart.py",
+    "tests/test_everyinfra.py",
+    "tests/test_haiyu_transport.py",
+    "tests/test_replica_image_recovery.py",
+    "tests/test_growth_center.py",
+    "tests/test_growth_center_postgres.py",
+    "tests/test_growth_rewards.py",
+    "tests/test_growth_rewards_postgres.py",
+    "tests/test_replica_welcome.py",
+    "tests/test_replica_welcome_postgres.py",
+    "tests/test_credit_migration_chain.py",
+    "tests/test_credit_payments_postgres.py",
+    "tests/test_credit_payments.py",
+    "tests/test_credit_memberships.py",
+    "tests/test_credit_refunds.py",
+    "tests/test_customer_credit_billing.py",
+    "tests/test_payment_reconciliation.py",
+    "tests/test_account_payment_followup.py",
+    "tests/test_phone_passwords.py",
+    "tests/test_auth_external.py",
+    "tests/test_replica.py",
+    "tests/test_replica_fast.py",
+    "tests/test_replica_billing.py"
+  ]
+}

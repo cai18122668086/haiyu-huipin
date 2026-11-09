@@ -1,0 +1,32 @@
+✔ newcomer countdown uses server deadline and ticks each second without resetting (2.007883ms)
+✔ first result is ready at thirty seconds without waiting for the next poll (1.516147ms)
+✔ a closed or cross-tab claimed reminder stays suppressed and missing results never trigger (0.321467ms)
+✔ task details permit the reminder while image, login and payment dialogs block (0.448333ms)
+✔ generation history uses the grouped replica session while task details use the job (1.383223ms)
+✔ unit prices use five credits and all twelve annual grants (1.202169ms)
+✔ free welcome only targets guests or unused trials on the homepage (0.289457ms)
+✔ daily popup frequency follows Beijing midnight (45.465089ms)
+✔ a failed first screen cannot display the successful second screen (1.044768ms)
+✔ out-of-order completion and private artifacts preserve screen identity (0.211518ms)
+✔ a retried screen uses the new job item while a reused screen keeps its position (0.211619ms)
+✔ exhausted quality reviews explain retained plans instead of suggesting another transport retry (1.547113ms)
+✔ planning progress explains retained work without presenting a failed screen as a restart (0.288633ms)
+✔ replanning and delayed poll responses do not move progress backwards (0.487194ms)
+✔ SQLite timestamps and UTC creation responses preserve polling order in every browser timezone (286.392766ms)
+✔ an explicitly new analysis or job may reset progress (0.311995ms)
+✔ a terminal failure is not revived by an old generating reply (0.197509ms)
+✔ a delayed reply for the old job cannot replace a newer retry (2.382064ms)
+✔ analysis completion and generation share one scale, failure is not success 100% (0.226374ms)
+✔ failed, partial and cancelled suites never mark successful delivery in the stepper (0.369258ms)
+✔ segmentation failures explain affected references without advertising a blind resume (0.496879ms)
+✔ legacy style failures retain materials without claiming a missing analysis checkpoint (0.297391ms)
+✔ unknown original image requests are reconciled rather than cloned into retries (1.0676ms)
+✔ zero-delivery free trials offer an explicit restart while paid and active jobs remain fenced (0.427091ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 531.386872

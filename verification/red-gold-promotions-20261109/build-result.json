@@ -1,0 +1,13 @@
+{
+  "revision": "31f74afe867348bdf2695e458653193e412c205d",
+  "backend_id": "sha256:36b7e8127e90cee4ad99e117eba141dc96c1c93d3006f4e866d6b02baf155084",
+  "frontend_id": "sha256:7e8ba563488e02f0f1df09815099e9db029ab3b45f6d4e0227be1e7fea971a49",
+  "backend_sources_checked": 654,
+  "frontend_sources_checked": 301,
+  "baseline_differences": [
+    "app/credit_products.py",
+    "app/growth_center.py",
+    "app/growth_rewards.py",
+    "app/growth_routes.py"
+  ]
+}
