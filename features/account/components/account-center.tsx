@@ -3,6 +3,8 @@ import { SupportCases } from "@/components/support-cases";
 import { AccountStatusMenu } from "@/components/account-status-menu";
 import { RewardsNavigation } from "@/components/rewards-navigation";
 import { InvitationCenter } from "./invitation-center";
+import { PurchaseConfirmation } from "./purchase-confirmation";
+import checkoutStyles from "./purchase-confirmation.module.css";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
 import { NewcomerOfferCountdown } from "@/components/newcomer-offer-controller";
@@ -204,10 +206,12 @@ function Dialog({
   title,
   children,
   onClose,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  className?: string;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -254,7 +258,7 @@ function Dialog({
       }}
     >
       <div
-        className="modal"
+        className={`modal ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="account-dialog-title"
@@ -945,76 +949,27 @@ function Membership({
       {selected && (
         <Dialog
           title="确认购买"
+          className={checkoutStyles.dialog}
           onClose={() => {
             if (!create.isPending) setSelected(null);
           }}
         >
-          <div className="receipt">
-            <div>
-              <span>购买内容</span>
-              <strong>{selected.name}</strong>
-            </div>
-            <div>
-              <span>
-                {selected.kind === "membership" ? "每月额度" : "充值积分"}
-              </span>
-              <strong>{fmt(selected.credits)} 积分</strong>
-            </div>
-            <div>
-              <span>应付金额</span>
-              <strong>¥{money(selected.amount_fen)}</strong>
-            </div>
-          </div>
-          <p className="checkout-note">
-            {selected.kind === "membership"
-              ? `${selected.months === 12 ? "年付一次支付，分 12 期按月发放" : "月卡按一个月周期发放"}，每期积分当期有效。已有会员时顺延生效。`
-              : selected.validity_days
-                ? `积分到账后 ${selected.validity_days} 天有效。`
-              : selected.validity_months
-                ? `积分到账后 ${selected.validity_months} 个月有效。`
-                : "购买积分无固定到期日。"}
-            到期不自动续费。
-          </p>
-          <p className="checkout-note">支付会向支付宝提供本订单号、套餐名称和金额，用于收款与核对。
-            购买前请阅读 <Link href="/legal/terms" target="_blank">用户协议</Link> 和 <Link href="/legal/privacy" target="_blank">隐私政策</Link>；
-            退款或发票请凭订单号联系客服人工处理。
-          </p>
-          <fieldset className="checkout-note">
-            <legend>支付方式</legend>
-            {catalog.data?.channels.map(value => <label key={value} style={{ marginRight: 20 }}>
-              <input type="radio" name="payment-channel" value={value} checked={channel === value}
-                disabled={create.isPending} onChange={() => setChannel(value)} />
-              {value === "alipay" ? "支付宝" : "微信支付"}
-            </label>)}
-          </fieldset>
-          {create.isError && (
-            <p className="account-error" role="alert">
-              {errorMessage(create.error)}
-            </p>
-          )}
-          <div className="modal-actions">
-            <Button
-              onClick={() => setSelected(null)}
-              disabled={create.isPending}
-            >
-              返回
-            </Button>
-            <Button
-              variant="primary"
-              disabled={create.isPending}
-              onClick={() =>
-                create.mutate({ productId: selected.id, channel }, {
-                  onSuccess: (order) => {
-                    setSelected(null);
-                    openOrder(order.id);
-                  },
-                })
-              }
-            >
-              {create.isPending ? "正在创建订单…" : "确认订单，前往付款"}
-              <ArrowRight size={16} />
-            </Button>
-          </div>
+          <PurchaseConfirmation
+            product={selected}
+            channels={catalog.data?.channels ?? []}
+            channel={channel}
+            pending={create.isPending}
+            error={create.isError ? errorMessage(create.error) : undefined}
+            onChannelChange={setChannel}
+            onSubmit={() =>
+              create.mutate({ productId: selected.id, channel }, {
+                onSuccess: (order) => {
+                  setSelected(null);
+                  openOrder(order.id);
+                },
+              })
+            }
+          />
         </Dialog>
       )}
     </div>
