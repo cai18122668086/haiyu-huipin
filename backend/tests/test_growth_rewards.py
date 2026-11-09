@@ -7,11 +7,13 @@ import pytest
 from sqlalchemy import func, select
 
 from app import credit_memberships as lots
+from app import credit_payment_routes as payments
 from app import credit_refunds as refunds
 from app import growth_rewards as growth
 from app import services
 from app.models import (
     CreditGrantRecord,
+    CreditMembershipRecord,
     CreditPurchaseRecord,
     CreditReservationRecord,
     DailyCheckinRecord,
@@ -171,7 +173,131 @@ def test_daily_checkin_updates_wallet_once_and_has_real_expiry(rewards_client):
         lot = session.scalar(
             select(CreditGrantRecord).where(CreditGrantRecord.kind == "daily_checkin")
         )
-        assert 29 <= (lots.aware(lot.expires_at) - lots.aware(utc_now())).days <= 30
+        remaining = (lots.aware(lot.expires_at) - lots.aware(utc_now())).total_seconds()
+        assert 86390 < remaining <= 86400
+        assert response.json()["rewards"]["checkin_validity_hours"] == 24
+        assert (
+            response.json()["rewards"]["checkin_expires_at"]
+            == lots.aware(lot.expires_at).isoformat()
+        )
+
+
+@pytest.mark.parametrize(
+    "status, days",
+    [
+        ("active", 30),
+        ("expired", 1),
+        ("scheduled", 1),
+        ("cancelled", 1),
+        ("other_workspace", 1),
+    ],
+)
+def test_checkin_uses_only_current_personal_membership(
+    rewards_client, monkeypatch, status, days
+):
+    now = utc_now()
+    monkeypatch.setattr(growth, "utc_now", lambda: now)
+    monkeypatch.setattr(lots, "utc_now", lambda: now)
+    with rewards_client.app.state.session_factory() as session:
+        session.add(
+            CreditMembershipRecord(
+                id="mem_checkin",
+                workspace_id="ws_test"
+                if status == "other_workspace"
+                else personal_workspace_id(BUYER),
+                plan_id="light",
+                plan_name="轻享版",
+                monthly_credits=600,
+                months=1,
+                starts_at=now + timedelta(days=1)
+                if status == "scheduled"
+                else now - timedelta(days=31)
+                if status == "expired"
+                else now,
+                ends_at=now if status == "expired" else now + timedelta(days=30),
+                cancelled_at=now if status == "cancelled" else None,
+            )
+        )
+        session.commit()
+    result = rewards_client.post(path() + "/rewards/check-in").json()
+    assert result["created"]
+    assert result["rewards"]["checkin_validity_hours"] == days * 24
+    assert (
+        result["rewards"]["checkin_expires_at"]
+        == (now + timedelta(days=days)).isoformat()
+    )
+    assert (
+        result["rewards"]["validity_days"] == 30
+    )  # Invitation reward terms unchanged.
+
+
+def test_checkin_upgrade_does_not_extend_existing_credits(rewards_client, monkeypatch):
+    now = utc_now()
+    monkeypatch.setattr(growth, "utc_now", lambda: now)
+    monkeypatch.setattr(lots, "utc_now", lambda: now)
+    monkeypatch.setattr(payments, "utc_now", lambda: now)
+    first = rewards_client.post(path() + "/rewards/check-in").json()
+    paid(rewards_client, "light_monthly", "49.00")
+    duplicate = rewards_client.post(path() + "/rewards/check-in").json()
+    assert not duplicate["created"]
+    assert (
+        duplicate["rewards"]["checkin_expires_at"]
+        == first["rewards"]["checkin_expires_at"]
+    )
+    assert duplicate["rewards"]["checkin_validity_hours"] == 720
+    tomorrow = now + timedelta(days=1)
+    monkeypatch.setattr(growth, "utc_now", lambda: tomorrow)
+    monkeypatch.setattr(lots, "utc_now", lambda: tomorrow)
+    second = rewards_client.post(path() + "/rewards/check-in").json()
+    assert second["created"]
+    assert (
+        second["rewards"]["checkin_expires_at"]
+        == (tomorrow + timedelta(days=30)).isoformat()
+    )
+    with rewards_client.app.state.session_factory() as session:
+        member = session.scalar(
+            select(CreditMembershipRecord).where(
+                CreditMembershipRecord.workspace_id == personal_workspace_id(BUYER)
+            )
+        )
+        member.cancelled_at = tomorrow
+        session.commit()
+    after_cancel = reward_state(rewards_client, BUYER)
+    assert after_cancel["checkin_validity_hours"] == 24
+    assert after_cancel["checkin_expires_at"] == second["rewards"]["checkin_expires_at"]
+
+
+def test_new_checkin_expiry_preserves_old_grants_and_expires_at_24_hours(
+    rewards_client, monkeypatch
+):
+    now = utc_now()
+    monkeypatch.setattr(growth, "utc_now", lambda: now)
+    monkeypatch.setattr(lots, "utc_now", lambda: now)
+    old_expiry = now + timedelta(days=29)
+    with rewards_client.app.state.session_factory() as session:
+        account = lots.refresh(session, personal_workspace_id(BUYER))
+        old = lots.grant(
+            session,
+            account,
+            "old-checkin",
+            10,
+            old_expiry,
+            "历史签到",
+            kind="daily_checkin",
+        )
+        old_id = old.id
+        session.commit()
+    result = rewards_client.post(path() + "/rewards/check-in").json()
+    assert result["created"] and wallet(rewards_client, BUYER) == 20
+    before = now + timedelta(hours=24, seconds=-1)
+    monkeypatch.setattr(lots, "utc_now", lambda: before)
+    assert wallet(rewards_client, BUYER) == 20
+    boundary = now + timedelta(hours=24)
+    monkeypatch.setattr(lots, "utc_now", lambda: boundary)
+    assert wallet(rewards_client, BUYER) == 10
+    with rewards_client.app.state.session_factory() as session:
+        old = session.get(CreditGrantRecord, old_id)
+        assert lots.aware(old.expires_at) == old_expiry and old.remaining == 10
 
 
 def test_beijing_midnight_not_browser_or_utc_day(rewards_client, monkeypatch):
@@ -184,6 +310,7 @@ def test_beijing_midnight_not_browser_or_utc_day(rewards_client, monkeypatch):
     monkeypatch.setattr(
         growth, "utc_now", lambda: datetime(2026, 11, 6, 15, 59, 59, tzinfo=UTC)
     )
+    monkeypatch.setattr(lots, "utc_now", lambda: growth.utc_now())
     assert (
         rewards_client.post(path() + "/rewards/check-in").json()["rewards"]["day"]
         == "2026-11-06"
