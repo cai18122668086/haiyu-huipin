@@ -5552,6 +5552,10 @@ export interface components {
             checked_in: boolean;
             /** Checkin Enabled */
             checkin_enabled: boolean;
+            /** Checkin Expires At */
+            checkin_expires_at: string | null;
+            /** Checkin Validity Hours */
+            checkin_validity_hours: number;
             /** Daily Credits */
             daily_credits: number;
             /** Day */

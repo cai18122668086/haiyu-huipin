@@ -34,7 +34,7 @@ export function RewardsNavigation() {
       <button type="button" className={styles.claim} disabled={rewards.isPending||!rewards.data?.checkin_enabled||rewards.data?.checked_in||claim.isPending} onClick={()=>claim.mutate()}>{claim.isPending?<LoaderCircle size={17} className="spin"/>:rewards.data?.checked_in?<Check size={17}/>:null}{rewards.data?.checked_in?"今日已签到，明天再来":"立即领取"}</button>
       {claim.isError&&<p className={styles.error} role="alert">{errorMessage(claim.error)}</p>}
       {rewards.isError&&<button className={styles.retry} onClick={()=>void rewards.refetch()}>暂时无法读取，点击重试</button>}
-      <div className={styles.footer}><span>到账后30天有效</span><Link href="/account#invitations" onClick={()=>setOpen(false)}>邀请返10%<ArrowUpRight size={13}/></Link></div>
+      <div className={styles.footer}><span>{rewards.data?.checkin_expires_at ? `本次积分至 ${new Date(rewards.data.checkin_expires_at).toLocaleString("zh-CN", {timeZone:"Asia/Shanghai",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false})}` : rewards.data ? (rewards.data.checkin_validity_hours === 24 ? "到账后24小时有效" : "到账后30天有效") : "普通用户24小时 · 会员30天"}</span><Link href="/account#invitations" onClick={()=>setOpen(false)}>邀请返10%<ArrowUpRight size={13}/></Link></div>
     </section>}
   </div>;
 }

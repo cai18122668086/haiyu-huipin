@@ -7,11 +7,13 @@ import pytest
 from sqlalchemy import func, select
 
 from app import credit_memberships as lots
+from app import credit_payment_routes as payments
 from app import credit_refunds as refunds
 from app import growth_rewards as growth
 from app import services
 from app.models import (
     CreditGrantRecord,
+    CreditMembershipRecord,
     CreditPurchaseRecord,
     CreditReservationRecord,
     DailyCheckinRecord,
@@ -85,7 +87,7 @@ def wallet(client, user_id=INVITER):
     ).json()["balance_credits"]
 
 
-def paid(client, product="pack_medium", money="99.00", *, user_id=BUYER):
+def paid(client, product="pack_medium", money="299.00", *, user_id=BUYER):
     response = client.post(
         path(user_id) + "/credits/purchases",
         headers={"Idempotency-Key": uuid4().hex, "X-User-Id": user_id},
@@ -171,7 +173,131 @@ def test_daily_checkin_updates_wallet_once_and_has_real_expiry(rewards_client):
         lot = session.scalar(
             select(CreditGrantRecord).where(CreditGrantRecord.kind == "daily_checkin")
         )
-        assert 29 <= (lots.aware(lot.expires_at) - lots.aware(utc_now())).days <= 30
+        remaining = (lots.aware(lot.expires_at) - lots.aware(utc_now())).total_seconds()
+        assert 86390 < remaining <= 86400
+        assert response.json()["rewards"]["checkin_validity_hours"] == 24
+        assert (
+            response.json()["rewards"]["checkin_expires_at"]
+            == lots.aware(lot.expires_at).isoformat()
+        )
+
+
+@pytest.mark.parametrize(
+    "status, days",
+    [
+        ("active", 30),
+        ("expired", 1),
+        ("scheduled", 1),
+        ("cancelled", 1),
+        ("other_workspace", 1),
+    ],
+)
+def test_checkin_uses_only_current_personal_membership(
+    rewards_client, monkeypatch, status, days
+):
+    now = utc_now()
+    monkeypatch.setattr(growth, "utc_now", lambda: now)
+    monkeypatch.setattr(lots, "utc_now", lambda: now)
+    with rewards_client.app.state.session_factory() as session:
+        session.add(
+            CreditMembershipRecord(
+                id="mem_checkin",
+                workspace_id="ws_test"
+                if status == "other_workspace"
+                else personal_workspace_id(BUYER),
+                plan_id="light",
+                plan_name="轻享版",
+                monthly_credits=600,
+                months=1,
+                starts_at=now + timedelta(days=1)
+                if status == "scheduled"
+                else now - timedelta(days=31)
+                if status == "expired"
+                else now,
+                ends_at=now if status == "expired" else now + timedelta(days=30),
+                cancelled_at=now if status == "cancelled" else None,
+            )
+        )
+        session.commit()
+    result = rewards_client.post(path() + "/rewards/check-in").json()
+    assert result["created"]
+    assert result["rewards"]["checkin_validity_hours"] == days * 24
+    assert (
+        result["rewards"]["checkin_expires_at"]
+        == (now + timedelta(days=days)).isoformat()
+    )
+    assert (
+        result["rewards"]["validity_days"] == 30
+    )  # Invitation reward terms unchanged.
+
+
+def test_checkin_upgrade_does_not_extend_existing_credits(rewards_client, monkeypatch):
+    now = utc_now()
+    monkeypatch.setattr(growth, "utc_now", lambda: now)
+    monkeypatch.setattr(lots, "utc_now", lambda: now)
+    monkeypatch.setattr(payments, "utc_now", lambda: now)
+    first = rewards_client.post(path() + "/rewards/check-in").json()
+    paid(rewards_client, "light_monthly", "49.00")
+    duplicate = rewards_client.post(path() + "/rewards/check-in").json()
+    assert not duplicate["created"]
+    assert (
+        duplicate["rewards"]["checkin_expires_at"]
+        == first["rewards"]["checkin_expires_at"]
+    )
+    assert duplicate["rewards"]["checkin_validity_hours"] == 720
+    tomorrow = now + timedelta(days=1)
+    monkeypatch.setattr(growth, "utc_now", lambda: tomorrow)
+    monkeypatch.setattr(lots, "utc_now", lambda: tomorrow)
+    second = rewards_client.post(path() + "/rewards/check-in").json()
+    assert second["created"]
+    assert (
+        second["rewards"]["checkin_expires_at"]
+        == (tomorrow + timedelta(days=30)).isoformat()
+    )
+    with rewards_client.app.state.session_factory() as session:
+        member = session.scalar(
+            select(CreditMembershipRecord).where(
+                CreditMembershipRecord.workspace_id == personal_workspace_id(BUYER)
+            )
+        )
+        member.cancelled_at = tomorrow
+        session.commit()
+    after_cancel = reward_state(rewards_client, BUYER)
+    assert after_cancel["checkin_validity_hours"] == 24
+    assert after_cancel["checkin_expires_at"] == second["rewards"]["checkin_expires_at"]
+
+
+def test_new_checkin_expiry_preserves_old_grants_and_expires_at_24_hours(
+    rewards_client, monkeypatch
+):
+    now = utc_now()
+    monkeypatch.setattr(growth, "utc_now", lambda: now)
+    monkeypatch.setattr(lots, "utc_now", lambda: now)
+    old_expiry = now + timedelta(days=29)
+    with rewards_client.app.state.session_factory() as session:
+        account = lots.refresh(session, personal_workspace_id(BUYER))
+        old = lots.grant(
+            session,
+            account,
+            "old-checkin",
+            10,
+            old_expiry,
+            "历史签到",
+            kind="daily_checkin",
+        )
+        old_id = old.id
+        session.commit()
+    result = rewards_client.post(path() + "/rewards/check-in").json()
+    assert result["created"] and wallet(rewards_client, BUYER) == 20
+    before = now + timedelta(hours=24, seconds=-1)
+    monkeypatch.setattr(lots, "utc_now", lambda: before)
+    assert wallet(rewards_client, BUYER) == 20
+    boundary = now + timedelta(hours=24)
+    monkeypatch.setattr(lots, "utc_now", lambda: boundary)
+    assert wallet(rewards_client, BUYER) == 10
+    with rewards_client.app.state.session_factory() as session:
+        old = session.get(CreditGrantRecord, old_id)
+        assert lots.aware(old.expires_at) == old_expiry and old.remaining == 10
 
 
 def test_beijing_midnight_not_browser_or_utc_day(rewards_client, monkeypatch):
@@ -184,6 +310,7 @@ def test_beijing_midnight_not_browser_or_utc_day(rewards_client, monkeypatch):
     monkeypatch.setattr(
         growth, "utc_now", lambda: datetime(2026, 11, 6, 15, 59, 59, tzinfo=UTC)
     )
+    monkeypatch.setattr(lots, "utc_now", lambda: growth.utc_now())
     assert (
         rewards_client.post(path() + "/rewards/check-in").json()["rewards"]["day"]
         == "2026-11-06"
@@ -213,16 +340,16 @@ def test_signed_payment_rewards_ten_percent_once_and_no_reward_on_checkin(
     rewards_client,
 ):
     order, fields = paid(rewards_client)
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     assert rewards_client.post(NOTIFY, data=fields).text == "success"
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     assert (
         rewards_client.post(path() + "/rewards/check-in").json()["credited_credits"]
         == 10
     )
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     state = reward_state(rewards_client)
-    assert state["invited_count"] == 1 and state["earned_credits"] == 110
+    assert state["invited_count"] == 1 and state["earned_credits"] == 600
     with rewards_client.app.state.session_factory() as session:
         assert (
             session.scalar(select(func.count()).select_from(ReferralRewardRecord)) == 1
@@ -237,7 +364,7 @@ def test_signed_payment_rewards_ten_percent_once_and_no_reward_on_checkin(
 
 def test_membership_reward_only_when_each_period_is_issued(rewards_client):
     order, _ = paid(rewards_client, "pro_annual", "948.00")
-    assert wallet(rewards_client, INVITER) == 150
+    assert wallet(rewards_client, INVITER) == 240
     with rewards_client.app.state.session_factory() as session:
         from app.models import CreditMembershipRecord
 
@@ -252,7 +379,7 @@ def test_membership_reward_only_when_each_period_is_issued(rewards_client):
             now=lots.add_months(member.starts_at, 1) + timedelta(seconds=1),
         )
         session.commit()
-    assert wallet(rewards_client, INVITER) == 300
+    assert wallet(rewards_client, INVITER) == 480
     with rewards_client.app.state.session_factory() as session:
         lots.refresh(session, personal_workspace_id(BUYER))
         session.commit()
@@ -264,7 +391,7 @@ def test_membership_reward_only_when_each_period_is_issued(rewards_client):
 def test_scheduled_membership_no_early_reward(rewards_client):
     paid(rewards_client, "pro_monthly", "99.00")
     paid(rewards_client, "pro_monthly", "99.00")
-    assert wallet(rewards_client, INVITER) == 150
+    assert wallet(rewards_client, INVITER) == 240
 
 
 def test_paid_snapshot_honored_after_campaign_paused(rewards_client):
@@ -279,11 +406,11 @@ def test_paid_snapshot_honored_after_campaign_paused(rewards_client):
         session.commit()
     assert (
         rewards_client.post(
-            NOTIFY, data=paid_fields(order, money="29.90", trade="pause_" + order["id"])
+            NOTIFY, data=paid_fields(order, money="99.00", trade="pause_" + order["id"])
         ).text
         == "success"
     )
-    assert wallet(rewards_client, INVITER) == 30
+    assert wallet(rewards_client, INVITER) == 180
 
 
 def test_refund_reclaims_unused_reward_and_duplicate_settlement_is_safe(rewards_client):
@@ -303,13 +430,13 @@ def test_refund_reclaims_unused_reward_and_duplicate_settlement_is_safe(rewards_
 def test_failed_refund_preserves_reward(rewards_client):
     order, _ = paid(rewards_client)
     refund_order(rewards_client, order, status="failed")
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
 
 
 def test_spent_reward_adjusts_future_gifts_without_negative_or_paid_wallet(
     rewards_client, monkeypatch
 ):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     finish(rewards_client, reserve(rewards_client, INVITER, 30), 30)
     refund_order(rewards_client, order)
     assert wallet(rewards_client, INVITER) == 0
@@ -329,7 +456,7 @@ def test_spent_reward_adjusts_future_gifts_without_negative_or_paid_wallet(
 def test_refund_does_not_cancel_active_task_and_reconciles_held_bonus_on_finish(
     rewards_client,
 ):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     reservation = reserve(rewards_client, INVITER, 30)
     refund_order(rewards_client, order)
     assert wallet(rewards_client, INVITER) == 30
@@ -339,7 +466,7 @@ def test_refund_does_not_cancel_active_task_and_reconciles_held_bonus_on_finish(
 
 
 def test_expired_unused_bonus_never_creates_adjustment(rewards_client):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     with rewards_client.app.state.session_factory() as session:
         lot = session.scalar(
             select(CreditGrantRecord).where(CreditGrantRecord.kind == "referral_bonus")
@@ -381,7 +508,7 @@ def test_verified_registration_binds_invite_once_and_invalid_code_does_not_block
         assert session.get(InvitationRecord, user2.id) is None
 
 
-def test_newcomer_pack_also_rewards_sixteen_credits(rewards_client):
+def test_newcomer_pack_keeps_ten_percent_referral_reward(rewards_client):
     from app.replica_welcome import CAMPAIGN, ensure_grant
 
     with rewards_client.app.state.session_factory() as session:
@@ -393,7 +520,7 @@ def test_newcomer_pack_also_rewards_sixteen_credits(rewards_client):
         assert ensure_grant(session, session.get(UserRecord, BUYER))
         session.commit()
     paid(rewards_client, "newcomer_160", "9.90")
-    assert wallet(rewards_client, INVITER) == 16
+    assert wallet(rewards_client, INVITER) == 24
 
 
 def test_partial_unused_refund_only_adjusts_corresponding_reward(rewards_client):
@@ -405,7 +532,7 @@ def test_partial_unused_refund_only_adjusts_corresponding_reward(rewards_client)
 
 
 def test_expired_bonus_only_adjusts_consumed_benefit(rewards_client):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     finish(rewards_client, reserve(rewards_client, INVITER, 8), 8)
     with rewards_client.app.state.session_factory() as session:
         lot = session.scalar(
@@ -439,7 +566,7 @@ def test_referral_reward_is_only_one_level(rewards_client):
         growth.bind_signup_invitation(session, session.get(UserRecord, INVITER), code)
         session.commit()
     paid(rewards_client)
-    assert wallet(rewards_client, INVITER) == 110
+    assert wallet(rewards_client, INVITER) == 600
     with rewards_client.app.state.session_factory() as session:
         assert (
             session.get(
@@ -450,24 +577,24 @@ def test_referral_reward_is_only_one_level(rewards_client):
 
 
 def test_refund_adjustment_never_takes_inviter_paid_credits(rewards_client):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
-    finish(rewards_client, reserve(rewards_client, INVITER, 30), 30)
-    paid(rewards_client, "pack_small", "29.90", user_id=INVITER)
-    assert wallet(rewards_client, INVITER) == 300
+    order, _ = paid(rewards_client, "pack_small", "99.00")
+    finish(rewards_client, reserve(rewards_client, INVITER, 180), 180)
+    paid(rewards_client, "pack_small", "99.00", user_id=INVITER)
+    assert wallet(rewards_client, INVITER) == 1800
     refund_order(rewards_client, order)
-    assert wallet(rewards_client, INVITER) == 300
+    assert wallet(rewards_client, INVITER) == 1800
     rewards_client.post(
         path(INVITER) + "/rewards/check-in", headers={"X-User-Id": INVITER}
     )
-    assert wallet(rewards_client, INVITER) == 300
-    assert reward_state(rewards_client)["pending_adjustment_credits"] == 20
+    assert wallet(rewards_client, INVITER) == 1800
+    assert reward_state(rewards_client)["pending_adjustment_credits"] == 170
 
 
 def test_membership_future_refund_keeps_reward_for_consumed_paid_period(rewards_client):
     order, _ = paid(rewards_client, "pro_annual", "948.00")
-    finish(rewards_client, reserve(rewards_client, BUYER, 1500), 1500)
+    finish(rewards_client, reserve(rewards_client, BUYER, 2400), 2400)
     refund_order(rewards_client, order)
-    assert wallet(rewards_client, INVITER) == 150
+    assert wallet(rewards_client, INVITER) == 240
     with rewards_client.app.state.session_factory() as session:
         from app.models import CreditMembershipRecord
 
@@ -490,7 +617,7 @@ def test_membership_future_refund_keeps_reward_for_consumed_paid_period(rewards_
 def test_full_goodwill_refund_reverses_reward_even_if_buyer_spent_credits(
     rewards_client,
 ):
-    order, _ = paid(rewards_client, "pack_small", "29.90")
+    order, _ = paid(rewards_client, "pack_small", "99.00")
     finish(rewards_client, reserve(rewards_client, BUYER, 300), 300)
     refund_order(rewards_client, order, policy="goodwill")
     assert wallet(rewards_client, INVITER) == 0
@@ -509,7 +636,7 @@ def test_payment_for_another_workspace_does_not_create_personal_referral_reward(
     assert (
         rewards_client.post(
             NOTIFY,
-            data=paid_fields(order, money="29.90", trade="workspace_" + order["id"]),
+            data=paid_fields(order, money="99.00", trade="workspace_" + order["id"]),
         ).text
         == "success"
     )

@@ -280,7 +280,7 @@ def test_wechat_encrypted_callback_and_replay(pilot_client, monkeypatch):
             "/api/v1/payments/wechat/notify", content=body, headers=headers
         )
         assert r.status_code == 204, r.text
-    assert balance(pilot_client) == 300
+    assert balance(pilot_client) == 1800
 
 
 @pytest.mark.parametrize(
@@ -289,7 +289,7 @@ def test_wechat_encrypted_callback_and_replay(pilot_client, monkeypatch):
         {"amount": {"total": 1, "currency": "CNY"}},
         {"mchid": "wrong"},
         {"appid": "wrong"},
-        {"amount": {"total": 2990, "currency": "USD"}},
+        {"amount": {"total": 9900, "currency": "USD"}},
     ],
 )
 def test_wechat_wrong_identity_or_amount_rejected(pilot_client, monkeypatch, changes):
@@ -333,7 +333,7 @@ def test_unconfigured_payments_show_catalog_but_block_purchase(pilot_client):
     pilot_client.app.state.settings.credit_payments_enabled = False
     catalog = pilot_client.get(BASE + "/packages?include_memberships=true").json()
     assert not catalog["enabled"] and catalog["channels"] == []
-    assert len(catalog["packages"]) == 10
+    assert len(catalog["packages"]) == 12
     assert (
         pilot_client.post(
             BASE + "/purchases",

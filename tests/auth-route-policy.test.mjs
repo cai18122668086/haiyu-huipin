@@ -137,7 +137,11 @@ test("final API 401 is centralised without browser token storage", async () => {
   assert.match(boundary, /onAuthSessionChanged/);
   assert.match(boundary, /if \(\(publicRoute && !publicTool\) \|\| developmentAuth\) return;\s*let cancelled = false/);
   assert.match(sessionEvents, /polaris:auth:unauthorised/);
-  assert.match(providers, /<AuthBoundary>\s*<NewcomerOfferController \/>\{children\}<\/AuthBoundary>/);
+  const authChildren = providers.match(/<AuthBoundary>([\s\S]*?)<\/AuthBoundary>/)?.[1];
+  assert.ok(authChildren, "application content stays within the auth boundary");
+  assert.match(authChildren, /<ReplicaWelcomePrompt\s*\/>/);
+  assert.match(authChildren, /<NewcomerOfferController\s*\/>/);
+  assert.match(authChildren, /\{children\}/);
 
   const authSources = await Promise.all([
     utf8("lib/auth/client.ts"),

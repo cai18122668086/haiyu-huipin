@@ -7280,6 +7280,21 @@
             "title": "Checkin Enabled",
             "type": "boolean"
           },
+          "checkin_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkin Expires At"
+          },
+          "checkin_validity_hours": {
+            "title": "Checkin Validity Hours",
+            "type": "integer"
+          },
           "daily_credits": {
             "title": "Daily Credits",
             "type": "integer"
@@ -7342,6 +7357,8 @@
           "daily_credits",
           "reward_percent",
           "validity_days",
+          "checkin_validity_hours",
+          "checkin_expires_at",
           "day",
           "next_day_at",
           "invite_url",

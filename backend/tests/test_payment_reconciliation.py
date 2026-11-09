@@ -85,7 +85,7 @@ def test_background_credits_offline_customer_and_annual_membership_once(
         assert record.status == "paid" and record.reconcile_next_at is None
         assert record.reconcile_attempts == 1
         assert (
-            session.get(WorkspaceCreditAccountRecord, WORKSPACE).balance_credits == 1500
+            session.get(WorkspaceCreditAccountRecord, WORKSPACE).balance_credits == 2400
         )
         assert (
             session.scalar(select(func.count()).select_from(CreditMembershipRecord))

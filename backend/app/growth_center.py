@@ -170,6 +170,9 @@ def invitation_center(
 def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
     product = PRODUCTS[NEWCOMER_PACK]
     regular = PRODUCTS[STARTER_PACK_ID]
+    comparable = (regular.credits, regular.validity_days) == (
+        product.credits, product.validity_days
+    )
     now = aware(utc_now())
     enabled = rewards.active(session, REMINDER) and newcomer_eligible(
         session, user.id, workspace_id
@@ -215,8 +218,8 @@ def offer_state(session: Session, user: UserRecord, workspace_id: str) -> dict:
         "ready_at": ready.isoformat() if ready else None,
         "window_ends_at": end.isoformat() if end else None,
         "amount_fen": product.amount_fen,
-        "regular_amount_fen": regular.amount_fen,
-        "savings_fen": regular.amount_fen - product.amount_fen,
+        "regular_amount_fen": regular.amount_fen if comparable else product.amount_fen,
+        "savings_fen": regular.amount_fen - product.amount_fen if comparable else 0,
         "credits": product.credits,
         "fast_images": product.credits // 8,
         "validity_days": product.validity_days,

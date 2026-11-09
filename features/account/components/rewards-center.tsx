@@ -33,7 +33,8 @@ export function RewardsCenter({ workspaceId }: { workspaceId: string }) {
       {data.checkin_enabled && <section className={styles.card} aria-label="每日签到">
         <header><span className={styles.icon}><CalendarCheck2 size={22} /></span><h2>每日签到</h2></header>
         <div className={styles.amount}><strong>{number(data.daily_credits)}</strong><span>积分</span></div>
-        <p className={styles.description}>北京时间每天一次</p>
+        <p className={styles.description}>北京时间每天一次{!data.checked_in && (data.checkin_validity_hours === 24 ? " · 到账后24小时有效" : " · 到账后30天有效")}</p>
+        {data.checkin_expires_at && <p className={styles.description}>本次积分到期：{new Date(data.checkin_expires_at).toLocaleString("zh-CN", {timeZone:"Asia/Shanghai",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false})}</p>}
         <button type="button" className={styles.action} data-claimed={data.checked_in || undefined} disabled={data.checked_in || claim.isPending} onClick={() => void checkin()}>
           {claim.isPending ? <><LoaderCircle className="spin" size={17} />领取中</> : data.checked_in ? <><Check size={17} />今日已签到</> : <>立即领取<ArrowUpRight size={17} /></>}
         </button>
@@ -47,8 +48,8 @@ export function RewardsCenter({ workspaceId }: { workspaceId: string }) {
       </section>}
     </div>
     <div className={styles.footnote}>
-      <span>赠送积分 {data.validity_days} 天有效</span>
-      <details><summary>奖励规则</summary><div>签到按北京时间每天领取一次。邀请仅限直接邀请的新注册好友为自己的个人账户充值；会员按每期实际到账积分返赠，充值退款会同步调整对应奖励。</div></details>
+      <span>邀请奖励到账后 {data.validity_days} 天有效</span>
+      <details><summary>奖励规则</summary><div>签到按北京时间每天领取一次。普通用户签到积分到账后24小时有效，有效会员签到积分到账后30天有效，以领取时的会员状态为准；此前领取的积分保持原到期时间。邀请仅限直接邀请的新注册好友为自己的个人账户充值；会员按每期实际到账积分返赠，充值退款会同步调整对应奖励。</div></details>
     </div>
     {message && <p className={styles.feedback} role="status">{message}</p>}
     {data.pending_adjustment_credits > 0 && <p className={styles.adjustment} title="充值退款对应的已用邀请奖励，将由后续赠送积分抵扣。">待调整 {number(data.pending_adjustment_credits)} 积分 · <Link href="/account#credits">查看明细</Link></p>}

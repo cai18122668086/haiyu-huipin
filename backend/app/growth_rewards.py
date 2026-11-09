@@ -20,6 +20,7 @@ from .models import (
     AuditEventRecord,
     CreditGrantRecord,
     CreditLedgerEntryRecord,
+    CreditMembershipRecord,
     CreditPurchaseRecord,
     CreditRefundRecord,
     DailyCheckinRecord,
@@ -375,6 +376,22 @@ def reverse_refund_rewards(
     session.flush()
 
 
+def checkin_validity_days(session: Session, workspace_id: str) -> int:
+    """Snapshot membership at claim time; never change previously issued lots."""
+    now = aware(utc_now())
+    member = session.scalar(
+        select(CreditMembershipRecord.id)
+        .where(
+            CreditMembershipRecord.workspace_id == workspace_id,
+            CreditMembershipRecord.starts_at <= now,
+            CreditMembershipRecord.ends_at > now,
+            CreditMembershipRecord.cancelled_at.is_(None),
+        )
+        .limit(1)
+    )
+    return BONUS_VALIDITY_DAYS if member else 1
+
+
 def checkin(
     session: Session, user: UserRecord
 ) -> tuple[DailyCheckinRecord | None, bool]:
@@ -390,13 +407,14 @@ def checkin(
     )
     if existing:
         return (existing if existing.user_id == user.id else None), False
+    validity_days = checkin_validity_days(session, account.workspace_id)
     lot, offset = _bonus(
         session,
         account,
         user.id,
         f"checkin:{user.id}:{today}",
         DAILY_CREDITS,
-        BONUS_VALIDITY_DAYS,
+        validity_days,
         "每日签到 +10 积分",
         "daily_checkin",
     )
@@ -407,6 +425,7 @@ def checkin(
         grant_id=lot.id,
         net_credits=DAILY_CREDITS - offset,
     )
+    assert lot.expires_at is not None
     session.add(receipt)
     session.add(
         AuditEventRecord(
@@ -415,7 +434,12 @@ def checkin(
             action="growth.daily_checkin",
             resource_type="daily_checkin",
             resource_id=today,
-            details={"credits": DAILY_CREDITS, "net_credits": receipt.net_credits},
+            details={
+                "credits": DAILY_CREDITS,
+                "net_credits": receipt.net_credits,
+                "validity_hours": validity_days * 24,
+                "expires_at": aware(lot.expires_at).isoformat(),
+            },
         )
     )
     session.flush()
@@ -450,17 +474,20 @@ def state(session: Session, user: UserRecord, workspace_id: str) -> dict:
     today = now.date().isoformat()
     if daily or referral:
         refresh(session, workspace_id)
-    claimed = (
-        bool(
-            session.scalar(
-                select(DailyCheckinRecord.user_id).where(
-                    DailyCheckinRecord.phone_key == phone_key(user),
-                    DailyCheckinRecord.day == today,
-                )
+    receipt = (
+        session.scalar(
+            select(DailyCheckinRecord).where(
+                DailyCheckinRecord.phone_key == phone_key(user),
+                DailyCheckinRecord.day == today,
             )
         )
         if daily
-        else False
+        else None
+    )
+    claimed_lot = (
+        session.get(CreditGrantRecord, receipt.grant_id)
+        if receipt and receipt.user_id == user.id
+        else None
     )
     invite_code = _code(session, user.id).code if referral else None
     invited = (
@@ -524,10 +551,14 @@ def state(session: Session, user: UserRecord, workspace_id: str) -> dict:
     return {
         "checkin_enabled": bool(daily),
         "referral_enabled": bool(referral),
-        "checked_in": claimed,
+        "checked_in": receipt is not None,
         "daily_credits": DAILY_CREDITS,
         "reward_percent": REWARD_BPS // 100,
         "validity_days": BONUS_VALIDITY_DAYS,
+        "checkin_validity_hours": checkin_validity_days(session, workspace_id) * 24,
+        "checkin_expires_at": aware(claimed_lot.expires_at).isoformat()
+        if claimed_lot and claimed_lot.expires_at
+        else None,
         "day": today,
         "next_day_at": datetime.combine(
             now.date() + timedelta(days=1),

@@ -143,7 +143,7 @@ def test_parallel_buyer_callbacks_and_checkin_serialize_inviter_wallet(
     def pay(order):
         barrier.wait(timeout=10)
         with factory() as session:
-            fields = paid_fields(order, money="29.90", trade="pg_growth_" + order["id"])
+            fields = paid_fields(order, money="99.00", trade="pg_growth_" + order["id"])
             _settle_native(session, "alipay", fields)
             _settle_native(session, "alipay", fields)
 
@@ -163,7 +163,7 @@ def test_parallel_buyer_callbacks_and_checkin_serialize_inviter_wallet(
             session.get(
                 WorkspaceCreditAccountRecord, personal_workspace_id("usr_test")
             ).balance_credits
-            == 190
+            == 1090
         )
         assert (
             session.scalar(select(func.count()).select_from(ReferralRewardRecord)) == 6
@@ -174,7 +174,7 @@ def test_parallel_buyer_callbacks_and_checkin_serialize_inviter_wallet(
                     WorkspaceCreditAccountRecord,
                     personal_workspace_id(f"usr_buyer_{i}"),
                 ).balance_credits
-                == 300
+                == 1800
             )
 
 

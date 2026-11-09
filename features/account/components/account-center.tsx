@@ -6,6 +6,7 @@ import { InvitationCenter } from "./invitation-center";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
 import { NewcomerOfferCountdown } from "@/components/newcomer-offer-controller";
+import { creditUnitPrice } from "@/lib/credit-unit-price";
 import { RewardsCenter } from "./rewards-center";
 import { useRewards } from "@/features/billing/api/rewards";
 
@@ -691,6 +692,7 @@ const planCopy: Record<string, { name: string; description: string }> = {
   light: { name: "轻享版", description: "偶尔上新，也能从容出图" },
   pro: { name: "专业版", description: "为持续上新的商家准备" },
   team: { name: "团队版", description: "为高频创作准备更多额度" },
+  flagship: { name: "旗舰版", description: "满足多店铺与批量上新需求" },
 };
 function Membership({
   workspaceId,
@@ -761,7 +763,8 @@ function Membership({
         <div className={newcomerStyles.copy}>
           <span className={newcomerStyles.badge}><Gift size={14}/>新客首单专享</span>
           <h3><strong>{newcomer.credits}</strong><span>积分</span></h3>
-          <p>生成更多商品图 · 到账后{newcomer.validity_days}天有效</p>
+          <p>单价 ¥{creditUnitPrice(newcomer)}/张</p>
+          <p>到账后{newcomer.validity_days}天有效</p>
           <NewcomerOfferCountdown className={newcomerStyles.countdown}/>
         </div>
         <div className={newcomerStyles.action}>
@@ -829,7 +832,7 @@ function Membership({
       ) : !products.length ? (
         <Empty>当前暂无可购买的套餐</Empty>
       ) : (
-        <div className={`plan-grid ${tab === "pack" ? "pack-grid" : ""}`}>
+        <div className={`plan-grid pack-grid`}>
           {products.map((product, index) => {
             const copy = product.plan_id
               ? planCopy[product.plan_id]
@@ -882,13 +885,16 @@ function Membership({
                     折合 ¥{money(product.amount_fen / 12)} / 月，按年一次支付
                   </div>
                 )}
-                <div className="plan-credit">
-                  <strong>{fmt(product.credits)}</strong>
-                  <span>创作积分{tab === "member" ? " / 月" : ""}</span>
-                </div>
-                <div className={styles.outputEstimates}>
-                  <span>{tab === "member" ? "每月预计出图" : "预计出图"}</span>
-                  <dl>{([["灵感", 5], ["快速", 8], ["精致", 15]] as const).map(([label, unit]) => <div key={label}><dt>{label}<small>{unit} 积分/张</small></dt><dd><b>{fmt(Math.floor(product.credits / unit))}</b><span>张</span></dd></div>)}</dl>
+                <div className={`plan-credit ${styles.creditPriceRow}`}>
+                  <span className={styles.creditAmount}>
+                    <strong>{fmt(product.credits)}</strong>
+                    <span>创作积分{tab === "member" ? " / 月" : ""}</span>
+                  </span>
+                  <span className={styles.unitPrice}>
+                    <span>单价</span>
+                    <strong>¥{creditUnitPrice(product)}</strong>
+                    <span>/张</span>
+                  </span>
                 </div>
                 <Button
                   variant={featured ? "lime-button" : "outline"}
@@ -932,7 +938,7 @@ function Membership({
       {!catalog.data?.enabled && <p role="status" className="checkout-note">会员方案已同步，在线购买尚未开放。</p>}
       <div className="pricing-disclaimer">
         <p>
-          数量为各版本单独使用时的估算，以生成前报价为准。续费会员顺延生效。
+          实际扣积分以生成前报价为准。续费会员顺延生效。
         </p>
       </div>
       <Faqs />

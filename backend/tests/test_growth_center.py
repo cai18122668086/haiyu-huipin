@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app import growth_center as center
-from app.credit_memberships import aware
+from app.credit_memberships import add_months, aware
 from app.models import (
     AssetRecord,
     JobAssetRecord,
@@ -121,7 +121,7 @@ def test_invitation_center_masks_friends_and_scopes_to_inviter(center_client):
 
 @pytest.mark.parametrize(
     "product,money,reward",
-    [("pack_medium", "99.00", 110), ("pro_monthly", "99.00", 150)],
+    [("pack_medium", "299.00", 600), ("pro_monthly", "99.00", 240)],
 )
 def test_invitation_center_tracks_real_pack_and_membership_payment(
     center_client, product, money, reward
@@ -253,7 +253,9 @@ def test_late_visit_does_not_remind_twice_on_same_beijing_day(
     assert offer(center_client, "/impression", "post").json()["should_show"]
 
 
-def test_regular_price_matches_real_repeatable_pack_and_refund(center_client):
+def test_unequal_credit_packs_have_no_crossed_out_price_and_regular_refund_unchanged(
+    center_client,
+):
     from sqlalchemy import select
 
     from app import credit_products
@@ -263,32 +265,33 @@ def test_regular_price_matches_real_repeatable_pack_and_refund(center_client):
     data = offer(center_client).json()
     regular = credit_products.PRODUCTS[credit_products.STARTER_PACK_ID]
     newcomer = credit_products.PRODUCTS["newcomer_160"]
-    assert data["regular_amount_fen"] == regular.amount_fen == 1990
-    assert data["amount_fen"] == newcomer.amount_fen == 990
-    assert data["savings_fen"] == 1000
     assert (
-        (regular.credits, regular.validity_days)
-        == (newcomer.credits, newcomer.validity_days)
-        == (160, 30)
+        data["regular_amount_fen"] == data["amount_fen"] == newcomer.amount_fen == 990
     )
-    first, _ = paid(center_client, regular.id, "19.90")
-    paid(center_client, regular.id, "19.90")
-    assert wallet(center_client, BUYER) == 320
-    assert wallet(center_client, INVITER) == 32
+    assert data["savings_fen"] == 0
+    assert (regular.amount_fen, regular.credits, regular.validity_months) == (
+        4900,
+        800,
+        12,
+    )
+    assert (newcomer.credits, newcomer.validity_days) == (240, 30)
+    first, _ = paid(center_client, regular.id, "49.00")
+    paid(center_client, regular.id, "49.00")
+    assert wallet(center_client, BUYER) == 1600
+    assert wallet(center_client, INVITER) == 160
     with center_client.app.state.session_factory() as session:
         lot = session.scalar(
             select(CreditGrantRecord).where(CreditGrantRecord.source_key == first["id"])
         )
         assert (
             abs(
-                (aware(lot.expires_at) - aware(lot.created_at)).total_seconds()
-                - 30 * 86400
+                (aware(lot.expires_at) - add_months(lot.created_at, 12)).total_seconds()
             )
             < 5
         )
     refund_order(center_client, first)
-    assert wallet(center_client, BUYER) == 160
-    assert wallet(center_client, INVITER) == 16
+    assert wallet(center_client, BUYER) == 800
+    assert wallet(center_client, INVITER) == 80
     assert not offer(center_client).json()["eligible"]
 
 

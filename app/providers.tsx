@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { AuthBoundary } from "@/components/auth/auth-boundary";
 import { InvitationCapture } from "@/components/invitation-capture";
+import { ReplicaWelcomePrompt } from "@/components/replica-welcome-offer";
 import { NewcomerOfferController } from "@/components/newcomer-offer-controller";
 import { initializeAuthClient } from "@/lib/auth/client";
 import { getAuthMode } from "@/lib/auth/config";
@@ -17,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <InvitationCapture />
-      <AuthBoundary><NewcomerOfferController />{children}</AuthBoundary>
+      <AuthBoundary><ReplicaWelcomePrompt /><NewcomerOfferController />{children}</AuthBoundary>
     </QueryClientProvider>
   );
 }

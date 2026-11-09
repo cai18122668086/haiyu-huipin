@@ -28,6 +28,8 @@ class RewardsState(BaseModel):
     daily_credits: int
     reward_percent: int
     validity_days: int
+    checkin_validity_hours: int
+    checkin_expires_at: str | None
     day: str
     next_day_at: str
     invite_url: str | None
