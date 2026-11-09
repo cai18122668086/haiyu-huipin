@@ -762,7 +762,7 @@ function Membership({
         <div className={newcomerStyles.copy}>
           <span className={newcomerStyles.badge}><Gift size={14}/>新客首单专享</span>
           <h3><strong>{newcomer.credits}</strong><span>积分</span></h3>
-          <p>单价 ¥{creditUnitPrice(newcomer)}/张 · 按5积分档折算</p>
+          <p>单价 ¥{creditUnitPrice(newcomer)}/张</p>
           <p>到账后{newcomer.validity_days}天有效</p>
           <NewcomerOfferCountdown className={newcomerStyles.countdown}/>
         </div>
@@ -885,13 +885,9 @@ function Membership({
                   </div>
                 )}
                 <div className="plan-credit">
-                  <strong>{fmt(product.credits)}</strong>
-                  <span>创作积分{tab === "member" ? " / 月" : ""}</span>
-                </div>
-                <div className={styles.unitPrice}>
-                  <span>单价 <strong>¥{creditUnitPrice(product)}</strong>/张</span>
-                  <small>按5积分档折算</small>
-                  <small>快速版8积分/张 · 精致版15积分/张</small>
+                  <span>单价</span>
+                  <strong>¥{creditUnitPrice(product)}</strong>
+                  <span>/张</span>
                 </div>
                 <Button
                   variant={featured ? "lime-button" : "outline"}
@@ -935,7 +931,7 @@ function Membership({
       {!catalog.data?.enabled && <p role="status" className="checkout-note">会员方案已同步，在线购买尚未开放。</p>}
       <div className="pricing-disclaimer">
         <p>
-          单价按5积分档折算，实际扣积分以生成前报价为准。续费会员顺延生效。
+          实际扣积分以生成前报价为准。续费会员顺延生效。
         </p>
       </div>
       <Faqs />

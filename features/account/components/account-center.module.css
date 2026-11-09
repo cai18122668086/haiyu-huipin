@@ -4959,5 +4959,3 @@
 .taskEntry{white-space:nowrap}.mobileTaskLabel{display:none}@media(max-width:640px){.desktopTaskLabel{display:none}.mobileTaskLabel{display:inline}}
 
 @media(min-width:1440px){.root :global(.pack-grid){grid-template-columns:repeat(4,minmax(0,1fr))}}@media(min-width:761px) and (max-width:1439px){.root :global(.pack-grid){grid-template-columns:repeat(2,minmax(0,1fr))}}
-
-.unitPrice{display:grid;gap:6px;margin:20px 0;padding:18px 0;border-top:1px solid #eee7e0;border-bottom:1px solid #eee7e0;color:#5d463a}.unitPrice>span{font-size:15px;line-height:1.5}.unitPrice strong{font-size:28px;color:#b51b20;letter-spacing:-.8px;margin:0 4px;font-variant-numeric:tabular-nums}.unitPrice small{font-size:12px;color:#85756c;line-height:1.6}
