@@ -4959,3 +4959,20 @@
 .taskEntry{white-space:nowrap}.mobileTaskLabel{display:none}@media(max-width:640px){.desktopTaskLabel{display:none}.mobileTaskLabel{display:inline}}
 
 @media(min-width:1440px){.root :global(.pack-grid){grid-template-columns:repeat(4,minmax(0,1fr))}}@media(min-width:761px) and (max-width:1439px){.root :global(.pack-grid){grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.root :global(.plan-credit).creditPriceRow {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.creditAmount,
+.unitPrice {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+.root :global(.plan-credit) .unitPrice strong {
+  font-size: 18px;
+  font-weight: 600;
+}

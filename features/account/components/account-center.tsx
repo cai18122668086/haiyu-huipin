@@ -884,10 +884,16 @@ function Membership({
                     折合 ¥{money(product.amount_fen / 12)} / 月，按年一次支付
                   </div>
                 )}
-                <div className="plan-credit">
-                  <span>单价</span>
-                  <strong>¥{creditUnitPrice(product)}</strong>
-                  <span>/张</span>
+                <div className={`plan-credit ${styles.creditPriceRow}`}>
+                  <span className={styles.creditAmount}>
+                    <strong>{fmt(product.credits)}</strong>
+                    <span>创作积分{tab === "member" ? " / 月" : ""}</span>
+                  </span>
+                  <span className={styles.unitPrice}>
+                    <span>单价</span>
+                    <strong>¥{creditUnitPrice(product)}</strong>
+                    <span>/张</span>
+                  </span>
                 </div>
                 <Button
                   variant={featured ? "lime-button" : "outline"}
