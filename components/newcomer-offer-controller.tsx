@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Sparkles, TicketPercent, X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import Link from "@/components/seo-link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWorkspace } from "@/features/workspaces/api/workspaces";
@@ -47,6 +47,7 @@ export function NewcomerOfferController() {
   const cache = useQueryClient();
   const [tick, setTick] = useState(0);
   const [blocked, setBlocked] = useState(false);
+  const [hiddenFloating, setHiddenFloating] = useState(false);
   const [offer, setOffer] = useState<{data:Offer;receivedAt:number;workspaceId:string}|null>(null);
   const inFlight = useRef(false), attempted = useRef(0);
   const protectedRoute = pathname.startsWith("/auth") || pathname.startsWith("/admin") || pathname.startsWith("/account");
@@ -90,11 +91,11 @@ export function NewcomerOfferController() {
     return () => { observer.disconnect(); document.removeEventListener("visibilitychange", visibleAgain); delete document.documentElement.dataset.newcomerUnblockedAt; };
   }, []);
   const visible = offer && offer.workspaceId === workspace?.id && query.data?.eligible && !protectedRoute;
-  const floating = !visible && !blocked && !protectedRoute && query.data?.eligible && query.data.trial_viewed;
+  const floating = !hiddenFloating && !visible && !blocked && !protectedRoute && query.data?.eligible && query.data.trial_viewed;
   const floatingTime = query.data ? newcomerCountdown(query.data.window_ends_at, query.data.server_now, tick - query.dataUpdatedAt) : null;
   return <>
     {visible && <NewcomerOfferModal offer={offer.data} receivedAt={offer.receivedAt} now={tick || offer.receivedAt} onClose={() => setOffer(null)}/>}
-    {floating && query.data && <button type="button" className={styles.floating} aria-label="查看限时福利，首单9.9元" onClick={() => {
+    {floating && query.data && <NewcomerFloating amount={query.data.amount_fen / 100} parts={floatingTime?.parts ?? ["00", "00", "00"]} onClose={() => setHiddenFloating(true)} onOpen={() => {
       if (!workspace?.id || inFlight.current) return;
       const id = workspace.id;
       inFlight.current = true;
@@ -102,11 +103,15 @@ export function NewcomerOfferController() {
         cache.setQueryData(newcomerOfferKey(id), {...result, should_show: false, reminded_today: result.should_show || result.reminded_today});
         if (result.should_show) setOffer({data: result, receivedAt: Date.now(), workspaceId: id});
       }).catch(() => router.push("/account?offer=newcomer#membership")).finally(() => { inFlight.current = false; });
-    }}><TicketPercent size={23}/><span className={styles.floatingContent}>
-      <span className={styles.floatingHeading}><strong>限时福利</strong><b>¥{query.data.amount_fen / 100}</b></span>
-      <span className={styles.floatingClock}><time aria-label={`优惠剩余${floatingTime?.parts.join(":")}`}>{floatingTime?.parts.join(":")}</time></span>
-    </span><ArrowUpRight size={17}/></button>}
+    }}/>}
   </>;
+}
+
+export function NewcomerFloating({amount, parts, onOpen, onClose}: {amount:number;parts:readonly string[];onOpen:()=>void;onClose:()=>void}) {
+  return <aside className={styles.floatingWrap} aria-label="新客福利悬浮入口">
+    <button type="button" className={styles.floatingClose} aria-label="收起福利悬浮入口" onClick={onClose}><X size={15}/></button>
+    <button type="button" className={styles.floating} aria-label={`查看限时福利，首单${amount}元`} onClick={onOpen}><strong>限时福利</strong><span className={styles.floatingPrice}><small>¥</small>{amount}</span><time aria-label={`优惠剩余${parts.join(":")}`}>{parts.join(":")}</time></button>
+  </aside>;
 }
 
 export function NewcomerOfferModal({offer,receivedAt,now,onClose}:{offer:Offer;receivedAt:number;now:number;onClose:()=>void}){
@@ -115,24 +120,19 @@ export function NewcomerOfferModal({offer,receivedAt,now,onClose}:{offer:Offer;r
   useEffect(()=>{const element=dialog.current;if(element&&!element.open)element.showModal();return()=>element?.close();},[]);
   const time=newcomerCountdown(offer.window_ends_at,offer.server_now,now-receivedAt);
   useEffect(()=>{if(time.seconds===0)onClose();},[time.seconds,onClose]);
-  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="newcomer-offer-title" onCancel={event=>{event.preventDefault();onClose();}} onClick={event=>{if(event.target===event.currentTarget){const r=event.currentTarget.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)onClose();}}}>
-    <button type="button" className={styles.close} aria-label="关闭新人优惠" onClick={onClose}><X size={20}/></button>
-    <div className={styles.top}><span className={styles.badge}><TicketPercent size={15}/>新客首单专享</span><Sparkles className={styles.sparkle} size={38}/><h2 id="newcomer-offer-title">限时福利</h2></div>
-    <div className={styles.coupon}>
-      <div className={styles.price}>
-        <small className={styles.originalPrice}>常规价 <s>¥{(offer.regular_amount_fen/100).toFixed(1)}</s></small>
+  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="newcomer-offer-title" onCancel={event=>{event.preventDefault();onClose();}}>
+    <header className={styles.top}>
+      <button type="button" className={styles.close} aria-label="关闭新人优惠" onClick={onClose}><X size={24}/></button>
+      <span className={styles.badge}>新客首单专享</span><h2 id="newcomer-offer-title">限时福利</h2>
+    </header>
+    <div className={styles.body}>
+      <div className={styles.coupon}>
         <div className={styles.priceValue}><span>¥</span><strong>{(offer.amount_fen/100).toFixed(1)}</strong></div>
-        <b>首单约{Math.round(offer.amount_fen/offer.regular_amount_fen*10)}折</b>
-      </div>
-      <div className={styles.benefit}>
-        <span className={styles.creditsLabel}>充值即得</span>
         <div className={styles.creditValue}><strong>{offer.credits}</strong><span>积分</span></div>
-        <span className={styles.validity}>到账后{offer.validity_days}天有效</span>
       </div>
-      <div className={styles.perImage}>首单立省 <strong>¥{offer.savings_fen/100}</strong></div>
+      <div className={styles.countdown}><span>福利倒计时</span><div aria-label={`剩余${time.parts[0]}小时${time.parts[1]}分${time.parts[2]}秒`}>{time.parts.map((part,index)=><span key={index}>{index>0&&<i>:</i>}<b>{part}</b></span>)}</div></div>
+      <Link className={styles.buy} href="/account?offer=newcomer#membership" onClick={onClose}>¥{offer.amount_fen/100} 立即抢购<ArrowUpRight size={21}/></Link>
+      <div className={styles.bottom}><p>到账后{offer.validity_days}天有效 · 每人限购一次 · 无自动续费</p><details><summary>活动规则</summary><p>未付费用户首单专享，每人限购一次。每24小时更新一轮福利，未购买用户可继续参与；每天最多自动提醒一次。{offer.credits}积分到账后{offer.validity_days}天有效。</p></details></div>
     </div>
-    <div className={styles.countdown}><div aria-label={`剩余${time.parts[0]}小时${time.parts[1]}分${time.parts[2]}秒`}>{time.parts.map((part,index)=><span key={index}>{index>0&&<i>:</i>}<b>{part}</b></span>)}</div></div>
-    <Link className={styles.buy} href="/account?offer=newcomer#membership" onClick={onClose}>¥9.9 立即抢购<ArrowUpRight size={20}/></Link>
-    <div className={styles.bottom}><span>一次购买 · 无自动续费</span><details><summary>活动规则</summary><p>未付费用户首单专享，每人限购一次。每24小时更新一轮福利，未购买用户可继续参与；每天最多提醒一次。160积分到账后30天有效。</p></details></div>
   </dialog>;
 }

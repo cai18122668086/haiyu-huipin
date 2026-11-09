@@ -364,7 +364,7 @@ def test_signed_payment_rewards_ten_percent_once_and_no_reward_on_checkin(
 
 def test_membership_reward_only_when_each_period_is_issued(rewards_client):
     order, _ = paid(rewards_client, "pro_annual", "948.00")
-    assert wallet(rewards_client, INVITER) == 150
+    assert wallet(rewards_client, INVITER) == 240
     with rewards_client.app.state.session_factory() as session:
         from app.models import CreditMembershipRecord
 
@@ -379,7 +379,7 @@ def test_membership_reward_only_when_each_period_is_issued(rewards_client):
             now=lots.add_months(member.starts_at, 1) + timedelta(seconds=1),
         )
         session.commit()
-    assert wallet(rewards_client, INVITER) == 300
+    assert wallet(rewards_client, INVITER) == 480
     with rewards_client.app.state.session_factory() as session:
         lots.refresh(session, personal_workspace_id(BUYER))
         session.commit()
@@ -391,7 +391,7 @@ def test_membership_reward_only_when_each_period_is_issued(rewards_client):
 def test_scheduled_membership_no_early_reward(rewards_client):
     paid(rewards_client, "pro_monthly", "99.00")
     paid(rewards_client, "pro_monthly", "99.00")
-    assert wallet(rewards_client, INVITER) == 150
+    assert wallet(rewards_client, INVITER) == 240
 
 
 def test_paid_snapshot_honored_after_campaign_paused(rewards_client):
@@ -508,7 +508,7 @@ def test_verified_registration_binds_invite_once_and_invalid_code_does_not_block
         assert session.get(InvitationRecord, user2.id) is None
 
 
-def test_newcomer_pack_also_rewards_sixteen_credits(rewards_client):
+def test_newcomer_pack_keeps_ten_percent_referral_reward(rewards_client):
     from app.replica_welcome import CAMPAIGN, ensure_grant
 
     with rewards_client.app.state.session_factory() as session:
@@ -520,7 +520,7 @@ def test_newcomer_pack_also_rewards_sixteen_credits(rewards_client):
         assert ensure_grant(session, session.get(UserRecord, BUYER))
         session.commit()
     paid(rewards_client, "newcomer_160", "9.90")
-    assert wallet(rewards_client, INVITER) == 16
+    assert wallet(rewards_client, INVITER) == 24
 
 
 def test_partial_unused_refund_only_adjusts_corresponding_reward(rewards_client):
@@ -592,9 +592,9 @@ def test_refund_adjustment_never_takes_inviter_paid_credits(rewards_client):
 
 def test_membership_future_refund_keeps_reward_for_consumed_paid_period(rewards_client):
     order, _ = paid(rewards_client, "pro_annual", "948.00")
-    finish(rewards_client, reserve(rewards_client, BUYER, 1500), 1500)
+    finish(rewards_client, reserve(rewards_client, BUYER, 2400), 2400)
     refund_order(rewards_client, order)
-    assert wallet(rewards_client, INVITER) == 150
+    assert wallet(rewards_client, INVITER) == 240
     with rewards_client.app.state.session_factory() as session:
         from app.models import CreditMembershipRecord
 

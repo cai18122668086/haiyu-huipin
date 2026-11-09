@@ -29,7 +29,7 @@ PRODUCTS = {
         "newcomer_160",
         "新人首单体验包",
         990,
-        160,
+        240,
         "pack",
         validity_days=30,
         first_purchase_only=True,
@@ -61,9 +61,9 @@ for product_id, name, price, credits in (
     )
 
 for plan_id, name, credits, monthly, annual in (
-    ("light", "轻享版", 600, 4900, 46800),
-    ("pro", "专业版", 1500, 9900, 94800),
-    ("team", "团队版", 5000, 29900, 286800),
+    ("light", "轻享版", 1000, 4900, 46800),
+    ("pro", "专业版", 2400, 9900, 94800),
+    ("team", "团队版", 8000, 29900, 286800),
 ):
     for period, months, price in (("monthly", 1, monthly), ("annual", 12, annual)):
         product_id = f"{plan_id}_{period}"

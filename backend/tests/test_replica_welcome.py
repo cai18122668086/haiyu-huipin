@@ -277,14 +277,14 @@ def test_newcomer_checkout_is_reused_paid_once_and_expires_in_30_days(welcome_cl
         )
         assert response.status_code == 201, response.text
         order = response.json()
-        assert order["amount_fen"] == 990 and order["credits"] == 160
+        assert order["amount_fen"] == 990 and order["credits"] == 240
         if first:
             assert order["id"] == first["id"]
         first = order
     fields = paid_fields(order, money="9.90", trade="newcomer-paid-001")
     for _ in range(2):
         assert welcome_client.post(NOTIFY, data=fields).status_code == 200
-    assert welcome_client.get(base()).json()["balance_credits"] == 160
+    assert welcome_client.get(base()).json()["balance_credits"] == 240
     with welcome_client.app.state.session_factory() as session:
         lot = session.scalar(
             select(CreditGrantRecord).where(CreditGrantRecord.source_key == order["id"])

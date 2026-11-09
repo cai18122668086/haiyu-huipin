@@ -6,6 +6,7 @@ import { InvitationCenter } from "./invitation-center";
 import { useQueryClient } from "@tanstack/react-query";
 import newcomerStyles from "./newcomer-offer.module.css";
 import { NewcomerOfferCountdown } from "@/components/newcomer-offer-controller";
+import { creditUnitPrice } from "@/lib/credit-unit-price";
 import { RewardsCenter } from "./rewards-center";
 import { useRewards } from "@/features/billing/api/rewards";
 
@@ -761,7 +762,8 @@ function Membership({
         <div className={newcomerStyles.copy}>
           <span className={newcomerStyles.badge}><Gift size={14}/>新客首单专享</span>
           <h3><strong>{newcomer.credits}</strong><span>积分</span></h3>
-          <p>生成更多商品图 · 到账后{newcomer.validity_days}天有效</p>
+          <p>单价 ¥{creditUnitPrice(newcomer)}/张 · 按5积分档折算</p>
+          <p>到账后{newcomer.validity_days}天有效</p>
           <NewcomerOfferCountdown className={newcomerStyles.countdown}/>
         </div>
         <div className={newcomerStyles.action}>
@@ -886,9 +888,10 @@ function Membership({
                   <strong>{fmt(product.credits)}</strong>
                   <span>创作积分{tab === "member" ? " / 月" : ""}</span>
                 </div>
-                <div className={styles.outputEstimates}>
-                  <span>{tab === "member" ? "每月预计出图" : "预计出图"}</span>
-                  <dl>{([["灵感", 5], ["快速", 8], ["精致", 15]] as const).map(([label, unit]) => <div key={label}><dt>{label}<small>{unit} 积分/张</small></dt><dd><b>{fmt(Math.floor(product.credits / unit))}</b><span>张</span></dd></div>)}</dl>
+                <div className={styles.unitPrice}>
+                  <span>单价 <strong>¥{creditUnitPrice(product)}</strong>/张</span>
+                  <small>按5积分档折算</small>
+                  <small>快速版8积分/张 · 精致版15积分/张</small>
                 </div>
                 <Button
                   variant={featured ? "lime-button" : "outline"}
@@ -932,7 +935,7 @@ function Membership({
       {!catalog.data?.enabled && <p role="status" className="checkout-note">会员方案已同步，在线购买尚未开放。</p>}
       <div className="pricing-disclaimer">
         <p>
-          数量为各版本单独使用时的估算，以生成前报价为准。续费会员顺延生效。
+          单价按5积分档折算，实际扣积分以生成前报价为准。续费会员顺延生效。
         </p>
       </div>
       <Faqs />

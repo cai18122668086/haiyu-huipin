@@ -160,7 +160,7 @@ def test_only_definitive_rejection_restores_rights(
     enable_admin(pilot_client)
     order = paid(pilot_client, "pro_annual", "948.00")
     quote = quoted(pilot_client, order)
-    assert quote["future_credits_to_cancel"] == 16500
+    assert quote["future_credits_to_cancel"] == 26400
 
     def reject(*args):
         raise payments.PaymentProviderError("PARAM_ERROR", definitive)
@@ -168,7 +168,7 @@ def test_only_definitive_rejection_restores_rights(
     monkeypatch.setattr(payments, "create_refund", reject)
     result = request_refund(pilot_client, order, quote).json()
     assert result["status"] == expected
-    assert balance(pilot_client) == (1500 if definitive else 0)
+    assert balance(pilot_client) == (2400 if definitive else 0)
     with pilot_client.app.state.session_factory() as session:
         member = session.scalar(select(CreditMembershipRecord))
         assert (member.cancelled_at is None) == definitive
@@ -276,4 +276,4 @@ def test_renewal_reserves_refund_pending_period(pilot_client, monkeypatch):
         )
         assert aware(new.starts_at) == aware(old.ends_at)
         refunds.settle(session, refund["id"], {"status": "failed"})
-    assert balance(pilot_client) == 1500
+    assert balance(pilot_client) == 2400
