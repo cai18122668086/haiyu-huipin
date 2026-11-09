@@ -4976,3 +4976,19 @@
   font-size: 18px;
   font-weight: 600;
 }
+
+@media (max-width: 480px) {
+  .root :global(.pricing-balance > div) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .root :global(.pricing-balance strong) {
+    white-space: nowrap;
+  }
+  .root :global(.pricing-balance > svg),
+  .root :global(.pricing-balance button) {
+    flex-shrink: 0;
+  }
+}
