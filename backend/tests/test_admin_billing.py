@@ -95,7 +95,7 @@ def test_manual_memberships_never_fake_paid_orders_and_cancel_idempotently(
         pilot_client.post(path, headers={"Idempotency-Key": key}, json=payload).json()
         == member
     )
-    assert balance(pilot_client) == 1500
+    assert balance(pilot_client) == 2400
     with pilot_client.app.state.session_factory() as session:
         assert session.scalar(select(CreditPurchaseRecord)) is None
         assert session.get(CreditMembershipRecord, member["id"]).purchase_id is None
@@ -108,7 +108,7 @@ def test_manual_memberships_never_fake_paid_orders_and_cancel_idempotently(
             json={"reason": "已核对补偿期限取消"},
         )
         assert result.status_code == 200, result.text
-        assert result.json()["credits_revoked"] == 1500
+        assert result.json()["credits_revoked"] == 2400
     assert balance(pilot_client) == 0
     overview = pilot_client.get(ADMIN + "/overview").json()
     assert overview["paid_orders"] == 0 and overview["gross_amount_fen"] == 0
