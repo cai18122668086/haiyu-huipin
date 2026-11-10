@@ -1,9 +1,10 @@
 "use client";
 
 import { PrimaryNavigationLink } from "./primary-navigation-link";
+import { CustomerServiceLink } from "./customer-service-link";
 
 import Link from "@/components/seo-link";
-import { ChevronDown, Flame, Grid2X2, Sparkles } from "lucide-react";
+import { ChevronDown, Flame, Grid2X2, Headset, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { HOT_FEATURE_IDS } from "@/lib/feature-priorities";
 import { FEATURE_THUMBNAILS } from "@/lib/creation-entrypoints";
@@ -224,6 +225,10 @@ export function MobileNavigationMenu({
               />
             );
           })}
+          <CustomerServiceLink className="mobile-nav-customer-service" onClick={onClose}>
+            <Headset size={16} aria-hidden="true" />
+            联系客服
+          </CustomerServiceLink>
         </nav>
         {menus.map((menu) => {
           const expanded = expandedMenu === menu.key;

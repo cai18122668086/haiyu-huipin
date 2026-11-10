@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { QRCodeSVG } from "qrcode.react";
+import { CustomerServiceLink, CUSTOMER_SERVICE_URL } from "@/components/customer-service-link";
 import { HaiyuQuickStartLinks } from "@/components/haiyu-start-hub";
 import {
   ArrowLeft,
@@ -311,12 +312,12 @@ export default function HelpPage() {
               <aside className="support-card">
                 <span><MessageCircle size={25} /></span>
                 <h3>仍然没有解决？</h3>
-                <p>在线联系工作人员。添加企业微信后，请说明你的账号、任务状态和已经操作过的步骤。</p>
+                <p>咨询时可以提供任务编号或订单号，方便客服定位问题。</p>
                 <button className="primary-button" onClick={() => setContactOpen(true)} aria-haspopup="dialog">
                   在线联系
                   <ArrowRight size={17} />
                 </button>
-                <small>工作日 09:30–18:30 · 添加后会尽快回复</small>
+                <small>工作日 09:30–18:30</small>
               </aside>
             </div>
           </section>
@@ -408,13 +409,12 @@ export default function HelpPage() {
       {contactOpen ? (
         <div className="help-modal-backdrop" role="presentation" onMouseDown={() => setContactOpen(false)}>
           <section className="help-modal contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="help-modal__close contact-modal__close" onClick={() => setContactOpen(false)} aria-label="关闭在线联系"><X size={20} /></button>
+            <button className="help-modal__close contact-modal__close" onClick={() => setContactOpen(false)} aria-label="关闭在线客服"><X size={20} /></button>
             <div className="contact-modal__icon"><MessageCircle size={26} /></div>
-            <h2 id="contact-modal-title">在线联系</h2>
-            <p><span>请扫描二维码，添加海宇数科微信客服。</span><span>添加时可以备注你的账号和遇到的问题。</span></p>
-            <div className="contact-qr"><Image src="/haiyu-contact-qr.jpg" alt="海宇数科微信客服二维码" width={330} height={330} unoptimized /></div>
-            <strong>扫码添加微信客服</strong>
-            <a href="https://work.weixin.qq.com/kfid/kfc1f8fc41acaca0895" target="_blank" rel="noopener noreferrer">直接联系在线客服</a>
+            <h2 id="contact-modal-title">在线客服</h2>
+            <p>点击下方按钮开始咨询，也可以用手机扫码。</p>
+            <CustomerServiceLink className="primary-button" />
+            <div className="contact-qr"><QRCodeSVG value={CUSTOMER_SERVICE_URL} size={224} marginSize={4} title="海宇绘品在线客服二维码" /></div>
             <small>售后咨询请提供订单号及问题说明，我们会尽快回复。</small>
           </section>
         </div>

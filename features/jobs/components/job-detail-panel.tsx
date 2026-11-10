@@ -183,7 +183,7 @@ export function JobDetailPanel({
 
             <section className="job-detail-actions" aria-label="任务操作">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">可用操作</span><h3>继续处理</h3></div></div>
-              <div className="job-action-buttons"><Link className="secondary-button" href={`/account?jobId=${encodeURIComponent(job.id)}#help`}>联系帮助，关联此任务</Link>
+              <div className="job-action-buttons"><Link className="secondary-button" href={`/account?jobId=${encodeURIComponent(job.id)}#help`}>就此任务联系客服</Link>
                 {allowsJobAction(permittedActions, "retry") && <button type="button" className="secondary-button" onClick={() => onRetry(job)} disabled={retryPending}><RotateCcw size={15} />重试失败项</button>}
                 {allowsJobAction(permittedActions, "cancel") && <button type="button" className="secondary-button danger-button" onClick={() => onCancel(job)} disabled={cancelPending}><Ban size={15} />取消任务</button>}
                 {allowsJobAction(permittedActions, "confirm_plan") && job.plan && <button type="button" className="primary-button" onClick={() => onConfirmPlan(job)} disabled={confirmPending}><Check size={15} />确认方案</button>}

@@ -1,6 +1,7 @@
 "use client";
-import { SupportCases } from "@/components/support-cases";
+import { SupportCaseHistory } from "@/components/support-cases";
 import { AccountStatusMenu } from "@/components/account-status-menu";
+import { CustomerServiceLink } from "@/components/customer-service-link";
 import { RewardsNavigation } from "@/components/rewards-navigation";
 import { InvitationCenter } from "./invitation-center";
 import { PurchaseConfirmation } from "./purchase-confirmation";
@@ -22,11 +23,13 @@ import {
   type ReactNode,
 } from "react";
 import Link from "@/components/seo-link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowDownToLine,
   ArrowRight,
   ArrowUpRight,
   Bell,
+  BookOpen,
   Check,
   ChevronDown,
   ChevronRight,
@@ -37,11 +40,13 @@ import {
   FileText,
   FolderOpen,
   Gift,
+  Headset,
   UsersRound,
   Image as ImageIcon,
   Layers3,
   LayoutDashboard,
   Menu,
+  MessageCircleMore,
   Plus,
   Search,
   RefreshCw,
@@ -451,7 +456,7 @@ function AccountCenter({ workspaceId }: { workspaceId: string }) {
           )}
           {page === "creations" && <Creations workspaceId={workspaceId} />}
           {page === "assets" && <Assets workspaceId={workspaceId} />}
-          {page === "help" && <><SupportCases workspaceId={workspaceId} /><Help /></>}
+          {page === "help" && <Help workspaceId={workspaceId} />}
           {page === "settings" && (
             <div className="settings-integration">
               <AccountPanel />
@@ -1657,18 +1662,18 @@ const faqs = [
   ],
   [
     "付款后还没有到账怎么办？",
-    "收银台返回页面不会直接增加积分，系统以收款通知确认为准。可以在订单详情点击“我已付款，核对到账”，由服务器向支付渠道核对；若渠道仍未确认，请保留账单与订单号联系帮助，避免重复付款。",
+    "收银台返回页面不会直接增加积分，系统以收款通知确认为准。可以在订单详情点击“我已付款，核对到账”，由服务器向支付渠道核对；若渠道仍未确认，请保留账单与订单号，并联系在线客服，避免重复付款。",
   ],
   [
     "可以在线申请发票吗？",
-    "在线发票申请暂未开放。订单页保留购买记录，可凭订单号联系帮助渠道处理。",
+    "在线发票申请暂未开放。订单页保留购买记录，可凭订单号联系在线客服处理。",
   ],
 ];
 function Faqs() {
   const [open, setOpen] = useState<number | null>(null);
   return (
     <section className="panel faq-panel">
-      <Heading title="你可能想了解" />
+      <Heading title="常见问题" />
       {faqs.map(([question, answer], index) => (
         <div className="faq-item" key={question}>
           <button
@@ -1684,37 +1689,54 @@ function Faqs() {
     </section>
   );
 }
-function Help() {
-  const [tab, setTab] = useState("帮助中心"),
-    announcements = usePublicAnnouncements();
+function Help({ workspaceId }: { workspaceId: string }) {
+  const [tab, setTab] = useState("帮助中心");
+  const announcements = usePublicAnnouncements();
+  const jobId = useSearchParams().get("jobId");
   return (
     <div className="page-content">
-      <div className="help-hero">
-        <CircleHelp size={27} />
-        <div>
-          <h2>让每一步创作，都更顺手。</h2>
-          <p>常见问题、产品动态和使用指南，在这里查看。</p>
+      <section className={styles.helpHero} aria-labelledby="account-support-title">
+        <div className={styles.helpCopy}>
+          <span className={styles.helpEyebrow}>海宇绘品 · 客户支持</span>
+          <h2 id="account-support-title">在线客服</h2>
+          <p>生成、积分和订单问题均可咨询。</p>
+          <CustomerServiceLink className={styles.helpContact}>
+            <MessageCircleMore size={20} aria-hidden="true" />
+            联系客服
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </CustomerServiceLink>
+          {jobId && jobId.length <= 40 ? (
+            <small className={styles.helpNote}>咨询时可附上此任务编号 <code>{jobId}</code></small>
+          ) : (
+            <small className={styles.helpNote}>咨询时可附上任务编号或订单号，方便客服核对。</small>
+          )}
         </div>
-      </div>
-      <div className="content-toolbar">
+        <div className={styles.helpArt} aria-hidden="true">
+          <span className={styles.helpHeadset}><Headset size={64} strokeWidth={1.5} /></span>
+          <span className={styles.helpBubble}><MessageCircleMore size={27} strokeWidth={1.8} /></span>
+          <Sparkles className={styles.helpSparkles} size={26} strokeWidth={1.6} />
+        </div>
+      </section>
+      <div className={`content-toolbar ${styles.helpToolbar}`}>
         <div className="filter-tabs">
           {["帮助中心", "产品消息"].map((value) => (
             <button
               className={tab === value ? "active" : ""}
               key={value}
               onClick={() => setTab(value)}
+              aria-pressed={tab === value}
             >
               {value}
             </button>
           ))}
         </div>
         <Link className="text-link" href="/help">
-          使用帮助
-          <ArrowUpRight size={15} />
+          <BookOpen size={16} aria-hidden="true" />
+          使用指南
         </Link>
       </div>
       {tab === "帮助中心" ? (
-        <Faqs />
+        <><Faqs /><SupportCaseHistory workspaceId={workspaceId} /></>
       ) : announcements.isError ? (
         <Failure error={announcements.error} retry={announcements.refetch} />
       ) : announcements.data?.items.length ? (

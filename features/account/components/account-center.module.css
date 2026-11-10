@@ -1542,7 +1542,7 @@
   flex-shrink: 0;
 }
 .root :global(.faq-panel) {
-  margin-top: 23px;
+  margin-top: 14px;
   padding: 0 24px;
 }
 .root :global(.faq-panel > .panel-heading) {
@@ -1562,8 +1562,8 @@
   justify-content: space-between;
   padding: 17px 0;
   text-align: left;
-  font-size: 11px;
-  color: #797674;
+  font-size: 14px;
+  color: #51445e;
   gap: 12px;
   line-height: 1.7;
 }
@@ -1573,9 +1573,9 @@
   transition: transform 0.2s;
 }
 .root :global(.faq-item > p) {
-  font-size: 10px;
-  color: #a299a5;
-  line-height: 2;
+  font-size: 13px;
+  color: #655673;
+  line-height: 1.8;
   padding: 0 28px 19px 0;
 }
 .root :global(.credit-summary) {
@@ -2001,30 +2001,146 @@
   font-size: 9px;
   color: #b6a9bf;
 }
-.root :global(.help-hero) {
-  display: flex;
+.helpHero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 24px;
-  padding: 30px 32px;
-  border: 1px solid #e5dfee;
-  background: linear-gradient(120deg, #f0ebfa, #f4f3eb);
-  border-radius: 13px;
-  margin-bottom: 25px;
-  color: #ab9abb;
+  gap: clamp(16px, 4vw, 60px);
+  overflow: hidden;
+  padding: clamp(26px, 3.5vw, 48px);
+  border: 1px solid #e4d9f5;
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 92% 50%, #e4d7f9, transparent 66%),
+    linear-gradient(115deg, #faf7ff, #f1ebfa);
+  margin-bottom: 22px;
 }
-.root :global(.help-hero h2) {
-  font-size: 18px;
-  font-weight: 500;
-  color: #82708f;
+.helpCopy { position: relative; z-index: 1; }
+.helpEyebrow {
+  display: inline-flex;
+  padding: 5px 10px;
+  border: 1px solid #e6dbf3;
+  border-radius: 20px;
+  background: #ffffffb3;
+  color: #65507d;
+  font-size: 12px;
+  font-weight: 650;
+}
+.root .helpCopy h2 {
+  margin-top: 12px;
+  color: #31223f;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 750;
+  line-height: 1.2;
+}
+.root .helpCopy p {
+  margin-top: 10px;
+  color: #51445e;
+  font-size: 15px;
   line-height: 1.7;
 }
-.root :global(.help-hero p) {
-  font-size: 10px;
-  margin-top: 9px;
-  color: #b0a0b8;
+.root .helpContact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 52px;
+  margin-top: 22px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: #51396f;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgb(62 35 91 / 20%);
 }
-.root :global(.help-hero + .content-toolbar) {
-  margin-bottom: 0;
+.root .helpContact:hover { background: #3f2a59; }
+.root .helpNote {
+  display: block;
+  margin-top: 12px;
+  color: #655673;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.helpNote code { color: #44305c; user-select: all; }
+.helpArt {
+  position: relative;
+  width: clamp(166px, 22vw, 244px);
+  aspect-ratio: 1;
+  margin: -10px 0;
+  pointer-events: none;
+}
+.helpArt::before,
+.helpArt::after {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border: 1px solid #c4aee3;
+  border-radius: 50%;
+}
+.helpArt::after { inset: 0; border-style: dashed; opacity: .6; }
+.helpHeadset,
+.helpBubble {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  box-shadow: 0 12px 24px rgb(79 48 116 / 15%);
+}
+.helpHeadset {
+  width: 54%;
+  top: 19%;
+  left: 17%;
+  border: 1px solid #fff;
+  border-radius: 24%;
+  background: #ffffffd9;
+  color: #644a8a;
+  transform: rotate(-9deg);
+}
+.helpBubble {
+  width: 26%;
+  right: 8%;
+  bottom: 14%;
+  border-radius: 27%;
+  background: #644a8a;
+  color: #fff;
+  transform: rotate(10deg);
+}
+.helpArt span svg { width: 51%; height: auto; }
+.helpSparkles { position: absolute; top: 12%; right: 13%; color: #795ca6; }
+.root .helpToolbar { gap: 8px; margin-bottom: 0; }
+.root .helpToolbar :global(.filter-tabs) { gap: clamp(14px, 3vw, 26px); }
+.root .helpToolbar :global(.filter-tabs) button,
+.root .helpToolbar :global(.text-link) {
+  min-height: 44px;
+  font-size: 14px;
+}
+.root .helpToolbar :global(.text-link) { gap: 6px; white-space: nowrap; }
+.root .helpToolbar button[aria-pressed="false"] { color: #675c6d; }
+.root :global(.support-history) {
+  margin-top: 14px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: #51445e;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.root :global(.support-history summary) { min-height: 44px; padding-block: 12px; cursor: pointer; }
+.root :global(.support-history article) { line-height: 1.65; }
+
+@media (max-width: 760px) {
+  .helpHero { display: block; padding: 22px 18px; border-radius: 16px; }
+  .helpArt { position: absolute; top: 12px; right: 14px; width: 74px; margin: 0; }
+  .helpSparkles { width: 11px; height: 11px; }
+  .root .helpCopy h2 { font-size: 30px; }
+  .root .helpCopy p { font-size: 14px; }
+  .root .helpContact { width: 100%; margin-top: 16px; }
+  .root .helpToolbar :global(.filter-tabs) button,
+  .root .helpToolbar :global(.text-link) { font-size: 13px; }
 }
 .root :global(.notices) {
   margin-top: 20px;
@@ -3422,13 +3538,7 @@
   .root :global(.faq-panel) {
     padding: 0 20px;
   }
-  .root :global(.faq-item > button) {
-    font-size: 10px;
-    padding: 17px 0;
-    line-height: 1.9;
-  }
   .root :global(.faq-item > p) {
-    font-size: 9px;
     padding-right: 8px;
     line-height: 2.1;
   }
@@ -3559,21 +3669,6 @@
   .root :global(.asset-upload > span),
   .root :global(.asset-upload small) {
     font-size: 8px;
-  }
-  .root :global(.help-hero) {
-    padding: 24px 21px;
-    gap: 16px;
-  }
-  .root :global(.help-hero > svg) {
-    flex-shrink: 0;
-    width: 26px;
-  }
-  .root :global(.help-hero h2) {
-    font-size: 15px;
-  }
-  .root :global(.help-hero p) {
-    font-size: 9px;
-    line-height: 1.9;
   }
   .root :global(.notice) {
     padding: 23px 20px;
@@ -3914,9 +4009,6 @@
   }
   .root :global(.modal .count-control > span) {
     margin-right: 5px;
-  }
-  .root :global(.help-hero h2) {
-    font-size: 13px;
   }
   .root :global(.credit-summary) {
     padding: 20px;
@@ -4285,14 +4377,6 @@
   font-size: 10px;
   color: #9c8da7;
 }
-.root :global(.faq-item > button) {
-  font-size: 13px;
-  color: #7f7188;
-}
-.root :global(.faq-item > p) {
-  font-size: 12px;
-  color: #9c8da6;
-}
 .root :global(.text-link) {
   font-size: 12px;
 }
@@ -4362,9 +4446,6 @@
 }
 .root :global(.asset-upload > small) {
   font-size: 10px;
-}
-.root :global(.help-hero p) {
-  font-size: 12px;
 }
 .root :global(.notice h3) {
   font-size: 13px;
@@ -4674,12 +4755,6 @@
   .root :global(.modal .subtle-note) {
     font-size: 9px;
   }
-  .root :global(.faq-item > button) {
-    font-size: 12px;
-  }
-  .root :global(.faq-item > p) {
-    font-size: 11px;
-  }
   .root :global(.table-toolbar > .search-box),
   .root :global(.content-toolbar > .search-box) {
     max-width: none;
@@ -4713,12 +4788,6 @@
   }
   .root :global(.asset-upload > small) {
     font-size: 9px;
-  }
-  .root :global(.help-hero p) {
-    font-size: 11px;
-  }
-  .root :global(.help-hero h2) {
-    font-size: 15px;
   }
   .root :global(.notice p) {
     font-size: 11px;
