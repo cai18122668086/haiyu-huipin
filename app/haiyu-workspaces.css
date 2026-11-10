@@ -73,6 +73,7 @@
 .creation-workspace-bar .nav-mega__footer a { display:block;text-align:center;font-size:12px;color:#333; }
 .creation-workspace-bar__right > a { display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:7px;color:#55555c;background:#ffffffb3;font-size:12px; }
 .creation-workspace-bar__right > a:hover { color:#111;background:#e9ff7b; }
+.creation-workspace-bar__right > .creation-support-link { justify-content:center; min-width:44px; min-height:44px; white-space:nowrap; }
 .app-shell--creation .workspace-header { position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;max-width:1160px;margin-inline:auto;padding:32px 24px 22px;text-align:center; }
 .app-shell--creation .workspace-header > div:first-child { min-width:0; }
 .app-shell--creation .workspace-header .back-link,.app-shell--creation .workspace-header > div > p { display:none; }

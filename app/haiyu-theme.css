@@ -170,6 +170,55 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .haiyu-home-footer__row p { color: #909685; font-size: 12px; }
 .haiyu-home-footer__row nav { display: flex; gap: 24px; margin-left: auto; color: #707764; font-size: 11px; }
 .haiyu-home-footer__row nav a:hover { color: #222b14; }
+.haiyu-home-service { display: none; }
+
+@media (width > 1000px) {
+  .haiyu-home-footer { --support-right: calc(22px + env(safe-area-inset-right)); }
+  body:has([data-newcomer-floating]) .haiyu-home-footer {
+    --support-right: calc(154px + env(safe-area-inset-right));
+  }
+  .haiyu-home-footer__row nav {
+    /* Keep the footer links clear of the fixed controls at the bottom of the page. */
+    margin-right: max(0px, calc(var(--support-right) + 124px - max(48px, (100vw - 1200px) / 2)));
+  }
+  .haiyu-home-service {
+    position: fixed;
+    right: var(--support-right);
+    bottom: calc(26px + env(safe-area-inset-bottom));
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 112px;
+    min-height: 44px;
+    padding: 0 8px;
+    border: 1px solid var(--violet-200);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--violet-700);
+    box-shadow: 0 6px 20px rgb(47 28 66 / 12%);
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .haiyu-home-service:hover { background: var(--violet-50); }
+  .haiyu-home-service:focus-visible { outline: 2px solid var(--violet-600); outline-offset: 3px; }
+}
+
+.mobile-nav-customer-service {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  border: 1px solid var(--violet-200);
+  border-radius: 9px;
+  background: var(--violet-50);
+  color: var(--violet-700);
+  font-size: 12px;
+  font-weight: 700;
+}
+.mobile-nav-customer-service:hover { background: var(--violet-100); }
 .haiyu-reveal { opacity: 0; translate: 0 18px; transition: opacity .65s var(--reveal-delay, 0ms), translate .65s var(--reveal-delay, 0ms); }
 .haiyu-reveal.is-revealed { opacity: 1; translate: 0 0; }
 .haiyu-showcase { overflow: hidden; background: #fff; }
@@ -389,7 +438,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .haiyu-closing__flower { right: -45px; top: 35px; font-size: 230px; }
   .haiyu-home-footer__row { flex-wrap: wrap; gap: 20px; padding-block: 24px; }
   .haiyu-home-footer__row p { margin-left: auto; font-size: 9px; }
-  .haiyu-home-footer__row nav { width: 100%; margin-left: 0; justify-content: space-between; font-size: 10px; }
+  .haiyu-home-footer__row nav { width: 100%; margin-left: 0; justify-content: space-between; gap: 8px; font-size: 11px; }
+  .haiyu-home-footer__row nav a { display: inline-flex; align-items: center; min-height: 44px; }
   .haiyu-color-wash i { width: 620px; height: 650px; opacity: .45; }
   .haiyu-color-wash i:nth-child(2) { width: 520px; }
   .haiyu-color-wash i:nth-child(3) { display: none; }

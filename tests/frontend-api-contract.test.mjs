@@ -87,9 +87,12 @@ test("runtime URLs stay local and declarative SEO URLs use a bounded allowlist",
     for (const match of source.matchAll(/https?:\/\/[^\s"'`<>]+/g)) {
       const url = new URL(match[0]);
       const relative = path.relative(root, file).split(path.sep).join("/");
-      const approvedSupportLink = [
-        "app/help/page.tsx", "app/legal/privacy/page.tsx", "app/legal/terms/page.tsx",
-      ].includes(relative) && url.href === "https://work.weixin.qq.com/kfid/kfc1f8fc41acaca0895";
+      const supportLinks = {
+        "app/legal/privacy/page.tsx": "https://work.weixin.qq.com/kfid/kfc1f8fc41acaca0895",
+        "app/legal/terms/page.tsx": "https://work.weixin.qq.com/kfid/kfc1f8fc41acaca0895",
+        "components/customer-service-link.tsx": "https://work.weixin.qq.com/kfid/kfc28d6af4de31987dc",
+      };
+      const approvedSupportLink = supportLinks[relative] === url.href;
       // These are canonical, schema and publisher identifiers, not remote API
       // endpoints. Keep this exception scoped to the exact metadata modules.
       const seoOrigins = {

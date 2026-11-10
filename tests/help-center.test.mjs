@@ -34,10 +34,11 @@ test("help center removes the crowded quick-start and feature-picker sections an
   assert.match(page, /按功能完成创作/);
 });
 
-test("help center preserves retention guidance and uses online WeChat contact", async () => {
-  const [page, content] = await Promise.all([
+test("help center preserves retention guidance and uses the shared customer service link", async () => {
+  const [page, content, contact] = await Promise.all([
     utf8("app/help/page.tsx"),
     utf8("lib/help-center-content.ts"),
+    utf8("components/customer-service-link.tsx"),
   ]);
   const combined = `${page}\n${content}`;
 
@@ -47,9 +48,11 @@ test("help center preserves retention guidance and uses online WeChat contact", 
   assert.match(combined, /草稿从创建起保存 30 天/);
   assert.match(combined, /到期后相关内容不可恢复/);
   assert.match(page, /在线联系/);
-  assert.match(page, /haiyu-contact-qr\.jpg/);
-  assert.match(page, /扫码添加微信客服/);
-  assert.match(page, /https:\/\/work\.weixin\.qq\.com\/kfid\/kfc1f8fc41acaca0895/);
+  assert.match(page, /<QRCodeSVG value=\{CUSTOMER_SERVICE_URL\}/);
+  assert.match(page, /<CustomerServiceLink className="primary-button"\s*\/>/);
+  assert.match(page, /<h2 id="contact-modal-title">在线客服<\/h2>/);
+  assert.match(contact, /https:\/\/work\.weixin\.qq\.com\/kfid\/kfc28d6af4de31987dc/);
+  assert.match(contact, /href=\{CUSTOMER_SERVICE_URL\} target="_blank" rel="noopener noreferrer"/);
   assert.doesNotMatch(page, /mailto:/);
   assert.doesNotMatch(page, /发送问题邮件/);
 });

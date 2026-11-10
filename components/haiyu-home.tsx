@@ -3,9 +3,10 @@
 import { DisplayImage } from "./display-image";
 
 import Link from "@/components/seo-link";
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, MoveUpRight, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, Headset, MoveUpRight, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./brand-mark";
+import { CustomerServiceLink } from "./customer-service-link";
 import { HOME_FEATURE_VISUALS } from "@/lib/home-feature-visuals";
 import { FeatureCaseArt } from "./feature-case-art";
 
@@ -241,7 +242,11 @@ export function HaiyuHomeFooter() {
         <Link className="haiyu-button" href="/tools">找到你的创作工具 <ArrowRight size={19} /></Link>
         <span className="haiyu-closing__flower" aria-hidden="true">✳</span>
       </section>
-      <div className="haiyu-home-footer__row"><Link href="/" aria-label="海宇绘品首页"><BrandMark /></Link><p>让好商品，一眼出彩。</p><nav aria-label="页脚导航"><Link href="/help">帮助中心</Link><Link href="/legal/privacy">隐私政策</Link><Link href="/legal/terms">服务条款</Link></nav></div>
+      <div className="haiyu-home-footer__row"><Link href="/" aria-label="海宇绘品首页"><BrandMark /></Link><p>让好商品，一眼出彩。</p><nav aria-label="页脚导航"><Link href="/help">帮助中心</Link><CustomerServiceLink /><Link href="/legal/privacy">隐私政策</Link><Link href="/legal/terms">服务条款</Link></nav></div>
+      <CustomerServiceLink className="haiyu-home-service">
+        <Headset size={18} aria-hidden="true" />
+        联系客服
+      </CustomerServiceLink>
     </footer>
   );
 }

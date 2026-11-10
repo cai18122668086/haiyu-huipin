@@ -108,7 +108,7 @@ export function NewcomerOfferController() {
 }
 
 export function NewcomerFloating({amount, parts, onOpen, onClose}: {amount:number;parts:readonly string[];onOpen:()=>void;onClose:()=>void}) {
-  return <aside className={styles.floatingWrap} aria-label="新客福利悬浮入口">
+  return <aside className={styles.floatingWrap} data-newcomer-floating aria-label="新客福利悬浮入口">
     <button type="button" className={styles.floatingClose} aria-label="收起福利悬浮入口" onClick={onClose}><X size={15}/></button>
     <button type="button" className={styles.floating} aria-label={`查看限时福利，首单${amount}元`} onClick={onOpen}><strong>限时福利</strong><span className={styles.floatingPrice}><small>¥</small>{amount}</span><time aria-label={`优惠剩余${parts.join(":")}`}>{parts.join(":")}</time></button>
   </aside>;

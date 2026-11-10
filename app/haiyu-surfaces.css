@@ -139,6 +139,9 @@
 .guide-modal__notice { border-color: #dfd5ec; background: #f7f3fc; color: #8c7c9d; }
 .help-modal__footer { border-color: #e4e9db; background: #fafcf6; }
 .contact-modal__icon { color: #806a96; background: #f0e9f9; }
+.contact-modal > .primary-button { min-height: 44px; margin-bottom: 16px; }
+.contact-modal .contact-qr { width: min(224px, 100%); height: auto; aspect-ratio: 1; margin-bottom: 0; }
+.contact-qr svg { display: block; width: 100%; height: auto; }
 .account-banner { border-color: #dce6cb; background: var(--haiyu-gradient); }
 .account-banner h1, .account-banner h2 { color: #202020; }
 .dashboard-shortcuts > a:hover { border-color: #bdcea3; background: #f5f9ed; }
