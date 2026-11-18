@@ -12,7 +12,9 @@ from PIL import Image
 from sqlalchemy import select
 
 from app.image_fidelity import (
+    BACKGROUND,
     CHECKS,
+    MATTE,
     PREPARE,
     READBACK,
     FidelityGateway,
@@ -136,6 +138,8 @@ def test_selection_cannot_use_style_or_invalid_geometry(change):
     [
         ("只需要下面的3个，不改变图案", "bottom"),
         ("保留上方的三个", "top"),
+        ("只使用下排三个", "bottom"),
+        ("只使用上排3个", "top"),
         ("只要左侧3件", "left"),
         ("选右边的三款", "right"),
         ("Use only the bottom three pictured charms", "bottom"),
@@ -450,3 +454,126 @@ def test_durable_binding_and_private_candidate_survive_restart(client):
         asyncio.run(
             restarted._retain(replace(call, workspace_id="foreign"), gateway.artifact)
         )
+
+
+class PixelGateway(Gateway):
+    image_fidelity_source_pixels_enabled = True
+    image_fidelity_source_model_path = None
+
+    async def plan(self, call):
+        self.plans.append(call)
+        if call.planning_profile == PREPARE:
+            payload = preparation()
+        elif call.planning_profile == MATTE:
+            payload = {
+                name: True
+                for name in (
+                    "complete_objects",
+                    "no_context_leak",
+                    "no_clipped_print",
+                    "edges_clean",
+                )
+            } | {"unresolved": [], "evidence": "Original complete source product"}
+        elif call.planning_profile == BACKGROUND:
+            payload = {
+                "background_description": "Pure white empty background",
+                "marketing_copy": [],
+            }
+        else:
+            assert call.planning_profile != READBACK
+            payload = review()
+        return PlannerCallResult(payload, "review", {}, {"reported": True}, 0.1, 2)
+
+    async def edit(self, call):
+        from app.source_pixels import artifact
+
+        self.edits.append(call)
+        assert call.sources[0].asset_id == "source-pixel-format"
+        assert "BACKGROUND PLATE ONLY" in call.prompt
+        assert "モモンガ" not in call.prompt
+        return ImageCallResult(
+            self.outcome,
+            "original-background-task",
+            {"network_requests": 1},
+            {"reported": True},
+            1,
+            10,
+            artifact=artifact(Image.new("RGB", (40, 40), "blue"), "background.png")
+            if self.outcome == ProviderOutcome.SUCCEEDED
+            else None,
+        )
+
+
+class PixelGuard(ScopedFidelity):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.evidence = {}
+
+    def _context(self, request):
+        return {
+            "job_type": "product_image",
+            "item_key": "image-001",
+            "settings": {
+                "task_type": "white_background",
+                "instruction": "白底保留原图案",
+            },
+        }
+
+    async def _retain(
+        self, request, artifact, *, role="fidelity_candidate", ordinal=None
+    ):
+        key = role + str(ordinal)
+        self.evidence[key] = artifact
+        return key
+
+    async def _source_layers(self, request, recipe, sources):
+        return tuple(self.evidence[row["asset_id"]] for row in recipe["layers"])
+
+
+def pixel_extraction(sources, preparation, model):
+    from app.source_pixels import PixelLayer, artifact
+
+    with Image.open(BytesIO(sources[0].payload)) as im:
+        layer = artifact(im.convert("RGBA"), "source-original.png")
+    return (PixelLayer(layer, sources[0].asset_id, sources[0].sha256, (0, 0, 40, 40)),)
+
+
+def test_source_product_rgb_is_composited_after_one_native_background(monkeypatch):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+    guard = PixelGuard(gateway, None, None)
+    result = asyncio.run(guard.edit(request(gateway)))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert len(gateway.edits) == 1 and len(gateway.plans) == 4
+    assert "fidelity_backgroundNone" in guard.evidence
+    with Image.open(BytesIO(result.artifact.payload)) as im:
+        assert im.getpixel((20, 20)) == (255, 0, 0, 255)
+        assert im.getpixel((0, 0)) == (0, 0, 255, 255)
+    assert (
+        result.raw_usage["source_pixel_preservation"]["background_sha256"]
+        == guard.evidence["fidelity_backgroundNone"].sha256
+    )
+
+
+def test_source_pixel_reconciliation_reuses_frozen_wire_prompt_and_mattes(monkeypatch):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+    gateway = PixelGateway(outcome=ProviderOutcome.OUTCOME_UNKNOWN)
+    guard = PixelGuard(gateway, None, None)
+    call = request(gateway)
+    assert asyncio.run(guard.edit(call)).outcome == ProviderOutcome.OUTCOME_UNKNOWN
+    sent = gateway.edits[0]
+    restarted = PixelGuard(gateway, None, None)
+    restarted.frozen, restarted.evidence = guard.frozen, guard.evidence
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError(
+            "Frozen image must never replan or reconstruct its wire recipe"
+        )
+
+    monkeypatch.setattr("app.source_pixels.extract_layers", must_not_run)
+    monkeypatch.setattr("app.source_pixels.background_prompt", must_not_run)
+    gateway.outcome = ProviderOutcome.SUCCEEDED
+    result = asyncio.run(restarted.edit(replace(call, reconcile_only=True)))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert replace(gateway.edits[1], reconcile_only=False) == sent
+    assert len([p for p in gateway.plans if p.planning_profile == MATTE]) == 1

@@ -7,14 +7,20 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml README.md alembic.ini ./
+COPY requirements-source-pixels.lock ./requirements-source-pixels.lock
 COPY app ./app
 COPY skill_sources ./skill_sources
 COPY source_manifests ./source_manifests
 COPY catalog_assets ./catalog_assets
 COPY migrations ./migrations
+COPY scripts/fetch_source_matte_model.py ./scripts/fetch_source_matte_model.py
+COPY third_party ./third_party
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install .
+    python -m pip install --require-hashes -r requirements-source-pixels.lock \
+    && python -m pip install .
+
+RUN PYTHONPATH=/app python scripts/fetch_source_matte_model.py
 
 RUN mkdir -p /app/.data/aurora-main-image \
     && groupadd --system --gid 10001 polaris \

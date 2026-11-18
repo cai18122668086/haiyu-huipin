@@ -28,6 +28,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+source-pixels = [
+  "numpy==2.5.5",
+  "opencv-python-headless==5.1.0.95",
+]
 browser = [
   "playwright>=1.50,<2",
 ]

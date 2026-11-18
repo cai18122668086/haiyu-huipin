@@ -18,7 +18,6 @@ import weakref
 from collections import Counter
 from dataclasses import replace
 from io import BytesIO
-from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, ValidationError
@@ -31,15 +30,17 @@ from .models import (
     JobAttemptRecord,
     JobItemRecord,
     JobRecord,
+    ReplicaDocumentRecord,
 )
 from .provider import ProviderOutcome
-from .services import canonical_hash, new_id
-from .storage import ValidatedImage
+from .services import canonical_hash
 
 VERSION = "image-fidelity-v1"
 PREPARE = "image_fidelity_prepare"
 REVIEW = "image_fidelity_review"
 READBACK = "image_fidelity_readback"
+MATTE = "image_fidelity_matte"
+BACKGROUND = "image_fidelity_background"
 CHECKS = (
     "subject_selection",
     "physical_artwork_text",
@@ -143,7 +144,7 @@ def technical_contract(
 
 def selection_constraint(instruction: str) -> dict[str, Any] | None:
     match = re.search(
-        r"(下面|下方|底部|上面|上方|顶部|左边|左侧|右边|右侧)的?\s*([1-6一二两三四五六])\s*[个件款只]",
+        r"(下面|下方|下排|底部|上面|上方|上排|顶部|左边|左侧|右边|右侧)的?\s*([1-6一二两三四五六])\s*[个件款只]",
         instruction,
     )
     if not match:
@@ -174,8 +175,8 @@ def selection_constraint(instruction: str) -> dict[str, Any] | None:
         "direction": next(
             key
             for key, names in {
-                "bottom": ("下面", "下方", "底部"),
-                "top": ("上面", "上方", "顶部"),
+                "bottom": ("下面", "下方", "下排", "底部"),
+                "top": ("上面", "上方", "上排", "顶部"),
                 "left": ("左边", "左侧"),
                 "right": ("右边", "右侧"),
             }.items()
@@ -194,7 +195,26 @@ def response_schema(
 ) -> dict[str, Any]:
     text = {"type": "string", "minLength": 1}
     properties: dict[str, Any]
-    if profile == READBACK:
+    if profile == BACKGROUND:
+        properties = {
+            "background_description": {**text, "maxLength": 2400},
+            "marketing_copy": {"type": "array", "maxItems": 32, "items": text},
+        }
+    elif profile == MATTE:
+        properties = {
+            **{
+                name: {"type": "boolean"}
+                for name in (
+                    "complete_objects",
+                    "no_context_leak",
+                    "no_clipped_print",
+                    "edges_clean",
+                )
+            },
+            "unresolved": {"type": "array", "items": text},
+            "evidence": text,
+        }
+    elif profile == READBACK:
         properties = {
             "text_runs": {
                 "type": "array",
@@ -381,10 +401,30 @@ class FidelityGateway:
                 or item.workspace_id != job.workspace_id
             ):
                 raise ValueError("Image fidelity item scope invalid")
+            settings = dict(job.configuration.get("settings", {}))
+            replica_id = job.configuration.get("replica_session_id")
+            if replica_id:
+                document = session.get(ReplicaDocumentRecord, replica_id)
+                if (
+                    document is None
+                    or document.workspace_id != request.workspace_id
+                    or (
+                        job.id not in document.payload.get("job_ids", [])
+                        or settings.get("replica_plan_hash")
+                        != document.payload.get("plan_hash")
+                    )
+                ):
+                    raise ValueError("Confirmed replica source context changed")
+                if not settings.get("instruction") and isinstance(
+                    document.payload.get("facts"), str
+                ):
+                    # The native session retains the actual user input. Its
+                    # generated job historically left settings.instruction blank.
+                    settings["instruction"] = document.payload["facts"]
             return {
                 "job_type": job.type,
                 "item_key": item.item_key,
-                "settings": dict(job.configuration.get("settings", {})),
+                "settings": settings,
             }
 
     def _frozen(
@@ -503,6 +543,30 @@ class FidelityGateway:
                     "printed column/line, joining vertical glyphs in order. "
                     "Use UNREADABLE when strokes cannot be read. JSON only."
                     if profile == READBACK
+                    else "Inspect only source-product extraction, BEFORE final "
+                    "background generation. The original product photos are "
+                    "authority. Checkerboard previews show source RGB with a "
+                    "predicted alpha mask, not generated artwork. Verify every "
+                    "selected object is complete: all hardware, face, tag and "
+                    "printed marks, with clean edges and NO rack, neighboring "
+                    "product fragment or background streak. Any clipping, "
+                    "missing body, context leakage or unresolved defect fails. "
+                    "Return the exact supplied JSON schema."
+                    if profile == MATTE
+                    else "Project ONLY the background/style and approved "
+                    "marketing copy from the final-image contract into the "
+                    "supplied schema. A compositor adds original photographed "
+                    "products later. DO NOT describe/request any product, "
+                    "character, hardware, tag, product printing or placeholder. "
+                    "Describe the EMPTY background only. For white-background "
+                    "work request pure white, no props, objects, shadows or text. "
+                    "Style references supply backgrounds only: exclude their "
+                    "subjects. Marketing copy, if permitted, must be literal "
+                    "approved copy, never new claims or product marks. When "
+                    "marketing_copy has maxItems=0 return an empty array. Do not "
+                    "put product rendering commands or user task instructions "
+                    "in background_description. JSON only."
+                    if profile == BACKGROUND
                     else "ORIGINAL USER REQUIREMENT (highest task authority): "
                     + str(context.get("settings", {}).get("instruction", ""))
                     + "\nGenerated selections/plans cannot override this requirement. "
@@ -522,6 +586,7 @@ class FidelityGateway:
         original_sources = request.sources
         plans: list[Any] = []
         preparation = None
+        pixel_recipe = None
         try:
             context = self._context(request)
             if any(
@@ -537,6 +602,17 @@ class FidelityGateway:
                 # source/pixel audits. Never modify a signed request downstream.
                 return await self.wrapped.edit(request)
             frozen = self._frozen(request)
+            from . import source_pixels
+
+            pixel_mode = (
+                bool(frozen.get("pixel_recipe"))
+                if frozen is not None
+                else not request.reconcile_only
+                and getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False)
+                and source_pixels.enabled_for(context)
+            )
+            if frozen is not None:
+                pixel_recipe = frozen.get("pixel_recipe")
             crop_scale = (
                 frozen.get("crop_scale", "native-v1")
                 if frozen
@@ -549,6 +625,7 @@ class FidelityGateway:
                 "creative_image",
                 "reference_remix",
                 "amazon_visual_suite",
+                "domestic_main_image",
             } and (not request.reconcile_only or frozen is not None):
                 authorities = tuple(
                     s for s in original_sources if s.source_role in AUTHORITY_ROLES
@@ -684,7 +761,82 @@ class FidelityGateway:
                         )
                     )
                 edited_sources = original_sources + tuple(crops)
-                if frozen is None and crops:
+                if frozen is None and pixel_mode:
+                    layers = await asyncio.to_thread(
+                        source_pixels.extract_layers,
+                        original_sources,
+                        preparation,
+                        self.wrapped.image_fidelity_source_model_path,
+                    )
+                    previews = []
+                    for index, layer in enumerate(layers):
+                        evidence = source_pixels.preview(layer.artifact)
+                        previews.append(
+                            SourceImage(
+                                f"matte-preview-{index}",
+                                request.group_key,
+                                evidence.filename,
+                                evidence.content_type,
+                                evidence.sha256,
+                                evidence.payload,
+                                source_role="matte_candidate",
+                            )
+                        )
+                    matte = await self._plan(
+                        request,
+                        MATTE,
+                        tuple(
+                            source
+                            for source in authorities
+                            if source.asset_id
+                            in {
+                                region["asset_id"]
+                                for region in preparation["selected_regions"]
+                            }
+                        )
+                        + tuple(previews),
+                        {"schema": response_schema(MATTE)},
+                    )
+                    plans.append(matte)
+                    if matte.error_code:
+                        raise ValueError("Source matte review unavailable")
+                    Draft202012Validator(response_schema(MATTE)).validate(matte.payload)
+                    if matte.payload["unresolved"] or not all(
+                        matte.payload[name] is True
+                        for name in (
+                            "complete_objects",
+                            "no_context_leak",
+                            "no_clipped_print",
+                            "edges_clean",
+                        )
+                    ):
+                        raise ValueError(
+                            "Source product extraction failed visual acceptance"
+                        )
+                    saved_layers = []
+                    for index, layer in enumerate(layers):
+                        asset_id = await self._retain(
+                            request,
+                            layer.artifact,
+                            role="fidelity_source_cutout",
+                            ordinal=index,
+                        )
+                        saved_layers.append(
+                            {
+                                "asset_id": asset_id,
+                                "sha256": layer.artifact.sha256,
+                                "source_asset_id": layer.source_asset_id,
+                                "source_sha256": layer.source_sha256,
+                                "source_box": layer.source_box,
+                            }
+                        )
+                    pixel_recipe = {
+                        "version": source_pixels.VERSION,
+                        "model_sha256": source_pixels.MODEL_SHA256,
+                        "layers": saved_layers,
+                        "cells": source_pixels.positions(context, len(layers)),
+                    }
+                if frozen is None and crops and not pixel_mode:
                     source_readback = await self._plan(
                         request,
                         READBACK,
@@ -711,27 +863,101 @@ class FidelityGateway:
             else:
                 edited_sources = original_sources
             if frozen is None and not request.reconcile_only:
+                if pixel_recipe is not None:
+                    # Original product pixels stay local. Send only background
+                    # authority (or an empty format reference) to the generator.
+                    background_ids = [
+                        s.asset_id
+                        for s in original_sources
+                        if s.source_role
+                        in {
+                            "style_reference",
+                            "background_reference",
+                            "scene_reference",
+                        }
+                    ]
+                    if (
+                        not background_ids
+                        and context["job_type"] == "creative_image"
+                        and len(original_sources) > 1
+                    ):
+                        background_ids = [original_sources[1].asset_id]
+                    pixel_recipe["background_source_ids"] = background_ids
+                    background_schema = response_schema(BACKGROUND)
+                    if context["job_type"] not in {
+                        "amazon_visual_suite",
+                        "domestic_main_image",
+                        "detail_pack",
+                    }:
+                        background_schema["properties"]["marketing_copy"][
+                            "maxItems"
+                        ] = 0
+                    background_plan = await self._plan(
+                        request,
+                        BACKGROUND,
+                        tuple(
+                            source
+                            for source in original_sources
+                            if source.asset_id in background_ids
+                        ),
+                        {
+                            "schema": background_schema,
+                            "settings": context["settings"],
+                            "final_image_contract": request.prompt,
+                            "reserved_product_cells": pixel_recipe["cells"],
+                        },
+                    )
+                    plans.append(background_plan)
+                    if background_plan.error_code:
+                        raise ValueError("Background projection unavailable")
+                    Draft202012Validator(background_schema).validate(
+                        background_plan.payload
+                    )
+                    pixel_recipe["background_projection"] = background_plan.payload
+                    if not background_ids:
+                        import base64
+
+                        width, height = (
+                            int(value) for value in request.size.split("x")
+                        )
+                        empty = source_pixels.artifact(
+                            Image.new("RGB", (width, height), "white"),
+                            "native-format.png",
+                        )
+                        pixel_recipe["format_png_base64"] = base64.b64encode(
+                            empty.payload
+                        ).decode("ascii")
+                prepared_prompt = (
+                    request.prompt
+                    + "\nORIGINAL USER REQUIREMENT (overrides generated plans): "
+                    + str(context["settings"].get("instruction", ""))
+                    + "\n"
+                    + operation_policy(context)
+                    + "\nSOURCE_SELECTION="
+                    + json.dumps(
+                        {
+                            k: v
+                            for k, v in preparation.items()
+                            if k != "source_inventory"
+                        }
+                        if isinstance(preparation, dict)
+                        else preparation,
+                        ensure_ascii=False,
+                    )
+                )
+                if pixel_recipe is not None:
+                    pixel_recipe["wire_prompt"] = source_pixels.background_prompt(
+                        pixel_recipe["background_projection"]["background_description"],
+                        pixel_recipe["cells"],
+                        tuple(pixel_recipe["background_projection"]["marketing_copy"]),
+                    )
                 frozen = self._frozen(
                     request,
                     {
                         "preparation": preparation,
                         "crop_scale": crop_scale,
-                        "prompt": request.prompt
-                        + "\nORIGINAL USER REQUIREMENT (overrides generated plans): "
-                        + str(context["settings"].get("instruction", ""))
-                        + "\n"
-                        + operation_policy(context)
-                        + "\nSOURCE_SELECTION="
-                        + json.dumps(
-                            {
-                                k: v
-                                for k, v in preparation.items()
-                                if k != "source_inventory"
-                            }
-                            if isinstance(preparation, dict)
-                            else preparation,
-                            ensure_ascii=False,
-                        ),
+                        "pixel_recipe": pixel_recipe,
+                        "prompt": prepared_prompt,
                     },
                 )
             if frozen is not None:
@@ -740,6 +966,36 @@ class FidelityGateway:
                     sources=edited_sources,
                     prompt=frozen["prompt"],
                 )
+                if pixel_recipe is not None:
+                    wire_sources = tuple(
+                        s
+                        for s in original_sources
+                        if s.asset_id in pixel_recipe["background_source_ids"]
+                    )
+                    if not wire_sources:
+                        import base64
+
+                        data = base64.b64decode(
+                            pixel_recipe["format_png_base64"], validate=True
+                        )
+                        wire_sources = (
+                            SourceImage(
+                                "source-pixel-format",
+                                request.group_key,
+                                "native-format.png",
+                                "image/png",
+                                hashlib.sha256(data).hexdigest(),
+                                data,
+                                source_role="format_canvas",
+                            ),
+                        )
+                    request = replace(
+                        request,
+                        sources=wire_sources,
+                        prompt=pixel_recipe["wire_prompt"],
+                    )
+            if pixel_recipe is not None and frozen is None:
+                raise ValueError("Source pixel dispatch requires its frozen receipt")
         except Exception as exc:
             if isinstance(exc, ValidationError):
                 logger.warning(
@@ -778,9 +1034,141 @@ class FidelityGateway:
         result = await self.wrapped.edit(request)
         if result.outcome != ProviderOutcome.SUCCEEDED or result.artifact is None:
             return self._account(result, plans)
-        return await self._review(
-            request, context, request.sources, preparation, plans, result
+        pixel_proof = None
+        if (
+            pixel_recipe is not None
+            and technical_contract(context, request, result.artifact)[
+                "server_technical_checks_passed"
+            ]
+        ):
+            try:
+                await self._retain(request, result.artifact, role="fidelity_background")
+                cutouts = await self._source_layers(
+                    request, pixel_recipe, original_sources
+                )
+                composed, pixel_proof = source_pixels.compose(
+                    result.artifact, cutouts, pixel_recipe["cells"]
+                )
+                result = replace(
+                    result,
+                    artifact=composed,
+                    raw_usage={
+                        **dict(result.raw_usage or {}),
+                        "source_pixel_preservation": pixel_proof,
+                    },
+                )
+            except Exception as exc:
+                logger.warning(
+                    "source_pixel_composition_failed job_id=%s reason=%s",
+                    request.job_id,
+                    type(exc).__name__,
+                )
+                return replace(
+                    self._account(result, plans),
+                    outcome=ProviderOutcome.FAILED,
+                    artifact=None,
+                    retryable=False,
+                    error_code="IMAGE_FIDELITY_COMPOSITION_FAILED",
+                    error_message="原图保真合成未完成，未交付；原生图回执已保留。",
+                )
+        review_sources = edited_sources if pixel_recipe is not None else request.sources
+        review_request = (
+            replace(request, prompt=frozen["prompt"])
+            if pixel_recipe is not None and frozen is not None
+            else request
         )
+        return await self._review(
+            review_request,
+            context,
+            review_sources,
+            preparation,
+            plans,
+            result,
+            pixel_proof=pixel_proof,
+        )
+
+    async def _source_layers(
+        self, request: Any, recipe: dict[str, Any], sources: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        from . import source_pixels
+        from .provider import ProviderArtifact
+
+        if (
+            recipe["version"] != source_pixels.VERSION
+            or recipe["model_sha256"] != source_pixels.MODEL_SHA256
+        ):
+            raise ValueError("Saved source pixel recipe version changed")
+        records = []
+        with self.sessions() as session:
+            for row in recipe["layers"]:
+                asset = session.scalar(
+                    select(AssetRecord)
+                    .join(
+                        JobAssetRecord,
+                        JobAssetRecord.asset_id == AssetRecord.id,
+                    )
+                    .where(
+                        AssetRecord.id == row["asset_id"],
+                        AssetRecord.workspace_id == request.workspace_id,
+                        AssetRecord.lifecycle_status == "ready",
+                        AssetRecord.deleted_at.is_(None),
+                        JobAssetRecord.job_id == request.job_id,
+                        JobAssetRecord.job_item_id == request.job_item_id,
+                        JobAssetRecord.workspace_id == request.workspace_id,
+                        JobAssetRecord.role == "fidelity_source_cutout",
+                        JobAssetRecord.is_deliverable.is_(False),
+                    )
+                )
+                if asset is None or asset.sha256 != row["sha256"]:
+                    raise ValueError(
+                        "Saved source product layer is outside its immutable scope"
+                    )
+                records.append(
+                    (
+                        asset.object_key,
+                        asset.sha256,
+                        asset.byte_size,
+                        asset.width,
+                        asset.height,
+                        row,
+                    )
+                )
+        cutouts = []
+        by_id = {source.asset_id: source for source in sources}
+        for key, expected, size, width, height, row in records:
+            payload = await self.storage.read_bytes(key)
+            if len(payload) != size or hashlib.sha256(payload).hexdigest() != expected:
+                raise ValueError("Saved source product layer bytes changed")
+            with Image.open(BytesIO(payload)) as image:
+                if image.size != (width, height) or "A" not in image.getbands():
+                    raise ValueError("Saved product matte geometry changed")
+                rgb = image.convert("RGB").tobytes()
+            original = by_id.get(row["source_asset_id"])
+            if original is None or original.sha256 != row["source_sha256"]:
+                raise ValueError("Source product authority changed")
+            with Image.open(BytesIO(original.payload)) as image:
+                from PIL import ImageOps
+
+                observed = (
+                    ImageOps.exif_transpose(image)
+                    .convert("RGB")
+                    .crop(tuple(row["source_box"]))
+                )
+                if observed.size != (width, height) or observed.tobytes() != rgb:
+                    raise ValueError(
+                        "Saved product RGB differs from the original photo"
+                    )
+            cutouts.append(
+                ProviderArtifact(
+                    payload=payload,
+                    filename="source-product.png",
+                    content_type="image/png",
+                    width=width,
+                    height=height,
+                    sha256=expected,
+                )
+            )
+        return tuple(cutouts)
 
     async def review_existing(
         self,
@@ -848,6 +1236,8 @@ class FidelityGateway:
         preparation: Any,
         plans: list[Any],
         result: Any,
+        *,
+        pixel_proof: dict[str, Any] | None = None,
     ) -> Any:
         from .xinghe_agent import SourceImage
 
@@ -872,6 +1262,7 @@ class FidelityGateway:
                 "source_selection": preparation,
                 "candidate_dimensions": [candidate.width, candidate.height],
                 "technical_contract": technical,
+                "server_source_pixel_proof": pixel_proof,
                 "contract_feedback": feedback,
                 "source_roles": [(s.asset_id, s.source_role) for s in original_sources],
                 "schema": response_schema(REVIEW),
@@ -886,7 +1277,14 @@ class FidelityGateway:
                 "technical_contract's EXISTING native-original acceptance policy, "
                 "not an invented exact-pixel export requirement. A failed measured "
                 "technical check must fail canvas. Subject and printing checks "
-                "still require direct inspection of actual attached pixels.",
+                "still require direct inspection of actual attached pixels. "
+                "If server_source_pixel_proof is present, source RGB was checked "
+                "byte-for-byte before compositing: glyphs were copied from the "
+                "source, not invented by the background generator. This proves "
+                "provenance, NOT completeness: still reject clipped/missing "
+                "printing, poor matte boundaries, wrong subjects, overlaps or "
+                "extra products. Do not invent a changed transcription from "
+                "uncertain OCR when the actual source pixels were preserved.",
             }
             try:
                 review = await self._plan(
@@ -930,6 +1328,7 @@ class FidelityGateway:
         if (
             accepted
             and preparation
+            and pixel_proof is None
             and (
                 preparation.get("literal_print_ledger")
                 or any(
@@ -1072,89 +1471,21 @@ class FidelityGateway:
             + sum(p.api_latency_seconds for p in plans),
         )
 
-    async def _retain(self, request: Any, artifact: Any) -> str:
-        with self.sessions() as session:
-            attempt = session.get(JobAttemptRecord, request.attempt_id)
-            if attempt is None or (
-                attempt.workspace_id,
-                attempt.job_id,
-                attempt.job_item_id,
-                attempt.provider_idempotency_key,
-            ) != (
-                request.workspace_id,
-                request.job_id,
-                request.job_item_id,
-                request.idempotency_key,
-            ):
-                raise ValueError("Candidate scope invalid")
-        suffix = Path(artifact.filename).suffix.lower()
-        key = (
-            f"{request.workspace_id}/fidelity/{request.job_item_id}/"
-            f"{request.attempt_id}/{artifact.sha256}{suffix}"
+    async def _retain(
+        self,
+        request: Any,
+        artifact: Any,
+        *,
+        role: str = "fidelity_candidate",
+        ordinal: int | None = None,
+    ) -> str:
+        from .fidelity_assets import retain
+
+        return await retain(
+            self.sessions,
+            self.storage,
+            request,
+            artifact,
+            role=role,
+            ordinal=ordinal,
         )
-        stored = await self.storage.save_validated(
-            ValidatedImage(
-                artifact.payload,
-                artifact.filename,
-                artifact.content_type,
-                artifact.width,
-                artifact.height,
-                key,
-                artifact.sha256,
-            )
-        )
-        with self.sessions() as session:
-            attempt = session.get(JobAttemptRecord, request.attempt_id)
-            if attempt is None or (
-                attempt.workspace_id,
-                attempt.job_id,
-                attempt.job_item_id,
-            ) != (request.workspace_id, request.job_id, request.job_item_id):
-                raise ValueError("Candidate scope invalid")
-            prior = session.scalar(
-                select(JobAssetRecord).where(
-                    JobAssetRecord.job_item_id == request.job_item_id,
-                    JobAssetRecord.role == "fidelity_candidate",
-                    JobAssetRecord.ordinal == attempt.attempt_no,
-                )
-            )
-            if prior is not None:
-                asset = session.get(AssetRecord, prior.asset_id)
-                if asset is None or asset.sha256 != artifact.sha256:
-                    raise ValueError("Retained candidate binding changed")
-                return prior.asset_id
-            asset_id = new_id("asset")
-            session.add(
-                AssetRecord(
-                    id=asset_id,
-                    workspace_id=request.workspace_id,
-                    media_kind="image",
-                    origin_kind="generated",
-                    lifecycle_status="ready",
-                    original_filename=artifact.filename,
-                    content_type=artifact.content_type,
-                    byte_size=len(artifact.payload),
-                    width=artifact.width,
-                    height=artifact.height,
-                    sha256=artifact.sha256,
-                    storage_provider=stored.storage_provider,
-                    storage_bucket=stored.storage_bucket,
-                    object_key=stored.object_key,
-                    asset_metadata={"fidelity_candidate": True, "policy": VERSION},
-                )
-            )
-            session.flush()
-            session.add(
-                JobAssetRecord(
-                    workspace_id=request.workspace_id,
-                    job_id=request.job_id,
-                    job_item_id=request.job_item_id,
-                    asset_id=asset_id,
-                    direction="intermediate",
-                    role="fidelity_candidate",
-                    ordinal=attempt.attempt_no,
-                    is_deliverable=False,
-                )
-            )
-            session.commit()
-            return asset_id
