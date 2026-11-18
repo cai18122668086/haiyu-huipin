@@ -43,6 +43,7 @@ TESTS = [
     "tests/test_haiyu_prompt.py", "tests/test_execution_reliability.py",
     "tests/test_customer_credit_billing.py", "tests/test_new_job_contracts.py",
     "tests/test_replica_unknown_retry.py", "tests/test_credit_payments.py",
+    "tests/test_replica_fast.py",
     "tests/test_credit_memberships.py", "tests/test_credit_refunds.py",
 ]
 

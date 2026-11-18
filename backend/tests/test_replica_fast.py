@@ -262,7 +262,10 @@ def test_failed_screen_retry_does_not_replan_or_regenerate_successes(client):
     replacement = response.json()["payload"]["job_ids"][0]
     assert execute(client, gateway, replacement) == "completed"
     assert len(gateway.plans) == 1
-    assert [r.group_key for r in gateway.images] == ["F001", "F002", "F002"]
+    # Initial screens execute concurrently; only the failed screen may be
+    # submitted after the explicit retry, regardless of initial completion order.
+    assert sorted(r.group_key for r in gateway.images[:2]) == ["F001", "F002"]
+    assert [r.group_key for r in gateway.images[2:]] == ["F002"]
 
 
 def test_unknown_image_outcome_blocks_resubmission(client):
