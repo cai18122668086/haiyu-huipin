@@ -2562,6 +2562,7 @@ class TengliOpenAICompatibleGateway:
             "amazon_visual_suite", "amazon_visual_suite_fast",
             "aurora_domestic_detail", "aurora_domestic_campaign_completion",
             "aurora_domestic_modules_completion", "aurora_domestic_plan_repair",
+            "aurora_domestic_intake",
             refined_detail.PROFILE, detail_fast.PROFILE, "aurora_native_fast_identity",
             "aurora_remix_fast_prepare",
         }:
@@ -2678,6 +2679,8 @@ class TengliOpenAICompatibleGateway:
                                 "literal_print_geometry_required"
                             ) is True
                         )
+                        if precise_print_geometry or request.planning_profile == "image_fidelity_color_mask":
+                            route_payload["max_completion_tokens"] = 16384
                         if request.planning_profile in {
                             "image_fidelity_prepare", "image_fidelity_readback",
                             "image_fidelity_matte", "image_fidelity_background",
@@ -7839,6 +7842,11 @@ class XingheImageProvider:
             validate_pair_before_identity(judgment, native_request, image_sha256=artifact.sha256, width=artifact.width, height=artifact.height)
             expected_identity_scope = observed_pair_scope(judgment.get("module_judgments"))
         except DetailReviewError as exc:
+            logger.warning(
+                "native_review_contract_invalid job_id=%s profile=%s code=%s diagnostic=%s",
+                request.job_id, audit_request.planning_profile, exc.code,
+                json.dumps(exc.diagnostic, ensure_ascii=True, separators=(",", ":")),
+            )
             raise XingheAgentError(exc.code, str(exc)) from exc
         if not identity_complete(identity, expected_identity_scope):
             identity_result = await review(

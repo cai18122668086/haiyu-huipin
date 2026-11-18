@@ -188,7 +188,9 @@ def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expec
     assert payload["model"] == expected
     if expected.startswith("kimi"):
         assert payload["response_format"] == {"type": "json_object"}
-        assert payload["max_completion_tokens"] == 8192
+        assert payload["max_completion_tokens"] == (
+            16384 if profile == "image_fidelity_color_mask" else 8192
+        )
     if profile.startswith("image_fidelity_") and profile != "image_fidelity_color_mask":
         assert payload["thinking"] == {"type": "disabled"}
         assert payload["max_completion_tokens"] == 8192
@@ -223,7 +225,7 @@ def test_precise_print_surface_selection_keeps_its_reasoning_budget():
     )))
     payload = transport.calls[0]["payload"]
     assert payload["model"] == "kimi-k2.6"
-    assert payload["max_completion_tokens"] == 8192
+    assert payload["max_completion_tokens"] == 16384
     assert "thinking" not in payload
 
 

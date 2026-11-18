@@ -345,6 +345,42 @@ def request(gateway):
     )
 
 
+@pytest.mark.parametrize(
+    "error,repeats,expected_calls",
+    [
+        ("PLANNER_OUTPUT_TRUNCATED", False, 2),
+        ("PLANNER_OUTPUT_TRUNCATED", True, 2),
+        ("PLANNER_TRANSPORT_OUTCOME_UNKNOWN", False, 1),
+    ],
+)
+def test_only_known_preparation_truncation_gets_one_complete_schema_correction(
+    error, repeats, expected_calls
+):
+    class IncompleteSource(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == PREPARE:
+                count = sum(p.planning_profile == PREPARE for p in self.plans)
+                if count == 1 or repeats:
+                    return replace(result, payload=None, error_code=error)
+            return result
+
+    gateway = IncompleteSource()
+    result = asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    source_calls = [p for p in gateway.plans if p.planning_profile == PREPARE]
+    assert len(source_calls) == expected_calls
+    if expected_calls == 2:
+        assert source_calls[0].sources == source_calls[1].sources
+        feedback = json.loads(source_calls[1].product_information[0])[
+            "contract_feedback"
+        ]
+        assert feedback["diagnostic"]["reason"] == "known_output_truncation"
+    assert len(gateway.edits) == int(
+        not repeats and error == "PLANNER_OUTPUT_TRUNCATED"
+    )
+    assert result.actual_cost_micros == 2 * len(gateway.plans) + 10 * len(gateway.edits)
+
+
 @pytest.mark.parametrize("malformed,review_calls", [(False, 1), (True, 2)])
 def test_rejected_or_malformed_review_never_regenerates(malformed, review_calls):
     gateway = Gateway(malformed=malformed)

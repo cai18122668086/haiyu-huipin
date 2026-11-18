@@ -849,6 +849,10 @@ class FidelityGateway:
                             "not the style image's text. If unreadable, state "
                             "UNREADABLE alone, never a prefixed/suffixed annotation, "
                             "rather than inventing a transcription. "
+                            "identity describes observed color, shape and "
+                            "position, never a guessed character or animal "
+                            "name. visible_print contains actual photographed "
+                            "glyphs only, never a name inferred from the face. "
                             "visible_print uses separate entries for each physical "
                             "printed column or copyright line. Join vertical glyphs "
                             "in their reading order; never combine a name, series "
@@ -873,6 +877,34 @@ class FidelityGateway:
                     )
                     plans.append(plan)
                     if plan.error_code:
+                        if plan.error_code == "PLANNER_OUTPUT_TRUNCATED":
+                            if preparation_attempt:
+                                self._prepared[scope] = None
+                                raise ValueError(
+                                    "Preparation response remained incomplete"
+                                )
+                            preparation_feedback = {
+                                "diagnostic": {
+                                    "validator": "complete_response", "path": "/",
+                                    "missing_fields": [],
+                                    "reason": "known_output_truncation",
+                                },
+                                "instruction": (
+                                    "The acknowledged response reached its output "
+                                    "limit without a complete JSON object. Return "
+                                    "concise but COMPLETE JSON against the entire "
+                                    "unchanged schema and ORIGINAL source pixels. "
+                                    "Do not omit inventory, printed surfaces, "
+                                    "selection constraints or protected attributes."
+                                ),
+                            }
+                            logger.warning(
+                                "source_selection_contract_retry job_id=%s "
+                                "diagnostic=%s",
+                                request.job_id,
+                                preparation_feedback["diagnostic"],
+                            )
+                            continue
                         raise ValueError("Preparation unavailable")
                     try:
                         Draft202012Validator(preparation_schema).validate(plan.payload)

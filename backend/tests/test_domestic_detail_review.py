@@ -88,7 +88,29 @@ def test_missing_observation_is_rejected_without_defaults(complete_observation, 
         normalize(raw, request)
     assert error.value.code == "AURORA_NATIVE_AUDIT_INVALID"
     assert str(error.value).startswith("/" + field + ":")
+    assert error.value.diagnostic is not None
+    assert any(
+        field in issue["missing_fields"]
+        for issue in error.value.diagnostic["issues"]
+    )
     assert raw == before
+
+
+def test_invalid_review_diagnostics_do_not_include_response_values(
+    complete_observation,
+):
+    raw, request = complete_observation
+    raw["artifact_binding"]["image_sha256"] = "a" * 64
+    raw["status"] = "PRIVATE_RESPONSE_VALUE"
+    raw["checks"]["facts"]["pass"] = "PRIVATE_BOOL_VALUE"
+    with pytest.raises(DetailReviewError) as error:
+        normalize(raw, request)
+    diagnostic = error.value.diagnostic
+    assert diagnostic is not None
+    encoded = json.dumps(diagnostic)
+    assert "PRIVATE_" not in encoded
+    assert diagnostic["issue_count"] >= 2
+    assert any(issue["validator"] == "type" for issue in diagnostic["issues"])
 
 
 @pytest.mark.parametrize(
