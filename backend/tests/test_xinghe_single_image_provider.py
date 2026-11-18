@@ -46,6 +46,7 @@ from app.xinghe_agent import (
     AmazonVisualReviewRequest,
     ImageCallResult,
     ImageEditRequest,
+    PlannerCallResult,
     SourceImage,
     _artifact_from_bytes,
     normalize_usage,
@@ -248,11 +249,17 @@ class RecordingGateway:
         self.plan_requests: list[object] = []
         self.amazon_reviews: list[AmazonVisualReviewRequest] = []
         self.plan_calls = 0
+        self.plan_results: list[PlannerCallResult | BaseException] = []
         self.error: Exception | None = None
 
     async def plan(self, request: object) -> object:
         self.plan_requests.append(request)
         self.plan_calls += 1
+        if self.plan_results:
+            result = self.plan_results.pop(0)
+            if isinstance(result, BaseException):
+                raise result
+            return result
         return type(
             "AnalysisResult",
             (),
@@ -1065,6 +1072,187 @@ def test_inspiration_competitor_reference_runs_reference_planner_before_edit(
     ]
     assert "HARD COMPOSITION SKELETON" in image_request.prompt
     assert "EXECUTION PROMPT" in image_request.prompt
+
+
+def _creative_plan_result(**changes: Any) -> PlannerCallResult:
+    fields = (
+        "product_identity_lock", "hard_composition_skeleton", "normalized_anchors",
+        "product_role_map", "typography_zones", "commercial_intent",
+        "forbidden_transfer", "post_generation_review", "original_execution_prompt",
+    )
+    values: dict[str, Any] = {
+        "payload": dict.fromkeys(fields, "preserve the original product"),
+        "provider_request_id": "planner-fixture",
+        "raw_usage": None, "normalized_usage": {},
+        "api_latency_seconds": 0.1, "actual_cost_micros": 0, "http_status": 200,
+    }
+    values.update(changes)
+    return PlannerCallResult(**values)
+
+
+@pytest.fixture
+def creative_case(harness, monkeypatch):
+    with harness.session_factory() as session:
+        session.get(JobRecord, "job_test").type = "creative_image"
+        session.get(JobAttemptRecord, "attempt_test").operation = "creative_image"
+        session.query(JobAssetRecord).one().role = "product_reference"
+        session.commit()
+    envelope = _envelope(
+        asset_ids=[("asset_product", "product_reference")],
+        prompt_input={"planning_mode": "creative", "user_instruction": "突出轻量便携"},
+    )
+    envelope.update(skill_id="xinghe-ecommerce-creative-image", operation="creative_image")
+    sleeps = []
+
+    async def sleep(seconds):
+        sleeps.append(seconds)
+
+    monkeypatch.setattr("app.xinghe_single_image_provider.asyncio.sleep", sleep)
+    return (
+        harness.provider(operation="creative_image", skill_id="xinghe-ecommerce-creative-image"),
+        _request(envelope, operation="creative_image"),
+        sleeps,
+    )
+
+
+@pytest.mark.parametrize("failures", [1, 2])
+def test_creative_missing_fields_retry_then_generate_once(harness, creative_case, caplog, failures):
+    provider, request, sleeps = creative_case
+    harness.gateway.plan_results = [_creative_plan_result(payload={})] * failures + [_creative_plan_result()]
+    caplog.set_level("INFO", logger="app.xinghe_single_image_provider")
+
+    result = asyncio.run(provider.execute(request))
+
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert harness.gateway.plan_calls == failures + 1
+    assert len(harness.gateway.requests) == 1
+    assert sleeps == list(range(1, failures + 1))
+    keys = [r.idempotency_key for r in harness.gateway.plan_requests]
+    assert len(set(keys)) == failures + 1
+    for retried in harness.gateway.plan_requests[1:]:
+        assert "Missing fields: commercial_intent" in retried.system_prompt
+        assert retried.system_prompt.count("PLANNING VALIDATION FEEDBACK:") == 1
+        assert "突出轻量便携" in retried.product_information
+        assert retried.sources == harness.gateway.plan_requests[0].sources
+    assert f"attempts={failures + 1}" in caplog.text
+    assert "job_id=job_test" in caplog.text
+
+
+def test_creative_exhaustion_logs_only_contract_fields(harness, creative_case, caplog):
+    provider, request, sleeps = creative_case
+    payload = dict(_creative_plan_result().payload)
+    del payload["original_execution_prompt"]
+    payload["commercial_intent"] = None
+    payload[SECRET] = "private provider response"
+    harness.gateway.plan_results = [_creative_plan_result(payload=payload)] * 3
+
+    result = asyncio.run(provider.execute(request))
+
+    assert result.error_code == "CREATIVE_VISUAL_ANALYSIS_INVALID"
+    assert result.retryable is False
+    assert result.actual_cost_micros == 0
+    assert harness.gateway.plan_calls == 3
+    assert harness.gateway.requests == []
+    assert sleeps == [1, 2]
+    diagnostics = result.raw_usage["creative_planning"]
+    assert diagnostics["missing_fields"] == ["original_execution_prompt"]
+    assert diagnostics["invalid_fields"] == ["commercial_intent"]
+    assert diagnostics["attempt"] == 3
+    assert diagnostics["will_retry"] is False
+    assert caplog.text.count("creative_planning_failed") == 3
+    assert SECRET not in caplog.text + json.dumps(result.raw_usage)
+    assert "private provider response" not in caplog.text
+
+
+@pytest.mark.parametrize("empty", [None, "", "  ", [], {}, False])
+def test_creative_empty_field_retries(harness, creative_case, empty):
+    provider, request, _ = creative_case
+    payload = dict(_creative_plan_result().payload)
+    payload["original_execution_prompt"] = empty
+    harness.gateway.plan_results = [_creative_plan_result(payload=payload), _creative_plan_result()]
+    assert asyncio.run(provider.execute(request)).outcome == ProviderOutcome.SUCCEEDED
+    assert harness.gateway.plan_calls == 2
+    assert len(harness.gateway.requests) == 1
+
+
+@pytest.mark.parametrize(("code", "status"), [
+    ("PLANNER_SCHEMA_INVALID", 200), ("PLANNER_OUTPUT_TRUNCATED", 200),
+    ("PROVIDER_RESPONSE_INVALID", None), ("PLANNER_RATE_LIMITED", 429),
+    ("PLANNER_RESPONSE_INVALID", 200), ("PROVIDER_TRANSPORT_FAILED", None),
+    ("PLANNER_REQUEST_FAILED", 503),
+])
+def test_creative_transient_planning_failure_retries(harness, creative_case, code, status):
+    provider, request, _ = creative_case
+    harness.gateway.plan_results = [
+        _creative_plan_result(payload=None, error_code=code, http_status=status),
+        _creative_plan_result(),
+    ]
+    assert asyncio.run(provider.execute(request)).outcome == ProviderOutcome.SUCCEEDED
+    assert harness.gateway.plan_calls == 2
+    assert len(harness.gateway.requests) == 1
+
+
+@pytest.mark.parametrize(("code", "status"), [
+    ("PLANNER_REQUEST_FAILED", 400), ("PLANNER_REQUEST_FAILED", 401),
+    ("PLANNER_REQUEST_FAILED", 403), ("CONTENT_REJECTED", 200),
+    ("PLANNER_SCHEMA_INVALID", 403),
+])
+def test_creative_permanent_planning_failure_does_not_retry(harness, creative_case, caplog, code, status):
+    provider, request, sleeps = creative_case
+    harness.gateway.plan_results = [
+        _creative_plan_result(payload=None, error_code=code, error_message=SECRET, http_status=status),
+    ]
+    result = asyncio.run(provider.execute(request))
+    assert result.error_code == "CREATIVE_VISUAL_ANALYSIS_FAILED"
+    assert harness.gateway.plan_calls == 1
+    assert harness.gateway.requests == []
+    assert sleeps == []
+    assert SECRET not in caplog.text + str(result)
+
+
+def test_creative_cancellation_propagates_without_retry(harness, creative_case):
+    provider, request, sleeps = creative_case
+    harness.gateway.plan_results = [asyncio.CancelledError()]
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(provider.execute(request))
+    assert harness.gateway.plan_calls == 1
+    assert harness.gateway.requests == []
+    assert sleeps == []
+
+
+def test_creative_non_object_response_retries(harness, creative_case):
+    provider, request, _ = creative_case
+    harness.gateway.plan_results = [
+        _creative_plan_result(payload="not an object"), _creative_plan_result(),
+    ]
+    assert asyncio.run(provider.execute(request)).outcome == ProviderOutcome.SUCCEEDED
+    assert harness.gateway.plan_calls == 2
+    assert len(harness.gateway.requests) == 1
+
+
+def test_creative_transient_failure_stops_at_attempt_limit(harness, creative_case):
+    provider, request, sleeps = creative_case
+    harness.gateway.plan_results = [
+        _creative_plan_result(payload=None, error_code="PLANNER_REQUEST_FAILED", http_status=503),
+    ] * 3
+    result = asyncio.run(provider.execute(request))
+    assert result.error_code == "CREATIVE_VISUAL_ANALYSIS_FAILED"
+    assert harness.gateway.plan_calls == 3
+    assert sleeps == [1, 2]
+    assert harness.gateway.requests == []
+
+
+def test_creative_image_failure_never_replans_or_resubmits(harness, creative_case):
+    provider, request, _ = creative_case
+    harness.gateway.plan_results = [_creative_plan_result()]
+    harness.gateway.result = replace(
+        _success_result(), outcome=ProviderOutcome.OUTCOME_UNKNOWN, artifact=None,
+        error_code="PROVIDER_OUTCOME_UNKNOWN",
+    )
+    result = asyncio.run(provider.execute(request))
+    assert result.outcome == ProviderOutcome.OUTCOME_UNKNOWN
+    assert harness.gateway.plan_calls == 1
+    assert len(harness.gateway.requests) == 1
 
 
 def test_inspiration_follow_target_falls_back_to_first_product_canvas(
