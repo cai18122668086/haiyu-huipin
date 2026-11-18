@@ -602,7 +602,12 @@ class PixelGateway(Gateway):
                     "no_clipped_print",
                     "edges_clean",
                 )
-            } | {"unresolved": [], "evidence": "Original complete source product"}
+            } | {
+                "unresolved": [],
+                "evidence": "Original complete source product",
+                "repairs": [],
+                "edge_feather_px": 0,
+            }
         elif call.planning_profile == BACKGROUND:
             payload = {
                 "background_description": "Pure white empty background",
@@ -682,6 +687,96 @@ def test_source_product_rgb_is_composited_after_one_native_background(monkeypatc
         result.raw_usage["source_pixel_preservation"]["background_sha256"]
         == guard.evidence["fidelity_backgroundNone"].sha256
     )
+
+
+def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image(
+    monkeypatch,
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+    guard = PixelGuard(gateway, None, None)
+    call = request(gateway)
+    identity = asyncio.run(guard.prepare_source_identity(call))
+    assert identity["enabled"] is True
+    assert len(identity["calls"]) == 1 and gateway.edits == []
+    assert identity["geometry"][0]["width_over_height"] == 1
+    assert getattr(guard, "frozen", None) is None
+    # The subsequent approved brief is different from the preflight prompt.
+    # Source selection is reused, and only that final image request is frozen.
+    result = asyncio.run(guard.edit(replace(call, prompt="Final source-aware brief")))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert len(gateway.edits) == 1
+    assert len([p for p in gateway.plans if p.planning_profile == PREPARE]) == 1
+
+
+@pytest.mark.parametrize("second_pass", [True, False])
+def test_one_changed_source_mask_is_reaudited_before_any_image(
+    monkeypatch, second_pass
+):
+    from app import source_pixels
+
+    def extraction(sources, preparation, model):
+        layer = pixel_extraction(sources, preparation, model)[0]
+        with Image.open(BytesIO(layer.artifact.payload)) as opened:
+            rgba = opened.convert("RGBA")
+        rgba.putpixel((20, 5), (255, 0, 0, 0))
+        return (replace(layer, artifact=source_pixels.artifact(rgba, "source.png")),)
+
+    monkeypatch.setattr(source_pixels, "extract_layers", extraction)
+
+    class CorrectedGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == MATTE:
+                count = len([p for p in self.plans if p.planning_profile == MATTE])
+                if count == 1:
+                    result.payload.update(
+                        complete_objects=False,
+                        unresolved=["Missing source edge"],
+                        repairs=[
+                            {
+                                "layer_index": 0,
+                                "action": "restore_foreground",
+                                "box": [36 / 72, 21 / 72, 37 / 72, 22 / 72],
+                            }
+                        ],
+                    )
+                elif not second_pass:
+                    result.payload.update(
+                        complete_objects=False, unresolved=["Still incomplete"]
+                    )
+            return result
+
+    gateway = CorrectedGateway()
+    guard = PixelGuard(gateway, None, None)
+    result = asyncio.run(guard.edit(request(gateway)))
+    audits = [p for p in gateway.plans if p.planning_profile == MATTE]
+    assert len(audits) == 2
+    assert audits[0].idempotency_key != audits[1].idempotency_key
+    assert audits[0].sources[-1].sha256 != audits[1].sources[-1].sha256
+    if second_pass:
+        assert result.outcome == ProviderOutcome.SUCCEEDED
+        assert len(gateway.edits) == 1
+        assert len(guard.frozen["pixel_recipe"]["mask_audits"]) == 2
+    else:
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert gateway.edits == []
+
+
+def test_failed_source_preflight_retains_planner_receipt_without_buying_an_image(
+    monkeypatch,
+):
+    class FailedSource(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            return replace(result, error_code="PLANNER_RESPONSE_INVALID")
+
+    gateway = FailedSource()
+    guard = PixelGuard(gateway, None, None)
+    identity = asyncio.run(guard.prepare_source_identity(request(gateway)))
+    assert identity["error"] == "SOURCE_IDENTITY_PREPARATION_FAILED"
+    assert identity["calls"][0].actual_cost_micros == 2
+    assert gateway.edits == [] and getattr(guard, "frozen", None) is None
 
 
 def test_source_pixel_reconciliation_reuses_frozen_wire_prompt_and_mattes(monkeypatch):

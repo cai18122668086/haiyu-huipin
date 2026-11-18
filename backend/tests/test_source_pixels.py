@@ -78,6 +78,9 @@ def test_refinement_recovers_small_fitting_without_erasing_coarse_foreground(
     monkeypatch.setattr(source_pixels, "_net", object())
     monkeypatch.setattr(source_pixels, "_loaded_path", tmp_path)
     monkeypatch.setattr(source_pixels.importlib, "import_module", lambda _: None)
+    monkeypatch.setattr(
+        source_pixels, "_recover_fine_edges", lambda crop, coarse, *args: coarse
+    )
     seen = []
 
     def masks(crop, *args):
@@ -107,6 +110,80 @@ def test_source_pixel_mode_cannot_undo_requested_garment_or_color_changes():
             }
         )
     assert not source_pixels.enabled_for({"job_type": "detail_pack", "settings": {}})
+
+
+def repair_fixture():
+    from PIL import ImageDraw
+
+    rgb = Image.new("RGBA", (100, 200), (45, 80, 120, 0))
+    alpha = Image.new("L", rgb.size)
+    draw = ImageDraw.Draw(alpha)
+    draw.rectangle((45, 8, 55, 45), fill=255)
+    draw.rectangle((20, 46, 80, 190), fill=255)
+    rgb.putalpha(alpha)
+    layer = source_pixels.PixelLayer(
+        source_pixels.artifact(rgb, "source.png"),
+        "original",
+        "a" * 64,
+        (0, 0, 100, 200),
+    )
+    return layer
+
+
+def correction(action, box):
+    return {
+        "layer_index": 0,
+        "action": action,
+        "box": [
+            (box[0] + 16) / 132,
+            (box[1] + 16) / 232,
+            (box[2] + 16) / 132,
+            (box[3] + 16) / 232,
+        ],
+    }
+
+
+def test_mask_correction_copies_only_alpha_and_keeps_source_rgb():
+    layer = repair_fixture()
+    repaired = source_pixels.repair_layers(
+        (layer,),
+        [
+            correction("restore_foreground", (44, 10, 45, 15)),
+            correction("remove_background", (49, 12, 51, 16)),
+        ],
+        0,
+    )[0]
+    with (
+        Image.open(BytesIO(layer.artifact.payload)) as before,
+        Image.open(BytesIO(repaired.artifact.payload)) as after,
+    ):
+        assert before.convert("RGB").tobytes() == after.convert("RGB").tobytes()
+        assert before.getpixel((44, 12))[3] == 0
+        assert after.getpixel((44, 12))[3] == 255
+        assert after.getpixel((50, 14))[3] == 0
+        assert (
+            before.crop((20, 46, 81, 191)).tobytes()
+            == after.crop((20, 46, 81, 191)).tobytes()
+        )
+
+
+@pytest.mark.parametrize(
+    "repairs,feather,reason",
+    [
+        ([correction("remove_background", (25, 50, 30, 55))], 0, "protected artwork"),
+        ([correction("restore_foreground", (0, 0, 100, 200))], 0, "too much"),
+        ([], 0, "no verifiable"),
+        ([], 3, "bounded contract"),
+        (
+            [{"layer_index": 1, "action": "restore_foreground", "box": [0, 0, 1, 1]}],
+            0,
+            "foreign layer",
+        ),
+    ],
+)
+def test_mask_correction_fails_closed(repairs, feather, reason):
+    with pytest.raises(ValueError, match=reason):
+        source_pixels.repair_layers((repair_fixture(),), repairs, feather)
 
 
 def test_native_pair_placements_preserve_authority_and_never_cross_seam():
@@ -154,6 +231,9 @@ def test_ambiguous_source_matte_changes_context_without_relaxing_fragment_guard(
     monkeypatch.setattr(source_pixels, "_net", object())
     monkeypatch.setattr(source_pixels, "_loaded_path", tmp_path)
     monkeypatch.setattr(source_pixels.importlib, "import_module", lambda _: None)
+    monkeypatch.setattr(
+        source_pixels, "_recover_fine_edges", lambda crop, coarse, *args: coarse
+    )
     seen = []
 
     def segment(crop, *args):

@@ -100,6 +100,43 @@ class RemixFastProvider(XingheSingleImageProvider):
                 }
                 self._save_state(request, state)
             if "brief" not in state:
+                planning_sources = sources
+                prepare_identity = getattr(
+                    self.gateway, "prepare_source_identity", None
+                )
+                if callable(prepare_identity):
+                    identity = await prepare_identity(
+                        ImageEditRequest(
+                            workspace_id=request.workspace_id,
+                            job_id=request.job_id,
+                            job_item_id=request.job_item_id,
+                            attempt_id=request.attempt_id,
+                            page_number=envelope.item_ordinal + 1,
+                            group_key=envelope.item_key,
+                            sources=sources,
+                            prompt="",
+                            quality="high",
+                            idempotency_key=request.idempotency_key,
+                            size=size,
+                            output_format="png",
+                            preserve_provider_artifact=True,
+                            single_dispatch=True,
+                        ),
+                        stored_preparation=state.get("source_preparation"),
+                    )
+                    state["calls"].extend(
+                        _call("source_selection", c) for c in identity["calls"]
+                    )
+                    if identity.get("error"):
+                        self._save_state(request, state)
+                        return self._result(
+                            state, error="REMIX_FAST_SOURCE_PREPARATION_FAILED"
+                        )
+                    if identity.get("enabled"):
+                        planning_sources = sources + identity["sources"]
+                        state["source_preparation"] = identity["preparation"]
+                        state["measured_source_geometry"] = identity["geometry"]
+                        self._save_state(request, state)
                 context = {
                     "target_canvas": {"width": width, "height": height},
                     "canvas_authority": (
@@ -108,6 +145,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                         "canvas directive inside generation_brief."
                     ),
                     "user_facts": envelope.prompt_input.get("product_information", []),
+                    "measured_source_geometry": state.get("measured_source_geometry"),
                     "user_instruction": envelope.prompt_input.get(
                         "reference_guidance", ""
                     ),
@@ -140,6 +178,13 @@ class RemixFastProvider(XingheSingleImageProvider):
                         "OMPOSITION_ONLY"
                     ),
                     "geometry_contract": (
+                        "Use the measured original source geometry and attached "
+                        "original-selected crops. Only uniform scaling is allowed: "
+                        "full-object width MUST equal its height times the "
+                        "measured width_over_height. Do not author contradictory "
+                        "width/height/occupancy locks or alter physical proportions "
+                        "to fit the benchmark. Actual original printing/features "
+                        "override guesses based on familiar character names. "
                         "Quantified silhouette/proportions/structure/relationshi"
                         "ps. Lock directional details with positive wording and "
                         "explicit exclusions."
@@ -148,7 +193,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                 result = await self.gateway.plan(
                     _planner_request(
                         request,
-                        sources,
+                        planning_sources,
                         size,
                         PREPARE_PROFILE,
                         context,

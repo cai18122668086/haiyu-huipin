@@ -667,6 +667,8 @@ class IntakeStore:
                 "INTAKE_BINDING_CHANGED", "The original intake binding hash changed"
             )
         if not self.path.exists():
+            correction = self.binding.get("contract_repair")
+            predecessor_found = False
             for previous in self.root.glob("*.json"):
                 if previous.name.endswith(".response.json"):
                     continue
@@ -677,11 +679,69 @@ class IntakeStore:
                     old.get(key) == self.binding.get(key)
                     for key in ("settings", "sources", "resolution")
                 ):
+                    # A bounded correction is a new, durably receipted call,
+                    # never permission to repeat an unknown intake. Validate
+                    # all earlier calls and require the exact terminal parent.
+                    if (
+                        isinstance(correction, Mapping)
+                        and all(
+                            old.get(key) == value
+                            for key, value in self.binding.items()
+                            if key not in {"sha256", "contract_repair"}
+                        )
+                        and set(old) - {"contract_repair"}
+                        == set(self.binding) - {"contract_repair"}
+                    ):
+                        attempt = correction.get("attempt")
+                        old_attempt = (old.get("contract_repair") or {}).get(
+                            "attempt", 0
+                        )
+                        if (
+                            type(attempt) is int
+                            and 1 <= attempt <= 2
+                            and (
+                                type(old_attempt) is int and 0 <= old_attempt < attempt
+                            )
+                        ):
+                            prior = IntakeStore(self.root, old, self.job_id).completed()
+                            if prior is None:
+                                raise DetailIntakeError(
+                                    "INTAKE_OUTCOME_UNKNOWN",
+                                    "Missing correction parent",
+                                )
+                            if old_attempt == attempt - 1:
+                                code = correction.get("error_code")
+                                allowed = (
+                                    code
+                                    in {
+                                        "INTAKE_REFERENCE_METHOD_MISMATCH",
+                                        "INTAKE_REFERENCE_COVERAGE_INVALID",
+                                        "INTAKE_SCHEMA_INVALID",
+                                    }
+                                    and prior.get("error_code") is None
+                                )
+                                allowed = allowed or (
+                                    code == "PLANNER_OUTPUT_TRUNCATED"
+                                    and prior.get("error_code") == code
+                                )
+                                if not allowed or canonical_hash(
+                                    prior.get("payload") or {}
+                                ) != canonical_hash(correction.get("previous_payload")):
+                                    raise DetailIntakeError(
+                                        "INTAKE_RECEIPT_INVALID",
+                                        "Correction does not match its terminal parent",
+                                    )
+                                predecessor_found = True
+                            continue
                     raise DetailIntakeError(
                         "INTAKE_BINDING_CHANGED",
                         "An existing intake has a different code, Skill, or model "
                         "binding; reconcile it before dispatch",
                     )
+            if correction is not None and not predecessor_found:
+                raise DetailIntakeError(
+                    "INTAKE_RECEIPT_INVALID", "No verified terminal correction parent"
+                )
             return None
         request = json.loads(self.path.read_text(encoding="utf-8"))
         if self.job_id is not None and request.get("job_id") != self.job_id:

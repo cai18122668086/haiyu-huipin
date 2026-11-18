@@ -14,6 +14,7 @@ COPY source_manifests ./source_manifests
 COPY catalog_assets ./catalog_assets
 COPY migrations ./migrations
 COPY scripts/fetch_source_matte_model.py ./scripts/fetch_source_matte_model.py
+COPY scripts/check_source_pixel_runtime.py ./scripts/check_source_pixel_runtime.py
 COPY third_party ./third_party
 
 RUN --mount=type=cache,target=/root/.cache/pip \
@@ -21,6 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     && python -m pip install .
 
 RUN PYTHONPATH=/app python scripts/fetch_source_matte_model.py
+RUN PYTHONPATH=/app python scripts/check_source_pixel_runtime.py
 
 RUN mkdir -p /app/.data/aurora-main-image \
     && groupadd --system --gid 10001 polaris \

@@ -217,6 +217,26 @@ def response_schema(
             },
             "unresolved": {"type": "array", "items": text},
             "evidence": text,
+            "repairs": {
+                "type": "array",
+                "maxItems": 12,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["layer_index", "action", "box"],
+                    "properties": {
+                        "layer_index": {"type": "integer", "minimum": 0, "maximum": 5},
+                        "action": {"enum": ["restore_foreground", "remove_background"]},
+                        "box": {
+                            "type": "array",
+                            "minItems": 4,
+                            "maxItems": 4,
+                            "items": {"type": "number", "minimum": 0, "maximum": 1},
+                        },
+                    },
+                },
+            },
+            "edge_feather_px": {"type": "integer", "minimum": 0, "maximum": 2},
         }
     elif profile == READBACK:
         properties = {
@@ -671,6 +691,89 @@ class FidelityGateway:
             )
         )
 
+    def _selection_parameters(
+        self, request: Any, context: dict[str, Any]
+    ) -> tuple[tuple[Any, ...], tuple[str, ...], dict[str, Any] | None, str]:
+        original_sources = request.sources
+        authorities = tuple(
+            s for s in original_sources if s.source_role in AUTHORITY_ROLES
+        )
+        ids = tuple(s.asset_id for s in authorities)
+        selection = selection_constraint(
+            str(context["settings"].get("instruction", ""))
+        )
+        if selection:
+            # Spatial words refer to the first original product image;
+            # extra reference images cannot redefine its rows/objects.
+            ids = ids[:1]
+        if not ids:
+            raise ValueError("Missing product identity authority")
+        scope = canonical_hash(
+            {
+                "job": request.job_id,
+                "context": {k: v for k, v in context.items() if k != "item_key"},
+                "sources": [
+                    (s.asset_id, s.sha256, s.source_role)
+                    for s in original_sources
+                    if s.asset_id in ids
+                ],
+            }
+        )
+        return authorities, ids, selection, scope
+
+    async def _prepare_selection(
+        self,
+        request: Any,
+        context: dict[str, Any],
+        original_sources: tuple[Any, ...],
+        ids: tuple[str, ...],
+        selection: dict[str, Any] | None,
+        scope: str,
+        plans: list[Any],
+        preparation: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        lock = self._locks.setdefault(scope, asyncio.Lock())
+        async with lock:
+            preparation = preparation or self._prepared.get(scope)
+            if preparation is None:
+                plan = await self._plan(
+                    request,
+                    PREPARE,
+                    tuple(s for s in original_sources if s.asset_id in ids),
+                    {
+                        **context,
+                        "source_roles": [
+                            (s.asset_id, s.source_role) for s in original_sources
+                        ],
+                        "schema": response_schema(PREPARE, ids, selection),
+                        "original_user_instruction": context["settings"].get(
+                            "instruction", ""
+                        ),
+                        "spatial_selection_constraint": selection,
+                        "instruction": "Select exactly the objects requested "
+                        "by the user from product sources. Give tight "
+                        "complete-object boxes in normalized source-image "
+                        "coordinates. Read the original physical printing, "
+                        "not the style image's text. If unreadable, state "
+                        "UNREADABLE rather than inventing a transcription. "
+                        "When spatial_selection_constraint is present, "
+                        "inventory ALL objects in the first product photo "
+                        "as source_inventory, then select the requested "
+                        "bottom/top/left/right count by "
+                        "their actual positions. Bottom/下面 means LOWER rows, "
+                        "never the upper row or background subjects.",
+                    },
+                )
+                plans.append(plan)
+                if plan.error_code:
+                    raise ValueError("Preparation unavailable")
+                preparation = validate_preparation(plan.payload, ids, selection)
+                if len(self._prepared) >= 128:
+                    self._prepared.clear()
+                self._prepared[scope] = preparation
+        assert isinstance(preparation, dict)
+        return preparation
+
     async def edit(self, request: Any) -> Any:
         from .xinghe_agent import ImageCallResult, SourceImage
 
@@ -722,72 +825,19 @@ class FidelityGateway:
                 "domestic_main_image",
                 "detail_pack",
             } and (not request.reconcile_only or frozen is not None):
-                authorities = tuple(
-                    s for s in original_sources if s.source_role in AUTHORITY_ROLES
+                authorities, ids, selection, scope = self._selection_parameters(
+                    request, context
                 )
-                ids = tuple(s.asset_id for s in authorities)
-                selection = selection_constraint(
-                    str(context["settings"].get("instruction", ""))
+                preparation = await self._prepare_selection(
+                    request,
+                    context,
+                    original_sources,
+                    ids,
+                    selection,
+                    scope,
+                    plans,
+                    preparation,
                 )
-                if selection:
-                    # Spatial words refer to the first original product image;
-                    # extra reference images cannot redefine its rows/objects.
-                    ids = ids[:1]
-                if not ids:
-                    raise ValueError("Missing product identity authority")
-                scope = canonical_hash(
-                    {
-                        "job": request.job_id,
-                        "context": {
-                            k: v for k, v in context.items() if k != "item_key"
-                        },
-                        "sources": [
-                            (s.asset_id, s.sha256, s.source_role)
-                            for s in original_sources
-                            if s.source_role != "format_canvas"
-                        ],
-                    }
-                )
-                lock = self._locks.setdefault(scope, asyncio.Lock())
-                async with lock:
-                    preparation = preparation or self._prepared.get(scope)
-                    if preparation is None:
-                        plan = await self._plan(
-                            request,
-                            PREPARE,
-                            original_sources,
-                            {
-                                **context,
-                                "source_roles": [
-                                    (s.asset_id, s.source_role)
-                                    for s in original_sources
-                                ],
-                                "schema": response_schema(PREPARE, ids, selection),
-                                "original_user_instruction": context["settings"].get(
-                                    "instruction", ""
-                                ),
-                                "spatial_selection_constraint": selection,
-                                "instruction": "Select exactly the objects requested "
-                                "by the user from product sources. Give tight "
-                                "complete-object boxes in normalized source-image "
-                                "coordinates. Read the original physical printing, "
-                                "not the style image's text. If unreadable, state "
-                                "UNREADABLE rather than inventing a transcription. "
-                                "When spatial_selection_constraint is present, "
-                                "inventory ALL objects in the first product photo "
-                                "as source_inventory, then select the requested "
-                                "bottom/top/left/right count by "
-                                "their actual positions. Bottom/下面 means LOWER rows, "
-                                "never the upper row or background subjects.",
-                            },
-                        )
-                        plans.append(plan)
-                        if plan.error_code:
-                            raise ValueError("Preparation unavailable")
-                        preparation = validate_preparation(plan.payload, ids, selection)
-                        if len(self._prepared) >= 128:
-                            self._prepared.clear()
-                        self._prepared[scope] = preparation
                 crops = []
                 preparation = validate_preparation(
                     preparation,
@@ -863,99 +913,147 @@ class FidelityGateway:
                         preparation,
                         self.wrapped.image_fidelity_source_model_path,
                     )
-                    previews = []
-                    for index, layer in enumerate(layers):
-                        original = next(
-                            s
-                            for s in authorities
-                            if s.asset_id == layer.source_asset_id
-                        )
-                        with Image.open(BytesIO(original.payload)) as opened:
-                            from PIL import ImageOps
+                    mask_audits = []
+                    for mask_review in range(2):
+                        previews = []
+                        for index, layer in enumerate(layers):
+                            original = next(
+                                s
+                                for s in authorities
+                                if s.asset_id == layer.source_asset_id
+                            )
+                            with Image.open(BytesIO(original.payload)) as opened:
+                                from PIL import ImageOps
 
-                            left, top, right, bottom = layer.source_box
-                            crop = (
-                                ImageOps.exif_transpose(opened)
-                                .convert("RGB")
-                                .crop((left - 16, top - 16, right + 16, bottom + 16))
+                                left, top, right, bottom = layer.source_box
+                                crop = (
+                                    ImageOps.exif_transpose(opened)
+                                    .convert("RGB")
+                                    .crop(
+                                        (left - 16, top - 16, right + 16, bottom + 16)
+                                    )
+                                )
+                                factor = min(4, max(1, 1024 // max(crop.size)))
+                                crop = crop.resize(
+                                    (crop.width * factor, crop.height * factor),
+                                    Image.Resampling.NEAREST,
+                                )
+                                reference = source_pixels.artifact(
+                                    crop, f"matte-original-{index}.png"
+                                )
+                            evidence = source_pixels.preview(layer.artifact)
+                            previews.append(
+                                SourceImage(
+                                    f"matte-original-{index}",
+                                    request.group_key,
+                                    reference.filename,
+                                    reference.content_type,
+                                    reference.sha256,
+                                    reference.payload,
+                                    source_role="matte_original_crop",
+                                )
                             )
-                            factor = min(4, max(1, 1024 // max(crop.size)))
-                            crop = crop.resize(
-                                (crop.width * factor, crop.height * factor),
-                                Image.Resampling.NEAREST,
+                            previews.append(
+                                SourceImage(
+                                    f"matte-preview-{index}",
+                                    request.group_key,
+                                    evidence.filename,
+                                    evidence.content_type,
+                                    evidence.sha256,
+                                    evidence.payload,
+                                    source_role="matte_candidate",
+                                )
                             )
-                            reference = source_pixels.artifact(
-                                crop, f"matte-original-{index}.png"
+                        matte = await self._plan(
+                            request,
+                            MATTE,
+                            tuple(
+                                source
+                                for source in authorities
+                                if source.asset_id
+                                in {
+                                    region["asset_id"]
+                                    for region in preparation["selected_regions"]
+                                }
                             )
-                        evidence = source_pixels.preview(layer.artifact)
-                        previews.append(
-                            SourceImage(
-                                f"matte-original-{index}",
-                                request.group_key,
-                                reference.filename,
-                                reference.content_type,
-                                reference.sha256,
-                                reference.payload,
-                                source_role="matte_original_crop",
-                            )
+                            + tuple(previews),
+                            {
+                                "schema": response_schema(MATTE),
+                                "correction_contract": {
+                                    "layer_indices": list(range(len(layers))),
+                                    "coordinates": (
+                                        "normalized within each paired image "
+                                        "INCLUDING its 16px margin"
+                                    ),
+                                    "allowed": (
+                                        "At most 12 tight source alpha boxes. "
+                                        "restore_foreground copies source RGB; "
+                                        "it never generates metal. "
+                                        "remove_background only inside "
+                                        "unprinted top fittings, never over "
+                                        "rims, connectors, faces or printing. "
+                                        "edge_feather_px 1 or 2 for body halos."
+                                    ),
+                                },
+                                "instruction": (
+                                    "Each matte_original_crop is paired with "
+                                    "matte-preview of the SAME source region. "
+                                    "Compare every fitting and printed edge "
+                                    "directly. Previews include a neutral "
+                                    "margin so outer contours are visible. "
+                                    "Compare ONLY visible source hardware; "
+                                    "never infer hidden levers or mechanisms. "
+                                    "Missing metal, clipped text and residual "
+                                    "display hardware all fail. Never infer "
+                                    "completeness from the main body alone. "
+                                    "For a small source-only mask correction, "
+                                    "return repairs or edge_feather_px AND "
+                                    "retain failing checks and unresolved "
+                                    "defects. A later audit must inspect the "
+                                    "corrected pixels. Never erase hardware "
+                                    "as background; distinguish the rack peg "
+                                    "behind a clasp from the clasp rim. "
+                                    "If clean, repairs=[] and edge_feather_px=0."
+                                ),
+                            },
+                            suffix=f":mask-{mask_review}",
                         )
-                        previews.append(
-                            SourceImage(
-                                f"matte-preview-{index}",
-                                request.group_key,
-                                evidence.filename,
-                                evidence.content_type,
-                                evidence.sha256,
-                                evidence.payload,
-                                source_role="matte_candidate",
-                            )
+                        plans.append(matte)
+                        if matte.error_code:
+                            raise ValueError("Source matte review unavailable")
+                        Draft202012Validator(response_schema(MATTE)).validate(
+                            matte.payload
                         )
-                    matte = await self._plan(
-                        request,
-                        MATTE,
-                        tuple(
-                            source
-                            for source in authorities
-                            if source.asset_id
-                            in {
-                                region["asset_id"]
-                                for region in preparation["selected_regions"]
+                        accepted = (
+                            not matte.payload["unresolved"]
+                            and all(
+                                matte.payload[name] is True
+                                for name in (
+                                    "complete_objects",
+                                    "no_context_leak",
+                                    "no_clipped_print",
+                                    "edges_clean",
+                                )
+                            )
+                            and not matte.payload["repairs"]
+                            and not matte.payload["edge_feather_px"]
+                        )
+                        mask_audits.append(
+                            {
+                                "source_layer_sha256": [
+                                    layer.artifact.sha256 for layer in layers
+                                ],
+                                "review": matte.payload,
                             }
                         )
-                        + tuple(previews),
-                        {
-                            "schema": response_schema(MATTE),
-                            "instruction": "Each matte_original_crop is paired with "
-                            "matte-preview of the SAME source region. Compare every "
-                            "small fitting and printed edge directly. Checkerboard "
-                            "previews include a neutral margin so complete outer "
-                            "contours are visible. Compare ONLY hardware actually "
-                            "visible in the source, never infer a hidden lever or "
-                            "mechanism that the original does not show. "
-                            "Missing metal, missing ring segments, clipped text "
-                            "and residual display hardware all fail complete_objects "
-                            "or no_context_leak. Never infer completeness from the "
-                            "main character body alone.",
-                        },
-                    )
-                    plans.append(matte)
-                    if matte.error_code:
-                        raise ValueError("Source matte review unavailable")
-                    Draft202012Validator(response_schema(MATTE)).validate(matte.payload)
-                    if matte.payload["unresolved"] or not all(
-                        matte.payload[name] is True
-                        for name in (
-                            "complete_objects",
-                            "no_context_leak",
-                            "no_clipped_print",
-                            "edges_clean",
-                        )
-                    ):
+                        if accepted:
+                            break
                         logger.warning(
                             "source_matte_rejected job_id=%s item_id=%s "
-                            "failed_checks=%s unresolved_count=%s",
+                            "review=%s failed_checks=%s unresolved_count=%s",
                             request.job_id,
                             request.job_item_id,
+                            mask_review,
                             [
                                 name
                                 for name in (
@@ -968,8 +1066,17 @@ class FidelityGateway:
                             ],
                             len(matte.payload["unresolved"]),
                         )
-                        raise ValueError(
-                            "Source product extraction failed visual acceptance"
+                        if mask_review or not (
+                            matte.payload["repairs"] or matte.payload["edge_feather_px"]
+                        ):
+                            raise ValueError(
+                                "Source product extraction failed visual acceptance"
+                            )
+                        layers = await asyncio.to_thread(
+                            source_pixels.repair_layers,
+                            layers,
+                            matte.payload["repairs"],
+                            matte.payload["edge_feather_px"],
                         )
                     saved_layers = []
                     for index, layer in enumerate(layers):
@@ -992,6 +1099,7 @@ class FidelityGateway:
                         "version": source_pixels.VERSION,
                         "model_sha256": source_pixels.MODEL_SHA256,
                         "layers": saved_layers,
+                        "mask_audits": mask_audits,
                         "cells": source_pixels.positions(context, len(layers)),
                     }
                 if frozen is None and crops and not pixel_mode:
@@ -1412,17 +1520,22 @@ class FidelityGateway:
 
     def selected_source_evidence(self, request: Any) -> tuple[Any, ...]:
         """Return actual original crops bound to this frozen authorized call."""
+        frozen = self._frozen(request)
+        if frozen is None or not frozen.get("preparation"):
+            return ()
+        return self._selection_evidence(request, frozen["preparation"])
+
+    def _selection_evidence(
+        self, request: Any, preparation: dict[str, Any]
+    ) -> tuple[Any, ...]:
         from PIL import ImageOps
 
         from .source_pixels import artifact
         from .xinghe_agent import SourceImage
 
-        frozen = self._frozen(request)
-        if frozen is None or not frozen.get("preparation"):
-            return ()
         sources = {source.asset_id: source for source in request.sources}
         evidence = []
-        for index, region in enumerate(frozen["preparation"]["selected_regions"]):
+        for index, region in enumerate(preparation["selected_regions"]):
             original = sources[region["asset_id"]]
             if hashlib.sha256(original.payload).hexdigest() != original.sha256:
                 raise ValueError("Original source evidence bytes changed")
@@ -1455,6 +1568,86 @@ class FidelityGateway:
                 )
             )
         return tuple(evidence)
+
+    async def prepare_source_identity(
+        self, request: Any, *, stored_preparation: Any = None
+    ) -> dict[str, Any]:
+        """Measure original source geometry before a remix authors its brief.
+
+        This never freezes a generation prompt or submits an image. Returned
+        planner calls must be recorded by the caller, including on failure.
+        """
+        from . import source_pixels
+
+        plans: list[Any] = []
+        try:
+            context = self._context(request)
+            if not getattr(
+                self.wrapped, "image_fidelity_source_pixels_enabled", False
+            ) or not source_pixels.enabled_for(context):
+                return {"enabled": False, "calls": []}
+            if any(
+                hashlib.sha256(s.payload).hexdigest() != s.sha256
+                for s in request.sources
+            ):
+                raise ValueError("Original source identity bytes changed")
+            _, ids, selection, scope = self._selection_parameters(request, context)
+            if stored_preparation is not None:
+                stored_preparation = validate_preparation(
+                    stored_preparation, ids, selection, allow_stored=True
+                )
+            preparation = await self._prepare_selection(
+                request,
+                context,
+                request.sources,
+                ids,
+                selection,
+                scope,
+                plans,
+                stored_preparation,
+            )
+            self._prepared[scope] = preparation
+            layers = await asyncio.to_thread(
+                source_pixels.extract_layers,
+                request.sources,
+                preparation,
+                self.wrapped.image_fidelity_source_model_path,
+            )
+            geometry = []
+            for i, layer in enumerate(layers):
+                with Image.open(BytesIO(layer.artifact.payload)) as opened:
+                    visible = opened.getchannel("A").getbbox()
+                if visible is None:
+                    raise ValueError("Source geometry has no visible pixels")
+                width, height = visible[2] - visible[0], visible[3] - visible[1]
+                geometry.append(
+                    {
+                        "layer_index": i,
+                        "width": width,
+                        "height": height,
+                        "width_over_height": width / height,
+                        "source_sha256": layer.source_sha256,
+                    }
+                )
+            return {
+                "enabled": True,
+                "calls": plans,
+                "preparation": preparation,
+                "sources": self._selection_evidence(request, preparation),
+                "geometry": geometry,
+            }
+        except Exception as exc:
+            logger.warning(
+                "source_identity_preflight_failed job_id=%s reason=%s contract=%s",
+                request.job_id,
+                type(exc).__name__,
+                contract_diagnostic(exc) if isinstance(exc, ValidationError) else None,
+            )
+            return {
+                "enabled": True,
+                "calls": plans,
+                "error": "SOURCE_IDENTITY_PREPARATION_FAILED",
+            }
 
     async def review_existing(
         self,

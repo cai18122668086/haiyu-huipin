@@ -4301,6 +4301,7 @@ class XinghePlanningCoordinator:
                         "INTAKE_REFERENCE_METHOD_MISMATCH",
                         "INTAKE_REFERENCE_COVERAGE_INVALID",
                         "INTAKE_SCHEMA_INVALID",
+                        "PLANNER_OUTPUT_TRUNCATED",
                     }
                     and correction_no < 2
                     # Identity/logo failures already have a durable, separately
@@ -4309,8 +4310,12 @@ class XinghePlanningCoordinator:
                     and not (exc.code == "INTAKE_SCHEMA_INVALID" and str(
                         getattr(exc, "path", "")
                     ).startswith(("/identity", "/intake/identity")))
-                    and result is not None and result.error_code is None
-                    and isinstance(result.payload, Mapping)
+                    and result is not None
+                    and (
+                        (result.error_code is None and isinstance(result.payload, Mapping))
+                        or (exc.code == "PLANNER_OUTPUT_TRUNCATED"
+                            and result.error_code == "PLANNER_OUTPUT_TRUNCATED")
+                    )
                 ):
                     logger.warning(
                         "domestic_intake_contract_retry job_id=%s attempt=%s error_code=%s error_path=%s",
@@ -4320,8 +4325,9 @@ class XinghePlanningCoordinator:
                         "attempt": correction_no + 1,
                         "error_code": exc.code,
                         "validation_message": str(exc),
-                        "previous_payload": deepcopy(dict(result.payload)),
-                        "instruction": "Correct the complete original response against unchanged source pixels and the full schema. Preserve user facts and authority. No invented source IDs or automatic acceptance; every original validator will run again.",
+                        "previous_payload": deepcopy(dict(result.payload))
+                        if isinstance(result.payload, Mapping) else {},
+                        "instruction": "Correct the complete original response against unchanged source pixels and the full schema. If the previous response was truncated, return compact JSON with concise evidence and all required fields; do not omit or summarize required arrays. Preserve user facts and authority. No invented source IDs or automatic acceptance; every original validator will run again.",
                     })
                     try:
                         return await self._with_domestic_intake(repaired_request)

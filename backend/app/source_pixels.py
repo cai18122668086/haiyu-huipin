@@ -12,16 +12,16 @@ import importlib
 import json
 import math
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageChops, ImageOps
+from PIL import Image, ImageChops, ImageFilter, ImageOps
 
 from .provider import ProviderArtifact
 
-VERSION = "source-pixel-layers-v4"
+VERSION = "source-pixel-layers-v6"
 MODEL_SHA256 = "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"
 MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx"
 _lock = threading.Lock()
@@ -126,7 +126,43 @@ def _alpha(
         refined = _segment(crop.crop(box), cv, np, _net)
         second = Image.new("L", crop.size)
         second.paste(refined, (box[0], box[1]))
-        return ImageChops.lighter(first, second)
+        coarse = ImageChops.lighter(first, second)
+        return _recover_fine_edges(crop, coarse, cv, np)
+
+
+def _recover_fine_edges(
+    crop: Image.Image, coarse: Image.Image, cv: Any, np: Any
+) -> Image.Image:
+    """Resolve a small source-color band without erasing confirmed foreground.
+
+    The saliency model can miss fine reflective metal edges. Only pixels near
+    its confirmed product contour are candidates; distant display hardware is
+    definite background. Final completeness/context review remains mandatory.
+    """
+    radius = min(8, max(2, round(min(crop.size) * 0.025)))
+    foreground = np.array(coarse) >= 128
+    vicinity = np.array(coarse.filter(ImageFilter.MaxFilter(2 * radius + 1))) > 0
+    labels = np.where(
+        foreground, cv.GC_FGD, np.where(vicinity, cv.GC_PR_FGD, cv.GC_BGD)
+    ).astype(np.uint8)
+    if not np.any(labels == cv.GC_BGD):
+        raise ValueError("Fine-edge refinement lacks definite background")
+    cv.setRNGSeed(0)
+    cv.grabCut(
+        cv.cvtColor(np.array(crop.convert("RGB")), cv.COLOR_RGB2BGR),
+        labels,
+        None,
+        np.zeros((1, 65), np.float64),
+        np.zeros((1, 65), np.float64),
+        5,
+        cv.GC_INIT_WITH_MASK,
+    )
+    refined = np.where((labels == cv.GC_FGD) | (labels == cv.GC_PR_FGD), 255, 0).astype(
+        np.uint8
+    )
+    if np.any(refined[foreground] != 255) or np.any(refined[~vicinity] != 0):
+        raise ValueError("Fine-edge refinement violated its source contour bounds")
+    return Image.fromarray(refined, "L")
 
 
 def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
@@ -243,6 +279,12 @@ def extract_layers(
         bounds = alpha.point(lambda value: 255 if value >= 128 else 0).getbbox()
         if bounds is None or (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) < 64:
             raise ValueError("Source layer is empty or incomplete")
+        bounds = (
+            max(0, bounds[0] - 8),
+            max(0, bounds[1] - 8),
+            min(crop.width, bounds[2] + 8),
+            min(crop.height, bounds[3] + 8),
+        )
         # RGB is copied unchanged. Only alpha comes from segmentation.
         rgba = crop.convert("RGBA")
         rgba.putalpha(alpha)
@@ -282,6 +324,90 @@ def preview(cutout: ProviderArtifact) -> ProviderArtifact:
         (checker.width * factor, checker.height * factor), Image.Resampling.NEAREST
     )
     return artifact(checker, "source-matte-preview.png")
+
+
+def repair_layers(
+    layers: tuple[PixelLayer, ...], repairs: list[dict[str, Any]], feather: int
+) -> tuple[PixelLayer, ...]:
+    """Apply one bounded, source-only alpha correction, then require re-audit.
+
+    Normalized boxes refer to the paired audit images including their 16px
+    margin. Background erasure is restricted to the unprinted upper fitting
+    zone; it cannot erase the character faces, tag text or copyright below.
+    """
+    if type(feather) is not int or feather not in (0, 1, 2) or len(repairs) > 12:
+        raise ValueError("Source mask correction exceeds its bounded contract")
+    result = []
+    for index, layer in enumerate(layers):
+        if hashlib.sha256(layer.artifact.payload).hexdigest() != layer.artifact.sha256:
+            raise ValueError("Source layer changed before mask correction")
+        with Image.open(BytesIO(layer.artifact.payload)) as opened:
+            rgba = opened.convert("RGBA")
+        rgb = rgba.convert("RGB").tobytes()
+        alpha = rgba.getchannel("A")
+        before = alpha.tobytes()
+        rows = [
+            sum(v >= 128 for v in before[y * rgba.width : (y + 1) * rgba.width])
+            for y in range(rgba.height)
+        ]
+        broad = next(
+            (y for y, width in enumerate(rows) if width >= max(rows) * 0.35), 0
+        )
+        hardware_end = min(broad, round(rgba.height * 0.2))
+        for repair in repairs:
+            if type(repair["layer_index"]) is not int or not 0 <= repair[
+                "layer_index"
+            ] < len(layers):
+                raise ValueError("Mask correction selects a foreign layer")
+            if repair["layer_index"] != index:
+                continue
+            box = repair["box"]
+            if len(box) != 4 or any(
+                type(v) not in (int, float) or not math.isfinite(v) or not 0 <= v <= 1
+                for v in box
+            ):
+                raise ValueError("Mask correction coordinates are invalid")
+            left, top, right, bottom = (
+                round(box[0] * (rgba.width + 32)) - 16,
+                round(box[1] * (rgba.height + 32)) - 16,
+                round(box[2] * (rgba.width + 32)) - 16,
+                round(box[3] * (rgba.height + 32)) - 16,
+            )
+            if not (
+                0 <= left < right <= rgba.width and 0 <= top < bottom <= rgba.height
+            ):
+                raise ValueError("Mask correction leaves its immutable source crop")
+            action = repair["action"]
+            if action == "remove_background":
+                if bottom > hardware_end:
+                    raise ValueError(
+                        "Mask correction may not erase protected artwork or printing"
+                    )
+                value = 0
+            elif action == "restore_foreground":
+                value = 255
+            else:
+                raise ValueError("Unknown source mask correction")
+            alpha.paste(value, (left, top, right, bottom))
+        if feather:
+            softened = ImageChops.darker(
+                alpha, alpha.filter(ImageFilter.GaussianBlur(feather))
+            )
+            # Keep the fine fitting sharp; soften only the broad product body.
+            alpha.paste(softened.crop((0, broad, rgba.width, rgba.height)), (0, broad))
+        changed = sum(a != b for a, b in zip(before, alpha.tobytes(), strict=True))
+        if changed > max(64, sum(v > 0 for v in before) * 0.12):
+            raise ValueError("Source mask correction changes too much of the product")
+        rgba.putalpha(alpha)
+        if rgba.convert("RGB").tobytes() != rgb:
+            raise ValueError("Mask correction changed original product RGB")
+        result.append(replace(layer, artifact=artifact(rgba, layer.artifact.filename)))
+    if all(
+        a.artifact.sha256 == b.artifact.sha256
+        for a, b in zip(layers, result, strict=True)
+    ):
+        raise ValueError("Mask correction made no verifiable pixel change")
+    return tuple(result)
 
 
 def positions(context: dict[str, Any], count: int) -> list[list[float]]:
@@ -403,6 +529,10 @@ def compose(
             raise ValueError("Saved source product pixels changed")
         with Image.open(BytesIO(cutout.payload)) as opened:
             rgba = opened.convert("RGBA")
+        visible_box = rgba.getchannel("A").getbbox()
+        if visible_box is None:
+            raise ValueError("Source product has no visible pixels")
+        rgba = rgba.crop(visible_box)
         x0, y0, x1, y1 = cell
         if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
             raise ValueError("Invalid source product placement")
@@ -421,6 +551,7 @@ def compose(
         placements.append(
             {
                 "source_layer_sha256": cutout.sha256,
+                "source_visible_box": list(visible_box),
                 "box": [left, top, left + resized.width, top + resized.height],
             }
         )
