@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import math
 import re
 from collections.abc import Callable, Mapping, Sequence
@@ -77,6 +78,13 @@ from .xinghe_agent import (
 )
 
 _ANALYSIS_FIELD_MAX_CHARS = 1_200
+_CREATIVE_PLANNING_MAX_ATTEMPTS = 3
+_CREATIVE_PLANNING_RETRY_CODES = frozenset({
+    "PLANNER_SCHEMA_INVALID", "PLANNER_OUTPUT_TRUNCATED",
+    "PLANNER_RATE_LIMITED", "PLANNER_RESPONSE_INVALID",
+    "PROVIDER_RESPONSE_INVALID", "PROVIDER_TRANSPORT_FAILED",
+})
+logger = logging.getLogger(__name__)
 SINGLE_IMAGE_ADAPTER_CONFIGURATION_KEY = "new_skill_adapter"
 SINGLE_IMAGE_ADAPTER_SCHEMA_VERSION = "single-image-skill-adapter-v1"
 SINGLE_IMAGE_PROMPT_SCHEMA_VERSION = "single-image-prompt-v1"
@@ -257,11 +265,12 @@ class ManifestValidator(Protocol):
 
 
 class SingleImageProviderError(RuntimeError):
-    """A stable, redaction-safe failure returned before a gateway call."""
+    """A stable, redaction-safe failure returned before image generation."""
 
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, *, raw_usage: dict[str, Any] | None = None) -> None:
         super().__init__(message)
         self.code = code
+        self.raw_usage = raw_usage
 
 
 @dataclass(frozen=True)
@@ -435,7 +444,7 @@ class XingheSingleImageProvider:
             sources = await self._load_sources(source_records)
             envelope = self._resolve_dynamic_target(envelope, sources)
         except SingleImageProviderError as exc:
-            return self._rejection(exc.code, str(exc))
+            return self._rejection(exc.code, str(exc), raw_usage=exc.raw_usage)
         except Exception as exc:
             return self._rejection(
                 "SINGLE_IMAGE_AUTHORIZATION_FAILED",
@@ -528,7 +537,7 @@ class XingheSingleImageProvider:
             if not direct_prompt and not creative_analysis:
                 prompt = self._compile_prompt(envelope, protocol, reference_analysis=analysis)
         except SingleImageProviderError as exc:
-            return self._rejection(exc.code, str(exc))
+            return self._rejection(exc.code, str(exc), raw_usage=exc.raw_usage)
         except Exception as exc:
             return self._rejection(
                 "REFERENCE_VISUAL_ANALYSIS_FAILED",
@@ -757,12 +766,6 @@ class XingheSingleImageProvider:
             ),
             planning_profile="creative_image",
         )
-        analysis = await self.gateway.plan(planner_request)
-        if analysis.error_code is not None or not isinstance(analysis.payload, Mapping):
-            raise SingleImageProviderError(
-                "CREATIVE_VISUAL_ANALYSIS_FAILED",
-                analysis.error_message or "Creative visual planning failed.",
-            )
         required = {
             "product_identity_lock",
             "hard_composition_skeleton",
@@ -774,13 +777,90 @@ class XingheSingleImageProvider:
             "post_generation_review",
             "original_execution_prompt",
         }
-        missing = sorted(key for key in required if key not in analysis.payload)
-        if missing:
-            raise SingleImageProviderError(
-                "CREATIVE_VISUAL_ANALYSIS_INVALID",
-                "Creative planner omitted required fields.",
+        original_planner_request = planner_request
+        for attempt in range(1, _CREATIVE_PLANNING_MAX_ATTEMPTS + 1):
+            analysis = await self.gateway.plan(planner_request)
+            payload = analysis.payload if isinstance(analysis.payload, Mapping) else {}
+            missing = sorted(required - payload.keys())
+            # Optional visual concepts can legitimately be empty collections
+            # (e.g. no typography). Only the executable prompt requires text.
+            invalid = sorted(
+                key for key in required & payload.keys()
+                if (key == "original_execution_prompt" and not isinstance(payload[key], str))
+                or (isinstance(payload[key], str) and not _bounded_analysis_text(payload[key], fallback="").strip())
             )
-        return dict(analysis.payload)
+            if analysis.error_code is None and not missing and not invalid:
+                logger.info(
+                    "creative_planning_completed job_id=%s job_item_id=%s attempts=%s",
+                    request.job_id, request.job_item_id, attempt,
+                )
+                return dict(payload)
+
+            status = analysis.http_status
+            # Only malformed plans and transient planner responses may be retried.
+            # Never replay image generation, refusals, auth or other permanent 4xx.
+            permanent_http = status is not None and 400 <= status < 500 and status != 429
+            retryable = not permanent_http and (
+                analysis.error_code is None
+                or analysis.error_code in _CREATIVE_PLANNING_RETRY_CODES
+                or status == 429
+                or (status is not None and 500 <= status < 600)
+            )
+            code = (
+                "CREATIVE_VISUAL_ANALYSIS_INVALID"
+                if analysis.error_code is None
+                else "CREATIVE_VISUAL_ANALYSIS_FAILED"
+            )
+            diagnostics = {
+                "attempt": attempt,
+                "max_attempts": _CREATIVE_PLANNING_MAX_ATTEMPTS,
+                "missing_fields": missing,
+                "invalid_fields": invalid,
+                "error_code": code,
+                "planner_error_code": (
+                    analysis.error_code
+                    if analysis.error_code in _CREATIVE_PLANNING_RETRY_CODES | {"PLANNER_REQUEST_FAILED"}
+                    else "PLANNER_OTHER_ERROR" if analysis.error_code else None
+                ),
+                "http_status": status,
+                "will_retry": retryable and attempt < _CREATIVE_PLANNING_MAX_ATTEMPTS,
+            }
+            # Field names come exclusively from our contract. Do not log provider
+            # values, arbitrary keys/error messages, prompts, source images or keys.
+            logger.warning(
+                "creative_planning_failed job_id=%s job_item_id=%s diagnostics=%s",
+                request.job_id, request.job_item_id,
+                json.dumps(diagnostics, sort_keys=True),
+            )
+            if not diagnostics["will_retry"]:
+                raise SingleImageProviderError(
+                    code,
+                    "创作方案未能完整生成，请稍后重试。",
+                    raw_usage={
+                        "provider_type": self.name, "reported": False,
+                        "request_count": 0, "network_requests": 0,
+                        "input_images": 0, "output_images": 0,
+                        "creative_planning": diagnostics,
+                    },
+                )
+            feedback = (
+                "\nPLANNING VALIDATION FEEDBACK: Return a complete JSON object only, "
+                "with every required field populated. Do not return a schema or wrap "
+                "the object. Empty collections are allowed for visual concepts that "
+                "do not apply; original_execution_prompt must be non-empty text. "
+                "Keep each field concise. Reinspect the original images "
+                "and preserve the original user instruction. Required fields: "
+                + ", ".join(sorted(required))
+                + ". Missing fields: " + ", ".join(missing)
+                + ". Empty or invalid fields: " + ", ".join(invalid) + "."
+            )
+            planner_request = replace(
+                original_planner_request,
+                idempotency_key=f"{request.idempotency_key}:creative-analysis:retry-{attempt}",
+                system_prompt=original_planner_request.system_prompt + feedback,
+            )
+            await asyncio.sleep(attempt)
+        raise AssertionError("Creative planning attempt bound was exceeded")
 
     def _compile_creative_execution_prompt(
         self,
