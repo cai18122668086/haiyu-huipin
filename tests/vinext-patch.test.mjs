@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -91,6 +92,34 @@ async function restorePristineFixture(vinextRoot) {
   await writeFile(staticCachePath, staticCache, "utf8");
   await writeFile(prodServerPath, prodServer, "utf8");
 }
+
+test("production patch CLI executes through a directory alias", async () => {
+  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "polaris-patch-cli-"));
+  const project = path.join(temporaryRoot, "project");
+  const alias = path.join(temporaryRoot, "alias");
+  const fixture = path.join(project, "node_modules", "vinext");
+  try {
+    await cp(installedVinext, fixture, {
+      recursive: true,
+      filter(source) {
+        const relative = path.relative(installedVinext, source);
+        return ["", "package.json", "dist", path.join("dist", "server"),
+          path.join("dist", "server", "prod-server.js"),
+          path.join("dist", "server", "static-file-cache.js")].includes(relative);
+      },
+    });
+    await restorePristineFixture(fixture);
+    await mkdir(path.join(project, "build"), { recursive: true });
+    await cp("build/patch-vinext-production.mjs", path.join(project, "build", "patch-vinext-production.mjs"));
+    await symlink(project, alias, "junction");
+    execFileSync(process.execPath, [path.join(alias, "build", "patch-vinext-production.mjs")], { timeout: 10_000 });
+    assert.match((await snapshot(fixture)).staticCache, /_polaris-static/);
+    assert.match((await snapshot(fixture)).prodServer, /_polaris-static/);
+  } finally {
+    await rm(alias, { recursive: true, force: true });
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});
 
 async function snapshot(vinextRoot) {
   return {

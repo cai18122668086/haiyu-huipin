@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { realpathSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -64,7 +65,7 @@ async function patchFile(filePath, replacements) {
 
 if (
   process.argv[1] &&
-  pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url
+  realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
 ) {
   await patchVinextProduction();
 }

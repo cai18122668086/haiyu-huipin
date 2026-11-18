@@ -2,6 +2,7 @@ ARG POLARIS_NODE_BASE_IMAGE
 FROM ${POLARIS_NODE_BASE_IMAGE} AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY vendor vendor
 RUN npm ci --ignore-scripts --no-audit --fund=false
 
 FROM dependencies AS build
