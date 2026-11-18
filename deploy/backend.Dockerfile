@@ -10,7 +10,9 @@ WORKDIR /app
 
 # Runtime dependencies are fully pinned and hash-locked by the product commit.
 COPY backend/requirements.lock ./requirements.lock
-RUN python -m pip install --require-hashes --only-binary=:all: -r requirements.lock
+COPY backend/requirements-source-pixels.lock ./requirements-source-pixels.lock
+RUN python -m pip install --require-hashes --only-binary=:all: \
+    -r requirements.lock -r requirements-source-pixels.lock
 
 COPY backend/alembic.ini ./
 COPY backend/app ./app
@@ -19,6 +21,14 @@ COPY backend/skill_sources ./skill_sources
 COPY backend/source_manifests ./source_manifests
 COPY backend/migrations ./migrations
 COPY backend/scripts/assign_workspace_owner.py ./scripts/assign_workspace_owner.py
+COPY backend/scripts/fetch_source_matte_model.py ./scripts/fetch_source_matte_model.py
+COPY backend/scripts/fetch_source_text_font.py ./scripts/fetch_source_text_font.py
+COPY backend/scripts/check_source_pixel_runtime.py ./scripts/check_source_pixel_runtime.py
+COPY backend/third_party ./third_party
+
+RUN PYTHONPATH=/app python scripts/fetch_source_matte_model.py \
+    && PYTHONPATH=/app python scripts/fetch_source_text_font.py \
+    && PYTHONPATH=/app python scripts/check_source_pixel_runtime.py
 
 RUN groupadd --system --gid 10001 polaris \
     && useradd --system --uid 10001 --gid polaris --home-dir /app polaris \
