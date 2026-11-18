@@ -73,18 +73,25 @@ def recipe(
     if copy and hashlib.sha256(font_path.read_bytes()).hexdigest() != FONT_SHA256:
         raise ValueError("Approved source font integrity changed")
     blocks: list[dict[str, Any]] = []
-    for row in layout:
+    for layout_index, row in enumerate(layout):
         x0, y0, x1, y1 = row["panel_box"]
         if not (x0 < x1 and y0 < y1) or any(
             not math.isfinite(v) for v in row["panel_box"]
         ):
             raise ValueError("Invalid text placement")
         box = [x0, (row["panel"] + y0) / panels, x1, (row["panel"] + y1) / panels]
-        if any(_overlap(box, other) for other in cells) or any(
-            _overlap(box, block["box"]) for block in blocks
-        ):
+        product_collisions = [
+            index for index, other in enumerate(cells) if _overlap(box, other)
+        ]
+        text_collisions = [
+            block["copy_index"] for block in blocks if _overlap(box, block["box"])
+        ]
+        if product_collisions or text_collisions:
             raise ValueError(
-                "Approved text overlaps product pixels or another text block"
+                f"text_layout[{layout_index}] copy_index={row['copy_index']} "
+                f"panel={row['panel']} panel_box={row['panel_box']} overlaps "
+                f"placements indices={product_collisions} or prior text "
+                f"copy_indices={text_collisions}; move the colliding boxes apart"
             )
         text = copy[row["copy_index"]]
         if not isinstance(text, str) or not text.strip() or len(text) > 800:

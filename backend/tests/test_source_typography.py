@@ -87,3 +87,17 @@ def test_empty_approved_copy_needs_no_font_or_text_blocks(tmp_path):
         [], [], [[0.1, 0.1, 0.9, 0.9]], 1, tmp_path / "absent", (400, 400)
     )
     assert result["blocks"] == []
+
+
+def test_pair_layout_feedback_identifies_collision_without_copy_values(font):
+    heading = {**block(), "panel": 1, "panel_box": [0.07, 0.16, 0.61, 0.24]}
+    cells = [[0.07, 0.145, 0.31, 0.42], [0.53, 0.61, 0.92, 0.98]]
+    with pytest.raises(ValueError) as error:
+        source_typography.recipe(
+            ["PRIVATE APPROVED COPY"], [heading], cells, 2, font, (1440, 3840)
+        )
+    diagnostic = str(error.value)
+    assert "text_layout[0] copy_index=0 panel=1" in diagnostic
+    assert "placements indices=[1]" in diagnostic
+    assert "PRIVATE APPROVED COPY" not in diagnostic
+    assert len(diagnostic) <= 240
