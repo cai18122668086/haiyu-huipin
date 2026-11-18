@@ -1487,6 +1487,12 @@ class FidelityGateway:
                         references = []
                         for i, cutout in enumerate(source_cutouts):
                             ref = source_pixels.layer_reference(cutout)
+                            with Image.open(BytesIO(cutout.payload)) as original_layer:
+                                bounds = original_layer.getchannel("A").getbbox()
+                            if bounds is None:
+                                raise ValueError("Source layout has no original pixels")
+                            native_width = bounds[2] - bounds[0]
+                            native_height = bounds[3] - bounds[1]
                             references.append(
                                 SourceImage(
                                     f"source-window-reference-{i}",
@@ -1503,9 +1509,13 @@ class FidelityGateway:
                                     "reference_asset_id": (
                                         f"source-window-reference-{i}"
                                     ),
-                                    "width": ref.width,
-                                    "height": ref.height,
-                                    "width_over_height": ref.width / ref.height,
+                                    "width": native_width,
+                                    "height": native_height,
+                                    "width_over_height": native_width / native_height,
+                                    "inspection_preview_size": [ref.width, ref.height],
+                                    "max_detail_upscale": (
+                                        source_pixels.MAX_DETAIL_UPSCALE
+                                    ),
                                 }
                             )
                         projection_sources += tuple(references)
@@ -1565,6 +1575,12 @@ class FidelityGateway:
                                     "on its source_window_reference and fill its "
                                     "destination cell with that real detail. Do not "
                                     "replace an approved macro with a tiny full item."
+                                    "Inventory width/height are ORIGINAL pixels; "
+                                    "the larger inspection preview adds no detail. "
+                                    "A cropped detail may be enlarged at most "
+                                    "max_detail_upscale times. Keep such details "
+                                    "as appropriately sized insets; reserve other "
+                                    "space for approved text/supporting source views."
                                 )
                                 if planned_layout
                                 else "Use supplied reserved cells.",
@@ -1595,9 +1611,16 @@ class FidelityGateway:
                                     p.get("source_window", [0, 0, 1, 1])
                                     for p in background_plan.payload["placements"]
                                 ]
-                                source_pixels.crop_windows(
+                                detail_cutouts = source_pixels.crop_windows(
                                     tuple(source_cutouts[i] for i in indices),
                                     windows,
+                                )
+                                detail_width, detail_height = (
+                                    int(v) for v in request.size.split("x")
+                                )
+                                source_pixels.validate_detail_resolution(
+                                    detail_cutouts, cells, windows,
+                                    (detail_width, detail_height),
                                 )
                                 trial_recipe["source_windows"] = windows
                             text_width, text_height = (

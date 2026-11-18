@@ -7,7 +7,7 @@ import math
 from io import BytesIO
 from typing import Any
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
 from .provider import ProviderArtifact
 from .source_pixels import artifact
@@ -109,11 +109,15 @@ def crops(
         for quad in boxes:
             from PIL import ImageDraw
 
-            left, top = math.floor(min(quad[::2]) * image.width), math.floor(
-                min(quad[1::2]) * image.height
-            )
-            right, bottom = math.ceil(max(quad[::2]) * image.width), math.ceil(
-                max(quad[1::2]) * image.height
+            # Evidence-only original context protects curved baselines and
+            # copyright edge glyphs from approximate localization boundaries.
+            # It is real source RGB, never synthesized lettering or delivery padding.
+            padding = 8
+            left = max(0, math.floor(min(quad[::2]) * image.width) - padding)
+            top = max(0, math.floor(min(quad[1::2]) * image.height) - padding)
+            right = min(image.width, math.ceil(max(quad[::2]) * image.width) + padding)
+            bottom = min(
+                image.height, math.ceil(max(quad[1::2]) * image.height) + padding
             )
             piece = image.crop((left, top, right, bottom))
             mask = Image.new("L", piece.size)
@@ -121,12 +125,13 @@ def crops(
                 (round(x * image.width) - left, round(y * image.height) - top)
                 for x, y in zip(quad[::2], quad[1::2], strict=True)
             ], fill=255)
+            mask = mask.filter(ImageFilter.MaxFilter(padding * 2 + 1))
             piece = Image.composite(
                 piece, Image.new("RGB", piece.size, "#eeeeee"), mask
             )
             if min(piece.size) < 2:
                 raise ValueError("Physical print evidence is too small to inspect")
-            factor = min(8, max(1, 512 // max(piece.size)))
+            factor = min(8, max(1, 1024 // max(piece.size)))
             pieces.append(piece.resize(
                 (piece.width * factor, piece.height * factor),
                 Image.Resampling.NEAREST,

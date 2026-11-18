@@ -22,6 +22,7 @@ from PIL import Image, ImageChops, ImageFilter, ImageOps
 from .provider import ProviderArtifact
 
 VERSION = "source-pixel-layers-v10-matte-pairs-connected-hardware"
+MAX_DETAIL_UPSCALE = 4.0
 PLANNING_CONSTRAINTS = (
     "SOURCE PHOTOGRAPH RENDER CAPABILITIES: Plan from the actual supplied "
     "product photographs. The final renderer preserves their photographed RGB, "
@@ -32,8 +33,13 @@ PLANNING_CONSTRAINTS = (
     "letters, or demonstrate an unseen action. Author every module's visual "
     "proof and layout within those capabilities; explain an unseen operation "
     "with approved text rather than promising an unphotographed action image. "
-    "Source-only macro crops must specify the actual visible detail. Scene "
-    "actors/supporting props may be generated behind the intact photographed "
+    "Source-only macro crops must specify the actual visible detail. "
+    "A photographed detail crop may be enlarged at most 4x linearly. Tiny "
+    "original fittings cannot become sharp full-frame macro photos. Plan a "
+    "bounded original-detail inset with supporting original product views and "
+    "approved readable copy when source resolution is limited. Never promise "
+    "a macro framing that would require invented or enhanced source pixels. "
+    "Scene actors/supporting props may be generated behind the intact photographed "
     "product, with explicit achievable contact/attachment positions. Do not "
     "claim a measured size, thickness, weight, material, licensing or package "
     "contents that source pixels or confirmed user facts do not establish. "
@@ -727,6 +733,37 @@ def crop_windows(
             raise ValueError("Close-up contains no usable original product pixels")
         result.append(artifact(crop, "original-product-closeup.png"))
     return tuple(result)
+
+
+def validate_detail_resolution(
+    cutouts: tuple[ProviderArtifact, ...],
+    cells: list[list[float]],
+    windows: list[list[float]],
+    canvas: tuple[int, int],
+) -> None:
+    if len(cutouts) != len(cells) or len(windows) != len(cells):
+        raise ValueError("Detail resolution cannot change its placement count")
+    for index, (cutout, cell, window) in enumerate(
+        zip(cutouts, cells, windows, strict=True)
+    ):
+        if window == [0, 0, 1, 1]:
+            continue
+        with Image.open(BytesIO(cutout.payload)) as opened:
+            visible = opened.getchannel("A").getbbox()
+        if visible is None:
+            raise ValueError("Detail crop has no original pixels")
+        width, height = visible[2] - visible[0], visible[3] - visible[1]
+        factor = min(
+            math.floor((cell[2] - cell[0]) * canvas[0]) / width,
+            math.floor((cell[3] - cell[1]) * canvas[1]) / height,
+        )
+        if factor > MAX_DETAIL_UPSCALE:
+            raise ValueError(
+                f"placement[{index}] enlarges an original {width}x{height} detail "
+                f"by {factor:.2f}x; maximum is {MAX_DETAIL_UPSCALE:g}x. "
+                "Use a resolution-bounded inset and supporting original views; "
+                "do not invent detail pixels or omit approved copy."
+            )
 
 
 def layer_reference(cutout: ProviderArtifact) -> ProviderArtifact:

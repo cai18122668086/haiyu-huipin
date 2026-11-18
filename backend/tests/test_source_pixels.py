@@ -112,6 +112,20 @@ def test_approved_detail_crop_preserves_exact_photographed_pixels():
         source_pixels.crop_windows((original,), [[0.2, 0.5, 1.1, 0.8]])
 
 
+def test_macro_layout_cannot_enlarge_tiny_original_details_into_a_pixelated_hero():
+    original = source_pixels.artifact(Image.new("RGBA", (200, 300), "red"), "src.png")
+    windows = [[0.1, 0.1, 0.3, 0.3]]
+    cropped = source_pixels.crop_windows((original,), windows)
+    source_pixels.validate_detail_resolution(
+        cropped, [[0.1, 0.1, 0.4, 0.4]], windows, (400, 400)
+    )
+    with pytest.raises(ValueError, match="maximum is 4x"):
+        source_pixels.validate_detail_resolution(
+            cropped, [[0.1, 0.1, 0.9, 0.9]], windows, (1440, 1920)
+        )
+    assert original.sha256 == hashlib.sha256(original.payload).hexdigest()
+
+
 def test_matte_copies_rgb_without_drawing_or_inventing_print(monkeypatch):
     original = Image.new("RGB", (100, 100), (100, 150, 200))
     for x in range(20, 80):

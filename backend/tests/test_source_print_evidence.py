@@ -31,9 +31,19 @@ def test_reading_evidence_contains_only_exact_nearest_neighbor_physical_print():
         expected = original.crop((10, 20, 20, 60)).resize(
             (80, 320), Image.Resampling.NEAREST
         )
-        assert sheet.crop((8, 8, 88, 328)).tobytes() == expected.tobytes()
+        assert sheet.crop((72, 72, 152, 392)).tobytes() == expected.tobytes()
         assert sheet.getpixel((0, 0)) == (238, 238, 238)
     assert evidence.sha256 == hashlib.sha256(evidence.payload).hexdigest()
+
+
+def test_actual_edge_glyphs_remain_visible_in_the_original_evidence_margin():
+    original, source, prep = fixture()
+    original.putpixel((9, 61), (241, 19, 77))
+    view = source_pixels.artifact(original, "source-with-edge-glyph.png")
+    source.payload, source.sha256 = view.payload, view.sha256
+    evidence = source_print_evidence.crops((source,), prep)[0]
+    with Image.open(BytesIO(evidence.payload)) as sheet:
+        assert sheet.getpixel((64, 400)) == (241, 19, 77)
 
 
 @pytest.mark.parametrize("fault", ["missing", "overlap", "outside", "hash"])

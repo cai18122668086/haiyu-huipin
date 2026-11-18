@@ -2568,6 +2568,20 @@ class TengliOpenAICompatibleGateway:
             from .source_pixels import PLANNING_CONSTRAINTS
 
             content.append({"type": "text", "text": PLANNING_CONSTRAINTS})
+            native_sources = []
+            for source in request.sources:
+                with Image.open(BytesIO(source.payload)) as opened:
+                    from PIL import ImageOps
+
+                    width, height = ImageOps.exif_transpose(opened).size
+                native_sources.append({
+                    "asset_id": source.asset_id, "role": source.source_role,
+                    "native_width": width, "native_height": height,
+                })
+            content.append({
+                "type": "text",
+                "text": "MEASURED_ORIGINAL_SOURCE_PIXELS=" + json.dumps(native_sources),
+            })
         format_feedback = None
         correction_prompt = None
         if request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity"}:
@@ -2657,7 +2671,17 @@ class TengliOpenAICompatibleGateway:
                             "response_format": {"type": "json_object"},
                             "max_completion_tokens": 8192,
                         })
-                        if request.planning_profile.startswith("image_fidelity_"):
+                        precise_print_geometry = (
+                            request.planning_profile == "image_fidelity_prepare"
+                            and bool(request.product_information)
+                            and json.loads(request.product_information[0]).get(
+                                "literal_print_geometry_required"
+                            ) is True
+                        )
+                        if request.planning_profile in {
+                            "image_fidelity_prepare", "image_fidelity_readback",
+                            "image_fidelity_matte", "image_fidelity_background",
+                        } and not precise_print_geometry:
                             route_payload["thinking"] = {"type": "disabled"}
                     elif request.planning_profile in {
                         "image_fidelity_prepare", "image_fidelity_color_mask"

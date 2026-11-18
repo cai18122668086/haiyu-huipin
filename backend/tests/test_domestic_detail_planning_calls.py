@@ -168,6 +168,7 @@ def test_remix_literal_review_uses_configured_vision_and_never_falls_back(failur
         ("image_fidelity_matte", "kimi-k2.6"),
         ("image_fidelity_background", "kimi-k2.6"),
         ("image_fidelity_prepare", "kimi-k2.6"),
+        ("image_fidelity_color_mask", "kimi-k2.6"),
     ],
 )
 def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expected):
@@ -188,9 +189,11 @@ def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expec
     if expected.startswith("kimi"):
         assert payload["response_format"] == {"type": "json_object"}
         assert payload["max_completion_tokens"] == 8192
-    if profile.startswith("image_fidelity_"):
+    if profile.startswith("image_fidelity_") and profile != "image_fidelity_color_mask":
         assert payload["thinking"] == {"type": "disabled"}
         assert payload["max_completion_tokens"] == 8192
+    elif profile == "image_fidelity_color_mask":
+        assert "thinking" not in payload
 
 
 @pytest.mark.parametrize("enabled", [False, True])
@@ -205,6 +208,23 @@ def test_source_preserving_planning_receives_real_render_capabilities(enabled):
     texts = [c["text"] for c in transport.calls[0]["payload"]["messages"][1]["content"]
              if c["type"] == "text"]
     assert any("SOURCE PHOTOGRAPH RENDER CAPABILITIES" in t for t in texts) is enabled
+
+
+def test_precise_print_surface_selection_keeps_its_reasoning_budget():
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    asyncio.run(gateway.plan(replace(
+        request("image_fidelity_prepare"),
+        product_information=(json.dumps({"literal_print_geometry_required": True}),),
+    )))
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == "kimi-k2.6"
+    assert payload["max_completion_tokens"] == 8192
+    assert "thinking" not in payload
 
 
 @pytest.mark.parametrize("profile", PROFILES)
