@@ -458,6 +458,7 @@ def test_quota_enabled_flag_is_read_from_config(tmp_path) -> None:
         ),
     ],
 )
+@pytest.mark.parametrize("fidelity_enabled", [False, True])
 def test_partial_retry_reserves_only_runnable_provider_requests(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -465,6 +466,7 @@ def test_partial_retry_reserves_only_runnable_provider_requests(
     provider_flag: str,
     total_items: int,
     selected_count: int,
+    fidelity_enabled: bool,
 ) -> None:
     quota_calls: list[dict[str, Any]] = []
 
@@ -473,6 +475,7 @@ def test_partial_retry_reserves_only_runnable_provider_requests(
 
     monkeypatch.setattr(routes_v1, "reserve_provider_job_quota", record_quota)
     client.app.state.settings.task_runner = "tengli"
+    client.app.state.settings.image_fidelity_review_enabled = fidelity_enabled
     setattr(client.app.state.settings, provider_flag, True)
 
     with client.app.state.session_factory() as session:
@@ -524,6 +527,8 @@ def test_partial_retry_reserves_only_runnable_provider_requests(
     expected_requests = (
         51 if job_type == JobType.AMAZON_VISUAL_SUITE else selected_count * 2
     )
+    if fidelity_enabled:
+        expected_requests += selected_count * 3
     assert reservation["provider_request_count"] == expected_requests
     assert reservation["job"].expected_item_count == total_items
 

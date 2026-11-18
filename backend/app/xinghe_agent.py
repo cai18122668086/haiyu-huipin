@@ -246,6 +246,7 @@ _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "aurora_domestic_intake", "aurora_domestic_detail",
     "aurora_domestic_plan_repair", "aurora_domestic_modules_completion",
     "aurora_domestic_campaign_completion",
+    "aurora_detail_pair_audit", "aurora_detail_campaign_audit",
 })
 IMAGE_SIZE = "1024x1536"
 SUPPORTED_IMAGE_SIZES = frozenset(
@@ -2635,7 +2636,7 @@ class TengliOpenAICompatibleGateway:
                     # in the original user envelope and is validated locally.
                     route_payload["response_format"] = {"type": "json_object"}
                     route_payload["messages"] = deepcopy(payload["messages"])
-                    if request.planning_profile == "amazon_visual_suite" or request.authoring_stage == "direct":
+                    if request.planning_profile in {"amazon_visual_suite", "aurora_detail_pair_audit", "aurora_detail_campaign_audit"} or request.authoring_stage == "direct":
                         # This prompt previously relied on the transport schema.
                         # json_object must still receive the ENTIRE contract;
                         # local validation and all 21 rows remain unchanged.

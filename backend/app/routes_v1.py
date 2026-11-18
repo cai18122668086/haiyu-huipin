@@ -4795,7 +4795,10 @@ def _reserve_real_provider_job_if_enabled(
         # Two edit calls plus up to four reviews, including same-candidate
         # recovery. Review recovery never regenerates the saved image.
         provider_requests = 6
-    if settings.image_fidelity_review_enabled and job.type != JobType.LOCAL_EDIT.value:
+    if (
+        getattr(settings, "image_fidelity_review_enabled", False)
+        and job.type != JobType.LOCAL_EDIT.value
+    ):
         fidelity_items = (
             runnable_item_count if runnable_item_count is not None
             else job.expected_item_count
