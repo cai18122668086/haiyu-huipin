@@ -15,7 +15,7 @@ from PIL import Image, ImageOps
 
 from .source_pixels import artifact
 
-VERSION = "source-gold-metal-to-silver-v1"
+VERSION = "source-gold-metal-to-silver-v2-protected-print"
 PROFILE = "image_fidelity_color_mask"
 
 
@@ -85,6 +85,18 @@ def render(source: Any, recipe: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
     hsv: Any = original.convert("HSV").load()
     output = original.copy()
     edited: Any = output.load()
+    print_boxes = recipe.get("protected_print_boxes", [])
+    if len(print_boxes) > 72:
+        raise ValueError("Protected printing exceeds its bounded source inventory")
+    protected = []
+    for box in print_boxes:
+        x0, y0, x1, y1 = box
+        if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
+            raise ValueError("Protected printing has invalid source geometry")
+        protected.append((
+            math.floor(x0 * original.width), math.floor(y0 * original.height),
+            math.ceil(x1 * original.width), math.ceil(y1 * original.height),
+        ))
     changed: set[tuple[int, int]] = set()
     for region in selection["regions"]:
         x0, y0, x1, y1 = region["box"]
@@ -105,6 +117,11 @@ def render(source: Any, recipe: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
                 # Warm gold only. Neutral highlights/background stay original.
                 if not (10 <= hue <= 50 and saturation >= 55 and value >= 30):
                     continue
+                if any(
+                    pleft <= x < pright and ptop <= y < pbottom
+                    for pleft, ptop, pright, pbottom in protected
+                ):
+                    raise ValueError("Metal recoloring would change protected printing")
                 red, green, blue = pixels[x, y]
                 luminance = round(red * 0.2126 + green * 0.7152 + blue * 0.0722)
                 edited[x, y] = (luminance, luminance, luminance)

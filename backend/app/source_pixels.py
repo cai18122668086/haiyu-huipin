@@ -21,7 +21,7 @@ from PIL import Image, ImageChops, ImageFilter, ImageOps
 
 from .provider import ProviderArtifact
 
-VERSION = "source-pixel-layers-v8-owned-connected-context"
+VERSION = "source-pixel-layers-v10-matte-pairs-connected-hardware"
 PLANNING_CONSTRAINTS = (
     "SOURCE PHOTOGRAPH RENDER CAPABILITIES: Plan from the actual supplied "
     "product photographs. The final renderer preserves their photographed RGB, "
@@ -400,6 +400,30 @@ def preview(cutout: ProviderArtifact) -> ProviderArtifact:
     return artifact(checker, "source-matte-preview.png")
 
 
+def matte_pair(
+    original: ProviderArtifact, cutout_preview: ProviderArtifact
+) -> ProviderArtifact:
+    """Put real original/cutout evidence at the same scale in one view."""
+    views = []
+    for view in (original, cutout_preview):
+        if hashlib.sha256(view.payload).hexdigest() != view.sha256:
+            raise ValueError("Matte comparison evidence bytes changed")
+        with Image.open(BytesIO(view.payload)) as opened:
+            views.append(opened.convert("RGB"))
+    left, right = views
+    if left.size != right.size:
+        raise ValueError("Matte comparison evidence has mismatched geometry")
+    result = Image.new("RGB", (left.width * 2 + 16, left.height + 20), "#eeeeee")
+    result.paste(left, (0, 20))
+    result.paste(right, (left.width + 16, 20))
+    from PIL import ImageDraw
+
+    draw = ImageDraw.Draw(result)
+    draw.text((4, 4), "ORIGINAL", fill="black")
+    draw.text((left.width + 20, 4), "CUTOUT", fill="black")
+    return artifact(result, "original-cutout-pair.png")
+
+
 def repair_layers(
     layers: tuple[PixelLayer, ...], repairs: list[dict[str, Any]], feather: int
 ) -> tuple[PixelLayer, ...]:
@@ -452,17 +476,74 @@ def repair_layers(
             ):
                 raise ValueError("Mask correction leaves its immutable source crop")
             action = repair["action"]
+            colors = rgba.convert("RGB").convert("HSV").tobytes()
+            opacity = alpha.tobytes()
+            gold = {
+                (x, y)
+                for y in range(top, bottom)
+                for x in range(left, right)
+                if 11 <= colors[(y * rgba.width + x) * 3] <= 78
+                and colors[(y * rgba.width + x) * 3 + 1] >= 65
+                and colors[(y * rgba.width + x) * 3 + 2] >= 30
+            }
+
             if action == "remove_background":
                 if bottom > hardware_end:
                     raise ValueError(
                         "Mask correction may not erase protected artwork or printing"
                     )
-                value = 0
+                if gold:
+                    raise ValueError("Mask correction may not erase photographed metal")
+                alpha.paste(0, (left, top, right, bottom))
             elif action == "restore_foreground":
-                value = 255
+                if (right - left) * (bottom - top) > max(
+                    64, sum(v > 0 for v in before) * 0.12
+                ):
+                    raise ValueError(
+                        "Source mask correction changes too much of the product"
+                    )
+                if bottom > hardware_end:
+                    raise ValueError(
+                        "Mask correction may not redraw protected artwork or printing"
+                    )
+                # A rectangle is evidence localization, NEVER a foreground
+                # mask. Restore only actual source-colored metal connected to
+                # the existing fitting. Background corners and isolated rack
+                # fragments cannot become opaque merely because QA boxed them.
+                candidates = {
+                    (x, y)
+                    for x, y in gold
+                    if opacity[y * rgba.width + x] < 255
+                }
+                queue = [
+                    (x, y)
+                    for x, y in candidates
+                    if any(
+                        0 <= x + dx < rgba.width
+                        and 0 <= y + dy < rgba.height
+                        and opacity[(y + dy) * rgba.width + x + dx] >= 128
+                        for dx, dy in (
+                            (-1, -1), (0, -1), (1, -1), (-1, 0),
+                            (1, 0), (-1, 1), (0, 1), (1, 1),
+                        )
+                    )
+                ]
+                while queue:
+                    x, y = queue.pop()
+                    if (x, y) not in candidates:
+                        continue
+                    candidates.remove((x, y))
+                    alpha.putpixel((x, y), 255)
+                    queue.extend(
+                        (x + dx, y + dy)
+                        for dx, dy in (
+                            (-1, -1), (0, -1), (1, -1), (-1, 0),
+                            (1, 0), (-1, 1), (0, 1), (1, 1),
+                        )
+                        if (x + dx, y + dy) in candidates
+                    )
             else:
                 raise ValueError("Unknown source mask correction")
-            alpha.paste(value, (left, top, right, bottom))
         if feather:
             softened = ImageChops.darker(
                 alpha, alpha.filter(ImageFilter.GaussianBlur(feather))

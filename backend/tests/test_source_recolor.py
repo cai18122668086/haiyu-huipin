@@ -83,3 +83,10 @@ def test_local_silver_path_does_not_apply_to_other_requested_edits():
         {**context, "settings": {**context["settings"], "target_color": "蓝色"}},
         (source,),
     )
+
+
+def test_gold_colored_physical_print_cannot_be_recolored_as_a_metal_component():
+    _, source, recipe = fixture()
+    recipe["protected_print_boxes"] = [[0.15, 0.15, 0.25, 0.35]]
+    with pytest.raises(ValueError, match="protected printing"):
+        source_recolor.render(source, recipe)

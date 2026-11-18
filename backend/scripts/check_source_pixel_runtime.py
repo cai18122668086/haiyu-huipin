@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+from io import BytesIO
 from pathlib import Path
 
 import cv2
@@ -13,9 +14,11 @@ from app import source_typography
 from app.source_pixels import (
     MODEL_SHA256,
     MatteFragmentError,
+    PixelLayer,
     _recover_fine_edges,
     _single_product,
     artifact,
+    repair_layers,
 )
 
 parser = argparse.ArgumentParser()
@@ -59,6 +62,29 @@ except MatteFragmentError:
     pass
 else:
     raise AssertionError("Large disconnected context escaped the 95% guard")
+hardware = Image.new("RGBA", (80, 160), (30, 80, 120, 0))
+hardware_draw = ImageDraw.Draw(hardware)
+hardware_draw.rectangle((39, 10, 45, 30), fill=(190, 145, 55, 0))
+hardware_alpha = Image.new("L", hardware.size)
+hardware_mask = ImageDraw.Draw(hardware_alpha)
+hardware_mask.rectangle((40, 10, 45, 30), fill=255)
+hardware_mask.rectangle((20, 31, 65, 150), fill=255)
+hardware.putalpha(hardware_alpha)
+repaired = repair_layers(
+    (PixelLayer(artifact(hardware, "fitting.png"), "synthetic", "0" * 64,
+                (0, 0, 80, 160)),),
+    [{"layer_index": 0, "action": "restore_foreground", "box": [
+        51 / 112, 26 / 192, 66 / 112, 46 / 192,
+    ]}],
+    0,
+)[0]
+with Image.open(BytesIO(repaired.artifact.payload)) as recovered_hardware:
+    assert recovered_hardware.getpixel((39, 20))[3] == 255
+    assert recovered_hardware.getpixel((35, 10))[3] == 0
+    assert (
+        recovered_hardware.convert("RGB").tobytes()
+        == hardware.convert("RGB").tobytes()
+    )
 font_path = source_typography.FONT_PATH
 assert (
     hashlib.sha256(font_path.read_bytes()).hexdigest() == source_typography.FONT_SHA256

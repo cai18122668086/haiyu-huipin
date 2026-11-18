@@ -188,6 +188,9 @@ def repair_fixture():
     from PIL import ImageDraw
 
     rgb = Image.new("RGBA", (100, 200), (45, 80, 120, 0))
+    source_draw = ImageDraw.Draw(rgb)
+    source_draw.rectangle((44, 8, 55, 45), fill=(190, 145, 55, 0))
+    source_draw.rectangle((49, 12, 51, 16), fill=(140, 145, 150, 0))
     alpha = Image.new("L", rgb.size)
     draw = ImageDraw.Draw(alpha)
     draw.rectangle((45, 8, 55, 45), fill=255)
@@ -236,6 +239,21 @@ def test_mask_correction_copies_only_alpha_and_keeps_source_rgb():
         assert (
             before.crop((20, 46, 81, 191)).tobytes()
             == after.crop((20, 46, 81, 191)).tobytes()
+        )
+
+
+def test_hardware_repair_box_never_becomes_an_opaque_background_rectangle():
+    layer = repair_fixture()
+    fixed = source_pixels.repair_layers(
+        (layer,), [correction("restore_foreground", (40, 8, 60, 30))], 0
+    )[0]
+    with Image.open(BytesIO(fixed.artifact.payload)) as after:
+        assert after.getpixel((44, 12))[3] == 255
+        assert after.getpixel((40, 8))[3] == 0
+        assert after.getpixel((59, 29))[3] == 0
+    with pytest.raises(ValueError, match="photographed metal"):
+        source_pixels.repair_layers(
+            (layer,), [correction("remove_background", (45, 10, 47, 15))], 0
         )
 
 

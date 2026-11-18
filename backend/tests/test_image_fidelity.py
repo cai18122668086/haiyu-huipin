@@ -95,6 +95,15 @@ def test_character_name_cannot_replace_original_copyright():
     assert validate_preparation(value, ("product",), allow_stored=True) == value
 
 
+def test_repeated_physical_print_cannot_be_deduplicated_by_the_candidate_reader():
+    value = preparation()
+    value["literal_print_ledger"] = ["ちいかわ", "ちいかわ", "©nagano"]
+    assert not readback_matches({"text_runs": ["ちいかわ", "©nagano"]}, value)
+    assert readback_matches(
+        {"text_runs": ["ちいかわ", "ちいかわ", "©nagano"]}, value
+    )
+
+
 def test_unreadable_annotation_is_a_contract_error_not_a_literal_print_string():
     value = preparation()
     value["selected_regions"][0]["visible_print"] = ["底部版权小字：UNREADABLE"]
@@ -270,7 +279,9 @@ class ScopedFidelity(FidelityGateway):
 
 
 @pytest.mark.parametrize("corrected", [False, True])
-def test_preparation_contract_correction_is_bounded_before_image_dispatch(corrected):
+def test_preparation_contract_correction_is_bounded_before_image_dispatch(
+    corrected,
+):
     class AnnotatedPreparation(Gateway):
         async def plan(self, req):
             if req.planning_profile != PREPARE:
@@ -734,6 +745,9 @@ def test_local_silver_render_preserves_original_and_never_submits_an_image(
             self.plans.append(call)
             if call.planning_profile == PREPARE:
                 payload = preparation()
+                payload["selected_regions"][0]["print_regions"] = [
+                    [0.1, 0.6, 0.9, 0.6, 0.9, 0.9, 0.1, 0.9]
+                ]
             elif call.planning_profile == READBACK:
                 payload = {"text_runs": ["モモンガ"]}
             elif call.planning_profile == source_recolor.PROFILE:
@@ -850,6 +864,48 @@ def test_source_product_rgb_is_composited_after_one_native_background(monkeypatc
     )
 
 
+def test_final_comparison_uses_original_frozen_binding_not_the_projected_prompt(
+    monkeypatch,
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+    original = request(gateway)
+
+    class BoundPixelGuard(PixelGuard):
+        def _frozen(self, call, value=None):
+            assert call == original
+            return super()._frozen(call, value)
+
+    result = asyncio.run(BoundPixelGuard(gateway, None, None).edit(original))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert gateway.edits[0].prompt != original.prompt
+
+
+@pytest.mark.parametrize("retention_fails", [False, True])
+def test_comparison_failure_keeps_paid_original_and_cost_without_regeneration(
+    monkeypatch, retention_fails,
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+
+    class CorruptedEvidence(PixelGuard):
+        async def paired_source_evidence(self, call, candidate):
+            raise ValueError("Corrupted source receipt")
+
+        async def _retain(self, call, artifact, **kwargs):
+            if retention_fails and not kwargs:
+                raise OSError("Storage unavailable")
+            return await super()._retain(call, artifact, **kwargs)
+
+    guard = CorruptedEvidence(gateway, None, None)
+    result = asyncio.run(guard.edit(request(gateway)))
+    assert result.error_code == "IMAGE_FIDELITY_EVIDENCE_FAILED"
+    assert result.artifact is None and result.retryable is False
+    assert len(gateway.edits) == 1 and len(gateway.plans) == 3
+    assert result.actual_cost_micros == 16
+    assert ("fidelity_candidateNone" in guard.evidence) is not retention_fails
+
+
 def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image(
     monkeypatch,
 ):
@@ -859,7 +915,7 @@ def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image
     call = request(gateway)
     identity = asyncio.run(guard.prepare_source_identity(call))
     assert identity["enabled"] is True
-    assert len(identity["calls"]) == 1 and gateway.edits == []
+    assert len(identity["calls"]) == 2 and gateway.edits == []
     assert identity["geometry"][0]["width_over_height"] == 1
     assert getattr(guard, "frozen", None) is None
     # The subsequent approved brief is different from the preflight prompt.
@@ -927,13 +983,20 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
 def test_one_changed_source_mask_is_reaudited_before_any_image(
     monkeypatch, second_pass
 ):
+    from PIL import ImageDraw
+
     from app import source_pixels
 
     def extraction(sources, preparation, model):
         layer = pixel_extraction(sources, preparation, model)[0]
         with Image.open(BytesIO(layer.artifact.payload)) as opened:
             rgba = opened.convert("RGBA")
-        rgba.putpixel((20, 5), (255, 0, 0, 0))
+        alpha = Image.new("L", rgba.size)
+        draw = ImageDraw.Draw(alpha)
+        draw.rectangle((18, 2, 22, 8), fill=255)
+        draw.rectangle((8, 9, 32, 38), fill=255)
+        alpha.putpixel((20, 5), 0)
+        rgba.putalpha(alpha)
         return (replace(layer, artifact=source_pixels.artifact(rgba, "source.png")),)
 
     monkeypatch.setattr(source_pixels, "extract_layers", extraction)
@@ -962,6 +1025,11 @@ def test_one_changed_source_mask_is_reaudited_before_any_image(
             return result
 
     gateway = CorrectedGateway()
+    original = Image.new("RGB", (40, 40), "blue")
+    draw = ImageDraw.Draw(original)
+    draw.rectangle((18, 2, 22, 8), fill=(190, 145, 55))
+    draw.rectangle((8, 9, 32, 38), fill="red")
+    gateway.artifact = source_pixels.artifact(original, "source-gold.png")
     guard = PixelGuard(gateway, None, None)
     result = asyncio.run(guard.edit(request(gateway)))
     audits = [p for p in gateway.plans if p.planning_profile == MATTE]

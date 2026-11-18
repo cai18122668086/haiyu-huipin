@@ -196,6 +196,8 @@ def response_schema(
     profile: str,
     source_ids: tuple[str, ...] = (),
     selection: dict[str, Any] | None = None,
+    *,
+    print_geometry: bool = False,
 ) -> dict[str, Any]:
     text = {"type": "string", "minLength": 1}
     properties: dict[str, Any]
@@ -253,6 +255,8 @@ def response_schema(
             },
         }
     elif profile == PREPARE:
+        from .source_print_evidence import REGIONS_SCHEMA
+
         properties = {
             "selected_regions": {
                 "type": "array",
@@ -274,6 +278,7 @@ def response_schema(
                             "items": {"type": "number", "minimum": 0, "maximum": 1},
                         },
                         "identity": text,
+                        "print_regions": deepcopy(REGIONS_SCHEMA),
                         "visible_print": {
                             "type": "array",
                             "items": {
@@ -298,6 +303,8 @@ def response_schema(
             "allowed_changes": {"type": "array", "minItems": 1, "items": text},
             "selection_summary": text,
         }
+        if not print_geometry:
+            del properties["selected_regions"]["items"]["properties"]["print_regions"]
         properties["source_inventory"] = {
             **properties["selected_regions"],
             "maxItems": 24,
@@ -370,8 +377,12 @@ def validate_preparation(
     selection: dict[str, Any] | None = None,
     *,
     allow_stored: bool = False,
+    print_geometry: bool = False,
 ) -> dict[str, Any]:
-    schema = response_schema(PREPARE, ids, None if allow_stored else selection)
+    schema = response_schema(
+        PREPARE, ids, None if allow_stored else selection,
+        print_geometry=print_geometry or allow_stored,
+    )
     if allow_stored:
         if selection:
             schema["required"].append("source_inventory")
@@ -400,10 +411,28 @@ def validate_preparation(
             ],
             "source_inventory": [canonical_region(r) for r in inventory],
         }
-    for region in payload["selected_regions"] + payload.get("source_inventory", []):
+    from .source_print_evidence import PrintGeometryError
+    from .source_print_evidence import validate as validate_print_geometry
+
+    selected_count = len(payload["selected_regions"])
+    for index, region in enumerate(
+        payload["selected_regions"] + payload.get("source_inventory", [])
+    ):
         x0, y0, x1, y1 = region["box"]
         if not (x1 > x0 and y1 > y0 and (x1 - x0) * (y1 - y0) >= 0.0001):
             raise ValueError("Source selection has invalid geometry")
+        try:
+            validate_print_geometry(region)
+        except PrintGeometryError as exc:
+            raise ValidationError(
+                exc.rule, validator="source_geometry", validator_value=exc.rule,
+                path=[
+                    "selected_regions"
+                    if index < selected_count else "source_inventory",
+                    index if index < selected_count else index - selected_count,
+                    "print_regions", exc.index,
+                ],
+            ) from exc
     if selection:
         inventory = payload["source_inventory"]
         if len(
@@ -461,11 +490,14 @@ def contract_diagnostic(error: ValidationError) -> dict[str, Any]:
     missing = []
     if error.validator == "required" and isinstance(error.instance, dict):
         missing = sorted(set(error.validator_value) - set(error.instance))
-    return {
+    diagnostic = {
         "validator": error.validator,
         "path": "/" + "/".join(str(part) for part in error.absolute_path),
         "missing_fields": missing,
     }
+    if error.validator == "source_geometry":
+        diagnostic["constraint"] = error.validator_value
+    return diagnostic
 
 
 class FidelityGateway:
@@ -675,6 +707,11 @@ class FidelityGateway:
                     "character names, correct spelling, or repair malformed "
                     "letters. Return separate text_runs for each physical "
                     "printed column/line, joining vertical glyphs in order. "
+                    "Read ALL printed columns, secondary series marks and "
+                    "copyright lines on EVERY attached product. Identical "
+                    "printing on distinct products must repeat in text_runs; "
+                    "never deduplicate repeated physical text or summarize "
+                    "only the character names. "
                     "Use UNREADABLE when strokes cannot be read. JSON only."
                     if profile == READBACK
                     else "Inspect only source-product extraction, BEFORE final "
@@ -768,6 +805,25 @@ class FidelityGateway:
                 )
             preparation = preparation or self._prepared.get(scope)
             if preparation is None:
+                from .source_recolor import enabled as local_recolor_enabled
+
+                require_print_geometry = bool(getattr(
+                    self.wrapped, "image_fidelity_source_pixels_enabled", False
+                )) and local_recolor_enabled(context, original_sources)
+                preparation_schema = response_schema(
+                    PREPARE, ids, selection, print_geometry=require_print_geometry
+                )
+                if require_print_geometry:
+                    for name in ("selected_regions", "source_inventory"):
+                        if name not in preparation_schema["properties"]:
+                            continue
+                        record = preparation_schema["properties"][name]["items"]
+                        if "print_regions" not in record["required"]:
+                            record["required"].append("print_regions")
+                        record["allOf"] = [{
+                            "if": {"properties": {"visible_print": {"minItems": 1}}},
+                            "then": {"properties": {"print_regions": {"minItems": 1}}},
+                        }]
                 preparation_feedback = None
                 for preparation_attempt in range(2):
                     plan = await self._plan(
@@ -779,7 +835,8 @@ class FidelityGateway:
                             "source_roles": [
                                 (s.asset_id, s.source_role) for s in original_sources
                             ],
-                            "schema": response_schema(PREPARE, ids, selection),
+                            "schema": preparation_schema,
+                            "literal_print_geometry_required": require_print_geometry,
                             "contract_feedback": preparation_feedback,
                             "original_user_instruction": context["settings"].get(
                                 "instruction", ""
@@ -796,6 +853,12 @@ class FidelityGateway:
                             "printed column or copyright line. Join vertical glyphs "
                             "in their reading order; never combine a name, series "
                             "column and copyright into one invented text run. "
+                            "When literal_print_geometry_required is true, map "
+                            "EVERY actual printed column, secondary series mark "
+                            "and copyright line into a disjoint print_regions entry "
+                            "inside that product's source box. Include repeated "
+                            "physical text on every product. These boxes supply "
+                            "pixels only to an independent OCR reader; no answers. "
                             "When spatial_selection_constraint is present, "
                             "inventory ALL objects in the first product photo "
                             "as source_inventory, then select the requested "
@@ -809,7 +872,11 @@ class FidelityGateway:
                     if plan.error_code:
                         raise ValueError("Preparation unavailable")
                     try:
-                        preparation = validate_preparation(plan.payload, ids, selection)
+                        Draft202012Validator(preparation_schema).validate(plan.payload)
+                        preparation = validate_preparation(
+                            plan.payload, ids, selection,
+                            print_geometry=require_print_geometry,
+                        )
                         break
                     except ValidationError as exc:
                         if preparation_attempt:
@@ -905,26 +972,16 @@ class FidelityGateway:
                             crop, f"matte-original-{index}.png"
                         )
                     evidence = source_pixels.preview(layer.artifact)
+                    pair = source_pixels.matte_pair(reference, evidence)
                     previews.append(
                         SourceImage(
-                            f"matte-original-{index}",
+                            f"matte-pair-{index}",
                             request.group_key,
-                            reference.filename,
-                            reference.content_type,
-                            reference.sha256,
-                            reference.payload,
-                            source_role="matte_original_crop",
-                        )
-                    )
-                    previews.append(
-                        SourceImage(
-                            f"matte-preview-{index}",
-                            request.group_key,
-                            evidence.filename,
-                            evidence.content_type,
-                            evidence.sha256,
-                            evidence.payload,
-                            source_role="matte_candidate",
+                            pair.filename,
+                            pair.content_type,
+                            pair.sha256,
+                            pair.payload,
+                            source_role="matte_original_candidate_pair",
                         )
                     )
                 matte = await self._plan(
@@ -945,8 +1002,9 @@ class FidelityGateway:
                         "correction_contract": {
                             "layer_indices": list(range(len(layers))),
                             "coordinates": (
-                                "normalized within each paired image "
-                                "INCLUDING its 16px margin"
+                                "normalized within the RIGHT CUTOUT panel only, "
+                                "INCLUDING its 16px checkerboard margin, "
+                                "EXCLUDING the 20px label header and LEFT panel"
                             ),
                             "allowed": (
                                 "At most 12 tight source alpha boxes. "
@@ -959,8 +1017,9 @@ class FidelityGateway:
                             ),
                         },
                         "instruction": (
-                            "Each matte_original_crop is paired with "
-                            "matte-preview of the SAME source region. "
+                            "Each matte-pair image shows LEFT ORIGINAL photo "
+                            "crop and RIGHT CUTOUT preview of the SAME source "
+                            "region at the SAME scale, with evidence-only labels. "
                             "Compare every fitting and printed edge "
                             "directly. Previews include a neutral "
                             "margin so outer contours are visible. "
@@ -1054,6 +1113,7 @@ class FidelityGateway:
     async def edit(self, request: Any) -> Any:
         from .xinghe_agent import ImageCallResult, SourceImage
 
+        original_request = request
         original_sources = request.sources
         plans: list[Any] = []
         preparation = None
@@ -1220,10 +1280,17 @@ class FidelityGateway:
                         "cells": source_pixels.positions(context, len(layers)),
                     }
                 if frozen is None and crops and not pixel_mode:
+                    readback_crops = tuple(crops)
+                    if source_recolor.enabled(context, original_sources) and getattr(
+                        self.wrapped, "image_fidelity_source_pixels_enabled", False
+                    ):
+                        readback_crops = self._literal_print_evidence(
+                            original_request, preparation, "product_detail"
+                        )
                     source_readback = await self._plan(
                         request,
                         READBACK,
-                        tuple(crops),
+                        readback_crops,
                         {"schema": response_schema(READBACK)},
                         suffix=":source",
                     )
@@ -1279,11 +1346,21 @@ class FidelityGateway:
                 plans.append(selection)
                 if selection.error_code:
                     raise ValueError("Original metal selection unavailable")
+                if not isinstance(preparation, dict):
+                    raise ValueError(
+                        "Source metal recolor requires its print authority"
+                    )
                 recolor_recipe = {
                     "version": source_recolor.VERSION,
                     "source_asset_id": source.asset_id,
                     "source_sha256": source.sha256,
                     "selection": selection.payload,
+                    "protected_print_boxes": [
+                        [min(quad[::2]), min(quad[1::2]),
+                         max(quad[::2]), max(quad[1::2])]
+                        for region in preparation["selected_regions"]
+                        for quad in region.get("print_regions", [])
+                    ],
                 }
             if frozen is None and not request.reconcile_only:
                 if pixel_recipe is not None:
@@ -1807,9 +1884,33 @@ class FidelityGateway:
             else request
         )
         if pixel_proof is not None:
-            review_sources += await self.paired_source_evidence(
-                replace(review_request, sources=original_sources), result.artifact
-            )
+            try:
+                review_sources += await self.paired_source_evidence(
+                    original_request, result.artifact
+                )
+            except Exception as exc:
+                logger.warning(
+                    "image_fidelity_evidence_failed job_id=%s item_id=%s reason=%s",
+                    request.job_id,
+                    request.job_item_id,
+                    type(exc).__name__,
+                )
+                try:
+                    await self._retain(request, result.artifact)
+                except Exception as retention_error:
+                    logger.warning(
+                        "image_fidelity_retention_failed job_id=%s reason=%s",
+                        request.job_id,
+                        type(retention_error).__name__,
+                    )
+                return replace(
+                    self._account(result, plans),
+                    outcome=ProviderOutcome.FAILED,
+                    artifact=None,
+                    retryable=False,
+                    error_code="IMAGE_FIDELITY_EVIDENCE_FAILED",
+                    error_message="原图对照证据未能完整确认，未交付。",
+                )
         return await self._review(
             review_request,
             context,
@@ -1985,6 +2086,20 @@ class FidelityGateway:
             )
         return tuple(evidence)
 
+    def _literal_print_evidence(
+        self, request: Any, preparation: dict[str, Any], role: str
+    ) -> tuple[Any, ...]:
+        from .source_print_evidence import crops
+        from .xinghe_agent import SourceImage
+
+        return tuple(
+            SourceImage(
+                f"print-detail-{i}", request.group_key, f"print-detail-{i}.png",
+                view.content_type, view.sha256, view.payload, source_role=role,
+            )
+            for i, view in enumerate(crops(request.sources, preparation))
+        )
+
     async def prepare_source_identity(
         self, request: Any, *, stored_preparation: Any = None
     ) -> dict[str, Any]:
@@ -2007,7 +2122,9 @@ class FidelityGateway:
                 for s in request.sources
             ):
                 raise ValueError("Original source identity bytes changed")
-            _, ids, selection, scope = self._selection_parameters(request, context)
+            authorities, ids, selection, scope = self._selection_parameters(
+                request, context
+            )
             if stored_preparation is not None:
                 stored_preparation = validate_preparation(
                     stored_preparation, ids, selection, allow_stored=True
@@ -2023,11 +2140,8 @@ class FidelityGateway:
                 stored_preparation,
             )
             self._prepared[scope] = preparation
-            layers = await asyncio.to_thread(
-                source_pixels.extract_layers,
-                request.sources,
-                preparation,
-                self.wrapped.image_fidelity_source_model_path,
+            layers, _ = await self._approved_source_layers(
+                request, request.sources, authorities, preparation, plans
             )
             geometry = []
             for i, layer in enumerate(layers):
@@ -2395,7 +2509,9 @@ class FidelityGateway:
                             source_role="candidate_detail",
                         )
                         for i, view in enumerate(
-                            self._selection_evidence(candidate_request, preparation)
+                            self._literal_print_evidence(
+                                candidate_request, preparation, "candidate_detail"
+                            )
                         )
                     )
                 readback = await self._plan(
