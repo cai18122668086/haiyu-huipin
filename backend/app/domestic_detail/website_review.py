@@ -268,7 +268,7 @@ def legacy_prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
 screen slices, and the final full 3:8 candidate canvas. Only product_reference
 images establish product truth. Return WEBSITE_LEAN_V1 JSON matching the schema.
 Return every required root field and exactly two complete module_judgments in
-the supplied module order, including when status is MATERIAL_FAIL or UNKNOWN.
+the supplied module order, including when status is MATERIAL_FAIL.
 Each module must contain all six checks and its actual observations. An aggregate
 failure summary alone is incomplete; preserve negative findings in the complete JSON.
 For each actual slice report six core checks: identity, facts, legibility,
@@ -305,7 +305,7 @@ def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
 screen slices, and the final full 3:8 candidate canvas. Only product_reference
 images establish product truth. Return WEBSITE_LEAN_V1 JSON matching the schema.
 Return every required root field and exactly two complete module_judgments in
-the supplied module order, including when status is MATERIAL_FAIL or UNKNOWN.
+the supplied module order, including when status is MATERIAL_FAIL.
 Each module must contain all six checks and its actual observations. An aggregate
 failure summary alone is incomplete; preserve negative findings in the complete JSON.
 For each actual slice report six core checks: identity, facts, legibility,
