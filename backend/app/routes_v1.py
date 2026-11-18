@@ -4804,10 +4804,10 @@ def _reserve_real_provider_job_if_enabled(
             else job.expected_item_count
         )
         # One source inspection for single edits, at most two same-image
-        # reviews. This reserves provider costs; member image credits stay
+        # reviews plus an independent candidate-only text readback. Member credits stay
         # governed by the existing deliverable-based settlement.
         fidelity_calls = fidelity_items * (
-            3 if job.type in {
+            4 if job.type in {
                 JobType.PRODUCT_IMAGE.value, JobType.CREATIVE_IMAGE.value,
                 JobType.REFERENCE_REMIX.value,
                 JobType.AMAZON_VISUAL_SUITE.value,

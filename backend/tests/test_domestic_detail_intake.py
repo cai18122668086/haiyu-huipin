@@ -112,6 +112,16 @@ def validate(value, **kwargs):
     )
 
 
+def test_reference_parent_methods_cannot_add_unobserved_units():
+    value = intake()
+    value["reference_materials"][0]["observed_expression_methods"].append(
+        "不存在于任一实际分析单元的额外三栏图文方法"
+    )
+    with pytest.raises(DetailIntakeError) as caught:
+        validate(value)
+    assert caught.value.code == "INTAKE_REFERENCE_METHOD_MISMATCH"
+
+
 @pytest.mark.parametrize(
     "id_value,path",
     [

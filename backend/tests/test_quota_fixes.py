@@ -528,7 +528,7 @@ def test_partial_retry_reserves_only_runnable_provider_requests(
         51 if job_type == JobType.AMAZON_VISUAL_SUITE else selected_count * 2
     )
     if fidelity_enabled:
-        expected_requests += selected_count * 3
+        expected_requests += selected_count * 4
     assert reservation["provider_request_count"] == expected_requests
     assert reservation["job"].expected_item_count == total_items
 

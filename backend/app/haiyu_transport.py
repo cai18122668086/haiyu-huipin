@@ -497,14 +497,42 @@ class HaiyuTransport:
                 timeout_seconds=timeout_seconds,
             )
         values = dict(fields)
-        if self.native_references and all(part[0] == "image" for part in files):
+        if self.native_references:
             # Operator-enabled only after end-to-end multi-reference validation.
             # Keep original ordered bytes and native image indices; a contact
             # sheet is not equivalent to separate product/background sources.
+            wire_files = [part for part in files if part[0] == "image"]
+            masks = [part for part in files if part[0] == "mask"]
+            note = ""
+            if masks and wire_files:
+                if len(masks) != 1:
+                    raise _error("One edit-authority mask is required.")
+                with Image.open(BytesIO(wire_files[0][3])) as source:
+                    original = ImageOps.exif_transpose(source).convert("RGB")
+                with Image.open(BytesIO(masks[0][3])) as source_mask:
+                    mask = source_mask.convert("RGBA")
+                    alpha = ImageOps.invert(mask.getchannel("A"))
+                if alpha.size != original.size:
+                    raise _error("Edit map must match its original source canvas.")
+                tinted = Image.blend(
+                    original, Image.new("RGB", original.size, "#a977e7"), 0.55
+                )
+                guide = Image.composite(tinted, original, alpha)
+                buf = BytesIO()
+                guide.save(buf, "PNG")
+                wire_files.append(
+                    ("image", "edit-authority.png", "image/png", buf.getvalue())
+                )
+                note = (
+                    "\nThe LAST image is an EDIT MAP ONLY: purple marks the "
+                    "authorized editable area on image 1. Never copy the purple "
+                    "overlay. Image 1 is the original canvas and product authority; "
+                    "change only the requested content within that map."
+                )
             if (
-                not 1 <= len(files) <= 16
-                or sum(len(part[3]) for part in files) > 50 * 1024 * 1024
-                or any(len(part[3]) > 20 * 1024 * 1024 for part in files)
+                not 1 <= len(wire_files) <= 16
+                or sum(len(part[3]) for part in wire_files) > 50 * 1024 * 1024
+                or any(len(part[3]) > 20 * 1024 * 1024 for part in wire_files)
             ):
                 return 400, {
                     "error": {
@@ -512,7 +540,6 @@ class HaiyuTransport:
                         "message": "Native reference input limit exceeded",
                     }
                 }
-            wire_files, note = list(files), ""
         else:
             wire_files, note = await asyncio.to_thread(
                 pack_references, files, target_size=values.get("size", "")

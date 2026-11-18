@@ -242,7 +242,7 @@ PLANNER_DIAGNOSTICS_SCHEMA = "xinghe-planner-diagnostics"
 _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "replica_native_contract", "replica_exact_compact",
     refined_detail.PROFILE, detail_fast.PROFILE, "amazon_visual_suite",
-    "image_fidelity_prepare", "image_fidelity_review",
+    "image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback",
     "aurora_domestic_intake", "aurora_domestic_detail",
     "aurora_domestic_plan_repair", "aurora_domestic_modules_completion",
     "aurora_domestic_campaign_completion",
@@ -2298,6 +2298,7 @@ class TengliOpenAICompatibleGateway:
         self.high_price_micros = high_price_micros
         self.review_price_micros = review_price_micros
         self.image_fidelity_review_enabled = False
+        self.image_fidelity_readback_model = ""
         self.timeout_seconds = timeout_seconds
         self.planner_timeout_seconds = planner_timeout_seconds
         self.diagnostic_content_sample = diagnostic_content_sample
@@ -2612,6 +2613,19 @@ class TengliOpenAICompatibleGateway:
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
                 route_payload = {**payload, "model": route.planner_model}
+                if request.planning_profile == "image_fidelity_readback":
+                    route_payload["model"] = (
+                        self.image_fidelity_readback_model or route.planner_model
+                    )
+                    if route_payload["model"].casefold().startswith("qwen"):
+                        # Literal OCR uses its complete schema in the prompt.
+                        # Qwen's compatible JSON transport requires json_object;
+                        # bound thinking/output rather than waiting indefinitely.
+                        route_payload.update({
+                            "response_format": {"type": "json_object"},
+                            "max_completion_tokens": 8192,
+                            "enable_thinking": False,
+                        })
                 planner_key = request.idempotency_key
                 if (request.planning_profile == "aurora_native_fast_identity"
                     and route.planner_model.casefold().startswith("deepseek")):
@@ -3643,6 +3657,7 @@ def build_tengli_gateway(settings: Settings) -> TengliOpenAICompatibleGateway:
         ) if settings.image_capacity_redis_url else None),
     )
     gateway.image_fidelity_review_enabled = settings.image_fidelity_review_enabled
+    gateway.image_fidelity_readback_model = settings.image_fidelity_readback_model
     return gateway
 
 
@@ -10988,11 +11003,10 @@ def _aurora_structure_zone_counts(structure: Mapping[str, Any]) -> dict[str, int
 
 
 def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
-    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review"}:
-        from .image_fidelity import AUTHORITY_ROLES, response_schema
-        ids = tuple(s.asset_id for s in request.sources if s.source_role in AUTHORITY_ROLES)
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback"}:
+        context = json.loads(request.product_information[0])
         return {"type": "json_schema", "json_schema": {"name": request.planning_profile,
-                "strict": True, "schema": response_schema(request.planning_profile, ids)}}
+                "strict": True, "schema": context["schema"]}}
     if request.planning_profile == "aurora_native_fast_identity":
         return _planner_response_format(replace(request, planning_profile="aurora_identity"))
     if request.planning_profile == "replica_exact_compact":
@@ -11315,7 +11329,7 @@ def _planner_prompt(request: PlannerRequest) -> str:
 
 
 def _planner_prompt_body(request: PlannerRequest) -> str:
-    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review"}:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback"}:
         return "Inspect the actual attached source/candidate images for this preservation task only. JSON only.\n" + "\n".join(request.product_information)
     if request.planning_profile == "aurora_native_fast_identity":
         return _planner_prompt_body(replace(request, planning_profile="aurora_identity")) + "\nReturn the complete identity response_schema:\n" + json.dumps(_aurora_identity_json_schema(), ensure_ascii=False)

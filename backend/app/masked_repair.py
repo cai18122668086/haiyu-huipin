@@ -1691,7 +1691,9 @@ def _effective_execution_path(
     if requested != "auto":
         return requested
     if _wall_recolour_colour(instruction) is not None:
-        return "deterministic"
+        # A colour token does not prove every selected pixel is wall. Preserve
+        # object boundaries/lighting through the contextual edit and review.
+        return "full"
     selected = sum(1 for value in authority.getdata() if value > 0)  # type: ignore[attr-defined,misc]
     total = authority.width * authority.height
     fraction = selected / total if total else 1.0

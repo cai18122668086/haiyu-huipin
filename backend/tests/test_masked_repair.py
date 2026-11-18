@@ -144,7 +144,7 @@ def test_wall_recolour_is_texture_preserving_and_never_expands_authority():
             instruction=instruction,
             authority=authority,
         )
-        == "deterministic"
+        == "full"
     )
     candidate = masked_repair_module._deterministic_repair(
         source, authority, instruction

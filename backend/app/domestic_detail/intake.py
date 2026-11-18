@@ -478,6 +478,8 @@ def intake_prompt(
         "and observed_expression_methods. Every analyzed_units entry's "
         "observed_expression_method must be copied VERBATIM from one entry "
         "in that same reference's observed_expression_methods array. "
+        "That parent array must equal the deduplicated methods from the "
+        "individual units EXACTLY; no extra ungrounded method is permitted. "
         "Do not paraphrase these cross-references. Do not fabricate ANALYZED "
         "references. No full plan/modules/copy is permitted in this "
         "response. Observed facts are atomic: include atomic_key and "

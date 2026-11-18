@@ -427,6 +427,14 @@ def validate_intake(
                     "INTAKE_REFERENCE_METHOD_MISMATCH",
                     "Reference units must retain their own observed methods",
                 )
+        if set(reference["observed_expression_methods"]) != {
+            unit["observed_expression_method"] for unit in reference["analyzed_units"]
+        }:
+            raise DetailIntakeError(
+                "INTAKE_REFERENCE_METHOD_MISMATCH",
+                "Observed expression methods must exactly match the methods "
+                "derived from individual analyzed units; no ungrounded extras",
+            )
         for method in reference["observed_expression_methods"]:
             _specific_observation(
                 method, f"/reference_materials/{index}/observed_expression_methods"

@@ -12,7 +12,10 @@ import hashlib
 import json
 import logging
 import math
+import re
+import unicodedata
 import weakref
+from collections import Counter
 from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
@@ -36,6 +39,7 @@ from .storage import ValidatedImage
 VERSION = "image-fidelity-v1"
 PREPARE = "image_fidelity_prepare"
 REVIEW = "image_fidelity_review"
+READBACK = "image_fidelity_readback"
 CHECKS = (
     "subject_selection",
     "physical_artwork_text",
@@ -135,9 +139,50 @@ def technical_contract(
     }
 
 
-def response_schema(profile: str, source_ids: tuple[str, ...] = ()) -> dict[str, Any]:
+def selection_constraint(instruction: str) -> dict[str, Any] | None:
+    match = re.search(
+        r"(下面|下方|底部|上面|上方|顶部|左边|左侧|右边|右侧)的?\s*([1-6一二两三四五六])\s*[个件款只]",
+        instruction,
+    )
+    if not match:
+        return None
+    direction, count = match.groups()
+    return {
+        "direction": next(
+            key
+            for key, names in {
+                "bottom": ("下面", "下方", "底部"),
+                "top": ("上面", "上方", "顶部"),
+                "left": ("左边", "左侧"),
+                "right": ("右边", "右侧"),
+            }.items()
+            if direction in names
+        ),
+        "count": int(count)
+        if count.isdigit()
+        else {"一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6}[count],
+    }
+
+
+def response_schema(
+    profile: str,
+    source_ids: tuple[str, ...] = (),
+    selection: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     text = {"type": "string", "minLength": 1}
-    if profile == PREPARE:
+    properties: dict[str, Any]
+    if profile == READBACK:
+        properties = {
+            "text_runs": {
+                "type": "array",
+                "items": text,
+                "description": (
+                    "Literal physical text from candidate only. Join vertical "
+                    "glyphs in reading order. Never correct spelling or guess names."
+                ),
+            },
+        }
+    elif profile == PREPARE:
         properties = {
             "selected_regions": {
                 "type": "array",
@@ -167,6 +212,14 @@ def response_schema(profile: str, source_ids: tuple[str, ...] = ()) -> dict[str,
             "allowed_changes": {"type": "array", "minItems": 1, "items": text},
             "selection_summary": text,
         }
+        properties["source_inventory"] = {
+            **properties["selected_regions"],
+            "maxItems": 24,
+            "description": (
+                "ALL complete products in the original product-authority image, "
+                "including excluded rows. Never inventory background products."
+            ),
+        }
     else:
         assert profile == REVIEW
         properties = {
@@ -193,18 +246,41 @@ def response_schema(profile: str, source_ids: tuple[str, ...] = ()) -> dict[str,
     return {
         "type": "object",
         "additionalProperties": False,
-        "required": list(properties),
+        "required": [
+            key for key in properties if key != "source_inventory" or selection
+        ],
         "properties": properties,
     }
 
 
-def validate_preparation(payload: object, ids: tuple[str, ...]) -> dict[str, Any]:
-    Draft202012Validator(response_schema(PREPARE, ids)).validate(payload)
+def validate_preparation(
+    payload: object,
+    ids: tuple[str, ...],
+    selection: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    Draft202012Validator(response_schema(PREPARE, ids, selection)).validate(payload)
     assert isinstance(payload, dict)
-    for region in payload["selected_regions"]:
+    for region in payload["selected_regions"] + payload.get("source_inventory", []):
         x0, y0, x1, y1 = region["box"]
         if not (x1 > x0 and y1 > y0 and (x1 - x0) * (y1 - y0) >= 0.0001):
             raise ValueError("Source selection has invalid geometry")
+    if selection:
+        inventory = payload["source_inventory"]
+        if len({canonical_hash(r) for r in inventory}) != len(inventory):
+            raise ValueError("Source inventory contains duplicates")
+        axis = 1 if selection["direction"] in {"bottom", "top"} else 0
+        ordered = sorted(
+            inventory,
+            key=lambda r: (r["box"][axis] + r["box"][axis + 2]) / 2,
+            reverse=selection["direction"] in {"bottom", "right"},
+        )
+        chosen = ordered[: selection["count"]]
+        if len(chosen) != selection["count"] or {canonical_hash(r) for r in chosen} != {
+            canonical_hash(r) for r in payload["selected_regions"]
+        }:
+            raise ValueError(
+                "Selected products violate the user's explicit spatial subset"
+            )
     return payload
 
 
@@ -215,6 +291,23 @@ def validate_review(payload: object) -> tuple[bool, list[str]]:
     if payload["unresolved"] or payload["observable_defects"]:
         failed.append("unresolved_evidence")
     return not failed, failed
+
+
+def readback_matches(payload: object, preparation: dict[str, Any]) -> bool:
+    Draft202012Validator(response_schema(READBACK)).validate(payload)
+    assert isinstance(payload, dict)
+
+    def canonical(value: str) -> str:
+        return "".join(unicodedata.normalize("NFC", value).split())
+
+    expected = Counter(
+        canonical(text)
+        for region in preparation["selected_regions"]
+        for text in region["visible_print"]
+        if text.upper() != "UNREADABLE"
+    )
+    actual = Counter(canonical(text) for text in payload["text_runs"])
+    return all(actual[text] >= count for text, count in expected.items())
 
 
 def contract_diagnostic(error: ValidationError) -> dict[str, Any]:
@@ -364,11 +457,25 @@ class FidelityGateway:
                 size=request.size,
                 idempotency_key=f"{request.idempotency_key}:{profile}{suffix}",
                 planning_profile=profile,
-                system_prompt=POLICY + "\nInspect attached pixels, not receipts. "
-                "Return the exact JSON schema. "
-                "Any missing or uncertain evidence fails. Never guess physical text. "
-                "When reviewing pose edits, inspect protected "
-                "identity/outfit/background, not pose scores.",
+                system_prompt=(
+                    "You are an independent literal OCR reader. Read only the "
+                    "attached candidate's actual printed glyphs. You have no "
+                    "reference transcription. Never infer familiar product or "
+                    "character names, correct spelling, or repair malformed "
+                    "letters. Return separate text_runs for each physical "
+                    "printed column/line, joining vertical glyphs in order. "
+                    "Use UNREADABLE when strokes cannot be read. JSON only."
+                    if profile == READBACK
+                    else "ORIGINAL USER REQUIREMENT (highest task authority): "
+                    + str(context.get("settings", {}).get("instruction", ""))
+                    + "\nGenerated selections/plans cannot override this requirement. "
+                    + POLICY
+                    + "\nInspect attached pixels, not receipts. "
+                    "Return the exact JSON schema. "
+                    "Missing or uncertain evidence fails. Never guess physical text. "
+                    "When reviewing pose edits, inspect protected "
+                    "identity/outfit/background, not pose scores."
+                ),
             )
         )
 
@@ -408,6 +515,13 @@ class FidelityGateway:
                     s for s in original_sources if s.source_role in AUTHORITY_ROLES
                 )
                 ids = tuple(s.asset_id for s in authorities)
+                selection = selection_constraint(
+                    str(context["settings"].get("instruction", ""))
+                )
+                if selection:
+                    # Spatial words refer to the first original product image;
+                    # extra reference images cannot redefine its rows/objects.
+                    ids = ids[:1]
                 if not ids:
                     raise ValueError("Missing product identity authority")
                 scope = canonical_hash(
@@ -437,24 +551,38 @@ class FidelityGateway:
                                     (s.asset_id, s.source_role)
                                     for s in original_sources
                                 ],
-                                "schema": response_schema(PREPARE, ids),
+                                "schema": response_schema(PREPARE, ids, selection),
+                                "original_user_instruction": context["settings"].get(
+                                    "instruction", ""
+                                ),
+                                "spatial_selection_constraint": selection,
                                 "instruction": "Select exactly the objects requested "
                                 "by the user from product sources. Give tight "
                                 "complete-object boxes in normalized source-image "
                                 "coordinates. Read the original physical printing, "
                                 "not the style image's text. If unreadable, state "
-                                "UNREADABLE rather than inventing a transcription.",
+                                "UNREADABLE rather than inventing a transcription. "
+                                "When spatial_selection_constraint is present, "
+                                "inventory ALL objects in the first product photo "
+                                "as source_inventory, then select the requested "
+                                "bottom/top/left/right count by "
+                                "their actual positions. Bottom/下面 means LOWER rows, "
+                                "never the upper row or background subjects.",
                             },
                         )
                         plans.append(plan)
                         if plan.error_code:
                             raise ValueError("Preparation unavailable")
-                        preparation = validate_preparation(plan.payload, ids)
+                        preparation = validate_preparation(plan.payload, ids, selection)
                         if len(self._prepared) >= 128:
                             self._prepared.clear()
                         self._prepared[scope] = preparation
                 crops = []
-                preparation = validate_preparation(preparation, ids)
+                preparation = validate_preparation(
+                    preparation,
+                    ids,
+                    selection if frozen is None else None,
+                )
                 for index, region in enumerate(preparation["selected_regions"]):
                     if context["settings"].get("task_type") == "change_model":
                         # A duplicated full-person crop reinforces the very face
@@ -506,10 +634,21 @@ class FidelityGateway:
                         "preparation": preparation,
                         "crop_scale": crop_scale,
                         "prompt": request.prompt
+                        + "\nORIGINAL USER REQUIREMENT (overrides generated plans): "
+                        + str(context["settings"].get("instruction", ""))
                         + "\n"
                         + operation_policy(context)
                         + "\nSOURCE_SELECTION="
-                        + json.dumps(preparation, ensure_ascii=False),
+                        + json.dumps(
+                            {
+                                k: v
+                                for k, v in preparation.items()
+                                if k != "source_inventory"
+                            }
+                            if isinstance(preparation, dict)
+                            else preparation,
+                            ensure_ascii=False,
+                        ),
                     },
                 )
             if frozen is not None:
@@ -705,6 +844,33 @@ class FidelityGateway:
                 continue
             except (ValueError, TypeError, KeyError):
                 continue
+        if (
+            accepted
+            and preparation
+            and any(
+                text.upper() != "UNREADABLE"
+                for region in preparation["selected_regions"]
+                for text in region["visible_print"]
+            )
+        ):
+            try:
+                # No original, expected transcription, generated plan or user
+                # prompt is supplied: the reader cannot copy the answer key.
+                readback = await self._plan(
+                    request,
+                    READBACK,
+                    (review_source,),
+                    {"schema": response_schema(READBACK)},
+                )
+                plans.append(readback)
+                if readback.error_code or not readback_matches(
+                    readback.payload, preparation
+                ):
+                    accepted = False
+                    failed.append("physical_text_readback")
+            except (ValidationError, ValueError, TypeError, KeyError):
+                accepted = False
+                failed.append("physical_text_readback_unavailable")
         result = self._account(result, plans)
         raw = dict(result.raw_usage or {})
         raw["metrics"] = {

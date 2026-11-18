@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+from copy import deepcopy
 from dataclasses import replace
 from datetime import timedelta
 from io import BytesIO
@@ -13,7 +14,10 @@ from sqlalchemy import select
 from app.image_fidelity import (
     CHECKS,
     PREPARE,
+    READBACK,
     FidelityGateway,
+    readback_matches,
+    selection_constraint,
     technical_contract,
     validate_preparation,
     validate_review,
@@ -72,6 +76,33 @@ def test_all_true_cannot_override_unresolved_evidence(field):
     assert validate_review(value) == (False, ["unresolved_evidence"])
 
 
+@pytest.mark.parametrize("transcription", ["モモソガ", "ちいかわ", "UNREADABLE"])
+def test_independent_literal_readback_rejects_wrong_or_unknown_print(transcription):
+    assert readback_matches({"text_runs": [transcription]}, preparation()) is False
+    assert readback_matches({"text_runs": ["モ\nモ\nン\nガ"]}, preparation()) is True
+
+
+def test_all_true_visual_review_cannot_override_candidate_only_ocr():
+    class BlindReaderGateway(Gateway):
+        async def plan(self, req):
+            self.plans.append(req)
+            value = preparation() if req.planning_profile == PREPARE else review()
+            if req.planning_profile == READBACK:
+                assert len(req.sources) == 1 and req.sources[0].asset_id == "candidate"
+                assert "モモンガ" not in req.system_prompt
+                assert "モモンガ" not in str(req.product_information)
+                value = {"text_runs": ["ちいかわ"]}
+            return PlannerCallResult(value, "reader", {}, {"reported": True}, 0.1, 2)
+
+    gateway = BlindReaderGateway()
+    result = asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    assert result.error_code == "IMAGE_FIDELITY_REJECTED"
+    assert result.raw_usage["metrics"]["image_fidelity"]["failed_checks"] == [
+        "physical_text_readback"
+    ]
+    assert len(gateway.edits) == 1 and len(gateway.plans) == 3
+
+
 @pytest.mark.parametrize("change", ["style_authority", "empty_box", "out_of_bounds"])
 def test_selection_cannot_use_style_or_invalid_geometry(change):
     value = preparation()
@@ -82,6 +113,59 @@ def test_selection_cannot_use_style_or_invalid_geometry(change):
         region["box"] = [0, 0, 0, 1] if change == "empty_box" else [-0.1, 0, 1, 1]
     with pytest.raises((ValueError, ValidationError)):
         validate_preparation(value, ("product",))
+
+
+@pytest.mark.parametrize(
+    "instruction,direction",
+    [
+        ("只需要下面的3个，不改变图案", "bottom"),
+        ("保留上方的三个", "top"),
+        ("只要左侧3件", "left"),
+        ("选右边的三款", "right"),
+    ],
+)
+def test_explicit_spatial_selection_is_verified_against_full_source_inventory(
+    instruction, direction
+):
+    constraint = selection_constraint(instruction)
+    assert constraint == {"direction": direction, "count": 3}
+    value = preparation()
+    inventory = []
+    for row in range(2):
+        for col in range(3):
+            region = deepcopy(value["selected_regions"][0])
+            region.update(
+                box=[col / 3, row / 2, (col + 0.8) / 3, (row + 0.8) / 2],
+                identity=f"original product {row}-{col}",
+            )
+            inventory.append(region)
+    value["source_inventory"] = inventory
+    axis = 1 if direction in {"bottom", "top"} else 0
+    ordered = sorted(
+        inventory,
+        key=lambda r: r["box"][axis] + r["box"][axis + 2],
+        reverse=direction in {"bottom", "right"},
+    )
+    value["selected_regions"] = ordered[:3]
+    assert validate_preparation(value, ("product",), constraint) == value
+    value["selected_regions"] = ordered[-3:]
+    with pytest.raises(ValueError, match="spatial subset"):
+        validate_preparation(value, ("product",), constraint)
+
+
+def test_unverified_spatial_selection_stops_before_any_paid_image():
+    class SpatialFidelity(ScopedFidelity):
+        def _context(self, request):
+            return {
+                "job_type": "creative_image",
+                "settings": {"instruction": "只需要下面的3个"},
+            }
+
+    gateway = Gateway()
+    result = asyncio.run(SpatialFidelity(gateway, None, None).edit(request(gateway)))
+    assert result.outcome == ProviderOutcome.FAILED
+    assert gateway.edits == []
+    assert "只需要下面的3个" in gateway.plans[0].system_prompt
 
 
 class Gateway:

@@ -527,6 +527,36 @@ def test_native_reference_limit_rejects_before_purchase():
     assert status == 400 and delegate.calls == []
 
 
+def test_native_mask_guide_keeps_the_original_canvas_and_exact_authority():
+    original = png("white")
+    mask = Image.new("RGBA", (1024, 1024), (255, 255, 255, 255))
+    mask.putpixel((10, 10), (255, 255, 255, 0))
+    buffer = BytesIO()
+    mask.save(buffer, "PNG")
+    delegate = Transport([image_response()])
+    transport = HaiyuTransport(delegate, native_references=True)
+    status, _ = asyncio.run(
+        transport.post_multipart(
+            url="https://api.haiyushuke.com/v1/images/edits",
+            headers={},
+            fields=[("model", MODELS[0]), ("prompt", "Edit only selected wall")],
+            files=[
+                ("image", "original.png", "image/png", original),
+                ("mask", "authority.png", "image/png", buffer.getvalue()),
+            ],
+            timeout_seconds=30,
+        )
+    )
+    assert status == 200
+    sent = delegate.calls[0]
+    assert len(sent["files"]) == 2 and sent["files"][0][3] == original
+    with Image.open(BytesIO(sent["files"][1][3])) as guide:
+        assert guide.size == (1024, 1024)
+        assert guide.getpixel((20, 20)) == (255, 255, 255)
+        assert guide.getpixel((10, 10)) != (255, 255, 255)
+    assert "EDIT MAP ONLY" in dict(sent["fields"])["prompt"]
+
+
 @pytest.mark.parametrize("old_encoder", ["jpeg", "png"])
 @pytest.mark.parametrize("old_size", [False, True])
 def test_legacy_packing_receipt_resumes_without_changing_or_resubmitting(
