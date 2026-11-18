@@ -192,6 +192,7 @@ class Settings(BaseSettings):
     # Public DNS results require no allowlist; private/LAN addresses stay denied.
     image_result_allowed_hosts: tuple[str, ...] = ()
     haiyu_image_size_enabled: bool = False
+    haiyu_native_references_enabled: bool = False
     # Optional second OpenAI-compatible route. The primary analysis/image
     # settings above remain intact; this route is only used when explicitly
     # enabled and can be placed first through provider_rotation_order.

@@ -3604,6 +3604,7 @@ def build_tengli_gateway(settings: Settings) -> TengliOpenAICompatibleGateway:
             transport or NativeUrllibOpenAITransport(),
             result_allowed_hosts=settings.image_result_allowed_hosts,
             send_size=settings.haiyu_image_size_enabled,
+            native_references=settings.haiyu_native_references_enabled,
             journal_dir=settings.aurora_work_root / "haiyu-image-results",
         )
     gateway = TengliOpenAICompatibleGateway(

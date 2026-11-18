@@ -1,8 +1,8 @@
-"""Haiyu's one-reference, asynchronous image API at the transport boundary.
+"""Haiyu's asynchronous image API at the transport boundary.
 
 Original assets and workflow contracts remain in the existing job/storage layer.
-Only the provider wire format is adapted here; no request is replayed after an
-unknown outcome. See https://www.haiyushuke.com/docs/guides/image.
+Only the provider wire format is adapted here; native references/controls are
+operator-gated, and no request is replayed after an unknown outcome.
 """
 
 from __future__ import annotations
@@ -287,6 +287,7 @@ class HaiyuTransport:
         task_timeout: float = 900,
         result_allowed_hosts: tuple[str, ...] = (),
         send_size: bool = False,
+        native_references: bool = False,
         journal_dir: Path | None = None,
     ) -> None:
         self.delegate = delegate
@@ -294,6 +295,7 @@ class HaiyuTransport:
         self.task_timeout = task_timeout
         self.result_allowed_hosts = result_allowed_hosts
         self.send_size = send_size
+        self.native_references = native_references
         self.journal_dir = journal_dir
 
     def _request_journal(
@@ -495,13 +497,28 @@ class HaiyuTransport:
                 timeout_seconds=timeout_seconds,
             )
         values = dict(fields)
-        wire_files, note = await asyncio.to_thread(
-            pack_references, files, target_size=values.get("size", "")
-        )
-        # Haiyu currently verifies the default canvas only; explicitly passing
-        # size returns 503 "No verified channel supports these parameters".
-        # Express the target in the prompt and let existing workflow validators
-        # reject a native artifact that does not meet its delivery contract.
+        if self.native_references and all(part[0] == "image" for part in files):
+            # Operator-enabled only after end-to-end multi-reference validation.
+            # Keep original ordered bytes and native image indices; a contact
+            # sheet is not equivalent to separate product/background sources.
+            if (
+                not 1 <= len(files) <= 16
+                or sum(len(part[3]) for part in files) > 50 * 1024 * 1024
+                or any(len(part[3]) > 20 * 1024 * 1024 for part in files)
+            ):
+                return 400, {
+                    "error": {
+                        "code": "invalid_parameter",
+                        "message": "Native reference input limit exceeded",
+                    }
+                }
+            wire_files, note = list(files), ""
+        else:
+            wire_files, note = await asyncio.to_thread(
+                pack_references, files, target_size=values.get("size", "")
+            )
+        # Native controls remain operator-gated until their upstream bindings
+        # pass acceptance. The workflow always validates the returned pixels.
         if values.get("size"):
             note += f"\nTarget output canvas: {values['size']} pixels."
         from .haiyu_prompt import fit_prompt
@@ -521,7 +538,10 @@ class HaiyuTransport:
                     "message": str(prompt_error),
                 }
             }
-        wire_fields = [(key, value) for key, value in fields if key in {"model", "n"}]
+        allowed_fields = {"model", "n"}
+        if self.native_references:
+            allowed_fields.update({"quality", "input_fidelity"})
+        wire_fields = [(key, value) for key, value in fields if key in allowed_fields]
         if self.send_size and values.get("size"):
             wire_fields.append(("size", values["size"]))
         wire_fields += [
@@ -562,25 +582,49 @@ class HaiyuTransport:
                 # Reconstruct the historical encoder and require an EXACT
                 # fingerprint match. This read-only path cannot reserve or send
                 # a new request, nor accept changed source bytes/instructions.
-                legacy_files, legacy_note = await asyncio.to_thread(
-                    _legacy_pack_references,
-                    files,
-                )
-                if values.get("size"):
-                    legacy_note += f"\nTarget output canvas: {values['size']} pixels."
-                legacy_prompt = fit_prompt(values.get("prompt", "") + legacy_note)
-                legacy_fields = [
-                    (key, legacy_prompt if key == "prompt" else value)
-                    for key, value in wire_fields
-                ]
-                journal, receipt, fresh = self._request_journal(
-                    url,
-                    wire_headers["Idempotency-Key"],
-                    legacy_fields,
-                    legacy_files,
-                    reconcile_only=True,
-                )
-                wire_fields, wire_files = legacy_fields, legacy_files
+                matched = False
+                for encoder in (pack_references, _legacy_pack_references):
+                    if encoder is pack_references:
+                        old_files, old_note = await asyncio.to_thread(
+                            encoder, files, target_size=values.get("size", "")
+                        )
+                    else:
+                        old_files, old_note = await asyncio.to_thread(encoder, files)
+                    if values.get("size"):
+                        old_note += f"\nTarget output canvas: {values['size']} pixels."
+                    old_prompt = fit_prompt(values.get("prompt", "") + old_note)
+                    for old_size in (True, False):
+                        old_fields = [
+                            (name, value)
+                            for name, value in fields
+                            if name in {"model", "n"}
+                        ]
+                        if old_size and values.get("size"):
+                            old_fields.append(("size", values["size"]))
+                        old_fields += [
+                            ("prompt", old_prompt),
+                            ("async", "true"),
+                            ("response_format", "url"),
+                        ]
+                        try:
+                            journal, receipt, fresh = self._request_journal(
+                                url,
+                                wire_headers["Idempotency-Key"],
+                                old_fields,
+                                old_files,
+                                reconcile_only=True,
+                            )
+                        except XingheAgentError as mismatch:
+                            if "parameters changed" not in str(mismatch):
+                                raise
+                            continue
+                        wire_fields, wire_files = old_fields, old_files
+                        matched = True
+                        break
+                    if matched:
+                        break
+                if not matched:
+                    raise exc
         except OSError as exc:
             raise _error(
                 "Image request journal is unavailable; reconcile before retry."

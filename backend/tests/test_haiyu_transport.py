@@ -479,9 +479,61 @@ class JournalTransport(HaiyuTransport):
         }
 
 
+def test_native_references_preserve_order_bytes_and_explicit_controls():
+    delegate = Transport([image_response()])
+    files = [
+        ("image", "product.png", "image/png", png()),
+        ("image", "background.png", "image/png", png("pink")),
+    ]
+    fields = [
+        ("model", MODELS[0]),
+        ("prompt", "Use image 2 as background"),
+        ("quality", "high"),
+        ("input_fidelity", "high"),
+        ("size", "1464x600"),
+        ("n", "1"),
+    ]
+    transport = HaiyuTransport(delegate, send_size=True, native_references=True)
+    status, _ = asyncio.run(
+        transport.post_multipart(
+            url="https://api.haiyushuke.com/v1/images/edits",
+            headers={"Idempotency-Key": "native-test"},
+            fields=fields,
+            files=files,
+            timeout_seconds=30,
+        )
+    )
+    assert status == 200 and len(delegate.calls) == 1
+    sent = delegate.calls[0]
+    assert sent["files"] == files
+    values = dict(sent["fields"])
+    assert values["quality"] == values["input_fidelity"] == "high"
+    assert values["size"] == "1464x600"
+    assert "REFERENCE SHEET" not in values["prompt"]
+
+
+def test_native_reference_limit_rejects_before_purchase():
+    delegate = Transport([])
+    transport = HaiyuTransport(delegate, native_references=True)
+    status, _ = asyncio.run(
+        transport.post_multipart(
+            url="https://api.haiyushuke.com/v1/images/edits",
+            headers={},
+            fields=[("model", MODELS[0]), ("prompt", "Preserve")],
+            files=[("image", f"source-{i}.png", "image/png", png()) for i in range(17)],
+            timeout_seconds=30,
+        )
+    )
+    assert status == 400 and delegate.calls == []
+
+
+@pytest.mark.parametrize("old_encoder", ["jpeg", "png"])
+@pytest.mark.parametrize("old_size", [False, True])
 def test_legacy_packing_receipt_resumes_without_changing_or_resubmitting(
     tmp_path,
     monkeypatch,
+    old_encoder,
+    old_size,
 ):
     from app import haiyu_transport
 
@@ -495,20 +547,36 @@ def test_legacy_packing_receipt_resumes_without_changing_or_resubmitting(
     args = dict(
         url="https://api.haiyushuke.com/v1/images/edits",
         headers={"Idempotency-Key": "historical-key"},
-        fields=[("model", MODELS[0]), ("prompt", "Original instruction")],
+        fields=[
+            ("model", MODELS[0]),
+            ("prompt", "Original instruction"),
+            ("size", "1464x600"),
+            ("quality", "high"),
+            ("input_fidelity", "high"),
+        ],
         files=files,
         timeout_seconds=30,
     )
     monkeypatch.setattr(
         haiyu_transport,
         "pack_references",
-        lambda value, **_: haiyu_transport._legacy_pack_references(value),
+        (lambda value, **_: haiyu_transport._legacy_pack_references(value))
+        if old_encoder == "jpeg"
+        else original_packer,
     )
-    first = JournalTransport(delegate, journal_dir=tmp_path, poll_interval=0)
+    first = JournalTransport(
+        delegate, journal_dir=tmp_path, poll_interval=0, send_size=old_size
+    )
     asyncio.run(first.post_multipart(**args))
     monkeypatch.setattr(haiyu_transport, "pack_references", original_packer)
     resumed_delegate = Transport([])
-    resumed = JournalTransport(resumed_delegate, journal_dir=tmp_path, poll_interval=0)
+    resumed = JournalTransport(
+        resumed_delegate,
+        journal_dir=tmp_path,
+        poll_interval=0,
+        send_size=True,
+        native_references=True,
+    )
     status, result = asyncio.run(resumed.post_multipart(**args, reconcile_only=True))
     assert status == 200 and result["haiyu_task_id"] == "historical-task"
     assert len(delegate.calls) == 1 and resumed_delegate.calls == []
