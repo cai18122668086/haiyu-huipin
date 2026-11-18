@@ -20,10 +20,13 @@ REGIONS_SCHEMA = {
         "items": {"type": "number", "minimum": 0, "maximum": 1},
     },
     "description": (
-        "Separate source-photo quadrilaterals for EVERY physical printed column "
-        "or copyright line, including repeated series marks. Each has 8 numbers "
+        "One source-photo quadrilateral per complete visible printed SURFACE "
+        "(such as the entire colored hanging tag), containing ALL its columns, "
+        "secondary marks and copyright. Do not split adjacent printed columns "
+        "into competing crops. Each has 8 numbers "
         "x0,y0,x1,y1,x2,y2,x3,y3 in TL,TR,BR,BL order around the actual angled "
-        "printed surface. No transcription. Convex polygons must be disjoint "
+        "complete printed surface, including every edge glyph. No transcription. "
+        "Convex polygons for distinct printed surfaces must be disjoint "
         "and entirely inside this product's box; their bounding boxes may overlap."
     ),
 }
