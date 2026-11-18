@@ -6,6 +6,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import test from "node:test";
 import { checkUpstreamAdvisories } from "./audit-front-dependencies.mjs";
+import { primeVendorCache, verifiedArchives } from "./prime-vendor-cache.mjs";
+import os from "node:os";
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(import.meta.dirname, "..");
@@ -19,6 +21,29 @@ test("installed React server and Next.js versions match the security update", ()
   for (const [name, version] of [["react", "19.2.9"], ["react-dom", "19.2.9"],
     ["react-server-dom-webpack", "19.2.9"], ["next", "16.4.6"]]) {
     assert.equal(require(`${name}/package.json`).version, version, name);
+  }
+});
+
+test("reviewed archive cache works offline and refuses changed bytes or origins", async () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "huipin-archive-cache-"));
+  try {
+    assert.deepEqual(await primeVendorCache(root, path.join(temporary, "cache")), { verified_archives: 2, offline_verified: true });
+    const fixture = path.join(temporary, "fixture");
+    fs.mkdirSync(path.join(fixture, "vendor"), { recursive: true });
+    for (const major of ["v2", "v4"]) fs.copyFileSync(path.join(root, "vendor", `picomatch-${major}.tgz`), path.join(fixture, "vendor", `picomatch-${major}.tgz`));
+    const original = fs.readFileSync(path.join(root, "package-lock.json"));
+    fs.writeFileSync(path.join(fixture, "package-lock.json"), original);
+    const archive = path.join(fixture, "vendor", "picomatch-v2.tgz");
+    const bytes = fs.readFileSync(archive);
+    fs.writeFileSync(archive, Buffer.concat([bytes, Buffer.from("changed")]));
+    assert.throws(() => verifiedArchives(fixture), /integrity mismatch/);
+    fs.writeFileSync(archive, bytes);
+    for (const origin of ["untrusted.example", "user:credential@raw.githubusercontent.com"]) {
+      fs.writeFileSync(path.join(fixture, "package-lock.json"), original.toString().replaceAll("raw.githubusercontent.com", origin));
+      assert.throws(() => verifiedArchives(fixture));
+    }
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
   }
 });
 

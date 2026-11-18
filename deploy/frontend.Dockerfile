@@ -3,7 +3,8 @@ FROM ${POLARIS_NODE_BASE_IMAGE} AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY vendor vendor
-RUN npm ci --ignore-scripts --no-audit --fund=false
+COPY build/prime-vendor-cache.mjs build/prime-vendor-cache.mjs
+RUN node build/prime-vendor-cache.mjs && npm ci --prefer-offline --ignore-scripts --no-audit --fund=false
 
 FROM dependencies AS build
 COPY app app

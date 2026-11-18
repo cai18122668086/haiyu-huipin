@@ -50,7 +50,7 @@ COPY package.json package-lock.json eslint.config.mjs ./
 COPY build build
 COPY vendor vendor
 COPY tests tests
-RUN npm ci --ignore-scripts --no-audit --fund=false
+RUN node build/prime-vendor-cache.mjs && npm ci --prefer-offline --ignore-scripts --no-audit --fund=false
 RUN npm run audit:security
 RUN cp -a /app/dist/client/_polaris-static /tmp/previous-static && npm run build && cp -an /tmp/previous-static/. /app/dist/client/_polaris-static/
 FROM {NODE} AS runtime

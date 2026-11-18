@@ -22,6 +22,11 @@ advisory after installed-source checks and subprocess attack deadlines pass;
 new or changed disclosures fail the gate. Registry dependency auditing keeps
 the existing high-severity threshold. No blanket advisory suppression is used.
 
+Docker builds prime npm's cache from these tracked tarballs after verifying the
+lockfile SHA-512 and the immutable repository URL. An offline extraction check
+must succeed before installation. This supports restricted build networks
+without changing dependency URLs, lockfile integrity or TLS verification.
+
 The upstream parser also supports raw regular-expression constructs and an
 explicit trusted-pattern safeguard opt-out. These forks address the named
 default repeated-wildcard extglob vulnerability, not arbitrary regex safety.
