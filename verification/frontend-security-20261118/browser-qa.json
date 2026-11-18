@@ -1,0 +1,25 @@
+{
+  "revision": "d82a5aa3b5963bf9ac26e4e1897d574145acf595",
+  "local_production_build": true,
+  "candidate_source_files_matched": 402,
+  "browser_checks": [
+    "homepage visual rendering",
+    "homepage interactive showcase tab",
+    "SPA navigation to tools",
+    "tools headings and links",
+    "help route and live search for 上传 returned 5 results"
+  ],
+  "server_candidate_browser_suite": "included in 272 passing tests on Node 24 with pinned official Chromium image",
+  "server_preview_http": "passed on private Docker network",
+  "ssh_browser_forward": "blocked by existing SSH forwarding policy; unchanged",
+  "post_deploy_browser_verification": {
+    "status": "passed",
+    "routes": [
+      "/",
+      "/tools",
+      "/help"
+    ],
+    "navigation": "homepage to tools to help",
+    "visual_checks": "homepage and help rendered normally"
+  }
+}

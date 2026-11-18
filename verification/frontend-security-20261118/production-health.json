@@ -1,0 +1,74 @@
+{
+  "containers": {
+    "huipin-prelaunch-api-1": {
+      "id": "0c2e75ad4f09aa09468bb9cc95142046bc4663ac6b78dfd4112610339adb2633",
+      "image": "huipin-planner-retry/backend:8c4537e09656dd7d9202b44129889aac9d5c4af6",
+      "image_id": "sha256:879b4bfcf64444c96c11c0b3c15f86a6f26020e9d2e3bf0400455323b79a920f",
+      "running": true,
+      "health": "healthy"
+    },
+    "huipin-prelaunch-worker-1": {
+      "id": "5fe09a6c654ab159ed588d4f17c1537b719624b4705a5c9c082d3aa526ef210b",
+      "image": "huipin-planner-retry/backend:8c4537e09656dd7d9202b44129889aac9d5c4af6",
+      "image_id": "sha256:879b4bfcf64444c96c11c0b3c15f86a6f26020e9d2e3bf0400455323b79a920f",
+      "running": true,
+      "health": "healthy"
+    },
+    "huipin-prelaunch-dispatcher-1": {
+      "id": "c909e5221433ccc53c7c17f5d239b2c2098c604f7827b388eb573d88e404c10a",
+      "image": "huipin-planner-retry/backend:8c4537e09656dd7d9202b44129889aac9d5c4af6",
+      "image_id": "sha256:879b4bfcf64444c96c11c0b3c15f86a6f26020e9d2e3bf0400455323b79a920f",
+      "running": true,
+      "health": "healthy"
+    },
+    "huipin-prelaunch-frontend-1": {
+      "id": "cccc8a5af0a9aa9bbccd658a790e5661912ca8c3cf7219732c4ef1e02287b6e0",
+      "image": "huipin-frontend-security/frontend:d82a5aa3b5963bf9ac26e4e1897d574145acf595",
+      "image_id": "sha256:479bd7b9b133129e42d480b7f8f0cd37861f9eacba4ec31a1129c9eaa308629a",
+      "running": true,
+      "health": "healthy"
+    }
+  },
+  "health": {
+    "/health/live": {
+      "http_status": 200,
+      "status": "ok",
+      "service": "Polaris Commerce Studio API",
+      "version": "1.1.0",
+      "checks": {
+        "process": "ok"
+      }
+    },
+    "/health/ready": {
+      "http_status": 200,
+      "status": "ok",
+      "service": "Polaris Commerce Studio API",
+      "version": "1.1.0",
+      "checks": {
+        "database": "ok",
+        "task_broker": "ok",
+        "object_storage": "ok",
+        "authentication": "ok"
+      }
+    }
+  },
+  "migration": "20261106_0040",
+  "activation": {
+    "status": "activated",
+    "revision": "d82a5aa3b5963bf9ac26e4e1897d574145acf595",
+    "frontend_image": "huipin-frontend-security/frontend:d82a5aa3b5963bf9ac26e4e1897d574145acf595",
+    "previous_image": "huipin-online-support/frontend:1953f622abd4431985e55c37c238ece8b67f8bc4",
+    "backend_restarted": false,
+    "database_changed": false,
+    "other_services_preserved": true,
+    "runtime_environment_preserved": true,
+    "protected_configuration_preserved": true,
+    "public_routes_verified": 7,
+    "public_original_assets_verified": 6,
+    "security_and_unit_tests_passed": true,
+    "matched_files": 402
+  },
+  "activated_at_beijing": "2026-11-18 13:47",
+  "audited_image_matches_production": true,
+  "backend_container_ids_preserved": true
+}

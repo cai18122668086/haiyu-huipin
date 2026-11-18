@@ -1,0 +1,25 @@
+{
+  "revision": "d82a5aa3b5963bf9ac26e4e1897d574145acf595",
+  "released_at_beijing": "2026-11-18 13:47",
+  "local": {
+    "clean_npm_ci": "passed",
+    "security_self_tests": 10,
+    "registry_vulnerabilities": 0,
+    "frontend_tests": 272,
+    "lint_errors": 0,
+    "lint_existing_warnings": 3,
+    "typecheck": "passed",
+    "production_build": "passed",
+    "deployment_tests": 115,
+    "source_preflight": "passed"
+  },
+  "required_ci_checks_passed": 14,
+  "candidate_regression_tests": 272,
+  "candidate_tests_skipped": 0,
+  "candidate_source_files": 402,
+  "unchanged_application_sources": 304,
+  "production_routes": 7,
+  "production_original_assets": 6,
+  "production_browser_routes": 3,
+  "rollback_retained": true
+}

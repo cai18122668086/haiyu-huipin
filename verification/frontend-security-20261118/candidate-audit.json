@@ -1,0 +1,16 @@
+{
+  "registry_vulnerabilities": 0,
+  "canonical_upstream_audit": {
+    "registry_audit": "passed",
+    "upstream": "picomatch@2.3.2,4.0.7",
+    "locally_patched": [
+      "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"
+    ],
+    "unreviewed_upstream_advisories": 0
+  },
+  "security_self_tests": 10,
+  "frontend_tests": 272,
+  "failures": 0,
+  "skipped": 0,
+  "runtime_node": "24.22.1"
+}
