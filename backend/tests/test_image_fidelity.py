@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import json
 from copy import deepcopy
 from dataclasses import replace
 from datetime import timedelta
@@ -722,6 +723,9 @@ def test_local_silver_render_preserves_original_and_never_submits_an_image(
             and result.raw_usage["network_requests"] == 5
         )
         assert result.raw_usage["source_recolor"]["outside_mask_changed_pixels"] == 0
+        reader = [p for p in gateway.plans if p.planning_profile == READBACK][-1]
+        assert all(s.source_role == "candidate_detail" for s in reader.sources)
+        assert "モモンガ" not in str(reader.product_information)
         with Image.open(BytesIO(result.artifact.payload)) as actual:
             assert actual.getpixel((10, 10)) == (147, 147, 147)
             assert actual.getpixel((0, 0)) == (185, 145, 60)
@@ -1023,6 +1027,12 @@ def test_native_pair_composes_only_approved_source_layers_after_one_background(
             [0, 0, 1, 1],
             [0.1, 0.45, 0.9, 0.65],
         ]
+        projection = [p for p in gateway.plans if p.planning_profile == BACKGROUND][0]
+        assert any(
+            s.source_role == "source_window_reference:0" for s in projection.sources
+        )
+        context = json.loads(projection.product_information[0])
+        assert context["source_layer_inventory"][0]["width_over_height"] == 1
         with Image.open(BytesIO(result.artifact.payload)) as image:
             assert image.size == (40, 80)
             assert image.getpixel((20, 20)) == (255, 0, 0, 255)

@@ -167,7 +167,7 @@ def test_remix_literal_review_uses_configured_vision_and_never_falls_back(failur
         ("aurora_remix_fast_review", "kimi-k2.6"),
         ("image_fidelity_matte", "qwen3.5-plus"),
         ("image_fidelity_background", "qwen3.5-plus"),
-        ("image_fidelity_prepare", "analysis-model"),
+        ("image_fidelity_prepare", "kimi-k2.6"),
     ],
 )
 def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expected):

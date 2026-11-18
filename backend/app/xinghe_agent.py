@@ -2613,17 +2613,19 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask"}:
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
                 route_payload = {**payload, "model": route.planner_model}
-                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask"}:
+                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
                     route_payload["model"] = (
                         self.image_fidelity_precision_model
                         if request.planning_profile in {
-                            "image_fidelity_readback", "aurora_remix_fast_review", "image_fidelity_color_mask"
+                            "image_fidelity_readback", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"
                         } and self.image_fidelity_precision_model
+                        else route.planner_model
+                        if request.planning_profile == "image_fidelity_prepare"
                         else self.image_fidelity_readback_model or route.planner_model
                     )
                     if route_payload["model"].casefold().startswith("qwen"):
@@ -2646,8 +2648,12 @@ class TengliOpenAICompatibleGateway:
                             "max_completion_tokens": 8192,
                             "thinking": {"type": "disabled"},
                         })
+                    elif request.planning_profile in {
+                        "image_fidelity_prepare", "image_fidelity_color_mask"
+                    }:
+                        route_payload["max_completion_tokens"] = 8192
                 planner_key = request.idempotency_key
-                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask"}:
+                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
                     planner_key += ":literal-ocr:" + hashlib.sha256(
                         route_payload["model"].encode()
                     ).hexdigest()[:12]

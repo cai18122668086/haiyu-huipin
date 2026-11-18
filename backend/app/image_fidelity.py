@@ -763,6 +763,10 @@ class FidelityGateway:
                         "coordinates. Read the original physical printing, "
                         "not the style image's text. If unreadable, state "
                         "UNREADABLE rather than inventing a transcription. "
+                        "visible_print uses separate entries for each physical "
+                        "printed column or copyright line. Join vertical glyphs "
+                        "in their reading order; never combine a name, series "
+                        "column and copyright into one invented text run. "
                         "When spatial_selection_constraint is present, "
                         "inventory ALL objects in the first product photo "
                         "as source_inventory, then select the requested "
@@ -1250,6 +1254,11 @@ class FidelityGateway:
                         "domestic_main_image",
                         "reference_remix",
                     }
+                    crop_allowed = (
+                        self._native_pair
+                        or context["job_type"]
+                        in {"amazon_visual_suite", "domestic_main_image"}
+                    ) and context.get("item_key") != "MAIN-01"
                     if planned_layout:
                         background_schema["properties"]["placements"] = {
                             "type": "array",
@@ -1288,7 +1297,7 @@ class FidelityGateway:
                             },
                         }
                         background_schema["required"].append("placements")
-                        if self._native_pair:
+                        if crop_allowed:
                             background_schema["properties"]["placements"]["items"][
                                 "properties"
                             ]["source_window"] = {
@@ -1318,7 +1327,13 @@ class FidelityGateway:
                         if source.asset_id in background_ids
                     )
                     source_cutouts: tuple[Any, ...] = ()
-                    if self._native_pair:
+                    projection_inventory = [
+                        {"layer_index": i, "identity": region["identity"]}
+                        for i, region in enumerate(
+                            (preparation or {}).get("selected_regions", [])
+                        )
+                    ]
+                    if planned_layout:
                         source_cutouts = await self._source_layers(
                             request, pixel_recipe, original_sources
                         )
@@ -1335,6 +1350,16 @@ class FidelityGateway:
                                     ref.payload,
                                     source_role=f"source_window_reference:{i}",
                                 )
+                            )
+                            projection_inventory[i].update(
+                                {
+                                    "reference_asset_id": (
+                                        f"source-window-reference-{i}"
+                                    ),
+                                    "width": ref.width,
+                                    "height": ref.height,
+                                    "width_over_height": ref.width / ref.height,
+                                }
                             )
                         projection_sources += tuple(references)
                     projection_feedback = None
@@ -1365,12 +1390,7 @@ class FidelityGateway:
                                     "describes the EMPTY style and clear text areas, "
                                     "never requests the generator to draw letters."
                                 ),
-                                "source_layer_inventory": [
-                                    {"layer_index": i, "identity": region["identity"]}
-                                    for i, region in enumerate(
-                                        (preparation or {}).get("selected_regions", [])
-                                    )
-                                ],
+                                "source_layer_inventory": projection_inventory,
                                 "placement_contract": (
                                     "Select source layer indices for EACH approved "
                                     "module. For two panels: top=0, bottom=1. "
@@ -1379,8 +1399,14 @@ class FidelityGateway:
                                     "own coordinates .04-.96. Do NOT use source "
                                     "photo coordinates or full-pair coordinates. "
                                     "Follow the approved subject, copy and layout; "
-                                    "a layer may repeat on the other panel. Keep "
-                                    "room for all approved text. Never cross the "
+                                    "a layer may repeat on the other panel. "
+                                    "Each layer is ONE product, not the whole "
+                                    "group. Use its measured width_over_height. "
+                                    "When a group contains several products, "
+                                    "split its destination area into separate "
+                                    "non-overlapping cells; never repeat the "
+                                    "whole group rectangle for every member. "
+                                    "Keep room for all approved text. Never cross the "
                                     "seam or overlap cells. Inventory is the "
                                     "permitted pool, not an instruction to "
                                     "include every product in every panel."
@@ -1414,16 +1440,16 @@ class FidelityGateway:
                                 )
                                 trial_recipe["placement_indices"] = indices
                                 trial_recipe["cells"] = cells
-                                if self._native_pair:
-                                    windows = [
-                                        p.get("source_window", [0, 0, 1, 1])
-                                        for p in background_plan.payload["placements"]
-                                    ]
-                                    source_pixels.crop_windows(
-                                        tuple(source_cutouts[i] for i in indices),
-                                        windows,
-                                    )
-                                    trial_recipe["source_windows"] = windows
+                            if crop_allowed:
+                                windows = [
+                                    p.get("source_window", [0, 0, 1, 1])
+                                    for p in background_plan.payload["placements"]
+                                ]
+                                source_pixels.crop_windows(
+                                    tuple(source_cutouts[i] for i in indices),
+                                    windows,
+                                )
+                                trial_recipe["source_windows"] = windows
                             text_width, text_height = (
                                 int(v) for v in request.size.split("x")
                             )
@@ -2248,10 +2274,31 @@ class FidelityGateway:
             try:
                 # No original, expected transcription, generated plan or user
                 # prompt is supplied: the reader cannot copy the answer key.
+                readback_sources = (review_source,)
+                if recolor_proof is not None:
+                    # Local recoloring keeps original dimensions and geometry.
+                    # Give the independent reader actual candidate crops at the
+                    # same evidence scale as source OCR, without any answer key.
+                    candidate_asset_id = preparation["selected_regions"][0]["asset_id"]
+                    candidate_request = replace(
+                        request,
+                        sources=(replace(review_source, asset_id=candidate_asset_id),),
+                    )
+                    readback_sources = tuple(
+                        replace(
+                            view,
+                            asset_id=f"candidate-detail-{i}",
+                            filename=f"candidate-detail-{i}.png",
+                            source_role="candidate_detail",
+                        )
+                        for i, view in enumerate(
+                            self._selection_evidence(candidate_request, preparation)
+                        )
+                    )
                 readback = await self._plan(
                     request,
                     READBACK,
-                    (review_source,),
+                    readback_sources,
                     {"schema": response_schema(READBACK)},
                 )
                 plans.append(readback)

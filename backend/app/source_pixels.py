@@ -557,11 +557,14 @@ def native_placements(
         # authored destination geometry, never source or supplier image pixels.
         y0, y1 = (panel + y0) / panels, (panel + y1) / panels
         box = [x0, y0, x1, y1]
-        if any(
-            min(x1, old[2]) > max(x0, old[0]) and min(y1, old[3]) > max(y0, old[1])
-            for old in cells
-        ):
-            raise ValueError("Native product placements overlap")
+        for old_index, old in enumerate(cells):
+            if min(x1, old[2]) > max(x0, old[0]) and min(y1, old[3]) > max(y0, old[1]):
+                raise ValueError(
+                    f"placements[{len(cells)}].panel_box overlaps "
+                    f"placements[{old_index}].panel_box: "
+                    f"{entry['panel_box']} versus {value[old_index]['panel_box']}. "
+                    "Each source layer is one product; use disjoint cells."
+                )
         indices.append(index)
         cells.append(box)
         seen_panels.add(panel)
