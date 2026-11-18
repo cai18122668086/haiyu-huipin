@@ -2632,7 +2632,8 @@ class TengliOpenAICompatibleGateway:
                     route_payload["model"] = (
                         self.image_fidelity_precision_model
                         if request.planning_profile in {
-                            "image_fidelity_readback", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"
+                            "image_fidelity_readback", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare",
+                            "image_fidelity_matte", "image_fidelity_background",
                         } and self.image_fidelity_precision_model
                         else route.planner_model
                         if request.planning_profile == "image_fidelity_prepare"
@@ -2656,7 +2657,7 @@ class TengliOpenAICompatibleGateway:
                             "response_format": {"type": "json_object"},
                             "max_completion_tokens": 8192,
                         })
-                        if request.planning_profile == "image_fidelity_readback":
+                        if request.planning_profile.startswith("image_fidelity_"):
                             route_payload["thinking"] = {"type": "disabled"}
                     elif request.planning_profile in {
                         "image_fidelity_prepare", "image_fidelity_color_mask"
