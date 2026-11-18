@@ -4,7 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY vendor vendor
 COPY build/prime-vendor-cache.mjs build/prime-vendor-cache.mjs
-RUN node build/prime-vendor-cache.mjs && npm ci --prefer-offline --ignore-scripts --no-audit --fund=false
+RUN node build/prime-vendor-cache.mjs
+RUN npm ci --ignore-scripts --no-audit --fund=false
 
 FROM dependencies AS build
 COPY app app
