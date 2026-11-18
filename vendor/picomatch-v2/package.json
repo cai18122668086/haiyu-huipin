@@ -85,7 +85,7 @@
     "upstreamVersion": "2.3.2",
     "upstreamIntegrity": "sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==",
     "originalParseSha256": "3a91656f440069aa8f8e15c9d695b9f6b2209df1eab2be8127c72cbcca45ff5f",
-    "patchedParseSha256": "bd47a0e830769a1906a612e4017d226c1d26ceaf9132fc286cece40e70a9d709",
+    "patchedParseSha256": "1461c22e818bf5f0b93536c082edbdb7c2550d94bed60aab1f924ff1029c73b8",
     "policy": "literalize repeated wildcard extglobs before regular-expression construction"
   }
 }
