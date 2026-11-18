@@ -1,0 +1,12 @@
+{
+  "status": "activated",
+  "revision": "8c4537e09656dd7d9202b44129889aac9d5c4af6",
+  "image": "huipin-planner-retry/backend:8c4537e09656dd7d9202b44129889aac9d5c4af6",
+  "source_files": 406,
+  "backup_bytes": 6073987,
+  "backup_sha256": "91510e955d5e2a937b82bd6fedc354be781f1a5aa55285e52bde63e464c4cbb3",
+  "runtime_preserved": true,
+  "schema_and_campaigns_preserved": true,
+  "customer_tasks_restarted": false,
+  "frontend_preserved": true
+}

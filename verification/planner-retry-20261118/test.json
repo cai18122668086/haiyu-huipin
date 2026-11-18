@@ -1,0 +1,18 @@
+{
+  "exit_code": 0,
+  "image_id": "sha256:879b4bfcf64444c96c11c0b3c15f86a6f26020e9d2e3bf0400455323b79a920f",
+  "isolated_database": true,
+  "tests": [
+    "tests/test_xinghe_single_image_provider.py",
+    "tests/test_haiyu_transport.py",
+    "tests/test_haiyu_prompt.py",
+    "tests/test_execution_reliability.py",
+    "tests/test_customer_credit_billing.py",
+    "tests/test_new_job_contracts.py",
+    "tests/test_replica_unknown_retry.py",
+    "tests/test_credit_payments.py",
+    "tests/test_replica_fast.py",
+    "tests/test_credit_memberships.py",
+    "tests/test_credit_refunds.py"
+  ]
+}
