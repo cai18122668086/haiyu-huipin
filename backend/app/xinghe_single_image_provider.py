@@ -782,9 +782,12 @@ class XingheSingleImageProvider:
             analysis = await self.gateway.plan(planner_request)
             payload = analysis.payload if isinstance(analysis.payload, Mapping) else {}
             missing = sorted(required - payload.keys())
+            # Optional visual concepts can legitimately be empty collections
+            # (e.g. no typography). Only the executable prompt requires text.
             invalid = sorted(
                 key for key in required & payload.keys()
-                if not payload[key] or not _bounded_analysis_text(payload[key], fallback="").strip()
+                if (key == "original_execution_prompt" and not isinstance(payload[key], str))
+                or (isinstance(payload[key], str) and not _bounded_analysis_text(payload[key], fallback="").strip())
             )
             if analysis.error_code is None and not missing and not invalid:
                 logger.info(
@@ -843,7 +846,9 @@ class XingheSingleImageProvider:
             feedback = (
                 "\nPLANNING VALIDATION FEEDBACK: Return a complete JSON object only, "
                 "with every required field populated. Do not return a schema or wrap "
-                "the object. Keep each field concise. Reinspect the original images "
+                "the object. Empty collections are allowed for visual concepts that "
+                "do not apply; original_execution_prompt must be non-empty text. "
+                "Keep each field concise. Reinspect the original images "
                 "and preserve the original user instruction. Required fields: "
                 + ", ".join(sorted(required))
                 + ". Missing fields: " + ", ".join(missing)

@@ -1141,8 +1141,8 @@ def test_creative_missing_fields_retry_then_generate_once(harness, creative_case
 def test_creative_exhaustion_logs_only_contract_fields(harness, creative_case, caplog):
     provider, request, sleeps = creative_case
     payload = dict(_creative_plan_result().payload)
-    del payload["original_execution_prompt"]
-    payload["commercial_intent"] = None
+    del payload["commercial_intent"]
+    payload["original_execution_prompt"] = None
     payload[SECRET] = "private provider response"
     harness.gateway.plan_results = [_creative_plan_result(payload=payload)] * 3
 
@@ -1155,8 +1155,8 @@ def test_creative_exhaustion_logs_only_contract_fields(harness, creative_case, c
     assert harness.gateway.requests == []
     assert sleeps == [1, 2]
     diagnostics = result.raw_usage["creative_planning"]
-    assert diagnostics["missing_fields"] == ["original_execution_prompt"]
-    assert diagnostics["invalid_fields"] == ["commercial_intent"]
+    assert diagnostics["missing_fields"] == ["commercial_intent"]
+    assert diagnostics["invalid_fields"] == ["original_execution_prompt"]
     assert diagnostics["attempt"] == 3
     assert diagnostics["will_retry"] is False
     assert caplog.text.count("creative_planning_failed") == 3
@@ -1227,6 +1227,20 @@ def test_creative_non_object_response_retries(harness, creative_case):
     ]
     assert asyncio.run(provider.execute(request)).outcome == ProviderOutcome.SUCCEEDED
     assert harness.gateway.plan_calls == 2
+    assert len(harness.gateway.requests) == 1
+
+
+@pytest.mark.parametrize("no_zones", [[], {}, None])
+def test_creative_plan_can_explicitly_have_no_text_zones(harness, creative_case, no_zones):
+    provider, request, sleeps = creative_case
+    payload = dict(_creative_plan_result().payload)
+    payload["typography_zones"] = no_zones
+    payload["forbidden_transfer"] = []
+    harness.gateway.plan_results = [_creative_plan_result(payload=payload)]
+    result = asyncio.run(provider.execute(request))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert harness.gateway.plan_calls == 1
+    assert sleeps == []
     assert len(harness.gateway.requests) == 1
 
 
