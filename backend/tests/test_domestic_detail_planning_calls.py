@@ -120,6 +120,76 @@ class Transport:
         }
 
 
+@pytest.mark.parametrize("failure", [None, "timeout", "server_with_cost"])
+def test_remix_literal_review_uses_configured_vision_and_never_falls_back(failure):
+    import hashlib
+
+    from app.xinghe_agent import SourceImage
+
+    transport = Transport(failure)
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline",
+        base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model",
+        image_model="image-model",
+        transport=transport,
+        failover_enabled=True,
+        failover_api_key="offline-alternate",
+        failover_base_url="https://alternate.offline.invalid/",
+        failover_model="alternate-model",
+    )
+    gateway.image_fidelity_readback_model = "qwen3.5-plus"
+    source = SourceImage(
+        "paired-original",
+        "primary",
+        "source.png",
+        "image/png",
+        hashlib.sha256(b"synthetic-pixels").hexdigest(),
+        b"synthetic-pixels",
+        source_role="product_authority_detail",
+    )
+    req = replace(request("aurora_remix_fast_review"), sources=(source,))
+    result = asyncio.run(gateway.plan(req))
+    assert len(transport.calls) == 1
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == "qwen3.5-plus"
+    assert payload["enable_thinking"] is False
+    assert payload["max_completion_tokens"] == 8192
+    images = [v for v in payload["messages"][1]["content"] if v["type"] == "image_url"]
+    assert len(images) == 1 and images[0]["image_url"]["detail"] == "high"
+    assert result.actual_cost_micros == (37 if failure != "timeout" else None)
+
+
+@pytest.mark.parametrize(
+    "profile,expected",
+    [
+        ("image_fidelity_readback", "kimi-k2.6"),
+        ("aurora_remix_fast_review", "kimi-k2.6"),
+        ("image_fidelity_matte", "qwen3.5-plus"),
+        ("image_fidelity_background", "qwen3.5-plus"),
+        ("image_fidelity_prepare", "analysis-model"),
+    ],
+)
+def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expected):
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline",
+        base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model",
+        image_model="image-model",
+        transport=transport,
+    )
+    gateway.image_fidelity_readback_model = "qwen3.5-plus"
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    asyncio.run(gateway.plan(request(profile)))
+    assert len(transport.calls) == 1
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == expected
+    if profile == "image_fidelity_readback":
+        assert payload["thinking"] == {"type": "disabled"}
+        assert payload["max_completion_tokens"] == 8192
+
+
 @pytest.mark.parametrize("profile", PROFILES)
 def test_native_replay_uses_one_original_call_and_charges_once(
     client, tmp_path, profile

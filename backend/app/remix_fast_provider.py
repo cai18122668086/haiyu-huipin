@@ -343,7 +343,12 @@ class RemixFastProvider(XingheSingleImageProvider):
                 source_evidence = getattr(
                     self.gateway, "selected_source_evidence", None
                 )
-                if callable(source_evidence):
+                paired_evidence = getattr(self.gateway, "paired_source_evidence", None)
+                if callable(paired_evidence):
+                    review_sources.extend(
+                        await paired_evidence(image_request, artifact)
+                    )
+                elif callable(source_evidence):
                     review_sources.extend(source_evidence(image_request))
                 review_sources.append(
                     _source("watermark_detail", wm.read_bytes(), "image/png")
@@ -397,6 +402,23 @@ class RemixFastProvider(XingheSingleImageProvider):
                                 "directly; existing source reflections, folds or "
                                 "marks are not newly invented defects. Real "
                                 "changed/missing printing or hardware still fails."
+                            ),
+                            "comparison_pairs": (
+                                "source_candidate_comparison images show LEFT "
+                                "SOURCE: original photographed product RGB with "
+                                "its reviewed source mask on neutral grey; RIGHT "
+                                "CANDIDATE: actual complete destination crop with "
+                                "its background. Both use the SAME uniform scale "
+                                "and full product geometry. Compare printed "
+                                "strokes and fittings directly in each pair. "
+                                "The unmasked full candidate remains authority "
+                                "for background, layout and source leakage. "
+                                "Original physical copyright, logos, curved tag "
+                                "baselines and reflections are protected source "
+                                "features. A brief's exclusion of added branding "
+                                "or benchmark text cannot forbid those originals. "
+                                "Never guess a familiar copyright/name from blur; "
+                                "compare the actual paired printed strokes."
                             ),
                             "measured_candidate_dimensions": [
                                 artifact.width,

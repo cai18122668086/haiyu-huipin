@@ -612,6 +612,7 @@ class PixelGateway(Gateway):
             payload = {
                 "background_description": "Pure white empty background",
                 "marketing_copy": [],
+                "text_layout": [],
             }
         else:
             assert call.planning_profile != READBACK
@@ -672,6 +673,102 @@ def pixel_extraction(sources, preparation, model):
     return (PixelLayer(layer, sources[0].asset_id, sources[0].sha256, (0, 0, 40, 40)),)
 
 
+@pytest.mark.parametrize("mask_accepted", [True, False])
+def test_local_silver_render_preserves_original_and_never_submits_an_image(
+    mask_accepted,
+):
+    from app import source_pixels, source_recolor
+
+    class GoldGateway(Gateway):
+        image_fidelity_source_pixels_enabled = True
+
+        async def plan(self, call):
+            self.plans.append(call)
+            if call.planning_profile == PREPARE:
+                payload = preparation()
+            elif call.planning_profile == READBACK:
+                payload = {"text_runs": ["モモンガ"]}
+            elif call.planning_profile == source_recolor.PROFILE:
+                payload = {
+                    "pixel_inspected": mask_accepted,
+                    "unresolved": [],
+                    "regions": [{"part": "metal_clasp", "box": [0.2, 0.2, 0.35, 0.35]}],
+                }
+            else:
+                payload = review()
+            return PlannerCallResult(payload, "offline", {}, {"reported": True}, 0.1, 2)
+
+    class GoldGuard(ScopedFidelity):
+        def _context(self, call):
+            return {
+                "job_type": "product_image",
+                "settings": {
+                    "task_type": "change_color",
+                    "target_color": "银色，仅金属配件",
+                    "instruction": "只将金属扣改成银色，保留图案、文字和背景",
+                },
+            }
+
+    gateway = GoldGateway()
+    gateway.artifact = source_pixels.artifact(
+        Image.new("RGB", (40, 40), (185, 145, 60)), "original.png"
+    )
+    result = asyncio.run(GoldGuard(gateway, None, None).edit(request(gateway)))
+    assert gateway.edits == []
+    if mask_accepted:
+        assert result.outcome == ProviderOutcome.SUCCEEDED
+        assert (
+            result.actual_cost_micros == 10
+            and result.raw_usage["network_requests"] == 5
+        )
+        assert result.raw_usage["source_recolor"]["outside_mask_changed_pixels"] == 0
+        with Image.open(BytesIO(result.artifact.payload)) as actual:
+            assert actual.getpixel((10, 10)) == (147, 147, 147)
+            assert actual.getpixel((0, 0)) == (185, 145, 60)
+    else:
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert result.actual_cost_micros == 6
+
+
+@pytest.mark.parametrize("recover", [True, False])
+def test_invalid_text_projection_retries_once_before_buying_any_background(
+    monkeypatch, recover
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class InvalidLayout(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == BACKGROUND:
+                count = len([p for p in self.plans if p.planning_profile == BACKGROUND])
+                if count == 1 or not recover:
+                    result.payload["text_layout"] = [
+                        {
+                            "copy_index": 0,
+                            "panel": 0,
+                            "panel_box": [0.1, 0.1, 0.9, 0.2],
+                            "role": "heading",
+                            "color": "#333333",
+                            "align": "left",
+                        }
+                    ]
+            return result
+
+    gateway = InvalidLayout()
+    guard = PixelGuard(gateway, None, None)
+    result = asyncio.run(guard.edit(request(gateway)))
+    layouts = [p for p in gateway.plans if p.planning_profile == BACKGROUND]
+    assert (
+        len(layouts) == 2 and layouts[0].idempotency_key != layouts[1].idempotency_key
+    )
+    if recover:
+        assert result.outcome == ProviderOutcome.SUCCEEDED
+        assert len(gateway.edits) == 1
+    else:
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert gateway.edits == []
+
+
 def test_source_product_rgb_is_composited_after_one_native_background(monkeypatch):
     monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
     gateway = PixelGateway()
@@ -687,6 +784,13 @@ def test_source_product_rgb_is_composited_after_one_native_background(monkeypatc
         result.raw_usage["source_pixel_preservation"]["background_sha256"]
         == guard.evidence["fidelity_backgroundNone"].sha256
     )
+    comparisons = asyncio.run(
+        guard.paired_source_evidence(request(gateway), result.artifact)
+    )
+    assert [source.source_role for source in comparisons] == [
+        "source_candidate_comparison",
+    ]
+    assert comparisons[0].sha256 == hashlib.sha256(comparisons[0].payload).hexdigest()
 
 
 def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image(
@@ -707,6 +811,59 @@ def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image
     assert result.outcome == ProviderOutcome.SUCCEEDED
     assert len(gateway.edits) == 1
     assert len([p for p in gateway.plans if p.planning_profile == PREPARE]) == 1
+
+
+@pytest.mark.parametrize("accepted", [True, False])
+def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_failures(
+    monkeypatch, accepted
+):
+    extractions = []
+
+    def extraction(*args):
+        extractions.append(1)
+        return pixel_extraction(*args)
+
+    monkeypatch.setattr("app.source_pixels.extract_layers", extraction)
+
+    class CachedMatteGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == MATTE and not accepted:
+                result.payload.update(
+                    complete_objects=False, unresolved=["Missing edge"]
+                )
+            return result
+
+    gateway = CachedMatteGateway()
+    first = PixelGuard(gateway, None, None)
+    second = PixelGuard(gateway, None, None)
+    second._prepared, second._locks, second._mattes = (
+        first._prepared,
+        first._locks,
+        first._mattes,
+    )
+    one = asyncio.run(first.edit(request(gateway)))
+    two = asyncio.run(
+        second.edit(
+            replace(
+                request(gateway),
+                job_item_id="second-item",
+                idempotency_key="second-item-key",
+            )
+        )
+    )
+    assert len(extractions) == 1
+    assert len([p for p in gateway.plans if p.planning_profile == MATTE]) == 1
+    if accepted:
+        assert one.outcome == two.outcome == ProviderOutcome.SUCCEEDED
+        assert len(gateway.edits) == 2
+        assert (
+            first.frozen["pixel_recipe"]["layers"]
+            == second.frozen["pixel_recipe"]["layers"]
+        )
+    else:
+        assert one.error_code == two.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert gateway.edits == []
 
 
 @pytest.mark.parametrize("second_pass", [True, False])
@@ -819,7 +976,12 @@ def test_native_pair_composes_only_approved_source_layers_after_one_background(
                         "panel": 0,
                         "panel_box": [0.1, 0.2, 0.9, 1.01 if cross_seam else 0.9],
                     },
-                    {"layer_index": 0, "panel": 1, "panel_box": [0.1, 0.2, 0.9, 0.9]},
+                    {
+                        "layer_index": 0,
+                        "panel": 1,
+                        "panel_box": [0.1, 0.2, 0.9, 0.9],
+                        "source_window": [0.1, 0.45, 0.9, 0.65],
+                    },
                 ]
             return result
 
@@ -857,6 +1019,10 @@ def test_native_pair_composes_only_approved_source_layers_after_one_background(
         assert len(gateway.edits) == 1
         assert gateway.edits[0].idempotency_key == original.idempotency_key
         assert guard.frozen["pixel_recipe"]["placement_indices"] == [0, 0]
+        assert guard.frozen["pixel_recipe"]["source_windows"] == [
+            [0, 0, 1, 1],
+            [0.1, 0.45, 0.9, 0.65],
+        ]
         with Image.open(BytesIO(result.artifact.payload)) as image:
             assert image.size == (40, 80)
             assert image.getpixel((20, 20)) == (255, 0, 0, 255)

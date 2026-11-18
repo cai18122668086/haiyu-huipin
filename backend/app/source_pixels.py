@@ -21,7 +21,7 @@ from PIL import Image, ImageChops, ImageFilter, ImageOps
 
 from .provider import ProviderArtifact
 
-VERSION = "source-pixel-layers-v6"
+VERSION = "source-pixel-layers-v8-owned-connected-context"
 MODEL_SHA256 = "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"
 MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx"
 _lock = threading.Lock()
@@ -127,7 +127,8 @@ def _alpha(
         second = Image.new("L", crop.size)
         second.paste(refined, (box[0], box[1]))
         coarse = ImageChops.lighter(first, second)
-        return _recover_fine_edges(crop, coarse, cv, np)
+        refined = _recover_fine_edges(crop, coarse, cv, np)
+        return _single_product(refined, cv, np)
 
 
 def _recover_fine_edges(
@@ -202,6 +203,13 @@ def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
         255,
         0,
     ).astype(np.uint8)
+    return _single_product(Image.fromarray(alpha, "L"), cv, np)
+
+
+def _single_product(mask: Image.Image, cv: Any, np: Any) -> Image.Image:
+    # The same disconnected-fragment guard applies AFTER mask unions and
+    # edge refinement too. They must not reintroduce a neighboring product.
+    alpha = np.array(mask)
     count, components, stats, _ = cv.connectedComponentsWithStats(alpha, 8)
     if count < 2:
         raise ValueError("Source matte has no connected product")
@@ -263,6 +271,17 @@ def extract_layers(
             min(image.width, math.ceil(x1 * image.width) + pad),
             min(image.height, math.ceil(y1 * image.height) + pad),
         )
+        # Context may include another complete product, especially on an
+        # already isolated white-background intermediate. Limit inference to
+        # the source object's spatial cell; retain the original photographed
+        # pixels, not a white fill or an invented mask. Completeness review
+        # still rejects any fitting clipped by an ambiguous inventory.
+        left, top, right, bottom = owned_context(
+            region,
+            preparation.get("source_inventory", []),
+            image.size,
+            (left, top, right, bottom),
+        )
         crop = image.crop((left, top, right, bottom))
         if crop.width * crop.height > 8_000_000:
             raise ValueError("Source selection exceeds the bounded matte pixel budget")
@@ -300,6 +319,42 @@ def extract_layers(
             )
         )
     return tuple(layers)
+
+
+def owned_context(
+    selected: dict[str, Any],
+    inventory: list[dict[str, Any]],
+    size: tuple[int, int],
+    crop: tuple[int, int, int, int],
+) -> tuple[int, int, int, int]:
+    x0, y0, x1, y1 = selected["box"]
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    left, top, right, bottom = crop
+    for other in inventory:
+        if other["asset_id"] != selected["asset_id"] or other["box"] == selected["box"]:
+            continue
+        a0, b0, a1, b1 = other["box"]
+        ox, oy = (a0 + a1) / 2, (b0 + b1) / 2
+        aligned_y = min(y1, b1) - max(y0, b0) > min(y1 - y0, b1 - b0) * 0.5
+        aligned_x = min(x1, a1) - max(x0, a0) > min(x1 - x0, a1 - a0) * 0.5
+        if aligned_y and abs(ox - cx) > min(x1 - x0, a1 - a0) * 0.5:
+            boundary = round((ox + cx) * size[0] / 2)
+            if ox < cx:
+                left = max(left, boundary)
+            else:
+                right = min(right, boundary)
+        if aligned_x and abs(oy - cy) > min(y1 - y0, b1 - b0) * 0.5:
+            boundary = round((oy + cy) * size[1] / 2)
+            if oy < cy:
+                top = max(top, boundary)
+            else:
+                bottom = min(bottom, boundary)
+    if not (
+        0 <= left < cx * size[0] < right <= size[0]
+        and 0 <= top < cy * size[1] < bottom <= size[1]
+    ):
+        raise ValueError("Source inventory cannot isolate the selected product context")
+    return left, top, right, bottom
 
 
 def preview(cutout: ProviderArtifact) -> ProviderArtifact:
@@ -456,6 +511,16 @@ def background_prompt(
         + "\nFINAL REQUIREMENT: empty background plate only, with absolutely "
         "no product, character, keychain, charm, metal clasp, tag, rack, "
         "silhouette, placeholder or lettering on a product."
+        + (
+            "\nREQUIRED VISIBLE MARKETING TEXT: Render EVERY approved copy "
+            "string above exactly, using the approved panel layout and hierarchy "
+            "outside product cells. Empty background means no products; it does "
+            "not cancel these required headlines and supporting text. Any "
+            "generic 'no text' in the background description applies only to "
+            "the reserved product cells. Missing approved copy is a failure."
+            if copy
+            else "\nNO TEXT anywhere: no marketing copy was approved."
+        )
     )
 
 
@@ -505,6 +570,143 @@ def native_placements(
     return indices, cells
 
 
+def crop_windows(
+    cutouts: tuple[ProviderArtifact, ...],
+    windows: list[list[float]] | None,
+) -> tuple[ProviderArtifact, ...]:
+    """Approved close-ups use original pixels, never a generated replacement."""
+    if windows is None:
+        return cutouts
+    if len(windows) != len(cutouts):
+        raise ValueError("Close-up placement count changed")
+    result = []
+    for cutout, window in zip(cutouts, windows, strict=True):
+        if len(window) != 4 or any(
+            type(v) not in (int, float) or not math.isfinite(v) for v in window
+        ):
+            raise ValueError("Invalid original-pixel close-up")
+        x0, y0, x1, y1 = window
+        if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
+            raise ValueError("Original-pixel close-up leaves its source")
+        if list(window) == [0, 0, 1, 1]:
+            result.append(cutout)
+            continue
+        if hashlib.sha256(cutout.payload).hexdigest() != cutout.sha256:
+            raise ValueError("Source pixels changed before close-up extraction")
+        with Image.open(BytesIO(cutout.payload)) as opened:
+            rgba = opened.convert("RGBA")
+        visible = rgba.getchannel("A").getbbox()
+        if visible is None:
+            raise ValueError("Close-up has no photographed product")
+        rgba = rgba.crop(visible)
+        crop = rgba.crop(
+            (
+                math.floor(x0 * rgba.width),
+                math.floor(y0 * rgba.height),
+                math.ceil(x1 * rgba.width),
+                math.ceil(y1 * rgba.height),
+            )
+        )
+        if min(crop.size) < 4 or crop.getchannel("A").getbbox() is None:
+            raise ValueError("Close-up contains no usable original product pixels")
+        result.append(artifact(crop, "original-product-closeup.png"))
+    return tuple(result)
+
+
+def layer_reference(cutout: ProviderArtifact) -> ProviderArtifact:
+    """Coordinate reference for a source window; never sent as a background."""
+    if hashlib.sha256(cutout.payload).hexdigest() != cutout.sha256:
+        raise ValueError("Original reference layer changed")
+    with Image.open(BytesIO(cutout.payload)) as opened:
+        rgba = opened.convert("RGBA")
+    visible = rgba.getchannel("A").getbbox()
+    if visible is None:
+        raise ValueError("Source reference is empty")
+    rgba = rgba.crop(visible)
+    canvas = Image.new("RGBA", rgba.size, "white")
+    canvas.alpha_composite(rgba)
+    factor = min(4, max(1, 1024 // max(canvas.size)))
+    return artifact(
+        canvas.resize(
+            (canvas.width * factor, canvas.height * factor), Image.Resampling.NEAREST
+        ),
+        "source-window-reference.png",
+    )
+
+
+def placed_layer(
+    cutout: ProviderArtifact, size: tuple[int, int], cell: list[float]
+) -> tuple[Image.Image, tuple[int, int, int, int], tuple[int, int, int, int]]:
+    """Use identical geometry for rendering and source/candidate comparisons."""
+    if hashlib.sha256(cutout.payload).hexdigest() != cutout.sha256:
+        raise ValueError("Saved source product pixels changed")
+    with Image.open(BytesIO(cutout.payload)) as opened:
+        rgba = opened.convert("RGBA")
+    visible_box = rgba.getchannel("A").getbbox()
+    if visible_box is None:
+        raise ValueError("Source product has no visible pixels")
+    rgba = rgba.crop(visible_box)
+    x0, y0, x1, y1 = cell
+    if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
+        raise ValueError("Invalid source product placement")
+    width, height = math.floor((x1 - x0) * size[0]), math.floor((y1 - y0) * size[1])
+    factor = min(width / rgba.width, height / rgba.height)
+    resized = rgba.resize(
+        (max(1, round(rgba.width * factor)), max(1, round(rgba.height * factor))),
+        Image.Resampling.LANCZOS,
+    )
+    left = round(x0 * size[0] + (width - resized.width) / 2)
+    top = round(y0 * size[1] + (height - resized.height) / 2)
+    return resized, (left, top, left + resized.width, top + resized.height), visible_box
+
+
+def comparison_panels(
+    candidate: ProviderArtifact,
+    cutouts: tuple[ProviderArtifact, ...],
+    cells: list[list[float]],
+) -> tuple[ProviderArtifact, ...]:
+    """Paired inspection evidence; never a delivery or substituted candidate.
+
+    LEFT is the original photographed layer, uniformly scaled by the frozen
+    render geometry on neutral grey. RIGHT is the actual complete destination
+    crop, with its actual background. Neither side synthesizes artwork/text.
+    The full unmasked candidate remains mandatory in the visual review.
+    """
+    from PIL import ImageDraw
+
+    if hashlib.sha256(candidate.payload).hexdigest() != candidate.sha256:
+        raise ValueError("Candidate comparison pixels changed")
+    with Image.open(BytesIO(candidate.payload)) as opened:
+        canvas = opened.convert("RGBA")
+    if canvas.size != (candidate.width, candidate.height):
+        raise ValueError("Candidate comparison dimensions changed")
+    if len(cutouts) != len(cells):
+        raise ValueError("Source comparison placement count changed")
+    comparisons = []
+    for i, (cutout, cell) in enumerate(zip(cutouts, cells, strict=True)):
+        source, box, _ = placed_layer(cutout, canvas.size, cell)
+        actual = canvas.crop(box)
+        # Fully opaque source pixels must match the real final candidate.
+        # This is an additional integrity check, not a visual approval flag.
+        for expected, observed in zip(source.getdata(), actual.getdata(), strict=True):
+            if expected[3] == 255 and expected != observed:
+                raise ValueError(
+                    "Candidate differs from original opaque product pixels"
+                )
+        pair = Image.new("RGBA", (source.width * 2 + 24, source.height + 32), "#dddddd")
+        pair.alpha_composite(source, (8, 24))
+        pair.alpha_composite(actual, (source.width + 16, 24))
+        draw = ImageDraw.Draw(pair)
+        draw.text((8, 5), "SOURCE", fill="black")
+        draw.text((source.width + 16, 5), "CANDIDATE", fill="black")
+        factor = min(4, max(1, 1024 // max(pair.size)))
+        pair = pair.resize(
+            (pair.width * factor, pair.height * factor), Image.Resampling.NEAREST
+        )
+        comparisons.append(artifact(pair, f"source-candidate-pair-{i}.png"))
+    return tuple(comparisons)
+
+
 def compose(
     background: ProviderArtifact,
     cutouts: tuple[ProviderArtifact, ...],
@@ -527,26 +729,8 @@ def compose(
     for cutout, cell in zip(cutouts, cells, strict=True):
         if hashlib.sha256(cutout.payload).hexdigest() != cutout.sha256:
             raise ValueError("Saved source product pixels changed")
-        with Image.open(BytesIO(cutout.payload)) as opened:
-            rgba = opened.convert("RGBA")
-        visible_box = rgba.getchannel("A").getbbox()
-        if visible_box is None:
-            raise ValueError("Source product has no visible pixels")
-        rgba = rgba.crop(visible_box)
-        x0, y0, x1, y1 = cell
-        if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
-            raise ValueError("Invalid source product placement")
-        width, height = (
-            math.floor((x1 - x0) * canvas.width),
-            math.floor((y1 - y0) * canvas.height),
-        )
-        factor = min(width / rgba.width, height / rgba.height)
-        resized = rgba.resize(
-            (max(1, round(rgba.width * factor)), max(1, round(rgba.height * factor))),
-            Image.Resampling.LANCZOS,
-        )
-        left = round(x0 * canvas.width + (width - resized.width) / 2)
-        top = round(y0 * canvas.height + (height - resized.height) / 2)
+        resized, box, visible_box = placed_layer(cutout, canvas.size, cell)
+        left, top = box[:2]
         canvas.alpha_composite(resized, (left, top))
         placements.append(
             {

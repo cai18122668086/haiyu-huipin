@@ -2299,6 +2299,8 @@ class TengliOpenAICompatibleGateway:
         self.review_price_micros = review_price_micros
         self.image_fidelity_review_enabled = False
         self.image_fidelity_readback_model = ""
+        self.image_fidelity_precision_model = ""
+        self.image_fidelity_font_path = Path("/app/fonts/NotoSansCJKsc-Regular.otf")
         self.image_fidelity_source_pixels_enabled = False
         self.image_fidelity_source_model_path = Path("/app/models/u2net.onnx")
         self.timeout_seconds = timeout_seconds
@@ -2544,7 +2546,7 @@ class TengliOpenAICompatibleGateway:
                     "type": "image_url",
                     "image_url": {
                         "url": f"data:{source.content_type};base64,{encoded}",
-                        **({"detail": "high"} if request.planning_profile.startswith("image_fidelity_") else {}),
+                        **({"detail": "high"} if request.planning_profile.startswith("image_fidelity_") or request.planning_profile == "aurora_remix_fast_review" else {}),
                     },
                 }
             )
@@ -2611,14 +2613,18 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background"}:
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask"}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
                 route_payload = {**payload, "model": route.planner_model}
-                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background"}:
+                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask"}:
                     route_payload["model"] = (
-                        self.image_fidelity_readback_model or route.planner_model
+                        self.image_fidelity_precision_model
+                        if request.planning_profile in {
+                            "image_fidelity_readback", "aurora_remix_fast_review", "image_fidelity_color_mask"
+                        } and self.image_fidelity_precision_model
+                        else self.image_fidelity_readback_model or route.planner_model
                     )
                     if route_payload["model"].casefold().startswith("qwen"):
                         # Literal OCR uses its complete schema in the prompt.
@@ -2629,8 +2635,19 @@ class TengliOpenAICompatibleGateway:
                             "max_completion_tokens": 8192,
                             "enable_thinking": False,
                         })
+                    elif (
+                        route_payload["model"].casefold().startswith("kimi")
+                        and request.planning_profile == "image_fidelity_readback"
+                    ):
+                        # Literal transcription needs no creative reasoning.
+                        # Preserve the independent candidate-only OCR schema.
+                        route_payload.update({
+                            "response_format": {"type": "json_object"},
+                            "max_completion_tokens": 8192,
+                            "thinking": {"type": "disabled"},
+                        })
                 planner_key = request.idempotency_key
-                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background"}:
+                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask"}:
                     planner_key += ":literal-ocr:" + hashlib.sha256(
                         route_payload["model"].encode()
                     ).hexdigest()[:12]
@@ -3667,6 +3684,8 @@ def build_tengli_gateway(settings: Settings) -> TengliOpenAICompatibleGateway:
     )
     gateway.image_fidelity_review_enabled = settings.image_fidelity_review_enabled
     gateway.image_fidelity_readback_model = settings.image_fidelity_readback_model
+    gateway.image_fidelity_precision_model = settings.image_fidelity_precision_model
+    gateway.image_fidelity_font_path = settings.image_fidelity_font_path
     gateway.image_fidelity_source_pixels_enabled = settings.image_fidelity_source_pixels_enabled
     gateway.image_fidelity_source_model_path = settings.image_fidelity_source_model_path
     return gateway
@@ -11036,7 +11055,7 @@ def _aurora_structure_zone_counts(structure: Mapping[str, Any]) -> dict[str, int
 
 
 def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
-    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background"}:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "image_fidelity_color_mask"}:
         context = json.loads(request.product_information[0])
         return {"type": "json_schema", "json_schema": {"name": request.planning_profile,
                 "strict": True, "schema": context["schema"]}}
@@ -11362,7 +11381,7 @@ def _planner_prompt(request: PlannerRequest) -> str:
 
 
 def _planner_prompt_body(request: PlannerRequest) -> str:
-    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background"}:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "image_fidelity_color_mask"}:
         return "Inspect the actual attached source/candidate images for this preservation task only. JSON only.\n" + "\n".join(request.product_information)
     if request.planning_profile == "aurora_native_fast_identity":
         return _planner_prompt_body(replace(request, planning_profile="aurora_identity")) + "\nReturn the complete identity response_schema:\n" + json.dumps(_aurora_identity_json_schema(), ensure_ascii=False)

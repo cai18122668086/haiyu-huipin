@@ -200,9 +200,12 @@ def response_schema(
     text = {"type": "string", "minLength": 1}
     properties: dict[str, Any]
     if profile == BACKGROUND:
+        from .source_typography import layout_schema
+
         properties = {
             "background_description": {**text, "maxLength": 2400},
             "marketing_copy": {"type": "array", "maxItems": 32, "items": text},
+            "text_layout": layout_schema(1),
         }
     elif profile == MATTE:
         properties = {
@@ -453,6 +456,9 @@ class FidelityGateway:
     def __init__(self, wrapped: Any, sessions: Any, storage: Any) -> None:
         self.wrapped, self.sessions, self.storage = wrapped, sessions, storage
         self._prepared: dict[str, dict[str, Any]] = {}
+        self._mattes: dict[
+            str, tuple[tuple[Any, ...], list[dict[str, Any]]] | None
+        ] = {}
         self._parent_key: str | None = None
         self._native_pair = False
         self._locks: weakref.WeakValueDictionary[str, asyncio.Lock] = (
@@ -488,6 +494,7 @@ class FidelityGateway:
         bound._parent_key = parent.idempotency_key
         bound._native_pair = True
         bound._prepared, bound._locks = self._prepared, self._locks
+        bound._mattes = self._mattes
         return await bound.edit(request)
 
     def _context(self, request: Any) -> dict[str, Any]:
@@ -774,6 +781,209 @@ class FidelityGateway:
         assert isinstance(preparation, dict)
         return preparation
 
+    async def _approved_source_layers(
+        self,
+        request: Any,
+        original_sources: tuple[Any, ...],
+        authorities: tuple[Any, ...],
+        preparation: dict[str, Any],
+        plans: list[Any],
+    ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
+        from . import source_pixels
+        from .xinghe_agent import SourceImage
+
+        key = canonical_hash(
+            {
+                "workspace": request.workspace_id,
+                "job": request.job_id,
+                "version": source_pixels.VERSION,
+                "model": source_pixels.MODEL_SHA256,
+                "sources": [(s.asset_id, s.sha256) for s in authorities],
+                "preparation": preparation,
+            }
+        )
+        lock = self._locks.setdefault("source-matte:" + key, asyncio.Lock())
+        async with lock:
+            if key in self._mattes:
+                prior = self._mattes[key]
+                if prior is None:
+                    raise ValueError(
+                        "Identical source extraction already failed acceptance"
+                    )
+                return prior[0], deepcopy(prior[1])
+            if len(self._mattes) >= 8:
+                self._mattes.pop(next(iter(self._mattes)))
+            # Do not re-review identical failed pixels on another suite item.
+            # Only a completed strict audit replaces this fail-closed marker.
+            self._mattes[key] = None
+            layers = await asyncio.to_thread(
+                source_pixels.extract_layers,
+                original_sources,
+                preparation,
+                self.wrapped.image_fidelity_source_model_path,
+            )
+            mask_audits = []
+            for mask_review in range(2):
+                previews = []
+                for index, layer in enumerate(layers):
+                    original = next(
+                        s for s in authorities if s.asset_id == layer.source_asset_id
+                    )
+                    with Image.open(BytesIO(original.payload)) as opened:
+                        from PIL import ImageOps
+
+                        left, top, right, bottom = layer.source_box
+                        crop = (
+                            ImageOps.exif_transpose(opened)
+                            .convert("RGB")
+                            .crop((left - 16, top - 16, right + 16, bottom + 16))
+                        )
+                        factor = min(4, max(1, 1024 // max(crop.size)))
+                        crop = crop.resize(
+                            (crop.width * factor, crop.height * factor),
+                            Image.Resampling.NEAREST,
+                        )
+                        reference = source_pixels.artifact(
+                            crop, f"matte-original-{index}.png"
+                        )
+                    evidence = source_pixels.preview(layer.artifact)
+                    previews.append(
+                        SourceImage(
+                            f"matte-original-{index}",
+                            request.group_key,
+                            reference.filename,
+                            reference.content_type,
+                            reference.sha256,
+                            reference.payload,
+                            source_role="matte_original_crop",
+                        )
+                    )
+                    previews.append(
+                        SourceImage(
+                            f"matte-preview-{index}",
+                            request.group_key,
+                            evidence.filename,
+                            evidence.content_type,
+                            evidence.sha256,
+                            evidence.payload,
+                            source_role="matte_candidate",
+                        )
+                    )
+                matte = await self._plan(
+                    request,
+                    MATTE,
+                    tuple(
+                        source
+                        for source in authorities
+                        if source.asset_id
+                        in {
+                            region["asset_id"]
+                            for region in preparation["selected_regions"]
+                        }
+                    )
+                    + tuple(previews),
+                    {
+                        "schema": response_schema(MATTE),
+                        "correction_contract": {
+                            "layer_indices": list(range(len(layers))),
+                            "coordinates": (
+                                "normalized within each paired image "
+                                "INCLUDING its 16px margin"
+                            ),
+                            "allowed": (
+                                "At most 12 tight source alpha boxes. "
+                                "restore_foreground copies source RGB; "
+                                "it never generates metal. "
+                                "remove_background only inside "
+                                "unprinted top fittings, never over "
+                                "rims, connectors, faces or printing. "
+                                "edge_feather_px 1 or 2 for body halos."
+                            ),
+                        },
+                        "instruction": (
+                            "Each matte_original_crop is paired with "
+                            "matte-preview of the SAME source region. "
+                            "Compare every fitting and printed edge "
+                            "directly. Previews include a neutral "
+                            "margin so outer contours are visible. "
+                            "Compare ONLY visible source hardware; "
+                            "never infer hidden levers or mechanisms. "
+                            "Missing metal, clipped text and residual "
+                            "display hardware all fail. Never infer "
+                            "completeness from the main body alone. "
+                            "For a small source-only mask correction, "
+                            "return repairs or edge_feather_px AND "
+                            "retain failing checks and unresolved "
+                            "defects. A later audit must inspect the "
+                            "corrected pixels. Never erase hardware "
+                            "as background; distinguish the rack peg "
+                            "behind a clasp from the clasp rim. "
+                            "If clean, repairs=[] and edge_feather_px=0."
+                        ),
+                    },
+                    suffix=f":mask-{mask_review}",
+                )
+                plans.append(matte)
+                if matte.error_code:
+                    raise ValueError("Source matte review unavailable")
+                Draft202012Validator(response_schema(MATTE)).validate(matte.payload)
+                accepted = (
+                    not matte.payload["unresolved"]
+                    and all(
+                        matte.payload[name] is True
+                        for name in (
+                            "complete_objects",
+                            "no_context_leak",
+                            "no_clipped_print",
+                            "edges_clean",
+                        )
+                    )
+                    and not matte.payload["repairs"]
+                    and not matte.payload["edge_feather_px"]
+                )
+                mask_audits.append(
+                    {
+                        "source_layer_sha256": [
+                            layer.artifact.sha256 for layer in layers
+                        ],
+                        "review": matte.payload,
+                    }
+                )
+                if accepted:
+                    break
+                logger.warning(
+                    "source_matte_rejected job_id=%s item_id=%s "
+                    "review=%s failed_checks=%s unresolved_count=%s",
+                    request.job_id,
+                    request.job_item_id,
+                    mask_review,
+                    [
+                        name
+                        for name in (
+                            "complete_objects",
+                            "no_context_leak",
+                            "no_clipped_print",
+                            "edges_clean",
+                        )
+                        if matte.payload[name] is not True
+                    ],
+                    len(matte.payload["unresolved"]),
+                )
+                if mask_review or not (
+                    matte.payload["repairs"] or matte.payload["edge_feather_px"]
+                ):
+                    raise ValueError(
+                        "Source product extraction failed visual acceptance"
+                    )
+                layers = await asyncio.to_thread(
+                    source_pixels.repair_layers,
+                    layers,
+                    matte.payload["repairs"],
+                    matte.payload["edge_feather_px"],
+                )
+            self._mattes[key] = (layers, deepcopy(mask_audits))
+            return layers, mask_audits
+
     async def edit(self, request: Any) -> Any:
         from .xinghe_agent import ImageCallResult, SourceImage
 
@@ -781,6 +991,9 @@ class FidelityGateway:
         plans: list[Any] = []
         preparation = None
         pixel_recipe = None
+        recolor_recipe = None
+        recolor_artifact = None
+        recolor_proof = None
         try:
             context = self._context(request)
             if any(
@@ -799,7 +1012,7 @@ class FidelityGateway:
                 # source/pixel audits. Never modify a signed request downstream.
                 return await self.wrapped.edit(request)
             frozen = self._frozen(request)
-            from . import source_pixels
+            from . import source_pixels, source_recolor, source_typography
 
             pixel_mode = (
                 bool(frozen.get("pixel_recipe"))
@@ -810,6 +1023,7 @@ class FidelityGateway:
             )
             if frozen is not None:
                 pixel_recipe = frozen.get("pixel_recipe")
+                recolor_recipe = frozen.get("source_recolor_recipe")
             crop_scale = (
                 frozen.get("crop_scale", "native-v1")
                 if frozen
@@ -907,177 +1121,13 @@ class FidelityGateway:
                     )
                 edited_sources = original_sources + tuple(crops)
                 if frozen is None and pixel_mode:
-                    layers = await asyncio.to_thread(
-                        source_pixels.extract_layers,
+                    layers, mask_audits = await self._approved_source_layers(
+                        request,
                         original_sources,
+                        authorities,
                         preparation,
-                        self.wrapped.image_fidelity_source_model_path,
+                        plans,
                     )
-                    mask_audits = []
-                    for mask_review in range(2):
-                        previews = []
-                        for index, layer in enumerate(layers):
-                            original = next(
-                                s
-                                for s in authorities
-                                if s.asset_id == layer.source_asset_id
-                            )
-                            with Image.open(BytesIO(original.payload)) as opened:
-                                from PIL import ImageOps
-
-                                left, top, right, bottom = layer.source_box
-                                crop = (
-                                    ImageOps.exif_transpose(opened)
-                                    .convert("RGB")
-                                    .crop(
-                                        (left - 16, top - 16, right + 16, bottom + 16)
-                                    )
-                                )
-                                factor = min(4, max(1, 1024 // max(crop.size)))
-                                crop = crop.resize(
-                                    (crop.width * factor, crop.height * factor),
-                                    Image.Resampling.NEAREST,
-                                )
-                                reference = source_pixels.artifact(
-                                    crop, f"matte-original-{index}.png"
-                                )
-                            evidence = source_pixels.preview(layer.artifact)
-                            previews.append(
-                                SourceImage(
-                                    f"matte-original-{index}",
-                                    request.group_key,
-                                    reference.filename,
-                                    reference.content_type,
-                                    reference.sha256,
-                                    reference.payload,
-                                    source_role="matte_original_crop",
-                                )
-                            )
-                            previews.append(
-                                SourceImage(
-                                    f"matte-preview-{index}",
-                                    request.group_key,
-                                    evidence.filename,
-                                    evidence.content_type,
-                                    evidence.sha256,
-                                    evidence.payload,
-                                    source_role="matte_candidate",
-                                )
-                            )
-                        matte = await self._plan(
-                            request,
-                            MATTE,
-                            tuple(
-                                source
-                                for source in authorities
-                                if source.asset_id
-                                in {
-                                    region["asset_id"]
-                                    for region in preparation["selected_regions"]
-                                }
-                            )
-                            + tuple(previews),
-                            {
-                                "schema": response_schema(MATTE),
-                                "correction_contract": {
-                                    "layer_indices": list(range(len(layers))),
-                                    "coordinates": (
-                                        "normalized within each paired image "
-                                        "INCLUDING its 16px margin"
-                                    ),
-                                    "allowed": (
-                                        "At most 12 tight source alpha boxes. "
-                                        "restore_foreground copies source RGB; "
-                                        "it never generates metal. "
-                                        "remove_background only inside "
-                                        "unprinted top fittings, never over "
-                                        "rims, connectors, faces or printing. "
-                                        "edge_feather_px 1 or 2 for body halos."
-                                    ),
-                                },
-                                "instruction": (
-                                    "Each matte_original_crop is paired with "
-                                    "matte-preview of the SAME source region. "
-                                    "Compare every fitting and printed edge "
-                                    "directly. Previews include a neutral "
-                                    "margin so outer contours are visible. "
-                                    "Compare ONLY visible source hardware; "
-                                    "never infer hidden levers or mechanisms. "
-                                    "Missing metal, clipped text and residual "
-                                    "display hardware all fail. Never infer "
-                                    "completeness from the main body alone. "
-                                    "For a small source-only mask correction, "
-                                    "return repairs or edge_feather_px AND "
-                                    "retain failing checks and unresolved "
-                                    "defects. A later audit must inspect the "
-                                    "corrected pixels. Never erase hardware "
-                                    "as background; distinguish the rack peg "
-                                    "behind a clasp from the clasp rim. "
-                                    "If clean, repairs=[] and edge_feather_px=0."
-                                ),
-                            },
-                            suffix=f":mask-{mask_review}",
-                        )
-                        plans.append(matte)
-                        if matte.error_code:
-                            raise ValueError("Source matte review unavailable")
-                        Draft202012Validator(response_schema(MATTE)).validate(
-                            matte.payload
-                        )
-                        accepted = (
-                            not matte.payload["unresolved"]
-                            and all(
-                                matte.payload[name] is True
-                                for name in (
-                                    "complete_objects",
-                                    "no_context_leak",
-                                    "no_clipped_print",
-                                    "edges_clean",
-                                )
-                            )
-                            and not matte.payload["repairs"]
-                            and not matte.payload["edge_feather_px"]
-                        )
-                        mask_audits.append(
-                            {
-                                "source_layer_sha256": [
-                                    layer.artifact.sha256 for layer in layers
-                                ],
-                                "review": matte.payload,
-                            }
-                        )
-                        if accepted:
-                            break
-                        logger.warning(
-                            "source_matte_rejected job_id=%s item_id=%s "
-                            "review=%s failed_checks=%s unresolved_count=%s",
-                            request.job_id,
-                            request.job_item_id,
-                            mask_review,
-                            [
-                                name
-                                for name in (
-                                    "complete_objects",
-                                    "no_context_leak",
-                                    "no_clipped_print",
-                                    "edges_clean",
-                                )
-                                if matte.payload[name] is not True
-                            ],
-                            len(matte.payload["unresolved"]),
-                        )
-                        if mask_review or not (
-                            matte.payload["repairs"] or matte.payload["edge_feather_px"]
-                        ):
-                            raise ValueError(
-                                "Source product extraction failed visual acceptance"
-                            )
-                        layers = await asyncio.to_thread(
-                            source_pixels.repair_layers,
-                            layers,
-                            matte.payload["repairs"],
-                            matte.payload["edge_feather_px"],
-                        )
                     saved_layers = []
                     for index, layer in enumerate(layers):
                         asset_id = await self._retain(
@@ -1128,6 +1178,46 @@ class FidelityGateway:
                     }
             else:
                 edited_sources = original_sources
+            if (
+                frozen is None
+                and not request.reconcile_only
+                and getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False)
+                and source_recolor.enabled(context, original_sources)
+            ):
+                source = next(
+                    s for s in original_sources if s.source_role == "product_reference"
+                )
+                selection = await self._plan(
+                    request,
+                    source_recolor.PROFILE,
+                    (source,),
+                    {
+                        "settings": context["settings"],
+                        "schema": source_recolor.schema(),
+                        "instruction": (
+                            "Inspect the original photo and locate EVERY visible "
+                            "gold metal clasp, ring and link requested for silver "
+                            "recoloring. Return tight original-image normalized "
+                            "boxes around each actual metal component. Preserve "
+                            "printed tags, acrylic heads, background and display "
+                            "stand. Never include a face/tag as metal. Use separate "
+                            "boxes for separate fittings; a box must cover <=4% "
+                            "of the image. No invented/hidden parts. Report any "
+                            "unresolved part instead of guessing. The server "
+                            "changes gold chroma only, retaining original shading, "
+                            "shape, printing, dimensions and every outside pixel."
+                        ),
+                    },
+                )
+                plans.append(selection)
+                if selection.error_code:
+                    raise ValueError("Original metal selection unavailable")
+                recolor_recipe = {
+                    "version": source_recolor.VERSION,
+                    "source_asset_id": source.asset_id,
+                    "source_sha256": source.sha256,
+                    "selection": selection.payload,
+                }
             if frozen is None and not request.reconcile_only:
                 if pixel_recipe is not None:
                     # Original product pixels stay local. Send only background
@@ -1152,6 +1242,9 @@ class FidelityGateway:
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
                     layout_panels = 2 if self._native_pair else 1
+                    background_schema["properties"]["text_layout"] = (
+                        source_typography.layout_schema(layout_panels)
+                    )
                     planned_layout = self._native_pair or context["job_type"] in {
                         "amazon_visual_suite",
                         "domestic_main_image",
@@ -1195,6 +1288,22 @@ class FidelityGateway:
                             },
                         }
                         background_schema["required"].append("placements")
+                        if self._native_pair:
+                            background_schema["properties"]["placements"]["items"][
+                                "properties"
+                            ]["source_window"] = {
+                                "type": "array",
+                                "minItems": 4,
+                                "maxItems": 4,
+                                "items": {"type": "number", "minimum": 0, "maximum": 1},
+                                "description": (
+                                    "Only for a close-up explicitly required by "
+                                    "the approved module. Normalized coordinates "
+                                    "on source_window_reference for this layer; "
+                                    "NOT source-photo or destination coordinates. "
+                                    "Full product = [0,0,1,1]."
+                                ),
+                            }
                     if context["job_type"] not in {
                         "amazon_visual_suite",
                         "domestic_main_image",
@@ -1203,61 +1312,159 @@ class FidelityGateway:
                         background_schema["properties"]["marketing_copy"][
                             "maxItems"
                         ] = 0
-                    background_plan = await self._plan(
-                        request,
-                        BACKGROUND,
-                        tuple(
-                            source
-                            for source in original_sources
-                            if source.asset_id in background_ids
-                        ),
-                        {
-                            "schema": background_schema,
-                            "settings": context["settings"],
-                            "final_image_contract": request.prompt,
-                            "reserved_product_cells": None
-                            if planned_layout
-                            else pixel_recipe["cells"],
-                            "native_pair": self._native_pair,
-                            "canvas_panel_count": layout_panels,
-                            "source_layer_inventory": [
-                                {"layer_index": i, "identity": region["identity"]}
-                                for i, region in enumerate(
-                                    (preparation or {}).get("selected_regions", [])
-                                )
-                            ],
-                            "placement_contract": (
-                                "Select source layer indices for EACH approved "
-                                "module. For two panels: top=0, bottom=1. "
-                                "For one panel: panel=0. panel_box uses each PANEL's "
-                                "own coordinates .04-.96. Do NOT use source "
-                                "photo coordinates or full-pair coordinates. "
-                                "Follow the approved subject, copy and layout; "
-                                "a layer may repeat on the other panel. Keep "
-                                "room for all approved text. Never cross the "
-                                "seam or overlap cells. Inventory is the "
-                                "permitted pool, not an instruction to "
-                                "include every product in every panel."
-                            )
-                            if planned_layout
-                            else "Use supplied reserved cells.",
-                        },
+                    projection_sources = tuple(
+                        source
+                        for source in original_sources
+                        if source.asset_id in background_ids
                     )
-                    plans.append(background_plan)
-                    if background_plan.error_code:
-                        raise ValueError("Background projection unavailable")
-                    Draft202012Validator(background_schema).validate(
-                        background_plan.payload
-                    )
-                    pixel_recipe["background_projection"] = background_plan.payload
-                    if planned_layout:
-                        indices, cells = source_pixels.native_placements(
-                            background_plan.payload["placements"],
-                            len(pixel_recipe["layers"]),
-                            panels=layout_panels,
+                    source_cutouts: tuple[Any, ...] = ()
+                    if self._native_pair:
+                        source_cutouts = await self._source_layers(
+                            request, pixel_recipe, original_sources
                         )
-                        pixel_recipe["placement_indices"] = indices
-                        pixel_recipe["cells"] = cells
+                        references = []
+                        for i, cutout in enumerate(source_cutouts):
+                            ref = source_pixels.layer_reference(cutout)
+                            references.append(
+                                SourceImage(
+                                    f"source-window-reference-{i}",
+                                    request.group_key,
+                                    ref.filename,
+                                    ref.content_type,
+                                    ref.sha256,
+                                    ref.payload,
+                                    source_role=f"source_window_reference:{i}",
+                                )
+                            )
+                        projection_sources += tuple(references)
+                    projection_feedback = None
+                    for projection_attempt in range(2):
+                        background_plan = await self._plan(
+                            request,
+                            BACKGROUND,
+                            projection_sources,
+                            {
+                                "schema": background_schema,
+                                "projection_feedback": projection_feedback,
+                                "settings": context["settings"],
+                                "final_image_contract": request.prompt,
+                                "reserved_product_cells": None
+                                if planned_layout
+                                else pixel_recipe["cells"],
+                                "native_pair": self._native_pair,
+                                "canvas_panel_count": layout_panels,
+                                "copy_layout_contract": (
+                                    "Keep ALL approved marketing copy with its "
+                                    "EXACT original spelling, panel and hierarchy. "
+                                    "The server renders it with the pinned font. "
+                                    "Return exactly one text_layout block per copy "
+                                    "index; [] when copy is empty. Text boxes must "
+                                    "not overlap product cells, other text boxes or "
+                                    "the pair seam. Reserve generous readable "
+                                    "heading/body space. Background_description "
+                                    "describes the EMPTY style and clear text areas, "
+                                    "never requests the generator to draw letters."
+                                ),
+                                "source_layer_inventory": [
+                                    {"layer_index": i, "identity": region["identity"]}
+                                    for i, region in enumerate(
+                                        (preparation or {}).get("selected_regions", [])
+                                    )
+                                ],
+                                "placement_contract": (
+                                    "Select source layer indices for EACH approved "
+                                    "module. For two panels: top=0, bottom=1. "
+                                    "For one panel: panel=0. panel_box uses "
+                                    "each PANEL's "
+                                    "own coordinates .04-.96. Do NOT use source "
+                                    "photo coordinates or full-pair coordinates. "
+                                    "Follow the approved subject, copy and layout; "
+                                    "a layer may repeat on the other panel. Keep "
+                                    "room for all approved text. Never cross the "
+                                    "seam or overlap cells. Inventory is the "
+                                    "permitted pool, not an instruction to "
+                                    "include every product in every panel."
+                                    "For a module explicitly requiring a connection "
+                                    "point or other macro detail, use source_window "
+                                    "on its source_window_reference and fill its "
+                                    "destination cell with that real detail. Do not "
+                                    "replace an approved macro with a tiny full item."
+                                )
+                                if planned_layout
+                                else "Use supplied reserved cells.",
+                            },
+                            suffix=f":layout-{projection_attempt}",
+                        )
+                        plans.append(background_plan)
+                        if background_plan.error_code:
+                            raise ValueError("Background projection unavailable")
+                        trial_recipe = deepcopy(pixel_recipe)
+                        try:
+                            Draft202012Validator(background_schema).validate(
+                                background_plan.payload
+                            )
+                            trial_recipe["background_projection"] = (
+                                background_plan.payload
+                            )
+                            if planned_layout:
+                                indices, cells = source_pixels.native_placements(
+                                    background_plan.payload["placements"],
+                                    len(trial_recipe["layers"]),
+                                    panels=layout_panels,
+                                )
+                                trial_recipe["placement_indices"] = indices
+                                trial_recipe["cells"] = cells
+                                if self._native_pair:
+                                    windows = [
+                                        p.get("source_window", [0, 0, 1, 1])
+                                        for p in background_plan.payload["placements"]
+                                    ]
+                                    source_pixels.crop_windows(
+                                        tuple(source_cutouts[i] for i in indices),
+                                        windows,
+                                    )
+                                    trial_recipe["source_windows"] = windows
+                            text_width, text_height = (
+                                int(v) for v in request.size.split("x")
+                            )
+                            trial_recipe["text_recipe"] = source_typography.recipe(
+                                background_plan.payload["marketing_copy"],
+                                background_plan.payload["text_layout"],
+                                trial_recipe["cells"],
+                                layout_panels,
+                                getattr(
+                                    self.wrapped,
+                                    "image_fidelity_font_path",
+                                    source_typography.FONT_PATH,
+                                ),
+                                (text_width, text_height),
+                            )
+                        except (ValidationError, ValueError) as projection_error:
+                            if projection_attempt:
+                                raise
+                            projection_feedback = {
+                                "diagnostic": contract_diagnostic(projection_error)
+                                if isinstance(projection_error, ValidationError)
+                                else {"reason": str(projection_error)[:240]},
+                                "previous_projection": background_plan.payload,
+                                "instruction": (
+                                    "Correct the invalid layout against the full "
+                                    "unchanged contract, exact approved copy "
+                                    "and source references. No missing copy, "
+                                    "overlap, guessed geometry or unreadable "
+                                    "type; all original validators run again."
+                                ),
+                            }
+                            logger.warning(
+                                "background_projection_retry job_id=%s "
+                                "item_id=%s diagnostic=%s",
+                                request.job_id,
+                                request.job_item_id,
+                                projection_feedback["diagnostic"],
+                            )
+                            continue
+                        pixel_recipe = trial_recipe
+                        break
                     if not background_ids:
                         import base64
 
@@ -1293,7 +1500,7 @@ class FidelityGateway:
                     pixel_recipe["wire_prompt"] = source_pixels.background_prompt(
                         pixel_recipe["background_projection"]["background_description"],
                         pixel_recipe["cells"],
-                        tuple(pixel_recipe["background_projection"]["marketing_copy"]),
+                        (),
                     )
                 frozen = self._frozen(
                     request,
@@ -1301,6 +1508,7 @@ class FidelityGateway:
                         "preparation": preparation,
                         "crop_scale": crop_scale,
                         "pixel_recipe": pixel_recipe,
+                        "source_recolor_recipe": recolor_recipe,
                         "prompt": prepared_prompt,
                     },
                 )
@@ -1340,6 +1548,15 @@ class FidelityGateway:
                     )
             if pixel_recipe is not None and frozen is None:
                 raise ValueError("Source pixel dispatch requires its frozen receipt")
+            if recolor_recipe is not None:
+                source = next(
+                    s
+                    for s in original_sources
+                    if s.asset_id == recolor_recipe["source_asset_id"]
+                )
+                recolor_artifact, recolor_proof = await asyncio.to_thread(
+                    source_recolor.render, source, recolor_recipe
+                )
         except Exception as exc:
             if isinstance(exc, ValidationError):
                 logger.warning(
@@ -1375,7 +1592,24 @@ class FidelityGateway:
                 ),
                 plans,
             )
-        result = await self.wrapped.edit(request)
+        if recolor_artifact is not None:
+            result = ImageCallResult(
+                outcome=ProviderOutcome.SUCCEEDED,
+                provider_request_id=None,
+                raw_usage={"network_requests": 0, "source_recolor": recolor_proof},
+                normalized_usage={
+                    "reported": True,
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                },
+                api_latency_seconds=0,
+                actual_cost_micros=0,
+                estimated_cost_micros=0,
+                artifact=recolor_artifact,
+            )
+        else:
+            result = await self.wrapped.edit(request)
         if result.outcome != ProviderOutcome.SUCCEEDED or result.artifact is None:
             return self._account(result, plans)
         pixel_proof = None
@@ -1394,9 +1628,31 @@ class FidelityGateway:
                     cutouts = tuple(
                         cutouts[i] for i in pixel_recipe["placement_indices"]
                     )
+                cutouts = source_pixels.crop_windows(
+                    cutouts, pixel_recipe.get("source_windows")
+                )
                 composed, pixel_proof = source_pixels.compose(
                     result.artifact, cutouts, pixel_recipe["cells"]
                 )
+                if pixel_recipe.get("text_recipe") is not None:
+                    from . import source_typography
+
+                    texted, text_proof = source_typography.render(
+                        composed,
+                        pixel_recipe["text_recipe"],
+                        getattr(
+                            self.wrapped,
+                            "image_fidelity_font_path",
+                            source_typography.FONT_PATH,
+                        ),
+                    )
+                    pixel_proof = {
+                        **pixel_proof,
+                        "product_composite_sha256": composed.sha256,
+                        "composite_sha256": texted.sha256,
+                        "typography": text_proof,
+                    }
+                    composed = texted
                 result = replace(
                     result,
                     artifact=composed,
@@ -1433,6 +1689,7 @@ class FidelityGateway:
             plans,
             result,
             pixel_proof=pixel_proof,
+            recolor_proof=recolor_proof,
         )
 
     async def _source_layers(
@@ -1517,6 +1774,36 @@ class FidelityGateway:
                 )
             )
         return tuple(cutouts)
+
+    async def paired_source_evidence(
+        self, request: Any, candidate: Any
+    ) -> tuple[Any, ...]:
+        from .source_pixels import comparison_panels, crop_windows
+        from .xinghe_agent import SourceImage
+
+        frozen = self._frozen(request)
+        if frozen is None or not frozen.get("pixel_recipe"):
+            return self.selected_source_evidence(request)
+        recipe = frozen["pixel_recipe"]
+        cutouts = await self._source_layers(request, recipe, request.sources)
+        if "placement_indices" in recipe:
+            cutouts = tuple(cutouts[i] for i in recipe["placement_indices"])
+        cutouts = crop_windows(cutouts, recipe.get("source_windows"))
+        pairs = await asyncio.to_thread(
+            comparison_panels, candidate, cutouts, recipe["cells"]
+        )
+        return tuple(
+            SourceImage(
+                f"source-candidate-pair-{i}",
+                request.group_key,
+                pair.filename,
+                pair.content_type,
+                pair.sha256,
+                pair.payload,
+                source_role="source_candidate_comparison",
+            )
+            for i, pair in enumerate(pairs)
+        )
 
     def selected_source_evidence(self, request: Any) -> tuple[Any, ...]:
         """Return actual original crops bound to this frozen authorized call."""
@@ -1835,6 +2122,7 @@ class FidelityGateway:
         result: Any,
         *,
         pixel_proof: dict[str, Any] | None = None,
+        recolor_proof: dict[str, Any] | None = None,
     ) -> Any:
         from .xinghe_agent import SourceImage
 
@@ -1851,6 +2139,13 @@ class FidelityGateway:
         accepted = False
         failed = ["review_unavailable"]
         technical = technical_contract(context, request, candidate)
+        if recolor_proof is not None:
+            technical["policy"] = (
+                "Local source-only gold-to-silver recolor: original photo "
+                "dimensions, geometry and outside-mask RGB are unchanged. "
+                "No supplier image was purchased or resized. Existing aspect "
+                "and full-canvas checks still apply."
+            )
         feedback = None
         for attempt in range(2):
             review_context = {
@@ -1863,6 +2158,7 @@ class FidelityGateway:
                 "candidate_dimensions": [candidate.width, candidate.height],
                 "technical_contract": technical,
                 "server_source_pixel_proof": pixel_proof,
+                "source_recolor_proof": recolor_proof,
                 "contract_feedback": feedback,
                 "source_roles": [(s.asset_id, s.source_role) for s in original_sources],
                 "schema": response_schema(REVIEW),
@@ -1874,6 +2170,11 @@ class FidelityGateway:
                 "source selection is the authority pool, not a requirement to "
                 "show all products in every module. Inspect both approved "
                 "modules, their exact copy and the clean pair seam. "
+                "An explicitly approved macro module must show its requested "
+                "original connection/detail crop, rather than a tiny whole "
+                "product. Only that approved macro framing may omit the "
+                "rest of the object; hero/full-product views still require "
+                "complete objects. All visible source details must match. "
                 "For change_model, short sleeves must remain short sleeves, "
                 "never the reference's tank top. Do not declare pass if source "
                 "printing changed or uncertainty/defects remain. "
@@ -1979,6 +2280,25 @@ class FidelityGateway:
                 "candidate_sha256": candidate.sha256,
             },
         }
+        if pixel_proof is not None:
+            raw["metrics"]["rendering"] = {
+                "kind": "native_background_source_products",
+                "method": pixel_proof["method"],
+                "background_sha256": pixel_proof["background_sha256"],
+                "result_sha256": candidate.sha256,
+                "version": pixel_proof["version"],
+                "font_sha256": (pixel_proof.get("typography") or {}).get("font_sha256"),
+            }
+        elif recolor_proof is not None:
+            raw["metrics"]["rendering"] = {
+                "kind": "source_original_recolor",
+                "method": recolor_proof["method"],
+                "source_sha256": recolor_proof["source_sha256"],
+                "result_sha256": candidate.sha256,
+                "version": recolor_proof["version"],
+                "changed_pixels": recolor_proof["changed_pixels"],
+                "outside_mask_changed_pixels": 0,
+            }
         if not accepted:
             try:
                 asset_id = await self._retain(request, candidate)

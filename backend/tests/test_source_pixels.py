@@ -41,6 +41,64 @@ def test_compositor_rejects_any_changed_input_hash(which):
         source_pixels.compose(background, (layer,), [[0, 0, 1, 1]])
 
 
+def test_background_plate_keeps_required_marketing_copy_outside_product_cells():
+    prompt = source_pixels.background_prompt(
+        "Pastel continuous background", [[0.1, 0.4, 0.9, 0.9]], ("批准标题",)
+    )
+    assert "批准标题" in prompt and "REQUIRED VISIBLE MARKETING TEXT" in prompt
+    assert "Missing approved copy is a failure" in prompt
+    empty = source_pixels.background_prompt("Pure white", [[0, 0, 1, 1]])
+    assert "NO TEXT anywhere" in empty
+    assert "REQUIRED VISIBLE MARKETING TEXT" not in empty
+
+
+def test_comparison_checks_real_candidate_opaque_pixels_without_approving_quality():
+    background = source_pixels.artifact(Image.new("RGB", (80, 80), "blue"), "bg.png")
+    cutout = source_pixels.artifact(Image.new("RGBA", (20, 40), "red"), "source.png")
+    cells = [[0.1, 0.1, 0.9, 0.9]]
+    candidate, _ = source_pixels.compose(background, (cutout,), cells)
+    panels = source_pixels.comparison_panels(candidate, (cutout,), cells)
+    assert len(panels) == 1
+    with Image.open(BytesIO(candidate.payload)) as opened:
+        changed = opened.convert("RGBA")
+    changed.putpixel((40, 40), (0, 255, 0, 255))
+    tampered = source_pixels.artifact(changed, "tampered.png")
+    with pytest.raises(ValueError, match="differs from original opaque"):
+        source_pixels.comparison_panels(tampered, (cutout,), cells)
+
+
+def test_owned_context_excludes_adjacent_products_without_changing_fragment_threshold():
+    inventory = [
+        {"asset_id": "source", "box": [0.0, 0.1, 0.3, 0.9]},
+        {"asset_id": "source", "box": [0.35, 0.1, 0.65, 0.9]},
+        {"asset_id": "source", "box": [0.7, 0.1, 1.0, 0.9]},
+    ]
+    crop = source_pixels.owned_context(
+        inventory[1], inventory, (1000, 1000), (250, 0, 750, 1000)
+    )
+    assert crop == (325, 0, 675, 1000)
+    assert source_pixels.owned_context(
+        inventory[1],
+        [{**inventory[0], "asset_id": "another"}],
+        (1000, 1000),
+        (250, 0, 750, 1000),
+    ) == (250, 0, 750, 1000)
+
+
+def test_approved_detail_crop_preserves_exact_photographed_pixels():
+    rgba = Image.new("RGBA", (100, 100), "red")
+    rgba.putpixel((40, 70), (25, 50, 75, 255))
+    original = source_pixels.artifact(rgba, "source.png")
+    full = source_pixels.crop_windows((original,), [[0, 0, 1, 1]])[0]
+    assert full is original
+    detail = source_pixels.crop_windows((original,), [[0.2, 0.5, 0.8, 0.8]])[0]
+    with Image.open(BytesIO(detail.payload)) as actual:
+        assert actual.size == (60, 30)
+        assert actual.tobytes() == rgba.crop((20, 50, 80, 80)).tobytes()
+    with pytest.raises(ValueError, match="leaves its source"):
+        source_pixels.crop_windows((original,), [[0.2, 0.5, 1.1, 0.8]])
+
+
 def test_matte_copies_rgb_without_drawing_or_inventing_print(monkeypatch):
     original = Image.new("RGB", (100, 100), (100, 150, 200))
     for x in range(20, 80):
@@ -93,6 +151,7 @@ def test_refinement_recovers_small_fitting_without_erasing_coarse_foreground(
             draw.rectangle((5, 0, crop.width - 5, crop.height - 1), fill=255)
         return result
 
+    monkeypatch.setattr(source_pixels, "_single_product", lambda mask, *args: mask)
     monkeypatch.setattr(source_pixels, "_segment", masks)
     result = source_pixels._alpha(Image.new("RGB", (100, 100)), tmp_path)
     assert len(seen) == 2 and seen[1] != seen[0]
@@ -246,6 +305,7 @@ def test_ambiguous_source_matte_changes_context_without_relaxing_fragment_guard(
         )
         return result
 
+    monkeypatch.setattr(source_pixels, "_single_product", lambda mask, *args: mask)
     monkeypatch.setattr(source_pixels, "_segment", segment)
     result = source_pixels._alpha(
         Image.new("RGB", (100, 100)), tmp_path, (30, 30, 70, 70)

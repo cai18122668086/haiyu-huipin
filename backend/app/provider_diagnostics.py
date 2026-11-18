@@ -121,6 +121,36 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
     if not isinstance(metrics, Mapping):
         return {}
     result: dict[str, Any] = {}
+    rendering = metrics.get("rendering")
+    if isinstance(rendering, Mapping) and rendering.get("kind") in {
+        "native_background_source_products",
+        "source_original_recolor",
+    }:
+        result["rendering"] = {
+            key: value
+            for key, value in rendering.items()
+            if (
+                key in {"kind", "method", "version"}
+                and isinstance(value, str)
+                and re.fullmatch(r"[a-zA-Z0-9_-]{1,96}", value)
+            )
+            or (
+                key
+                in {
+                    "background_sha256",
+                    "source_sha256",
+                    "result_sha256",
+                    "font_sha256",
+                }
+                and isinstance(value, str)
+                and re.fullmatch(r"[0-9a-f]{64}", value)
+            )
+            or (
+                key in {"changed_pixels", "outside_mask_changed_pixels"}
+                and type(value) is int
+                and 0 <= value <= 50_000_000
+            )
+        }
     fidelity = metrics.get("image_fidelity")
     if isinstance(fidelity, Mapping):
         result["image_fidelity"] = {
