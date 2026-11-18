@@ -158,12 +158,32 @@ route_test = test
 
 def test():
     unchanged_baseline()
+    built=json.loads((ROOT/'build-result.json').read_text())
+    assert built['image_id']==inspect(IMAGE)['Id']
+    fixtures=ROOT/'test-fixtures'
+    for path, expected in MANIFEST['test_fixtures'].items():
+        data=(fixtures/path).read_bytes()
+        if Path(path).suffix not in ['.png','.webp']:
+            data=data.replace(b'\r\n',b'\n')
+        assert hashlib.sha256(data).hexdigest()==expected,path
+    # Chromium and repository-only fixtures belong to this disposable test
+    # image/mounts; the deployable image and its dependency tree stay identical.
+    test_image='huipin-frontend-security/test:'+MANIFEST['revision']
+    dockerfile=ROOT/'test.Dockerfile'
+    dockerfile.write_text('FROM '+IMAGE+'\nUSER root\nRUN apt-get update && apt-get install -y --no-install-recommends chromium && rm -rf /var/lib/apt/lists/*\nUSER 1000:1000\n')
+    with (ROOT/'test-browser-build.log').open('w') as log:
+        subprocess.run(['docker','build','--network','host','-f',str(dockerfile),'-t',test_image,str(ROOT)],stdout=log,stderr=subprocess.STDOUT,check=True)
+    mounts=[]
+    for path in ['docs/openapi-v1.json','deploy/Caddyfile.domestic-detail-native','backend/catalog_assets/model-pose-transfer']:
+        mounts+=['-v',str(fixtures/path)+':/app/'+path+':ro']
     with (ROOT/'dependency-test.log').open('w') as log:
-        result=subprocess.run(['docker','run','--rm','--network','host','--memory','1g','--cpus','1.5','-e','npm_config_cache=/tmp/npm-cache','--entrypoint','sh',IMAGE,'-c','npm run audit:security && node --experimental-strip-types --test tests/*.test.mjs'],stdout=log,stderr=subprocess.STDOUT)
+        result=subprocess.run(['docker','run','--rm','--network','host','--memory','2g','--cpus','1.5','-e','npm_config_cache=/tmp/npm-cache',*mounts,'--entrypoint','sh',test_image,'-c','npm run audit:security && node --experimental-strip-types --test tests/*.test.mjs'],stdout=log,stderr=subprocess.STDOUT)
     print((ROOT/'dependency-test.log').read_text()[-4500:])
     assert result.returncode==0,'Final-image dependency audit or frontend tests failed'
     route_test()
     data=json.loads((ROOT/'test-result.json').read_text());data['security_and_unit_tests_passed']=True
+    data['test_fixtures_verified']=len(MANIFEST['test_fixtures'])
+    data['browser_test_environment']=test_image
     write_json('test-result.json',data)
 
 

@@ -18,7 +18,7 @@ def git(*args):
 
 def digest(p):
     data = p.read_bytes()
-    if p.suffix != ".tgz":
+    if p.suffix not in [".tgz", ".png", ".webp"]:
         data = data.replace(b"\r\n", b"\n")
     return hashlib.sha256(data).hexdigest()
 
@@ -32,12 +32,14 @@ def main():
     assert baseline["image"] == BASE
     app = git("ls-files", "app", "components", "features", "lib", "next.config.ts").splitlines()
     copied = git("ls-files", "build", "vendor", "tests", "package.json", "package-lock.json", "eslint.config.mjs").splitlines()
+    fixtures = git("ls-files", "docs/openapi-v1.json", "deploy/Caddyfile.domestic-detail-native", "backend/catalog_assets/model-pose-transfer").splitlines()
     smoke = ["/images/cases/olay-20261030/replica-01.png", "/images/cases/olay-20261030/replica-07.png",
              "/images/cases/olay-20261030/product-01.webp", "/images/cases/platform-v3/background-result.png",
              "/images/cases/platform-v3/color-result.png", "/images/cases/platform-v2/try-on-result.png"]
     manifest = {"revision": revision, "baseline": baseline,
                 "sources": {p: digest(ROOT / p) for p in [*app, *copied]},
                 "unchanged_app_sources": {p: digest(ROOT / p) for p in app},
+                "test_fixtures": {p: digest(ROOT / p) for p in fixtures},
                 "public_smoke_assets": {p: digest(ROOT / "public" / p.lstrip("/")) for p in smoke},
                 "node_base": NODE}
     # Fresh runtime layers contain the current dependency tree only. Previous
@@ -66,6 +68,8 @@ CMD ["npm","run","start","--","--hostname","0.0.0.0","--port","3000"]
     with tarfile.open(output / "source.tar.gz", "w:gz") as archive:
         for p in copied:
             archive.add(ROOT / p, arcname=p)
+        for p in fixtures:
+            archive.add(ROOT / p, arcname="test-fixtures/" + p)
         archive.add(Path(__file__).with_name("release.py"), arcname="release.py")
         for name, content in {"frontend.Dockerfile": docker, "release-manifest.json": json.dumps(manifest, indent=2)}.items():
             data = content.encode()
