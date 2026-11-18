@@ -170,9 +170,10 @@ def test():
     # image/mounts; the deployable image and its dependency tree stay identical.
     test_image='huipin-frontend-security/test:'+MANIFEST['revision']
     dockerfile=ROOT/'test.Dockerfile'
-    dockerfile.write_text('FROM '+IMAGE+'\nUSER root\nRUN apt-get update && apt-get install -y --no-install-recommends chromium && rm -rf /var/lib/apt/lists/*\nUSER 1000:1000\n')
+    browser_base='mcr.microsoft.com/playwright/python:v1.64.1-noble@sha256:08530fb1cfa94f223f47c60ba23dce91bc01b9f8a3b79485f35bdbbfe61dbb73'
+    dockerfile.write_text('FROM '+IMAGE+' AS candidate\nFROM '+MANIFEST['node_base']+' AS node\nFROM '+browser_base+'\nUSER root\nCOPY --from=node /usr/local /usr/local\nCOPY --from=candidate --chown=1000:1000 /app /app\nRUN ln -s /ms-playwright/chromium-1248/chrome-linux64/chrome /usr/bin/chromium\nENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0\nWORKDIR /app\nUSER 1000:1000\n')
     with (ROOT/'test-browser-build.log').open('w') as log:
-        subprocess.run(['docker','build','--network','host','-f',str(dockerfile),'-t',test_image,str(ROOT)],stdout=log,stderr=subprocess.STDOUT,check=True)
+        subprocess.run(['docker','build','--network','none','-f',str(dockerfile),'-t',test_image,str(ROOT)],stdout=log,stderr=subprocess.STDOUT,check=True)
     mounts=[]
     for path in ['docs/openapi-v1.json','deploy/Caddyfile.domestic-detail-native','backend/catalog_assets/model-pose-transfer']:
         mounts+=['-v',str(fixtures/path)+':/app/'+path+':ro']
@@ -184,6 +185,9 @@ def test():
     data=json.loads((ROOT/'test-result.json').read_text());data['security_and_unit_tests_passed']=True
     data['test_fixtures_verified']=len(MANIFEST['test_fixtures'])
     data['browser_test_environment']=test_image
+    data['browser_base']=browser_base
+    data['browser_base_id']=inspect(browser_base)['Id']
+    data['runtime_dependencies_copied_from']=built['image_id']
     write_json('test-result.json',data)
 
 
@@ -202,17 +206,18 @@ def preview():
     finally:
         private.unlink(missing_ok=True)
     caddy=ROOT/'Caddyfile.preview'
-    caddy.write_text('{\n admin off\n auto_https off\n}\nhttp://:8080 {\n handle /api/* { reverse_proxy huipin-prelaunch-api-1:8000 }\n handle /health/* { reverse_proxy huipin-prelaunch-api-1:8000 }\n handle { reverse_proxy '+app+':3000 }\n}\n')
-    subprocess.run(['docker','run','-d','--name',proxy,'--network',network,'--memory','64m','--cpus','0.2','-p','127.0.0.1:19196:8080','-v',str(caddy)+':/etc/caddy/Caddyfile:ro',inspect('huipin-prelaunch-caddy-1')['Image']],check=True,stdout=subprocess.DEVNULL)
+    caddy.write_text('{\n admin off\n auto_https off\n}\nhttp://:8080 {\n handle /api/* {\n  reverse_proxy huipin-prelaunch-api-1:8000\n }\n handle /health/* {\n  reverse_proxy huipin-prelaunch-api-1:8000\n }\n handle {\n  reverse_proxy '+app+':3000\n }\n}\n')
+    subprocess.run(['docker','run','-d','--name',proxy,'--network',network,'--memory','64m','--cpus','0.2','-v',str(caddy)+':/etc/caddy/Caddyfile:ro',inspect('huipin-prelaunch-caddy-1')['Image']],check=True,stdout=subprocess.DEVNULL)
+    address=inspect(proxy)['NetworkSettings']['Networks'][network]['IPAddress']+':8080'
     for _ in range(30):
         try:
-            assert_page('http://127.0.0.1:19196','/',('home-outcome-grid',))
+            assert_page('http://'+address,'/',('home-outcome-grid',))
             break
         except Exception:
             time.sleep(1)
     else:
         cleanup();raise RuntimeError('Preview did not become ready')
-    print(json.dumps({'preview':'ready','port':19196,'application':app,'proxy':proxy}))
+    print(json.dumps({'preview':'ready','proxy_address':address,'application':app,'proxy':proxy}))
 
 
 def cleanup():
