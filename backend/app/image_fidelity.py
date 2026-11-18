@@ -16,6 +16,7 @@ import re
 import unicodedata
 import weakref
 from collections import Counter
+from copy import deepcopy
 from dataclasses import replace
 from io import BytesIO
 from typing import Any
@@ -266,6 +267,28 @@ def response_schema(
                 "including excluded rows. Never inventory background products."
             ),
         }
+        if selection:
+            # Select inventory IDs instead of asking the model to duplicate
+            # whole records (and accidentally change their boxes or printing).
+            inventory = deepcopy(properties["source_inventory"])
+            inventory["items"]["properties"]["object_id"] = {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,32}$",
+            }
+            inventory["items"]["required"].append("object_id")
+            properties["source_inventory"] = inventory
+            del properties["selected_regions"]
+            properties["selected_object_ids"] = {
+                "type": "array",
+                "uniqueItems": True,
+                "minItems": selection["count"],
+                "maxItems": selection["count"],
+                "items": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,32}$"},
+                "description": (
+                    "Exact object_id values from source_inventory for the "
+                    "user's spatial subset. Do not repeat object records."
+                ),
+            }
     else:
         assert profile == REVIEW
         properties = {
@@ -309,8 +332,10 @@ def validate_preparation(
     *,
     allow_stored: bool = False,
 ) -> dict[str, Any]:
-    schema = response_schema(PREPARE, ids, selection)
+    schema = response_schema(PREPARE, ids, None if allow_stored else selection)
     if allow_stored:
+        if selection:
+            schema["required"].append("source_inventory")
         schema["properties"]["literal_print_ledger"] = {
             "type": "array",
             "items": {"type": "string", "minLength": 1},
@@ -318,13 +343,36 @@ def validate_preparation(
         }
     Draft202012Validator(schema).validate(payload)
     assert isinstance(payload, dict)
+    if selection and not allow_stored:
+        inventory = payload["source_inventory"]
+        by_id = {r["object_id"]: r for r in inventory}
+        if len(by_id) != len(inventory):
+            raise ValueError("Source inventory object IDs are not unique")
+        if any(key not in by_id for key in payload["selected_object_ids"]):
+            raise ValueError("Selected product is outside the source inventory")
+
+        def canonical_region(region: dict[str, Any]) -> dict[str, Any]:
+            return {k: v for k, v in region.items() if k != "object_id"}
+
+        payload = {
+            **{k: v for k, v in payload.items() if k != "selected_object_ids"},
+            "selected_regions": [
+                canonical_region(by_id[key]) for key in payload["selected_object_ids"]
+            ],
+            "source_inventory": [canonical_region(r) for r in inventory],
+        }
     for region in payload["selected_regions"] + payload.get("source_inventory", []):
         x0, y0, x1, y1 = region["box"]
         if not (x1 > x0 and y1 > y0 and (x1 - x0) * (y1 - y0) >= 0.0001):
             raise ValueError("Source selection has invalid geometry")
     if selection:
         inventory = payload["source_inventory"]
-        if len({canonical_hash(r) for r in inventory}) != len(inventory):
+        if len(
+            {
+                canonical_hash({"asset_id": r["asset_id"], "box": r["box"]})
+                for r in inventory
+            }
+        ) != len(inventory):
             raise ValueError("Source inventory contains duplicates")
         axis = 1 if selection["direction"] in {"bottom", "top"} else 0
         ordered = sorted(
@@ -435,6 +483,16 @@ class FidelityGateway:
             ):
                 raise ValueError("Image fidelity item scope invalid")
             settings = dict(job.configuration.get("settings", {}))
+            if not settings.get("instruction") and job.type in {
+                "detail_pack",
+                "amazon_visual_suite",
+            }:
+                # These forms retain user-entered constraints as fact buckets.
+                # They are source authority; generated module text is not.
+                facts = settings.get("verified_facts") or []
+                settings["instruction"] = "\n".join(
+                    [str(settings.get("product_name") or ""), *[str(v) for v in facts]]
+                )
             replica_id = job.configuration.get("replica_session_id")
             if replica_id:
                 document = session.get(ReplicaDocumentRecord, replica_id)
@@ -735,7 +793,7 @@ class FidelityGateway:
                     preparation,
                     ids,
                     selection if frozen is None else None,
-                    allow_stored=frozen is not None,
+                    allow_stored=True,
                 )
                 for index, region in enumerate(preparation["selected_regions"]):
                     if context["settings"].get("task_type") == "change_model":
@@ -815,10 +873,16 @@ class FidelityGateway:
                         with Image.open(BytesIO(original.payload)) as opened:
                             from PIL import ImageOps
 
+                            left, top, right, bottom = layer.source_box
                             crop = (
                                 ImageOps.exif_transpose(opened)
                                 .convert("RGB")
-                                .crop(layer.source_box)
+                                .crop((left - 16, top - 16, right + 16, bottom + 16))
+                            )
+                            factor = min(4, max(1, 1024 // max(crop.size)))
+                            crop = crop.resize(
+                                (crop.width * factor, crop.height * factor),
+                                Image.Resampling.NEAREST,
                             )
                             reference = source_pixels.artifact(
                                 crop, f"matte-original-{index}.png"
@@ -863,9 +927,11 @@ class FidelityGateway:
                             "schema": response_schema(MATTE),
                             "instruction": "Each matte_original_crop is paired with "
                             "matte-preview of the SAME source region. Compare every "
-                            "small fitting and printed edge directly. In particular, "
-                            "a U-shaped/bitten-off metal clasp where the source "
-                            "has a closed solid cap is an INCOMPLETE object. "
+                            "small fitting and printed edge directly. Checkerboard "
+                            "previews include a neutral margin so complete outer "
+                            "contours are visible. Compare ONLY hardware actually "
+                            "visible in the source, never infer a hidden lever or "
+                            "mechanism that the original does not show. "
                             "Missing metal, missing ring segments, clipped text "
                             "and residual display hardware all fail complete_objects "
                             "or no_context_leak. Never infer completeness from the "
@@ -885,6 +951,23 @@ class FidelityGateway:
                             "edges_clean",
                         )
                     ):
+                        logger.warning(
+                            "source_matte_rejected job_id=%s item_id=%s "
+                            "failed_checks=%s unresolved_count=%s",
+                            request.job_id,
+                            request.job_item_id,
+                            [
+                                name
+                                for name in (
+                                    "complete_objects",
+                                    "no_context_leak",
+                                    "no_clipped_print",
+                                    "edges_clean",
+                                )
+                                if matte.payload[name] is not True
+                            ],
+                            len(matte.payload["unresolved"]),
+                        )
                         raise ValueError(
                             "Source product extraction failed visual acceptance"
                         )
@@ -960,23 +1043,34 @@ class FidelityGateway:
                         background_ids = [original_sources[1].asset_id]
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
-                    if self._native_pair:
+                    layout_panels = 2 if self._native_pair else 1
+                    planned_layout = self._native_pair or context["job_type"] in {
+                        "amazon_visual_suite",
+                        "domestic_main_image",
+                        "reference_remix",
+                    }
+                    if planned_layout:
                         background_schema["properties"]["placements"] = {
                             "type": "array",
-                            "minItems": 2,
+                            "minItems": layout_panels,
                             "maxItems": 12,
                             "items": {
                                 "type": "object",
                                 "additionalProperties": False,
-                                "required": ["layer_index", "box", "panel"],
+                                "required": ["layer_index", "panel_box", "panel"],
                                 "properties": {
                                     "layer_index": {
                                         "type": "integer",
                                         "minimum": 0,
                                         "maximum": len(pixel_recipe["layers"]) - 1,
                                     },
-                                    "box": {
+                                    "panel_box": {
                                         "type": "array",
+                                        "description": (
+                                            "Destination rectangle normalized "
+                                            "within the selected panel, never "
+                                            "source-photo coordinates."
+                                        ),
                                         "minItems": 4,
                                         "maxItems": 4,
                                         "items": {
@@ -985,7 +1079,10 @@ class FidelityGateway:
                                             "maximum": 1,
                                         },
                                     },
-                                    "panel": {"type": "integer", "enum": [0, 1]},
+                                    "panel": {
+                                        "type": "integer",
+                                        "enum": list(range(layout_panels)),
+                                    },
                                 },
                             },
                         }
@@ -1010,15 +1107,23 @@ class FidelityGateway:
                             "schema": background_schema,
                             "settings": context["settings"],
                             "final_image_contract": request.prompt,
-                            "reserved_product_cells": pixel_recipe["cells"],
+                            "reserved_product_cells": None
+                            if planned_layout
+                            else pixel_recipe["cells"],
                             "native_pair": self._native_pair,
-                            "source_layer_inventory": (preparation or {}).get(
-                                "selected_regions"
-                            ),
+                            "canvas_panel_count": layout_panels,
+                            "source_layer_inventory": [
+                                {"layer_index": i, "identity": region["identity"]}
+                                for i, region in enumerate(
+                                    (preparation or {}).get("selected_regions", [])
+                                )
+                            ],
                             "placement_contract": (
-                                "For a native pair, select source layer indices "
-                                "for EACH approved module. Top panel=0 "
-                                "(y .02-.48); bottom panel=1 (y .52-.98). "
+                                "Select source layer indices for EACH approved "
+                                "module. For two panels: top=0, bottom=1. "
+                                "For one panel: panel=0. panel_box uses each PANEL's "
+                                "own coordinates .04-.96. Do NOT use source "
+                                "photo coordinates or full-pair coordinates. "
                                 "Follow the approved subject, copy and layout; "
                                 "a layer may repeat on the other panel. Keep "
                                 "room for all approved text. Never cross the "
@@ -1026,7 +1131,7 @@ class FidelityGateway:
                                 "permitted pool, not an instruction to "
                                 "include every product in every panel."
                             )
-                            if self._native_pair
+                            if planned_layout
                             else "Use supplied reserved cells.",
                         },
                     )
@@ -1037,10 +1142,11 @@ class FidelityGateway:
                         background_plan.payload
                     )
                     pixel_recipe["background_projection"] = background_plan.payload
-                    if self._native_pair:
+                    if planned_layout:
                         indices, cells = source_pixels.native_placements(
                             background_plan.payload["placements"],
                             len(pixel_recipe["layers"]),
+                            panels=layout_panels,
                         )
                         pixel_recipe["placement_indices"] = indices
                         pixel_recipe["cells"] = cells
@@ -1304,6 +1410,52 @@ class FidelityGateway:
             )
         return tuple(cutouts)
 
+    def selected_source_evidence(self, request: Any) -> tuple[Any, ...]:
+        """Return actual original crops bound to this frozen authorized call."""
+        from PIL import ImageOps
+
+        from .source_pixels import artifact
+        from .xinghe_agent import SourceImage
+
+        frozen = self._frozen(request)
+        if frozen is None or not frozen.get("preparation"):
+            return ()
+        sources = {source.asset_id: source for source in request.sources}
+        evidence = []
+        for index, region in enumerate(frozen["preparation"]["selected_regions"]):
+            original = sources[region["asset_id"]]
+            if hashlib.sha256(original.payload).hexdigest() != original.sha256:
+                raise ValueError("Original source evidence bytes changed")
+            with Image.open(BytesIO(original.payload)) as opened:
+                image = ImageOps.exif_transpose(opened).convert("RGB")
+                x0, y0, x1, y1 = region["box"]
+                crop = image.crop(
+                    (
+                        max(0, math.floor(x0 * image.width) - 12),
+                        max(0, math.floor(y0 * image.height) - 12),
+                        min(image.width, math.ceil(x1 * image.width) + 12),
+                        min(image.height, math.ceil(y1 * image.height) + 12),
+                    )
+                )
+                factor = min(4, max(1, 1024 // max(crop.size)))
+                crop = crop.resize(
+                    (crop.width * factor, crop.height * factor),
+                    Image.Resampling.NEAREST,
+                )
+                ref = artifact(crop, f"original-selected-{index}.png")
+            evidence.append(
+                SourceImage(
+                    f"original-selected-{index}",
+                    request.group_key,
+                    ref.filename,
+                    ref.content_type,
+                    ref.sha256,
+                    ref.payload,
+                    source_role="product_authority_detail",
+                )
+            )
+        return tuple(evidence)
+
     async def review_existing(
         self,
         request: Any,
@@ -1513,6 +1665,8 @@ class FidelityGateway:
                 "generation_contract": request.prompt,
                 "source_selection": preparation,
                 "native_pair": self._native_pair,
+                "marketing_canvas": context["job_type"]
+                in {"detail_pack", "amazon_visual_suite", "domestic_main_image"},
                 "candidate_dimensions": [candidate.width, candidate.height],
                 "technical_contract": technical,
                 "server_source_pixel_proof": pixel_proof,
@@ -1521,7 +1675,8 @@ class FidelityGateway:
                 "schema": response_schema(REVIEW),
                 "instruction": "Compare candidate against original authority, "
                 "including each selected design and exact visible physical text. "
-                "For native_pair, the approved generation contract determines "
+                "For native_pair or marketing_canvas, the generation contract "
+                "determines "
                 "which permitted source products appear in each panel. The "
                 "source selection is the authority pool, not a requirement to "
                 "show all products in every module. Inspect both approved "

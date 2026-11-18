@@ -168,10 +168,19 @@ def test_explicit_spatial_selection_is_verified_against_full_source_inventory(
         reverse=direction in {"bottom", "right"},
     )
     value["selected_regions"] = ordered[:3]
-    assert validate_preparation(value, ("product",), constraint) == value
-    value["selected_regions"] = ordered[-3:]
+    wire = {k: deepcopy(v) for k, v in value.items() if k != "selected_regions"}
+    wire["source_inventory"] = [
+        {**r, "object_id": f"object-{i}"} for i, r in enumerate(inventory)
+    ]
+    wire["selected_object_ids"] = [f"object-{inventory.index(r)}" for r in ordered[:3]]
+    assert validate_preparation(wire, ("product",), constraint) == value
+    assert (
+        validate_preparation(value, ("product",), constraint, allow_stored=True)
+        == value
+    )
+    wire["selected_object_ids"] = [f"object-{inventory.index(r)}" for r in ordered[-3:]]
     with pytest.raises(ValueError, match="spatial subset"):
-        validate_preparation(value, ("product",), constraint)
+        validate_preparation(wire, ("product",), constraint)
 
 
 def test_unverified_spatial_selection_stops_before_any_paid_image():
@@ -504,6 +513,21 @@ def test_durable_binding_and_private_candidate_survive_restart(client):
     saved = audited._frozen(call, value)
     restarted = FidelityGateway(gateway, sessions, storage)
     assert restarted._frozen(call) == saved
+    evidence = restarted.selected_source_evidence(call)
+    assert len(evidence) == 1
+    assert evidence[0].source_role == "product_authority_detail"
+    assert hashlib.sha256(evidence[0].payload).hexdigest() == evidence[0].sha256
+    with pytest.raises(ValueError, match="bytes changed"):
+        restarted.selected_source_evidence(
+            replace(
+                call,
+                sources=(
+                    replace(
+                        call.sources[0], payload=call.sources[0].payload + b"tampered"
+                    ),
+                ),
+            )
+        )
     with pytest.raises(ValueError, match="changed"):
         restarted._frozen(replace(call, prompt="changed"))
     with pytest.raises(ValueError, match="active|scope"):
@@ -682,3 +706,64 @@ def test_source_pixel_reconciliation_reuses_frozen_wire_prompt_and_mattes(monkey
     assert result.outcome == ProviderOutcome.SUCCEEDED
     assert replace(gateway.edits[1], reconcile_only=False) == sent
     assert len([p for p in gateway.plans if p.planning_profile == MATTE]) == 1
+
+
+@pytest.mark.parametrize("cross_seam", [False, True])
+def test_native_pair_composes_only_approved_source_layers_after_one_background(
+    monkeypatch, cross_seam
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class PairGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == BACKGROUND:
+                result.payload["placements"] = [
+                    {
+                        "layer_index": 0,
+                        "panel": 0,
+                        "panel_box": [0.1, 0.2, 0.9, 1.01 if cross_seam else 0.9],
+                    },
+                    {"layer_index": 0, "panel": 1, "panel_box": [0.1, 0.2, 0.9, 0.9]},
+                ]
+            return result
+
+        async def edit(self, call):
+            result = await super().edit(call)
+            from app.source_pixels import artifact
+
+            return replace(
+                result,
+                artifact=artifact(
+                    Image.new("RGB", (40, 80), "blue"), "native-pair.png"
+                ),
+            )
+
+    class PairGuard(PixelGuard):
+        def _context(self, call):
+            return {
+                "job_type": "detail_pack",
+                "item_key": "M01",
+                "settings": {"instruction": "原图商品图案保持不变"},
+            }
+
+    gateway = PairGateway()
+    guard = PairGuard(gateway, None, None)
+    guard._native_pair = True
+    original = replace(
+        request(gateway), size="40x80", idempotency_key="signed-native-child"
+    )
+    result = asyncio.run(guard.edit(original))
+    if cross_seam:
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert gateway.edits == []
+    else:
+        assert result.outcome == ProviderOutcome.SUCCEEDED
+        assert len(gateway.edits) == 1
+        assert gateway.edits[0].idempotency_key == original.idempotency_key
+        assert guard.frozen["pixel_recipe"]["placement_indices"] == [0, 0]
+        with Image.open(BytesIO(result.artifact.payload)) as image:
+            assert image.size == (40, 80)
+            assert image.getpixel((20, 20)) == (255, 0, 0, 255)
+            assert image.getpixel((20, 60)) == (255, 0, 0, 255)
+        assert original.prompt == "Change the person; retain source clothes"

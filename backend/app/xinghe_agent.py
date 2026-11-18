@@ -2543,7 +2543,8 @@ class TengliOpenAICompatibleGateway:
                 {
                     "type": "image_url",
                     "image_url": {
-                        "url": f"data:{source.content_type};base64,{encoded}"
+                        "url": f"data:{source.content_type};base64,{encoded}",
+                        **({"detail": "high"} if request.planning_profile.startswith("image_fidelity_") else {}),
                     },
                 }
             )

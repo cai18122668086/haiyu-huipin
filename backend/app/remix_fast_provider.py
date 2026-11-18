@@ -175,6 +175,22 @@ class RemixFastProvider(XingheSingleImageProvider):
                 )
                 self._save_state(request, state)
             brief = state["brief"]
+            image_request = ImageEditRequest(
+                workspace_id=request.workspace_id,
+                job_id=request.job_id,
+                job_item_id=request.job_item_id,
+                attempt_id=request.attempt_id,
+                page_number=envelope.item_ordinal + 1,
+                group_key=envelope.item_key,
+                sources=sources,
+                prompt=state["prompt"],
+                quality="high",
+                idempotency_key=request.idempotency_key,
+                size=size,
+                output_format="png",
+                preserve_provider_artifact=True,
+                single_dispatch=True,
+            )
             if state.get("phase") in {"image_started", "image_unknown"}:
                 return self._result(
                     state, error="REMIX_FAST_IMAGE_OUTCOME_UNKNOWN", unknown=True
@@ -188,24 +204,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                         state, error="REMIX_FAST_IMAGE_OUTCOME_UNKNOWN", unknown=True
                     )
                 try:
-                    image_result = await self.gateway.edit(
-                        ImageEditRequest(
-                            workspace_id=request.workspace_id,
-                            job_id=request.job_id,
-                            job_item_id=request.job_item_id,
-                            attempt_id=request.attempt_id,
-                            page_number=envelope.item_ordinal + 1,
-                            group_key=envelope.item_key,
-                            sources=sources,
-                            prompt=state["prompt"],
-                            quality="high",
-                            idempotency_key=request.idempotency_key,
-                            size=size,
-                            output_format="png",
-                            preserve_provider_artifact=True,
-                            single_dispatch=True,
-                        )
-                    )
+                    image_result = await self.gateway.edit(image_request)
                 except Exception:
                     state["phase"] = "image_unknown"
                     state["calls"].append(
@@ -296,6 +295,11 @@ class RemixFastProvider(XingheSingleImageProvider):
                 review_sources = list(sources) + [
                     _source("candidate", payload, artifact.content_type)
                 ]
+                source_evidence = getattr(
+                    self.gateway, "selected_source_evidence", None
+                )
+                if callable(source_evidence):
+                    review_sources.extend(source_evidence(image_request))
                 review_sources.append(
                     _source("watermark_detail", wm.read_bytes(), "image/png")
                 )
@@ -335,6 +339,20 @@ class RemixFastProvider(XingheSingleImageProvider):
                                 "unresolved": ["all unresolved issues"],
                             },
                             "brief": brief,
+                            "original_user_instruction": envelope.prompt_input.get(
+                                "reference_guidance", ""
+                            ),
+                            "identity_authority": (
+                                "The original product photo and original-selected "
+                                "source crops are physical identity authority. "
+                                "The brief is a generated plan, not a replacement "
+                                "for actual source pixels. Never remove visible "
+                                "source features to match a familiar character "
+                                "stereotype. Compare source/candidate details "
+                                "directly; existing source reflections, folds or "
+                                "marks are not newly invented defects. Real "
+                                "changed/missing printing or hardware still fails."
+                            ),
                             "measured_candidate_dimensions": [
                                 artifact.width,
                                 artifact.height,

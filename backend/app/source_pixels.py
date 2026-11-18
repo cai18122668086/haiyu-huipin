@@ -21,7 +21,7 @@ from PIL import Image, ImageChops, ImageOps
 
 from .provider import ProviderArtifact
 
-VERSION = "source-pixel-layers-v3"
+VERSION = "source-pixel-layers-v4"
 MODEL_SHA256 = "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"
 MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx"
 _lock = threading.Lock()
@@ -68,7 +68,15 @@ def enabled_for(context: dict[str, Any]) -> bool:
     )
 
 
-def _alpha(crop: Image.Image, model_path: Path) -> Image.Image:
+class MatteFragmentError(ValueError):
+    """The foreground is ambiguous; no image may be dispatched from this matte."""
+
+
+def _alpha(
+    crop: Image.Image,
+    model_path: Path,
+    selection_box: tuple[int, int, int, int] | None = None,
+) -> Image.Image:
     global _net, _loaded_path
     cv = importlib.import_module("cv2")
     np = importlib.import_module("numpy")
@@ -80,7 +88,27 @@ def _alpha(crop: Image.Image, model_path: Path) -> Image.Image:
             cv.setNumThreads(1)
             _net = cv.dnn.readNetFromONNX(str(model_path))
             _loaded_path = model_path
-        first = _segment(crop, cv, np, _net)
+        try:
+            first = _segment(crop, cv, np, _net)
+        except MatteFragmentError:
+            if selection_box is None:
+                raise
+            # Narrow only the surrounding source context, retaining the entire
+            # selected rectangle plus a margin. The same ambiguity criterion
+            # still applies. This is bounded to one additional local inference,
+            # before any supplier request, and never synthesizes product RGB.
+            core_left, core_top, core_right, core_bottom = selection_box
+            alternate = (
+                max(0, core_left - 12),
+                max(0, core_top - 12),
+                min(crop.width, core_right + 12),
+                min(crop.height, core_bottom + 12),
+            )
+            if alternate == (0, 0, crop.width, crop.height):
+                raise
+            recovered = _segment(crop.crop(alternate), cv, np, _net)
+            first = Image.new("L", crop.size)
+            first.paste(recovered, (alternate[0], alternate[1]))
         bounds = first.getbbox()
         if bounds is None:
             raise ValueError("Source matte is empty")
@@ -144,7 +172,7 @@ def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
     largest = int(stats[1:, cv.CC_STAT_AREA].argmax()) + 1
     total = int(stats[1:, cv.CC_STAT_AREA].sum())
     if int(stats[largest, cv.CC_STAT_AREA]) < total * 0.95:
-        raise ValueError("Source matte contains disconnected product fragments")
+        raise MatteFragmentError("Source matte contains disconnected product fragments")
     alpha[components != largest] = 0
     return Image.fromarray(alpha, "L")
 
@@ -202,7 +230,16 @@ def extract_layers(
         crop = image.crop((left, top, right, bottom))
         if crop.width * crop.height > 8_000_000:
             raise ValueError("Source selection exceeds the bounded matte pixel budget")
-        alpha = _alpha(crop, model_path)
+        alpha = _alpha(
+            crop,
+            model_path,
+            (
+                math.floor(x0 * image.width) - left,
+                math.floor(y0 * image.height) - top,
+                math.ceil(x1 * image.width) - left,
+                math.ceil(y1 * image.height) - top,
+            ),
+        )
         bounds = alpha.point(lambda value: 255 if value >= 128 else 0).getbbox()
         if bounds is None or (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) < 64:
             raise ValueError("Source layer is empty or incomplete")
@@ -226,6 +263,11 @@ def extract_layers(
 def preview(cutout: ProviderArtifact) -> ProviderArtifact:
     with Image.open(BytesIO(cutout.payload)) as opened:
         rgba = opened.convert("RGBA")
+    # Evidence-only breathing room makes the complete outer contour visible.
+    # This checkerboard is never a delivered or supplier canvas.
+    padded = Image.new("RGBA", (rgba.width + 32, rgba.height + 32))
+    padded.alpha_composite(rgba, (16, 16))
+    rgba = padded
     checker = Image.new("RGBA", rgba.size, "#dddddd")
     from PIL import ImageDraw
 
@@ -235,6 +277,10 @@ def preview(cutout: ProviderArtifact) -> ProviderArtifact:
             if (x // 16 + y // 16) % 2:
                 draw.rectangle((x, y, x + 15, y + 15), fill="#aaaaaa")
     checker.alpha_composite(rgba)
+    factor = min(4, max(1, 1024 // max(checker.size)))
+    checker = checker.resize(
+        (checker.width * factor, checker.height * factor), Image.Resampling.NEAREST
+    )
     return artifact(checker, "source-matte-preview.png")
 
 
@@ -287,25 +333,39 @@ def background_prompt(
     )
 
 
-def native_placements(value: Any, count: int) -> tuple[list[int], list[list[float]]]:
+def native_placements(
+    value: Any, count: int, panels: int = 2
+) -> tuple[list[int], list[list[float]]]:
     """Validate the approved pair's source-layer placement, including its seam."""
-    if not isinstance(value, list) or not 2 <= len(value) <= 12:
+    if (
+        panels not in (1, 2)
+        or not isinstance(value, list)
+        or not panels <= len(value) <= 12
+    ):
         raise ValueError("Native pair requires bounded product placement")
     indices: list[int] = []
     cells: list[list[float]] = []
-    panels = set()
+    seen_panels = set()
     for entry in value:
-        index, box, panel = entry["layer_index"], entry["box"], entry["panel"]
-        if type(index) is not int or not 0 <= index < count or panel not in (0, 1):
+        index, box, panel = entry["layer_index"], entry["panel_box"], entry["panel"]
+        if (
+            type(index) is not int
+            or not 0 <= index < count
+            or type(panel) is not int
+            or panel not in range(panels)
+        ):
             raise ValueError("Native placement changed the source authority")
         if len(box) != 4 or any(
             type(v) not in (int, float) or not math.isfinite(v) for v in box
         ):
             raise ValueError("Native placement geometry is invalid")
         x0, y0, x1, y1 = box
-        low, high = (0.02, 0.48) if panel == 0 else (0.52, 0.98)
-        if not (0.02 <= x0 < x1 <= 0.98 and low <= y0 < y1 <= high):
+        if not (0.04 <= x0 < x1 <= 0.96 and 0.04 <= y0 < y1 <= 0.96):
             raise ValueError("Native product placement crosses the pair seam")
+        # The pair is two vertically stacked equal panels. This transforms
+        # authored destination geometry, never source or supplier image pixels.
+        y0, y1 = (panel + y0) / panels, (panel + y1) / panels
+        box = [x0, y0, x1, y1]
         if any(
             min(x1, old[2]) > max(x0, old[0]) and min(y1, old[3]) > max(y0, old[1])
             for old in cells
@@ -313,8 +373,8 @@ def native_placements(value: Any, count: int) -> tuple[list[int], list[list[floa
             raise ValueError("Native product placements overlap")
         indices.append(index)
         cells.append(box)
-        panels.add(panel)
-    if panels != {0, 1}:
+        seen_panels.add(panel)
+    if seen_panels != set(range(panels)):
         raise ValueError("Native product placement omits an approved panel")
     return indices, cells
 
