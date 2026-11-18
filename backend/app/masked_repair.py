@@ -1495,8 +1495,12 @@ def _delivery_pixels(
         span = min(bbox[2] - bbox[0], bbox[3] - bbox[1])
         radius = min(
             64,
-            max(feather_radius, round(min(generated.size) * feather_radius / 100)),
-            max(1, span // 6),
+            max(
+                feather_radius,
+                round(min(generated.size) * feather_radius / 100),
+                span // 2 if span >= 32 else 1,
+            ),
+            max(1, span // 2 if span >= 32 else span // 6),
         )
         blurred = normalized.authority.filter(ImageFilter.GaussianBlur(radius=radius))
         ramp = blurred.point(lambda value: max(0, round((value - 160) * 255 / 95)))

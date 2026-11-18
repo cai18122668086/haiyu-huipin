@@ -2608,7 +2608,7 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast"}:
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback"}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
@@ -2627,6 +2627,10 @@ class TengliOpenAICompatibleGateway:
                             "enable_thinking": False,
                         })
                 planner_key = request.idempotency_key
+                if request.planning_profile == "image_fidelity_readback":
+                    planner_key += ":literal-ocr:" + hashlib.sha256(
+                        route_payload["model"].encode()
+                    ).hexdigest()[:12]
                 if (request.planning_profile == "aurora_native_fast_identity"
                     and route.planner_model.casefold().startswith("deepseek")):
                     route_payload["max_completion_tokens"] = 32768
@@ -2638,7 +2642,7 @@ class TengliOpenAICompatibleGateway:
                 if (
                     request.planning_profile
                     in _BOUNDED_JSON_PLANNER_PROFILES | {"amazon_visual_suite_fast"}
-                    and route.planner_model.casefold().startswith("deepseek")
+                    and route_payload["model"].casefold().startswith("deepseek")
                 ):
                     # This provider includes reasoning in the output allowance.
                     # Keep the complete schema and thinking mode. Bound its
@@ -3369,7 +3373,7 @@ class TengliOpenAICompatibleGateway:
                 }
             )
         route = self._visual_review_route(request.route_attempt)
-        payload = {
+        payload: dict[str, Any] = {
             "model": self.vision_model if route.name == "primary" else route.planner_model,
             "messages": [
                 {
@@ -3498,7 +3502,7 @@ class TengliOpenAICompatibleGateway:
                 }
             )
         route = self._visual_review_route(request.route_attempt)
-        payload = {
+        payload: dict[str, Any] = {
             "model": self.vision_model if route.name == "primary" else route.planner_model,
             "messages": [
                 {
@@ -3513,6 +3517,8 @@ class TengliOpenAICompatibleGateway:
             ],
             "response_format": {"type": "json_object"},
         }
+        if str(payload["model"]).casefold().startswith("qwen"):
+            payload.update({"max_completion_tokens": 8192, "enable_thinking": False})
         response: Mapping[str, Any] | None = None
         try:
             self.external_network_request_count += 1
@@ -4292,6 +4298,12 @@ class XinghePlanningCoordinator:
                         "INTAKE_SCHEMA_INVALID",
                     }
                     and correction_no < 2
+                    # Identity/logo failures already have a durable, separately
+                    # receipted brand recovery path. Generic correction must not
+                    # repeat the original intake or replace its evidence.
+                    and not (exc.code == "INTAKE_SCHEMA_INVALID" and str(
+                        getattr(exc, "path", "")
+                    ).startswith(("/identity", "/intake/identity")))
                     and result is not None and result.error_code is None
                     and isinstance(result.payload, Mapping)
                 ):
@@ -10554,6 +10566,11 @@ def _masked_visual_review_prompt(instruction: str) -> str:
         "request those exact changes; require all other identity evidence inside "
         "the selection to remain preserved. Also judge edge, lighting, and "
         "texture continuity at the selection boundary and visible artifacts. "
+        "Compare every alleged seam with the SAME coordinates in image 1: "
+        "an original window/frame/object edge is not a newly introduced defect. "
+        "The binary mask's straight outline alone is not pixel evidence of "
+        "a seam. Reject any actual new discontinuity, flat patch, halo or "
+        "cutoff visible in the delivered pixels; inspect, never assume. "
         f"User instruction: {instruction!r}. Return exactly one JSON object "
         "with boolean fields visual_success, instruction_satisfied, "
         "identity_inside_selection_preserved, boundary_continuity, and "

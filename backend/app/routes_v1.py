@@ -4807,7 +4807,7 @@ def _reserve_real_provider_job_if_enabled(
         # reviews plus an independent candidate-only text readback. Member credits stay
         # governed by the existing deliverable-based settlement.
         fidelity_calls = fidelity_items * (
-            4 if job.type in {
+            5 if job.type in {
                 JobType.PRODUCT_IMAGE.value, JobType.CREATIVE_IMAGE.value,
                 JobType.REFERENCE_REMIX.value,
                 JobType.AMAZON_VISUAL_SUITE.value,

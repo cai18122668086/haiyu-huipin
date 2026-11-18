@@ -82,16 +82,32 @@ def test_independent_literal_readback_rejects_wrong_or_unknown_print(transcripti
     assert readback_matches({"text_runs": ["モ\nモ\nン\nガ"]}, preparation()) is True
 
 
+def test_character_name_cannot_replace_original_copyright():
+    value = preparation()
+    value["literal_print_ledger"] = ["モモンガ", "©nagano"]
+    assert not readback_matches({"text_runs": ["モモンガ", "Momonga"]}, value)
+    assert readback_matches({"text_runs": ["モモンガ", "©nagano"]}, value)
+    with pytest.raises(ValidationError):
+        validate_preparation(value, ("product",))
+    assert validate_preparation(value, ("product",), allow_stored=True) == value
+
+
 def test_all_true_visual_review_cannot_override_candidate_only_ocr():
     class BlindReaderGateway(Gateway):
         async def plan(self, req):
             self.plans.append(req)
             value = preparation() if req.planning_profile == PREPARE else review()
             if req.planning_profile == READBACK:
-                assert len(req.sources) == 1 and req.sources[0].asset_id == "candidate"
+                assert len(req.sources) == 1
                 assert "モモンガ" not in req.system_prompt
                 assert "モモンガ" not in str(req.product_information)
-                value = {"text_runs": ["ちいかわ"]}
+                value = {
+                    "text_runs": [
+                        "ちいかわ"
+                        if req.sources[0].asset_id == "candidate"
+                        else "モモンガ"
+                    ]
+                }
             return PlannerCallResult(value, "reader", {}, {"reported": True}, 0.1, 2)
 
     gateway = BlindReaderGateway()
@@ -100,7 +116,7 @@ def test_all_true_visual_review_cannot_override_candidate_only_ocr():
     assert result.raw_usage["metrics"]["image_fidelity"]["failed_checks"] == [
         "physical_text_readback"
     ]
-    assert len(gateway.edits) == 1 and len(gateway.plans) == 3
+    assert len(gateway.edits) == 1 and len(gateway.plans) == 4
 
 
 @pytest.mark.parametrize("change", ["style_authority", "empty_box", "out_of_bounds"])
@@ -122,6 +138,7 @@ def test_selection_cannot_use_style_or_invalid_geometry(change):
         ("保留上方的三个", "top"),
         ("只要左侧3件", "left"),
         ("选右边的三款", "right"),
+        ("Use only the bottom three pictured charms", "bottom"),
     ],
 )
 def test_explicit_spatial_selection_is_verified_against_full_source_inventory(
@@ -191,7 +208,9 @@ class Gateway:
     async def plan(self, request):
         self.plans.append(request)
         value = preparation() if request.planning_profile == PREPARE else review()
-        if request.planning_profile != PREPARE:
+        if request.planning_profile == READBACK:
+            value = {"text_runs": ["モモンガ"]}
+        elif request.planning_profile != PREPARE:
             if self.malformed:
                 value = {"checks": {}}
             else:
@@ -262,9 +281,9 @@ def test_rejected_or_malformed_review_never_regenerates(malformed, review_calls)
     assert result.error_code == "IMAGE_FIDELITY_REJECTED"
     assert result.artifact is None and result.retryable is False
     assert len(gateway.edits) == 1
-    assert len(gateway.plans) == 1 + review_calls
+    assert len(gateway.plans) == 2 + review_calls
     assert audited.retained.sha256 == gateway.artifact.sha256
-    assert result.actual_cost_micros == 10 + 2 * (1 + review_calls)
+    assert result.actual_cost_micros == 10 + 2 * (2 + review_calls)
     assert len({p.idempotency_key for p in gateway.plans}) == len(gateway.plans)
     assert gateway.edits[0].sources[0].payload == request(gateway).sources[0].payload
     assert gateway.edits[0].sources[1].source_role == "product_detail"
@@ -290,7 +309,7 @@ def test_new_guard_reconciliation_reconstructs_frozen_prompt_and_crops():
     restarted = ScopedFidelity(gateway, None, None)
     restarted.frozen = frozen
     asyncio.run(restarted.edit(replace(original, reconcile_only=True)))
-    assert len(gateway.plans) == 1
+    assert len(gateway.plans) == 2
     assert replace(gateway.edits[1], reconcile_only=False) == sent
 
 

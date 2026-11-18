@@ -65,7 +65,9 @@ POLICY = (
     "selected object must come from product-authority sources, never from a "
     "background/style/pose reference. Physical printing is part of the product: "
     "preserve the actual characters, language, spelling, logos, illustrations, "
-    "linework and placement. Never replace tiny Japanese or other lettering with "
+    "linework and placement, including small copyright marks. Never translate "
+    "physical print or replace copyright with English character/product names. "
+    "Never replace tiny Japanese or other lettering with "
     "a familiar brand/character name or pseudo-glyphs. A ban on copying reference "
     "marketing text DOES NOT authorize erasing or rewriting product printing. "
     "For change_model, change the person only: retain Image 1's sleeve length, "
@@ -145,7 +147,28 @@ def selection_constraint(instruction: str) -> dict[str, Any] | None:
         instruction,
     )
     if not match:
-        return None
+        english = re.search(
+            r"\b(bottom|lower|top|upper|leftmost|left|rightmost|right)[\s-]+"
+            r"(one|two|three|four|five|six|[1-6])\b",
+            instruction,
+            re.I,
+        )
+        if not english:
+            return None
+        direction, count = english.groups()
+        return {
+            "direction": {
+                "lower": "bottom",
+                "upper": "top",
+                "leftmost": "left",
+                "rightmost": "right",
+            }.get(direction.lower(), direction.lower()),
+            "count": int(count)
+            if count.isdigit()
+            else {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}[
+                count.lower()
+            ],
+        }
     direction, count = match.groups()
     return {
         "direction": next(
@@ -247,7 +270,10 @@ def response_schema(
         "type": "object",
         "additionalProperties": False,
         "required": [
-            key for key in properties if key != "source_inventory" or selection
+            key
+            for key in properties
+            if key != "literal_print_ledger"
+            and (key != "source_inventory" or selection)
         ],
         "properties": properties,
     }
@@ -257,8 +283,17 @@ def validate_preparation(
     payload: object,
     ids: tuple[str, ...],
     selection: dict[str, Any] | None = None,
+    *,
+    allow_stored: bool = False,
 ) -> dict[str, Any]:
-    Draft202012Validator(response_schema(PREPARE, ids, selection)).validate(payload)
+    schema = response_schema(PREPARE, ids, selection)
+    if allow_stored:
+        schema["properties"]["literal_print_ledger"] = {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "maxItems": 96,
+        }
+    Draft202012Validator(schema).validate(payload)
     assert isinstance(payload, dict)
     for region in payload["selected_regions"] + payload.get("source_inventory", []):
         x0, y0, x1, y1 = region["box"]
@@ -300,11 +335,13 @@ def readback_matches(payload: object, preparation: dict[str, Any]) -> bool:
     def canonical(value: str) -> str:
         return "".join(unicodedata.normalize("NFC", value).split())
 
-    expected = Counter(
-        canonical(text)
+    required_runs = preparation.get("literal_print_ledger") or [
+        text
         for region in preparation["selected_regions"]
         for text in region["visible_print"]
-        if text.upper() != "UNREADABLE"
+    ]
+    expected = Counter(
+        canonical(text) for text in required_runs if text.upper() != "UNREADABLE"
     )
     actual = Counter(canonical(text) for text in payload["text_runs"])
     return all(actual[text] >= count for text, count in expected.items())
@@ -501,7 +538,9 @@ class FidelityGateway:
                 return await self.wrapped.edit(request)
             frozen = self._frozen(request)
             crop_scale = (
-                frozen.get("crop_scale", "native-v1") if frozen else "nearest-4-1024-v1"
+                frozen.get("crop_scale", "native-v1")
+                if frozen
+                else "nearest-4-1024-padded-v2"
             )
             if frozen is not None:
                 preparation = frozen["preparation"]
@@ -582,6 +621,7 @@ class FidelityGateway:
                     preparation,
                     ids,
                     selection if frozen is None else None,
+                    allow_stored=frozen is not None,
                 )
                 for index, region in enumerate(preparation["selected_regions"]):
                     if context["settings"].get("task_type") == "change_model":
@@ -593,6 +633,22 @@ class FidelityGateway:
                     )
                     with Image.open(BytesIO(source.payload)) as im:
                         x0, y0, x1, y1 = region["box"]
+                        if crop_scale == "nearest-4-1024-padded-v2":
+                            padding = max(
+                                8,
+                                round(
+                                    min((x1 - x0) * im.width, (y1 - y0) * im.height)
+                                    * 0.08
+                                ),
+                            )
+                            x0, y0 = (
+                                max(0, x0 - padding / im.width),
+                                max(0, y0 - padding / im.height),
+                            )
+                            x1, y1 = (
+                                min(1, x1 + padding / im.width),
+                                min(1, y1 + padding / im.height),
+                            )
                         box = (
                             math.floor(x0 * im.width),
                             math.floor(y0 * im.height),
@@ -601,7 +657,10 @@ class FidelityGateway:
                         )
                         buf = BytesIO()
                         detail = im.crop(box)
-                        if crop_scale == "nearest-4-1024-v1":
+                        if crop_scale in {
+                            "nearest-4-1024-v1",
+                            "nearest-4-1024-padded-v2",
+                        }:
                             factor = min(4, max(1, 1024 // max(detail.size)))
                             if factor > 1:
                                 # Pixel replication enlarges reference evidence;
@@ -625,6 +684,30 @@ class FidelityGateway:
                         )
                     )
                 edited_sources = original_sources + tuple(crops)
+                if frozen is None and crops:
+                    source_readback = await self._plan(
+                        request,
+                        READBACK,
+                        tuple(crops),
+                        {"schema": response_schema(READBACK)},
+                        suffix=":source",
+                    )
+                    plans.append(source_readback)
+                    if (
+                        source_readback.error_code
+                        or not readback_matches(source_readback.payload, preparation)
+                        or any(
+                            "UNREADABLE" in text.upper()
+                            for text in source_readback.payload["text_runs"]
+                        )
+                    ):
+                        raise ValueError(
+                            "Original physical printing could not be verified"
+                        )
+                    preparation = {
+                        **preparation,
+                        "literal_print_ledger": source_readback.payload["text_runs"],
+                    }
             else:
                 edited_sources = original_sources
             if frozen is None and not request.reconcile_only:
@@ -847,10 +930,13 @@ class FidelityGateway:
         if (
             accepted
             and preparation
-            and any(
-                text.upper() != "UNREADABLE"
-                for region in preparation["selected_regions"]
-                for text in region["visible_print"]
+            and (
+                preparation.get("literal_print_ledger")
+                or any(
+                    text.upper() != "UNREADABLE"
+                    for region in preparation["selected_regions"]
+                    for text in region["visible_print"]
+                )
             )
         ):
             try:
@@ -868,9 +954,14 @@ class FidelityGateway:
                 ):
                     accepted = False
                     failed.append("physical_text_readback")
-            except (ValidationError, ValueError, TypeError, KeyError):
+            except Exception as exc:
                 accepted = False
                 failed.append("physical_text_readback_unavailable")
+                logger.warning(
+                    "image_fidelity_readback_unavailable job_id=%s reason=%s",
+                    request.job_id,
+                    type(exc).__name__,
+                )
         result = self._account(result, plans)
         raw = dict(result.raw_usage or {})
         raw["metrics"] = {
