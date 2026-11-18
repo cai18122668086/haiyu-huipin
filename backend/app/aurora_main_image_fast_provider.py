@@ -21,6 +21,7 @@ from .errors import ApiError
 from .models import JobAttemptRecord, JobItemRecord, JobPlanRecord, JobRecord, utc_now
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
+from .provider_diagnostics import retained_metrics, retained_request_count
 from .services import canonical_hash, get_ready_assets
 from .storage import ValidatedImage
 from .xinghe_agent import ImageEditRequest, SourceImage, XingheGateway
@@ -408,6 +409,14 @@ class FastMainImageProvider:
                         raise
                     cached = self._claim(plan, page, request, skip_rejected_cache=True)
                 else:
+                    reviewer = getattr(self.gateway, "review_existing", None)
+                    if callable(reviewer):
+                        return await reviewer(
+                            request, sources=tuple(sources),
+                            prompt=image_prompt(plan, page),
+                            size=f"{plan['canvas'][0]}x{plan['canvas'][1]}",
+                            artifact=artifact,
+                        )
                     return ProviderResult(
                         outcome=ProviderOutcome.SUCCEEDED,
                         artifact=artifact,
@@ -442,11 +451,12 @@ class FastMainImageProvider:
             )
             usage = {
                 **(result.normalized_usage or {}),
-                "network_requests": 1,
+                "network_requests": retained_request_count(result.raw_usage),
                 "review_status": "NOT_REVIEWED",
                 "main_image_speed": "native_fast",
                 "planning_rounds": 1,
                 "metrics": {
+                    **retained_metrics(result.raw_usage),
                     "api_latency_seconds": result.api_latency_seconds,
                     "skill_id": plan["skill_id"],
                     "skill_content_hash": plan["skill_content_hash"],

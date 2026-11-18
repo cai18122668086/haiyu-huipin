@@ -187,6 +187,7 @@ class Settings(BaseSettings):
     image_base_url: str = "https://api.artflow.vip"
     image_model: str = "gpt-image-2.5-flare"
     image_fallback_models: tuple[str, ...] = ()
+    image_fidelity_review_enabled: bool = True
     # Exact CDN hosts trusted by the operator for local proxy fake-IP DNS.
     # Public DNS results require no allowlist; private/LAN addresses stay denied.
     image_result_allowed_hosts: tuple[str, ...] = ()

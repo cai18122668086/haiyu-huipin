@@ -525,6 +525,7 @@ def _usage_charge(
     usage: UsageEventRecord,
     request_count: int,
 ) -> tuple[int, str]:
+    raw = usage.raw_usage if isinstance(usage.raw_usage, dict) else {}
     if _is_non_negative_int(usage.actual_cost_micros):
         return int(usage.actual_cost_micros), "actual"
     if not _is_non_negative_int(usage.estimated_cost_micros):
@@ -549,7 +550,11 @@ def _usage_charge(
             estimated += (int(transport_attempts) - 1) * int(
                 job.estimated_cost_max_micros or 0
             )
-    elif request_count > 1:
+    elif request_count > 1 and not (
+        isinstance(raw.get("metrics"), dict)
+        and isinstance(raw["metrics"].get("image_fidelity"), dict)
+        and raw["metrics"]["image_fidelity"].get("costs_aggregated") is True
+    ):
         estimated *= request_count
     return estimated, "estimated_fallback"
 

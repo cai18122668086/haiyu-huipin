@@ -17,25 +17,38 @@ def image_content_refusal(payload: Mapping[str, Any]) -> bool:
     """Recognize an explicit refusal even when a relay wraps it as text output."""
     error = payload.get("error")
     if not isinstance(error, Mapping) or any(
-        payload.get(key) for key in (
-            "data", "images", "output", "url", "b64_json", "generation_id", "task_id"
+        payload.get(key)
+        for key in (
+            "data",
+            "images",
+            "output",
+            "url",
+            "b64_json",
+            "generation_id",
+            "task_id",
         )
     ):
         return False
     code = str(error.get("code") or "").casefold()
     if code in {
-        "content_policy_violation", "content_policy_rejected", "safety_violation",
-        "moderation_blocked", CONTENT_REJECTION_CODE.casefold(),
+        "content_policy_violation",
+        "content_policy_rejected",
+        "safety_violation",
+        "moderation_blocked",
+        CONTENT_REJECTION_CODE.casefold(),
     }:
         return True
     if code != "upstream_text_reply":
         return False
-    return bool(re.search(
-        r"(?:violat\w*.{0,80}(?:guardrails?|content polic)|"
-        r"similarity to third.party content|content.policy.violation|"
-        r"内容(?:政策|审核).{0,12}(?:拒绝|限制|不允许)|违反.{0,12}安全)",
-        str(error.get("message") or "")[:2400], re.I | re.S,
-    ))
+    return bool(
+        re.search(
+            r"(?:violat\w*.{0,80}(?:guardrails?|content polic)|"
+            r"similarity to third.party content|content.policy.violation|"
+            r"内容(?:政策|审核).{0,12}(?:拒绝|限制|不允许)|违反.{0,12}安全)",
+            str(error.get("message") or "")[:2400],
+            re.I | re.S,
+        )
+    )
 
 
 def safe_text(value: str, limit: int = 1200) -> str:
@@ -77,9 +90,16 @@ def known_image_route_rejection(status: int, payload: Mapping[str, Any]) -> bool
         or image_content_refusal(payload)
         or not isinstance(error, Mapping)
         or any(
-        payload.get(key) for key in (
-            "data", "images", "output", "url", "b64_json", "generation_id", "task_id"
-        )
+            payload.get(key)
+            for key in (
+                "data",
+                "images",
+                "output",
+                "url",
+                "b64_json",
+                "generation_id",
+                "task_id",
+            )
         )
     ):
         return False
@@ -101,17 +121,41 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
     if not isinstance(metrics, Mapping):
         return {}
     result: dict[str, Any] = {}
+    fidelity = metrics.get("image_fidelity")
+    if isinstance(fidelity, Mapping):
+        result["image_fidelity"] = {
+            key: value
+            for key, value in fidelity.items()
+            if (key in {"accepted", "costs_aggregated"} and type(value) is bool)
+            or (
+                key in {"image_requests", "planning_requests"}
+                and type(value) is int
+                and 0 <= value <= MAX_PROVIDER_ATTEMPTS
+            )
+            or (
+                key in {"version", "candidate_sha256", "retained_asset_id"}
+                and isinstance(value, str)
+                and len(value) <= 255
+            )
+            or (
+                key == "failed_checks"
+                and isinstance(value, list)
+                and len(value) <= 8
+                and all(isinstance(v, str) and len(v) <= 80 for v in value)
+            )
+        }
     recovery = metrics.get("image_recovery")
     if isinstance(recovery, Mapping):
         result["image_recovery"] = {
             key: safe_text(value, 255) if isinstance(value, str) else value
             for key, value in recovery.items()
             if (
-                key in {"can_resume_original", "reconcile_only"}
-                and type(value) is bool
-            ) or (
+                key in {"can_resume_original", "reconcile_only"} and type(value) is bool
+            )
+            or (
                 key in {"rate_limit_retries", "url_refreshes", "automatic_resumptions"}
-                and type(value) is int and 0 <= value <= 10
+                and type(value) is int
+                and 0 <= value <= 10
             )
             or (key == "original_task_id" and isinstance(value, str))
         }
@@ -136,3 +180,30 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
             if isinstance(row, Mapping)
         ]
     return result
+
+
+def retained_request_count(raw_usage: object) -> int:
+    """Count only gateway transport receipts and our bounded review receipts."""
+    metrics = retained_metrics(raw_usage)
+    count = (
+        raw_usage.get("network_requests") if isinstance(raw_usage, Mapping) else None
+    )
+    trace = metrics.get("provider_attempts")
+    image_count = len(trace) if isinstance(trace, list) else None
+    fidelity = metrics.get("image_fidelity", {})
+    if fidelity.get("costs_aggregated") is True:
+        images, plans = (
+            fidelity.get("image_requests"),
+            fidelity.get("planning_requests"),
+        )
+        if (
+            type(images) is int
+            and type(plans) is int
+            and type(count) is int
+            and images in {0, image_count}
+            and count == images + plans
+        ):
+            return count
+    if type(count) is int and count == image_count:
+        return count
+    return 1

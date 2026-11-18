@@ -131,6 +131,37 @@ def _usage() -> dict[str, int | bool | None]:
     }
 
 
+def test_wall_recolour_is_texture_preserving_and_never_expands_authority():
+    instruction = "仅将蒙版中的左侧墙面改为淡粉色，其余像素不变，不增加文字或物体。"
+    source = Image.new("RGBA", (200, 200), (210, 200, 180, 255))
+    for y in range(200):
+        for x in range(80):
+            source.putpixel((x, y), (190 + x // 4, 180 + x // 4, 160 + x // 4, 255))
+    authority = Image.open(BytesIO(_selection_rect_png((200, 200), (0, 0, 80, 190))))
+    assert (
+        masked_repair_module._effective_execution_path(
+            "auto",
+            instruction=instruction,
+            authority=authority,
+        )
+        == "deterministic"
+    )
+    candidate = masked_repair_module._deterministic_repair(
+        source, authority, instruction
+    )
+    assert candidate is not None
+    assert candidate.getpixel((100, 50)) == source.getpixel((100, 50))
+    assert candidate.getpixel((40, 50)) != source.getpixel((40, 50))
+    # Original relative light/dark variation is carried through the recolour.
+    assert candidate.getpixel((40, 50))[1] > candidate.getpixel((4, 50))[1]
+    assert (
+        masked_repair_module._wall_recolour_colour(
+            instruction + "并移除书架。",
+        )
+        is None
+    )
+
+
 class OfflineMaskedGateway(FakeXingheGateway):
     provider_name = "tengli-offline"
     image_model = "gpt-image-2"
@@ -188,9 +219,7 @@ class OfflineMaskedGateway(FakeXingheGateway):
             )
         raw_size = self.raw_size or (request.width, request.height)
         raw_color = (
-            (220, 20, 40, 255)
-            if self.raw_alpha is None
-            else (0, 0, 0, self.raw_alpha)
+            (220, 20, 40, 255) if self.raw_alpha is None else (0, 0, 0, self.raw_alpha)
         )
         raw = _png(raw_size, raw_color)
         return MaskedEditCallResult(
@@ -464,10 +493,15 @@ def test_transparent_provider_raw_is_materialized_before_review_and_locked(
     )
     with Image.open(BytesIO(gateway.review_calls[0].candidate_png)) as candidate_image:
         candidate_rgba = candidate_image.convert("RGBA")
-    assert candidate_rgba.getpixel((0, 0)) == expected_candidate.getpixel((0, 0))
+    # The reviewer sees the actual locked delivery, not a global raw redraw.
+    assert candidate_rgba.getpixel((0, 0)) == source_rgba.getpixel((0, 0))
+    # Inward feathering blends the editable boundary; it must still change.
+    assert candidate_rgba.getpixel((3, 3)) != source_rgba.getpixel((3, 3))
+    assert candidate_rgba.getpixel((3, 3)) != expected_candidate.getpixel((3, 3))
     assert candidate_rgba.getpixel((0, 0)) != (0, 0, 0, 255)
 
     delivered = asyncio.run(client.app.state.storage.read_bytes(output_key))
+    assert delivered == gateway.review_calls[0].candidate_png
     with Image.open(BytesIO(delivered)) as result_image:
         result_rgba = result_image.convert("RGBA")
     for y in range(8):
@@ -491,9 +525,7 @@ def test_visual_review_retries_once_without_regenerating_and_records_attempts(
     status_code, job = _create_job(client, source["id"], mask["id"])
     assert status_code == 202
     assert _dispatch(client) == 1
-    body = client.get(
-        f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}"
-    ).json()
+    body = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
     assert body["api_request_count"] == 3
 
     with client.app.state.session_factory() as session:
@@ -873,7 +905,6 @@ def test_empty_and_full_masks_fail_before_provider(
     assert gateway.masked_calls == []
 
 
-
 def test_encoding_damaged_instruction_fails_before_provider_calls(
     client: TestClient,
 ) -> None:
@@ -890,20 +921,14 @@ def test_encoding_damaged_instruction_fails_before_provider_calls(
         client,
         source["id"],
         mask["id"],
-        instruction=(
-            "???????????????;??????????POLARIS ????????????????"
-        ),
+        instruction=("???????????????;??????????POLARIS ????????????????"),
     )
     assert status_code == 202
     assert _dispatch(client) == 1
 
-    body = client.get(
-        f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}"
-    ).json()
+    body = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
     assert body["status"] == "failed"
-    assert body["items"][0]["error_code"] == (
-        "LOCAL_EDIT_INSTRUCTION_ENCODING_INVALID"
-    )
+    assert body["items"][0]["error_code"] == ("LOCAL_EDIT_INSTRUCTION_ENCODING_INVALID")
     assert body["api_request_count"] == 0
     assert gateway.masked_calls == []
     assert gateway.review_calls == []
@@ -935,6 +960,7 @@ def test_encoding_damaged_instruction_fails_before_provider_calls(
         assert settlement.details["charged_cost_micros"] == 0
         assert settlement.details["actual_provider_request_count"] == 0
         assert release.details["released_request_count"] == 6
+
 
 def test_dimensions_kind_and_cross_workspace_are_rejected_at_api(
     client: TestClient,

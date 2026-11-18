@@ -291,6 +291,8 @@ def build_native_input(
         "verification_status": "INTERNAL_ONLY",
     }
     user_facts = validated["user_facts"]
+    # The direct website brief requires every user fact, including separately
+    # verified facts. Preserve that same stronger coverage in native compilation.
     points = [
         {
             "id": f"USP{index:02d}",
@@ -303,6 +305,7 @@ def build_native_input(
                 fact
                 for fact in user_facts
                 if fact["evidence_ref"].startswith("settings/selling_points/")
+                or settings.get("website_contract_version") == "WEBSITE_DIRECT_V2"
             ),
             start=1,
         )

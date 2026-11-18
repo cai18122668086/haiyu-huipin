@@ -4795,6 +4795,24 @@ def _reserve_real_provider_job_if_enabled(
         # Two edit calls plus up to four reviews, including same-candidate
         # recovery. Review recovery never regenerates the saved image.
         provider_requests = 6
+    if settings.image_fidelity_review_enabled and job.type != JobType.LOCAL_EDIT.value:
+        fidelity_items = (
+            runnable_item_count if runnable_item_count is not None
+            else job.expected_item_count
+        )
+        # One source inspection for single edits, at most two same-image
+        # reviews. This reserves provider costs; member image credits stay
+        # governed by the existing deliverable-based settlement.
+        fidelity_calls = fidelity_items * (
+            3 if job.type in {
+                JobType.PRODUCT_IMAGE.value, JobType.CREATIVE_IMAGE.value,
+                JobType.REFERENCE_REMIX.value,
+                JobType.AMAZON_VISUAL_SUITE.value,
+            }
+            else 2
+        )
+        estimated_cost += fidelity_calls * settings.tengli_planner_reserve_micros
+        provider_requests += fidelity_calls
     reserve_provider_job_quota(
         session,
         job=job,

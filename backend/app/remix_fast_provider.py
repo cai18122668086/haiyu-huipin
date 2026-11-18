@@ -21,6 +21,7 @@ from PIL import Image
 from .config import default_aurora_work_root
 from .models import JobItemRecord, JobRecord
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
+from .provider_diagnostics import retained_metrics
 from .remix_fast_contract import (
     CHECKS,
     GEOMETRY_FIELDS,
@@ -128,9 +129,11 @@ class RemixFastProvider(XingheSingleImageProvider):
                         "re; normalized on generated canvas"
                     ),
                     "copy_authority": (
-                        "Only user facts and visible current-product text. Omit "
-                        "unverified claims, prices, source branding and exact so"
-                        "urce copy."
+                        "User facts and physical printing on the product are "
+                        "authoritative. Preserve every original character, logo "
+                        "and illustration on the selected product. Only omit "
+                        "unverified claims/prices and the BENCHMARK's marketing "
+                        "copy/branding; never erase or rewrite PRODUCT printing."
                     ),
                     "image_order": (
                         "Image 1 PRODUCT_IDENTITY_AUTHORITY; Image 2 BENCHMARK_C"
@@ -332,13 +335,21 @@ class RemixFastProvider(XingheSingleImageProvider):
                                 "unresolved": ["all unresolved issues"],
                             },
                             "brief": brief,
+                            "measured_candidate_dimensions": [
+                                artifact.width,
+                                artifact.height,
+                            ],
                         },
                         (
                             "Inspect real candidate pixels, watermark detail and enl"
                             "arged identity regions against original product and ben"
                             "chmark. Never accept receipts as pixel proof. Return fo"
                             "ur checks with concrete evidence. Missing/uncertain evi"
-                            "dence fails. No redraw.\n"
+                            "dence fails. A check with an unresolved defect must "
+                            "have passed=false; never claim all passed while "
+                            "unresolved is non-empty. Preserve product printing "
+                            "from Image 1; benchmark marketing text is separate. "
+                            "Use server-measured dimensions as facts. No redraw.\n"
                         )
                         + json.dumps(protocol.prompt_payload(), ensure_ascii=False),
                     )
@@ -454,6 +465,11 @@ class RemixFastProvider(XingheSingleImageProvider):
                 "input_images": 2,
                 "output_images": int(artifact is not None),
                 "metrics": {
+                    **{
+                        key: value
+                        for call in calls
+                        for key, value in call.get("metrics", {}).items()
+                    },
                     "skill_id": SKILL_ID,
                     "skill_version": "1.0.0",
                     "quick_check": state.get("review"),
@@ -629,7 +645,9 @@ def _validate_review(value: object) -> dict[str, Any]:
     ):
         raise ValueError("Quick review needs differences and unresolved issues")
     if value["unresolved"] and all(c["passed"] for c in checks):
-        raise ValueError("Unresolved issues cannot be automatically accepted")
+        # Contradictory acceptance is a failed quality verdict, never a pass.
+        # Retain the evidence and classify a known bad candidate as rejected.
+        value = {**value, "checks": [{**c, "passed": False} for c in checks]}
     return value
 
 
@@ -666,4 +684,5 @@ def _call(phase: str, result: Any) -> dict[str, Any]:
         "actual_cost_micros": result.actual_cost_micros,
         "estimated_cost_micros": getattr(result, "estimated_cost_micros", None),
         "network_requests": max(1, int((raw or {}).get("network_requests", 1))),
+        "metrics": retained_metrics(raw),
     }

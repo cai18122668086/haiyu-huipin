@@ -226,6 +226,29 @@ def test_reference_packing_preserves_every_reference_and_mask_guidance():
     assert "never reproduce this grid" in note
 
 
+@pytest.mark.parametrize("target_size", ["1464x600", "1086x1448", "800x800"])
+def test_lossless_reference_sheet_tracks_target_aspect_without_changing_sources(
+    target_size,
+):
+    source = png("#ca1693")
+    files, _ = pack_references(
+        [
+            ("image", "product.png", "image/png", source),
+            ("image", "style.png", "image/png", png("#8193ca")),
+        ],
+        target_size=target_size,
+    )
+    assert files[0][2] == "image/png"
+    width, height = (int(v) for v in target_size.split("x"))
+    with Image.open(BytesIO(files[0][3])) as sheet:
+        assert sheet.format == "PNG"
+        assert abs((sheet.width / sheet.height) / (width / height) - 1) < 0.001
+        # Solid source colors survive exactly, without JPEG glyph-edge damage.
+        colors = {color for _, color in sheet.getcolors(sheet.width * sheet.height)}
+        assert (202, 22, 147) in colors and (129, 147, 202) in colors
+    assert source == png("#ca1693")
+
+
 class PollingTransport(HaiyuTransport):
     def __init__(self, delegate, states):
         super().__init__(delegate, poll_interval=0, task_timeout=1)
@@ -456,6 +479,49 @@ class JournalTransport(HaiyuTransport):
         }
 
 
+def test_legacy_packing_receipt_resumes_without_changing_or_resubmitting(
+    tmp_path,
+    monkeypatch,
+):
+    from app import haiyu_transport
+
+    monkeypatch.setattr("app.haiyu_transport.download_result", lambda *_args: png())
+    original_packer = haiyu_transport.pack_references
+    files = [
+        ("image", "product.png", "image/png", png()),
+        ("image", "style.png", "image/png", png("red")),
+    ]
+    delegate = Transport([(202, {"id": "historical-task", "status": "queued"})])
+    args = dict(
+        url="https://api.haiyushuke.com/v1/images/edits",
+        headers={"Idempotency-Key": "historical-key"},
+        fields=[("model", MODELS[0]), ("prompt", "Original instruction")],
+        files=files,
+        timeout_seconds=30,
+    )
+    monkeypatch.setattr(
+        haiyu_transport,
+        "pack_references",
+        lambda value, **_: haiyu_transport._legacy_pack_references(value),
+    )
+    first = JournalTransport(delegate, journal_dir=tmp_path, poll_interval=0)
+    asyncio.run(first.post_multipart(**args))
+    monkeypatch.setattr(haiyu_transport, "pack_references", original_packer)
+    resumed_delegate = Transport([])
+    resumed = JournalTransport(resumed_delegate, journal_dir=tmp_path, poll_interval=0)
+    status, result = asyncio.run(resumed.post_multipart(**args, reconcile_only=True))
+    assert status == 200 and result["haiyu_task_id"] == "historical-task"
+    assert len(delegate.calls) == 1 and resumed_delegate.calls == []
+    with pytest.raises(XingheAgentError, match="parameters changed"):
+        asyncio.run(
+            resumed.post_multipart(
+                **{**args, "fields": [("model", MODELS[0]), ("prompt", "Changed")]},
+                reconcile_only=True,
+            )
+        )
+    assert resumed_delegate.calls == []
+
+
 def test_restart_recovers_accepted_task_without_another_paid_submit(
     tmp_path, monkeypatch
 ):
@@ -527,6 +593,32 @@ def test_async_terminal_failure_does_not_purchase_a_fallback_image(masked, singl
     assert result.provider_request_id == "failed-task"
     assert result.retryable is False
     assert result.raw_usage["metrics"]["provider_error"]["code"] == "render_failed"
+    assert len(delegate.calls) == 1
+
+
+@pytest.mark.parametrize("masked", [False, True])
+def test_failed_label_cannot_hide_upstream_reconciliation_instruction(masked):
+    delegate = Transport([(202, {"id": "original-task", "status": "queued"})])
+    transport = PollingTransport(
+        delegate,
+        [
+            (
+                200,
+                {
+                    "status": "failed",
+                    "error": {
+                        "code": "agent3_failed",
+                        "message": "Image result unavailable; "
+                        "do not create a replacement automatically",
+                    },
+                },
+            )
+        ],
+    )
+    result = dispatch(transport, masked=masked, single=False)
+    assert result.outcome == ProviderOutcome.OUTCOME_UNKNOWN
+    assert result.provider_request_id == "original-task"
+    assert result.retryable is False
     assert len(delegate.calls) == 1
 
 
@@ -616,7 +708,8 @@ def test_receipt_disk_failure_preserves_accepted_task_and_prevents_resubmit(tmp_
 
         async def get_task(self, url, headers, timeout):
             raise XingheAgentError(
-                "PROVIDER_RESPONSE_INVALID", "Original task query unavailable",
+                "PROVIDER_RESPONSE_INVALID",
+                "Original task query unavailable",
                 provider_request_id="accepted-task",
             )
 

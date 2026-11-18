@@ -242,6 +242,10 @@ PLANNER_DIAGNOSTICS_SCHEMA = "xinghe-planner-diagnostics"
 _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "replica_native_contract", "replica_exact_compact",
     refined_detail.PROFILE, detail_fast.PROFILE, "amazon_visual_suite",
+    "image_fidelity_prepare", "image_fidelity_review",
+    "aurora_domestic_intake", "aurora_domestic_detail",
+    "aurora_domestic_plan_repair", "aurora_domestic_modules_completion",
+    "aurora_domestic_campaign_completion",
 })
 IMAGE_SIZE = "1024x1536"
 SUPPORTED_IMAGE_SIZES = frozenset(
@@ -473,6 +477,7 @@ class PlannerRequest:
     detail_intake: Mapping[str, Any] | None = None
     intake_resolution: Mapping[str, Any] | None = None
     intake_brand_repair: Mapping[str, Any] | None = None
+    intake_contract_repair: Mapping[str, Any] | None = None
     native_dispatch: Mapping[str, Any] | None = None
     authoring_stage: str = ""
     authoring_target_ids: tuple[str, ...] = ()
@@ -2291,6 +2296,7 @@ class TengliOpenAICompatibleGateway:
         self.medium_price_micros = medium_price_micros
         self.high_price_micros = high_price_micros
         self.review_price_micros = review_price_micros
+        self.image_fidelity_review_enabled = False
         self.timeout_seconds = timeout_seconds
         self.planner_timeout_seconds = planner_timeout_seconds
         self.diagnostic_content_sample = diagnostic_content_sample
@@ -2629,7 +2635,7 @@ class TengliOpenAICompatibleGateway:
                     # in the original user envelope and is validated locally.
                     route_payload["response_format"] = {"type": "json_object"}
                     route_payload["messages"] = deepcopy(payload["messages"])
-                    if request.planning_profile == "amazon_visual_suite":
+                    if request.planning_profile == "amazon_visual_suite" or request.authoring_stage == "direct":
                         # This prompt previously relied on the transport schema.
                         # json_object must still receive the ENTIRE contract;
                         # local validation and all 21 rows remain unchanged.
@@ -3453,7 +3459,7 @@ class TengliOpenAICompatibleGateway:
         self,
         request: MaskedVisualReviewRequest,
     ) -> MaskedVisualReviewCallResult:
-        """Review the raw candidate once; never regenerate from this call."""
+        """Review the exact delivery preview; never regenerate from this call."""
 
         content: list[dict[str, Any]] = [
             {
@@ -3599,7 +3605,7 @@ def build_tengli_gateway(settings: Settings) -> TengliOpenAICompatibleGateway:
             send_size=settings.haiyu_image_size_enabled,
             journal_dir=settings.aurora_work_root / "haiyu-image-results",
         )
-    return TengliOpenAICompatibleGateway(
+    gateway = TengliOpenAICompatibleGateway(
         api_key=settings.tengli_api_key.get_secret_value(),
         base_url=settings.tengli_base_url,
         planner_api_key=settings.analysis_api_key.get_secret_value() or None,
@@ -3634,6 +3640,8 @@ def build_tengli_gateway(settings: Settings) -> TengliOpenAICompatibleGateway:
             settings.image_global_concurrency, settings.image_capacity_lease_seconds,
         ) if settings.image_capacity_redis_url else None),
     )
+    gateway.image_fidelity_review_enabled = settings.image_fidelity_review_enabled
+    return gateway
 
 
 class XinghePlanningCoordinator:
@@ -4040,6 +4048,7 @@ class XinghePlanningCoordinator:
             dispatch_route=selected_route,
             resolution=resolution,
             brand_repair=request.intake_brand_repair,
+            contract_repair=request.intake_contract_repair,
         )
         store = IntakeStore(
             detail_workspace(request.job_id) / "intake", binding, request.job_id
@@ -4258,6 +4267,34 @@ class XinghePlanningCoordinator:
             ), calls
         except (DetailIntakeError, OSError, ValueError, TypeError) as exc:
             if isinstance(exc, DetailIntakeError):
+                correction_no = int((request.intake_contract_repair or {}).get("attempt", 0))
+                if (
+                    exc.code in {
+                        "INTAKE_REFERENCE_METHOD_MISMATCH",
+                        "INTAKE_REFERENCE_COVERAGE_INVALID",
+                        "INTAKE_SCHEMA_INVALID",
+                    }
+                    and correction_no < 2
+                    and result is not None and result.error_code is None
+                    and isinstance(result.payload, Mapping)
+                ):
+                    logger.warning(
+                        "domestic_intake_contract_retry job_id=%s attempt=%s error_code=%s error_path=%s",
+                        request.job_id, correction_no + 1, exc.code, getattr(exc, "path", None),
+                    )
+                    repaired_request = replace(request, intake_contract_repair={
+                        "attempt": correction_no + 1,
+                        "error_code": exc.code,
+                        "validation_message": str(exc),
+                        "previous_payload": deepcopy(dict(result.payload)),
+                        "instruction": "Correct the complete original response against unchanged source pixels and the full schema. Preserve user facts and authority. No invented source IDs or automatic acceptance; every original validator will run again.",
+                    })
+                    try:
+                        return await self._with_domestic_intake(repaired_request)
+                    except DetailIntakeError as repair_error:
+                        merged = {canonical_hash(asdict(call)): call for call in (*calls, *repair_error.call_results)}
+                        repair_error.call_results = tuple(merged.values())
+                        raise
                 exc.call_results = calls
                 raise
             error = DetailIntakeError(
@@ -9006,6 +9043,8 @@ def _image_usage_record(
     )
     return {
         "raw": result.raw_usage,
+        "network_requests": result.raw_usage.get("network_requests", 1)
+        if isinstance(result.raw_usage, Mapping) else 1,
         "normalized": normalized,
         "input_tokens": normalized.get("input_tokens"),
         "output_tokens": normalized.get("output_tokens"),
@@ -10491,8 +10530,8 @@ def _masked_visual_review_prompt(instruction: str) -> str:
     return (
         "Review exactly three ordered images: (1) source, (2) binary authority "
         "mask where white pixels are editable and black pixels are locked, "
-        "(3) raw provider candidate. The server will later restore every "
-        "locked pixel exactly, so judge the requested change inside the white "
+        "(3) exact final delivery preview, already composited with every "
+        "locked pixel restored. Judge the requested change inside the white "
         "selection. Treat changes to product identity, logos, labels, text, "
         "patterns, or markings as failures only when the user did not explicitly "
         "request those exact changes; require all other identity evidence inside "
@@ -10947,6 +10986,11 @@ def _aurora_structure_zone_counts(structure: Mapping[str, Any]) -> dict[str, int
 
 
 def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review"}:
+        from .image_fidelity import AUTHORITY_ROLES, response_schema
+        ids = tuple(s.asset_id for s in request.sources if s.source_role in AUTHORITY_ROLES)
+        return {"type": "json_schema", "json_schema": {"name": request.planning_profile,
+                "strict": True, "schema": response_schema(request.planning_profile, ids)}}
     if request.planning_profile == "aurora_native_fast_identity":
         return _planner_response_format(replace(request, planning_profile="aurora_identity"))
     if request.planning_profile == "replica_exact_compact":
@@ -11269,6 +11313,8 @@ def _planner_prompt(request: PlannerRequest) -> str:
 
 
 def _planner_prompt_body(request: PlannerRequest) -> str:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review"}:
+        return "Inspect the actual attached source/candidate images for this preservation task only. JSON only.\n" + "\n".join(request.product_information)
     if request.planning_profile == "aurora_native_fast_identity":
         return _planner_prompt_body(replace(request, planning_profile="aurora_identity")) + "\nReturn the complete identity response_schema:\n" + json.dumps(_aurora_identity_json_schema(), ensure_ascii=False)
     if request.planning_profile == "replica_fast_suite":
@@ -11304,6 +11350,7 @@ def _planner_prompt_body(request: PlannerRequest) -> str:
             ],
             request.intake_resolution,
             request.intake_brand_repair,
+            request.intake_contract_repair,
         )
     if request.planning_profile == "creative_image":
         return (

@@ -2012,7 +2012,7 @@ class XingheSingleImageProvider:
                     "no_watermark_or_unrequested_extra_elements",
                 ],
             }
-        from .provider_diagnostics import MAX_PROVIDER_ATTEMPTS, retained_metrics
+        from .provider_diagnostics import retained_metrics, retained_request_count
 
         prior_metrics = usage.get("metrics")
         diagnostics = retained_metrics(
@@ -2022,16 +2022,8 @@ class XingheSingleImageProvider:
             **(dict(prior_metrics) if isinstance(prior_metrics, Mapping) else {}),
             **diagnostics,
         }
-        if call_result is not None and isinstance(call_result.raw_usage, Mapping):
-            count = call_result.raw_usage.get("network_requests")
-            trace = diagnostics.get("provider_attempts")
-            # Only our route receipts can override the adapter's logical call
-            # count. A vendor/mock usage field is not a transport observation.
-            if (
-                isinstance(trace, list) and type(count) is int
-                and count == len(trace) and 0 <= count <= MAX_PROVIDER_ATTEMPTS
-            ):
-                usage["network_requests"] = count
+        if call_result is not None:
+            usage["network_requests"] = retained_request_count(call_result.raw_usage)
         return usage
 
     def _rejection(
@@ -2241,6 +2233,8 @@ def _inspect_image(payload: bytes) -> tuple[int, int, str]:
 
 def _provider_generation_size(target: TargetSpec, *, skill_id: str = "") -> str:
     target_width, target_height = target.dimensions
+    if skill_id == _MODEL_POSE_TRANSFER_SKILL_ID:
+        return f"{target_width}x{target_height}"
     if skill_id == "xinghe-amazon-visual-suite":
         amazon_canvas = {
             (2000, 2000): "2048x2048",
@@ -2294,13 +2288,19 @@ def _target_artifact(
             "The provider artifact metadata does not match its payload.",
         )
     requested_format, content_type, suffix = _OUTPUT_FORMATS[target.output_format]
+    preserve_pose_canvas = skill_id == _MODEL_POSE_TRANSFER_SKILL_ID
+    if preserve_pose_canvas and abs((provider_width / provider_height) / (target_width / target_height) - 1) > 0.01:
+        raise SingleImageProviderError(
+            "MODEL_POSE_CANVAS_MISMATCH",
+            "换姿势原图画幅不符，未以透明补边伪造原画布。",
+        )
     if (provider_width, provider_height) == (
         target_width,
         target_height,
     ) and image_format == requested_format:
         return artifact
 
-    if target.fit == "cover":
+    if target.fit == "cover" or preserve_pose_canvas:
         rendered = ImageOps.fit(
             materialized,
             (target_width, target_height),
