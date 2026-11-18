@@ -190,7 +190,7 @@ class Settings(BaseSettings):
     image_fidelity_review_enabled: bool = True
     image_fidelity_readback_model: str = ""
     image_fidelity_source_pixels_enabled: bool = False
-    image_fidelity_source_model_path: Path = Path("/app/models/u2netp.onnx")
+    image_fidelity_source_model_path: Path = Path("/app/models/u2net.onnx")
     # Exact CDN hosts trusted by the operator for local proxy fake-IP DNS.
     # Public DNS results require no allowlist; private/LAN addresses stay denied.
     image_result_allowed_hosts: tuple[str, ...] = ()

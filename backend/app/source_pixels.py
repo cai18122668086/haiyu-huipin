@@ -17,13 +17,13 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageChops, ImageOps
 
 from .provider import ProviderArtifact
 
-VERSION = "source-pixel-layers-v1"
-MODEL_SHA256 = "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8"
-MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx"
+VERSION = "source-pixel-layers-v3"
+MODEL_SHA256 = "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"
+MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx"
 _lock = threading.Lock()
 _net: Any = None
 _loaded_path: Path | None = None
@@ -80,43 +80,73 @@ def _alpha(crop: Image.Image, model_path: Path) -> Image.Image:
             cv.setNumThreads(1)
             _net = cv.dnn.readNetFromONNX(str(model_path))
             _loaded_path = model_path
-        rgb = np.array(crop.convert("RGB"))
-        small = cv.resize(rgb, (320, 320)).astype(np.float32) / 255
-        tensor = (
-            (small - np.array([0.485, 0.456, 0.406])) / np.array([0.229, 0.224, 0.225])
-        ).transpose(2, 0, 1)[None]
-        _net.setInput(tensor.astype(np.float32))
-        prediction = _net.forward()[0, 0]
-        minimum, maximum = float(prediction.min()), float(prediction.max())
-        if not math.isfinite(maximum) or maximum - minimum < 0.01:
-            raise ValueError("Source matte has no reliable foreground")
-        confidence = cv.resize(
-            ((prediction - minimum) * 255 / (maximum - minimum)).astype(np.uint8),
-            crop.size,
+        first = _segment(crop, cv, np, _net)
+        bounds = first.getbbox()
+        if bounds is None:
+            raise ValueError("Source matte is empty")
+        # Recenter on the actual foreground before a second bounded inference.
+        # Small metal fittings can be missed in a coarse, asymmetric context.
+        # Union copies source alpha only; RGB is never generated or repaired.
+        left, top, right, bottom = bounds
+        pad = max(12, round(max(right - left, bottom - top) * 0.1))
+        box = (
+            max(0, left - pad),
+            max(0, top - pad),
+            min(crop.width, right + pad),
+            min(crop.height, bottom + pad),
         )
-        labels = np.where(
-            confidence < 128,
-            cv.GC_BGD,
-            np.where(confidence >= 230, cv.GC_FGD, cv.GC_PR_FGD),
-        ).astype(np.uint8)
-        if not np.any(labels == cv.GC_FGD) or not np.any(labels == cv.GC_BGD):
-            raise ValueError("Source matte lacks foreground/background evidence")
-        cv.setRNGSeed(0)
-        cv.grabCut(
-            cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
-            labels,
-            None,
-            np.zeros((1, 65), np.float64),
-            np.zeros((1, 65), np.float64),
-            3,
-            cv.GC_INIT_WITH_MASK,
-        )
-        alpha = np.where(
-            (labels == cv.GC_FGD) | (labels == cv.GC_PR_FGD),
-            np.minimum(255, np.maximum(0, (confidence.astype(float) - 128) * 255 / 80)),
-            0,
-        ).astype(np.uint8)
-        return Image.fromarray(alpha, "L")
+        refined = _segment(crop.crop(box), cv, np, _net)
+        second = Image.new("L", crop.size)
+        second.paste(refined, (box[0], box[1]))
+        return ImageChops.lighter(first, second)
+
+
+def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
+    rgb = np.array(crop.convert("RGB"))
+    small = cv.resize(rgb, (320, 320)).astype(np.float32) / 255
+    tensor = (
+        (small - np.array([0.485, 0.456, 0.406])) / np.array([0.229, 0.224, 0.225])
+    ).transpose(2, 0, 1)[None]
+    net.setInput(tensor.astype(np.float32))
+    prediction = net.forward()[0, 0]
+    minimum, maximum = float(prediction.min()), float(prediction.max())
+    if not math.isfinite(maximum) or maximum - minimum < 0.01:
+        raise ValueError("Source matte has no reliable foreground")
+    confidence = cv.resize(
+        ((prediction - minimum) * 255 / (maximum - minimum)).astype(np.uint8),
+        crop.size,
+    )
+    labels = np.where(
+        confidence < 96,
+        cv.GC_BGD,
+        np.where(confidence >= 230, cv.GC_FGD, cv.GC_PR_FGD),
+    ).astype(np.uint8)
+    if not np.any(labels == cv.GC_FGD) or not np.any(labels == cv.GC_BGD):
+        raise ValueError("Source matte lacks foreground/background evidence")
+    cv.setRNGSeed(0)
+    cv.grabCut(
+        cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
+        labels,
+        None,
+        np.zeros((1, 65), np.float64),
+        np.zeros((1, 65), np.float64),
+        5,
+        cv.GC_INIT_WITH_MASK,
+    )
+    alpha = np.where(
+        (labels == cv.GC_FGD) | (labels == cv.GC_PR_FGD),
+        255,
+        0,
+    ).astype(np.uint8)
+    count, components, stats, _ = cv.connectedComponentsWithStats(alpha, 8)
+    if count < 2:
+        raise ValueError("Source matte has no connected product")
+    largest = int(stats[1:, cv.CC_STAT_AREA].argmax()) + 1
+    total = int(stats[1:, cv.CC_STAT_AREA].sum())
+    if int(stats[largest, cv.CC_STAT_AREA]) < total * 0.95:
+        raise ValueError("Source matte contains disconnected product fragments")
+    alpha[components != largest] = 0
+    return Image.fromarray(alpha, "L")
 
 
 def artifact(image: Image.Image, filename: str) -> ProviderArtifact:
@@ -255,6 +285,38 @@ def background_prompt(
         "no product, character, keychain, charm, metal clasp, tag, rack, "
         "silhouette, placeholder or lettering on a product."
     )
+
+
+def native_placements(value: Any, count: int) -> tuple[list[int], list[list[float]]]:
+    """Validate the approved pair's source-layer placement, including its seam."""
+    if not isinstance(value, list) or not 2 <= len(value) <= 12:
+        raise ValueError("Native pair requires bounded product placement")
+    indices: list[int] = []
+    cells: list[list[float]] = []
+    panels = set()
+    for entry in value:
+        index, box, panel = entry["layer_index"], entry["box"], entry["panel"]
+        if type(index) is not int or not 0 <= index < count or panel not in (0, 1):
+            raise ValueError("Native placement changed the source authority")
+        if len(box) != 4 or any(
+            type(v) not in (int, float) or not math.isfinite(v) for v in box
+        ):
+            raise ValueError("Native placement geometry is invalid")
+        x0, y0, x1, y1 = box
+        low, high = (0.02, 0.48) if panel == 0 else (0.52, 0.98)
+        if not (0.02 <= x0 < x1 <= 0.98 and low <= y0 < y1 <= high):
+            raise ValueError("Native product placement crosses the pair seam")
+        if any(
+            min(x1, old[2]) > max(x0, old[0]) and min(y1, old[3]) > max(y0, old[1])
+            for old in cells
+        ):
+            raise ValueError("Native product placements overlap")
+        indices.append(index)
+        cells.append(box)
+        panels.add(panel)
+    if panels != {0, 1}:
+        raise ValueError("Native product placement omits an approved panel")
+    return indices, cells
 
 
 def compose(

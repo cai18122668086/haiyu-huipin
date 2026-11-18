@@ -4812,7 +4812,13 @@ def _reserve_real_provider_job_if_enabled(
                 JobType.REFERENCE_REMIX.value,
                 JobType.AMAZON_VISUAL_SUITE.value,
             }
-            else 2
+            else 5 if (
+                job.type == JobType.DETAIL_PACK.value
+                and getattr(settings, "image_fidelity_source_pixels_enabled", False)
+                and (configuration.get("settings") or {}).get("market_region")
+                == "domestic"
+                and not detail_fast_runtime.is_independent(configuration)
+            ) else 2
         )
         estimated_cost += fidelity_calls * settings.tengli_planner_reserve_micros
         provider_requests += fidelity_calls

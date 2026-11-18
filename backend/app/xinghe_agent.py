@@ -2300,7 +2300,7 @@ class TengliOpenAICompatibleGateway:
         self.image_fidelity_review_enabled = False
         self.image_fidelity_readback_model = ""
         self.image_fidelity_source_pixels_enabled = False
-        self.image_fidelity_source_model_path = Path("/app/models/u2netp.onnx")
+        self.image_fidelity_source_model_path = Path("/app/models/u2net.onnx")
         self.timeout_seconds = timeout_seconds
         self.planner_timeout_seconds = planner_timeout_seconds
         self.diagnostic_content_sample = diagnostic_content_sample
@@ -6715,7 +6715,12 @@ class XingheImageProvider:
                     except DetailGenerationError as exc:
                         return _provider_rejection(exc.code, str(exc), self.gateway)
                 try:
-                    result = await self.gateway.edit(image_request)
+                    if native_detail_request is not None and hasattr(self.gateway, "edit_native"):
+                        result = await self.gateway.edit_native(
+                            image_request, request, token=str(native_detail_request["token"])
+                        )
+                    else:
+                        result = await self.gateway.edit(image_request)
                 except Exception as exc:
                     result = ImageCallResult(
                         outcome=(

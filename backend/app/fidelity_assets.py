@@ -20,6 +20,7 @@ async def retain(
     *,
     role: str = "fidelity_candidate",
     ordinal: int | None = None,
+    authority_key: str | None = None,
 ) -> str:
     if role not in {
         "fidelity_candidate",
@@ -45,23 +46,20 @@ async def retain(
                 request.workspace_id,
                 request.job_id,
                 request.job_item_id,
-                request.idempotency_key,
+                authority_key or request.idempotency_key,
             ):
                 raise ValueError("Candidate scope invalid")
-            ordinal = (
-                attempt.attempt_no * 8 + ordinal
-                if role == "fidelity_source_cutout" and ordinal is not None
-                else attempt.attempt_no
-                if ordinal is None
-                else ordinal
-            )
+            receipt = hashlib.sha256(request.idempotency_key.encode()).hexdigest()
+            part = ordinal if ordinal is not None else 0
             prior = session.scalar(
                 select(JobAssetRecord).where(
                     JobAssetRecord.workspace_id == request.workspace_id,
                     JobAssetRecord.job_id == request.job_id,
                     JobAssetRecord.job_item_id == request.job_item_id,
                     JobAssetRecord.role == role,
-                    JobAssetRecord.ordinal == ordinal,
+                    JobAssetRecord.validation["fidelity_receipt"].as_string()
+                    == receipt,
+                    JobAssetRecord.validation["part"].as_integer() == part,
                 )
             )
             if prior is not None:
@@ -73,6 +71,17 @@ async def retain(
                 ):
                     raise ValueError("Retained candidate binding changed")
                 return prior.asset_id
+            # The workspace row lock also serializes allocation across signed
+            # native child invocations under one durable parent attempt.
+            last = session.scalar(
+                select(func.max(JobAssetRecord.ordinal)).where(
+                    JobAssetRecord.workspace_id == request.workspace_id,
+                    JobAssetRecord.job_id == request.job_id,
+                    JobAssetRecord.job_item_id == request.job_item_id,
+                    JobAssetRecord.role == role,
+                )
+            )
+            ordinal = int(last) + 1 if last is not None else 0
             used = session.scalar(
                 select(func.coalesce(func.sum(AssetRecord.byte_size), 0)).where(
                     AssetRecord.workspace_id == request.workspace_id,
@@ -95,7 +104,7 @@ async def retain(
             if suffix is None:
                 raise ValueError("Invalid fidelity evidence image type")
             scope = hashlib.sha256(
-                f"{request.job_item_id}:{request.attempt_id}:{role}".encode()
+                f"{request.job_item_id}:{request.attempt_id}:{receipt}:{role}".encode()
             ).hexdigest()[:32]
             key = f"{request.workspace_id}/fidelity/{scope}/{artifact.sha256}{suffix}"
             stored = await storage.save_validated(
@@ -142,6 +151,7 @@ async def retain(
                     role=role,
                     ordinal=ordinal,
                     is_deliverable=False,
+                    validation={"fidelity_receipt": receipt, "part": part},
                 )
             )
             session.commit()

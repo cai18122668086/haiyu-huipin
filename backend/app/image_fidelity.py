@@ -123,8 +123,11 @@ def technical_contract(
             "EXISTING Amazon native-original validator: aspect within 1%; "
             "desktop banners width/height at least requested. Other images: "
             "short edge >=1024, or short edge >=768 and area >=1500000. "
-            "The native artifact is delivered unchanged; requested target is "
-            "not an exact-pixel resampled export. No cropping or size relaxation."
+            "Measure the unmodified native background before any source-pixel "
+            "composition, and retain that original privately. The final canvas "
+            "must keep those dimensions; it is not an exact-pixel resampled "
+            "export. No cropping or size relaxation. A source-pixel composite "
+            "must carry its separate rendering provenance."
         )
     elif context["job_type"] == "domestic_main_image":
         valid = valid and width == height and min(width, height) >= 1024
@@ -382,12 +385,42 @@ class FidelityGateway:
     def __init__(self, wrapped: Any, sessions: Any, storage: Any) -> None:
         self.wrapped, self.sessions, self.storage = wrapped, sessions, storage
         self._prepared: dict[str, dict[str, Any]] = {}
+        self._parent_key: str | None = None
+        self._native_pair = False
         self._locks: weakref.WeakValueDictionary[str, asyncio.Lock] = (
             weakref.WeakValueDictionary()
         )
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.wrapped, name)
+
+    async def edit_native(self, request: Any, parent: Any, *, token: str) -> Any:
+        """Bind an already-authorized signed child to its exact durable parent.
+
+        Called only after the native Harness has fenced this invocation. The
+        logical request, approval hash and supplier key remain unchanged.
+        """
+        from .domestic_detail.generation import wire_idempotency_key
+
+        if not getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False):
+            return await self.wrapped.edit(request)
+        if self._context(request)["job_type"] != "detail_pack":
+            raise ValueError("Signed native image scope is not a detail pair")
+        if (
+            not token
+            or any(
+                getattr(request, field) != getattr(parent, field)
+                for field in ("workspace_id", "job_id", "job_item_id", "attempt_id")
+            )
+            or request.idempotency_key
+            != wire_idempotency_key(parent.idempotency_key, token)
+        ):
+            raise ValueError("Signed native image parent binding changed")
+        bound = FidelityGateway(self.wrapped, self.sessions, self.storage)
+        bound._parent_key = parent.idempotency_key
+        bound._native_pair = True
+        bound._prepared, bound._locks = self._prepared, self._locks
+        return await bound.edit(request)
 
     def _context(self, request: Any) -> dict[str, Any]:
         with self.sessions() as session:
@@ -481,7 +514,7 @@ class FidelityGateway:
                     request.workspace_id,
                     request.job_id,
                     request.job_item_id,
-                    request.idempotency_key,
+                    self._parent_key or request.idempotency_key,
                 )
             ):
                 raise ValueError("Image fidelity attempt scope invalid")
@@ -594,9 +627,12 @@ class FidelityGateway:
                 for source in original_sources
             ):
                 raise ValueError("Image fidelity source hash changed")
-            if context["job_type"] == "detail_pack" or (
-                context["job_type"] == "domestic_main_image"
-                and context["settings"].get("main_image_speed") != "native_fast"
+            if not self._native_pair and (
+                context["job_type"] == "detail_pack"
+                or (
+                    context["job_type"] == "domestic_main_image"
+                    and context["settings"].get("main_image_speed") != "native_fast"
+                )
             ):
                 # Native Harness image requests are signed and have their own
                 # source/pixel audits. Never modify a signed request downstream.
@@ -609,7 +645,7 @@ class FidelityGateway:
                 if frozen is not None
                 else not request.reconcile_only
                 and getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False)
-                and source_pixels.enabled_for(context)
+                and (self._native_pair or source_pixels.enabled_for(context))
             )
             if frozen is not None:
                 pixel_recipe = frozen.get("pixel_recipe")
@@ -626,6 +662,7 @@ class FidelityGateway:
                 "reference_remix",
                 "amazon_visual_suite",
                 "domestic_main_image",
+                "detail_pack",
             } and (not request.reconcile_only or frozen is not None):
                 authorities = tuple(
                     s for s in original_sources if s.source_role in AUTHORITY_ROLES
@@ -770,7 +807,34 @@ class FidelityGateway:
                     )
                     previews = []
                     for index, layer in enumerate(layers):
+                        original = next(
+                            s
+                            for s in authorities
+                            if s.asset_id == layer.source_asset_id
+                        )
+                        with Image.open(BytesIO(original.payload)) as opened:
+                            from PIL import ImageOps
+
+                            crop = (
+                                ImageOps.exif_transpose(opened)
+                                .convert("RGB")
+                                .crop(layer.source_box)
+                            )
+                            reference = source_pixels.artifact(
+                                crop, f"matte-original-{index}.png"
+                            )
                         evidence = source_pixels.preview(layer.artifact)
+                        previews.append(
+                            SourceImage(
+                                f"matte-original-{index}",
+                                request.group_key,
+                                reference.filename,
+                                reference.content_type,
+                                reference.sha256,
+                                reference.payload,
+                                source_role="matte_original_crop",
+                            )
+                        )
                         previews.append(
                             SourceImage(
                                 f"matte-preview-{index}",
@@ -795,7 +859,18 @@ class FidelityGateway:
                             }
                         )
                         + tuple(previews),
-                        {"schema": response_schema(MATTE)},
+                        {
+                            "schema": response_schema(MATTE),
+                            "instruction": "Each matte_original_crop is paired with "
+                            "matte-preview of the SAME source region. Compare every "
+                            "small fitting and printed edge directly. In particular, "
+                            "a U-shaped/bitten-off metal clasp where the source "
+                            "has a closed solid cap is an INCOMPLETE object. "
+                            "Missing metal, missing ring segments, clipped text "
+                            "and residual display hardware all fail complete_objects "
+                            "or no_context_leak. Never infer completeness from the "
+                            "main character body alone.",
+                        },
                     )
                     plans.append(matte)
                     if matte.error_code:
@@ -874,6 +949,7 @@ class FidelityGateway:
                             "style_reference",
                             "background_reference",
                             "scene_reference",
+                            "continuity_edge",
                         }
                     ]
                     if (
@@ -884,6 +960,36 @@ class FidelityGateway:
                         background_ids = [original_sources[1].asset_id]
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
+                    if self._native_pair:
+                        background_schema["properties"]["placements"] = {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 12,
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "required": ["layer_index", "box", "panel"],
+                                "properties": {
+                                    "layer_index": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": len(pixel_recipe["layers"]) - 1,
+                                    },
+                                    "box": {
+                                        "type": "array",
+                                        "minItems": 4,
+                                        "maxItems": 4,
+                                        "items": {
+                                            "type": "number",
+                                            "minimum": 0,
+                                            "maximum": 1,
+                                        },
+                                    },
+                                    "panel": {"type": "integer", "enum": [0, 1]},
+                                },
+                            },
+                        }
+                        background_schema["required"].append("placements")
                     if context["job_type"] not in {
                         "amazon_visual_suite",
                         "domestic_main_image",
@@ -905,6 +1011,23 @@ class FidelityGateway:
                             "settings": context["settings"],
                             "final_image_contract": request.prompt,
                             "reserved_product_cells": pixel_recipe["cells"],
+                            "native_pair": self._native_pair,
+                            "source_layer_inventory": (preparation or {}).get(
+                                "selected_regions"
+                            ),
+                            "placement_contract": (
+                                "For a native pair, select source layer indices "
+                                "for EACH approved module. Top panel=0 "
+                                "(y .02-.48); bottom panel=1 (y .52-.98). "
+                                "Follow the approved subject, copy and layout; "
+                                "a layer may repeat on the other panel. Keep "
+                                "room for all approved text. Never cross the "
+                                "seam or overlap cells. Inventory is the "
+                                "permitted pool, not an instruction to "
+                                "include every product in every panel."
+                            )
+                            if self._native_pair
+                            else "Use supplied reserved cells.",
                         },
                     )
                     plans.append(background_plan)
@@ -914,6 +1037,13 @@ class FidelityGateway:
                         background_plan.payload
                     )
                     pixel_recipe["background_projection"] = background_plan.payload
+                    if self._native_pair:
+                        indices, cells = source_pixels.native_placements(
+                            background_plan.payload["placements"],
+                            len(pixel_recipe["layers"]),
+                        )
+                        pixel_recipe["placement_indices"] = indices
+                        pixel_recipe["cells"] = cells
                     if not background_ids:
                         import base64
 
@@ -1046,6 +1176,10 @@ class FidelityGateway:
                 cutouts = await self._source_layers(
                     request, pixel_recipe, original_sources
                 )
+                if "placement_indices" in pixel_recipe:
+                    cutouts = tuple(
+                        cutouts[i] for i in pixel_recipe["placement_indices"]
+                    )
                 composed, pixel_proof = source_pixels.compose(
                     result.artifact, cutouts, pixel_recipe["cells"]
                 )
@@ -1196,12 +1330,130 @@ class FidelityGateway:
             request.idempotency_key,
             size,
         )
+        context = self._context(image_request)
+        plans: list[Any] = []
+        preparation = None
+        # A legacy supplier cache is not an exemption from source selection or
+        # literal printing acceptance. This path cannot call edit, freeze a new
+        # generation request, reconstruct a matte, or purchase a replacement.
+        try:
+            if any(hashlib.sha256(s.payload).hexdigest() != s.sha256 for s in sources):
+                raise ValueError("Cached review source hash changed")
+            ids = tuple(s.asset_id for s in sources if s.source_role in AUTHORITY_ROLES)
+            selection = selection_constraint(
+                str(context["settings"].get("instruction", ""))
+            )
+            if selection:
+                ids = ids[:1]
+            if not ids:
+                raise ValueError("Cached review lacks product authority")
+            plan = await self._plan(
+                image_request,
+                PREPARE,
+                sources,
+                {
+                    **context,
+                    "schema": response_schema(PREPARE, ids, selection),
+                    "original_user_instruction": context["settings"].get(
+                        "instruction", ""
+                    ),
+                    "spatial_selection_constraint": selection,
+                },
+                suffix=":cached",
+            )
+            plans.append(plan)
+            if plan.error_code:
+                raise ValueError("Cached source review unavailable")
+            preparation = validate_preparation(plan.payload, ids, selection)
+            from .xinghe_agent import SourceImage
+
+            crops = []
+            for index, region in enumerate(preparation["selected_regions"]):
+                original = next(s for s in sources if s.asset_id == region["asset_id"])
+                with Image.open(BytesIO(original.payload)) as opened:
+                    x0, y0, x1, y1 = region["box"]
+                    crop = opened.crop(
+                        (
+                            math.floor(x0 * opened.width),
+                            math.floor(y0 * opened.height),
+                            math.ceil(x1 * opened.width),
+                            math.ceil(y1 * opened.height),
+                        )
+                    )
+                    factor = min(4, max(1, 1024 // max(crop.size)))
+                    crop = crop.resize(
+                        (crop.width * factor, crop.height * factor),
+                        Image.Resampling.NEAREST,
+                    )
+                    output = BytesIO()
+                    crop.save(output, "PNG")
+                payload = output.getvalue()
+                crops.append(
+                    SourceImage(
+                        f"cached-source-{index}",
+                        image_request.group_key,
+                        "source-print.png",
+                        "image/png",
+                        hashlib.sha256(payload).hexdigest(),
+                        payload,
+                        source_role="product_detail",
+                    )
+                )
+            readback = await self._plan(
+                image_request,
+                READBACK,
+                tuple(crops),
+                {"schema": response_schema(READBACK)},
+                suffix=":cached-source",
+            )
+            plans.append(readback)
+            if (
+                readback.error_code
+                or not readback_matches(readback.payload, preparation)
+                or any("UNREADABLE" in t.upper() for t in readback.payload["text_runs"])
+            ):
+                raise ValueError("Cached source printing could not be verified")
+            preparation = {
+                **preparation,
+                "literal_print_ledger": readback.payload["text_runs"],
+            }
+        except Exception as exc:
+            logger.warning(
+                "cached_image_source_review_failed job_id=%s reason=%s",
+                request.job_id,
+                type(exc).__name__,
+            )
+            failed = self._account(
+                ImageCallResult(
+                    ProviderOutcome.FAILED,
+                    None,
+                    {"network_requests": 0},
+                    {"reported": True},
+                    0.0,
+                    0,
+                    estimated_cost_micros=0,
+                ),
+                plans,
+            )
+            return ProviderResult(
+                outcome=ProviderOutcome.FAILED,
+                error_code="IMAGE_FIDELITY_PREPARATION_FAILED",
+                error_message="保留原图的来源与印刷尚未通过验收，未发起替代生图。",
+                retryable=False,
+                usage_reported=failed.normalized_usage["reported"],
+                raw_usage=failed.raw_usage,
+                actual_cost_micros=failed.actual_cost_micros,
+                estimated_cost_micros=failed.estimated_cost_micros,
+                provider_name=self.provider_name,
+                model_name=self.image_model,
+                pricing_version=self.pricing_version,
+            )
         result = await self._review(
             image_request,
-            self._context(image_request),
+            context,
             sources,
-            None,
-            [],
+            preparation,
+            plans,
             ImageCallResult(
                 ProviderOutcome.SUCCEEDED,
                 None,
@@ -1260,6 +1512,7 @@ class FidelityGateway:
                 **context,
                 "generation_contract": request.prompt,
                 "source_selection": preparation,
+                "native_pair": self._native_pair,
                 "candidate_dimensions": [candidate.width, candidate.height],
                 "technical_contract": technical,
                 "server_source_pixel_proof": pixel_proof,
@@ -1268,6 +1521,11 @@ class FidelityGateway:
                 "schema": response_schema(REVIEW),
                 "instruction": "Compare candidate against original authority, "
                 "including each selected design and exact visible physical text. "
+                "For native_pair, the approved generation contract determines "
+                "which permitted source products appear in each panel. The "
+                "source selection is the authority pool, not a requirement to "
+                "show all products in every module. Inspect both approved "
+                "modules, their exact copy and the clean pair seam. "
                 "For change_model, short sleeves must remain short sleeves, "
                 "never the reference's tank top. Do not declare pass if source "
                 "printing changed or uncertainty/defects remain. "
@@ -1488,4 +1746,5 @@ class FidelityGateway:
             artifact,
             role=role,
             ordinal=ordinal,
+            authority_key=self._parent_key,
         )

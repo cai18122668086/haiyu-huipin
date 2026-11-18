@@ -338,9 +338,77 @@ def test_cached_original_review_never_generates_a_replacement():
         )
     )
     assert result.error_code == "IMAGE_FIDELITY_REJECTED"
-    assert gateway.edits == [] and len(gateway.plans) == 1
-    assert result.actual_cost_micros == 2
-    assert result.raw_usage["network_requests"] == 1
+    assert gateway.edits == [] and len(gateway.plans) == 3
+    assert result.actual_cost_micros == 6
+    assert result.raw_usage["network_requests"] == 3
+
+
+def test_cached_all_true_review_cannot_bypass_physical_text_readback():
+    class CachedReader(Gateway):
+        async def plan(self, call):
+            self.plans.append(call)
+            value = preparation() if call.planning_profile == PREPARE else review()
+            if call.planning_profile == READBACK:
+                value = {
+                    "text_runs": [
+                        "ちいかわ"
+                        if call.sources[0].asset_id == "candidate"
+                        else "モモンガ"
+                    ]
+                }
+            return PlannerCallResult(value, "reader", {}, {"reported": True}, 0.1, 2)
+
+    gateway = CachedReader()
+    call = request(gateway)
+    result = asyncio.run(
+        ScopedFidelity(gateway, None, None).review_existing(
+            call,
+            sources=call.sources,
+            prompt=call.prompt,
+            size=call.size,
+            artifact=gateway.artifact,
+        )
+    )
+    assert result.error_code == "IMAGE_FIDELITY_REJECTED"
+    assert gateway.edits == []
+    assert result.raw_usage["metrics"]["image_fidelity"]["failed_checks"] == [
+        "physical_text_readback"
+    ]
+
+
+def test_native_child_requires_exact_signed_key_and_parent_scope(monkeypatch):
+    from app.domestic_detail.generation import wire_idempotency_key
+
+    class NativeScope(ScopedFidelity):
+        def _context(self, call):
+            return {"job_type": "detail_pack", "settings": {}}
+
+    gateway = PixelGateway()
+    guard = NativeScope(gateway, None, None)
+    parent = request(gateway)
+    signed = replace(
+        parent,
+        idempotency_key=wire_idempotency_key(parent.idempotency_key, "signed-token"),
+    )
+    captured = []
+
+    async def inspect_only(bound, call):
+        captured.append((bound._parent_key, bound._native_pair, call))
+        return "scoped"
+
+    monkeypatch.setattr(FidelityGateway, "edit", inspect_only)
+    assert (
+        asyncio.run(guard.edit_native(signed, parent, token="signed-token")) == "scoped"
+    )
+    assert captured == [(parent.idempotency_key, True, signed)]
+    for bad in (
+        replace(signed, workspace_id="foreign"),
+        replace(signed, attempt_id="other"),
+        replace(signed, idempotency_key="guessed-key"),
+    ):
+        with pytest.raises(ValueError, match="binding"):
+            asyncio.run(guard.edit_native(bad, parent, token="signed-token"))
+    assert len(captured) == 1 and gateway.edits == []
 
 
 @pytest.mark.parametrize(
@@ -454,6 +522,43 @@ def test_durable_binding_and_private_candidate_survive_restart(client):
         asyncio.run(
             restarted._retain(replace(call, workspace_id="foreign"), gateway.artifact)
         )
+    # Signed child calls share the actual durable parent authority, while their
+    # immutable recipes and evidence remain distinct even in the same attempt.
+    from app.domestic_detail.generation import wire_idempotency_key
+
+    bound = FidelityGateway(gateway, sessions, storage)
+    bound._parent_key = call.idempotency_key
+    children = [
+        replace(call, idempotency_key=wire_idempotency_key(call.idempotency_key, token))
+        for token in ("signed-a", "signed-b")
+    ]
+    ids = []
+    for child in children:
+        with pytest.raises(ValueError, match="scope"):
+            restarted._frozen(child)
+        bound._frozen(child, value)
+        ids.append(
+            asyncio.run(
+                bound._retain(
+                    child, gateway.artifact, role="fidelity_source_cutout", ordinal=0
+                )
+            )
+        )
+        assert (
+            asyncio.run(
+                bound._retain(
+                    child, gateway.artifact, role="fidelity_source_cutout", ordinal=0
+                )
+            )
+            == ids[-1]
+        )
+    assert len(set(ids)) == 2
+    with sessions() as session:
+        records = session.scalars(
+            select(JobAssetRecord).where(JobAssetRecord.asset_id.in_(ids))
+        ).all()
+        assert sorted(row.ordinal for row in records) == [0, 1]
+        assert len({row.validation["fidelity_receipt"] for row in records}) == 2
 
 
 class PixelGateway(Gateway):
