@@ -185,9 +185,26 @@ def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expec
     assert len(transport.calls) == 1
     payload = transport.calls[0]["payload"]
     assert payload["model"] == expected
+    if expected.startswith("kimi"):
+        assert payload["response_format"] == {"type": "json_object"}
+        assert payload["max_completion_tokens"] == 8192
     if profile == "image_fidelity_readback":
         assert payload["thinking"] == {"type": "disabled"}
         assert payload["max_completion_tokens"] == 8192
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_source_preserving_planning_receives_real_render_capabilities(enabled):
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_source_pixels_enabled = enabled
+    asyncio.run(gateway.plan(request("amazon_visual_suite_fast")))
+    texts = [c["text"] for c in transport.calls[0]["payload"]["messages"][1]["content"]
+             if c["type"] == "text"]
+    assert any("SOURCE PHOTOGRAPH RENDER CAPABILITIES" in t for t in texts) is enabled
 
 
 @pytest.mark.parametrize("profile", PROFILES)

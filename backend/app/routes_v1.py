@@ -4825,6 +4825,8 @@ def _reserve_real_provider_job_if_enabled(
             # followed by a fresh review of changed pixels, before image dispatch.
             # Include one layout-contract correction before image dispatch.
             fidelity_calls += fidelity_items * 2
+        if getattr(settings, "image_fidelity_precision_model", ""):
+            fidelity_calls += fidelity_items
         estimated_cost += fidelity_calls * settings.tengli_planner_reserve_micros
         provider_requests += fidelity_calls
     reserve_provider_job_quota(

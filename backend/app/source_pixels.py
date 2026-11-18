@@ -22,6 +22,25 @@ from PIL import Image, ImageChops, ImageFilter, ImageOps
 from .provider import ProviderArtifact
 
 VERSION = "source-pixel-layers-v8-owned-connected-context"
+PLANNING_CONSTRAINTS = (
+    "SOURCE PHOTOGRAPH RENDER CAPABILITIES: Plan from the actual supplied "
+    "product photographs. The final renderer preserves their photographed RGB, "
+    "printing, connected parts and visible mechanical state. It can uniformly "
+    "scale/translate a complete object, repeat an original view, and crop a "
+    "specific visible detail. It cannot invent another angle, unfold/open "
+    "hardware, separate connected parts, rotate individual parts, replace "
+    "letters, or demonstrate an unseen action. Author every module's visual "
+    "proof and layout within those capabilities; explain an unseen operation "
+    "with approved text rather than promising an unphotographed action image. "
+    "Source-only macro crops must specify the actual visible detail. Scene "
+    "actors/supporting props may be generated behind the intact photographed "
+    "product, with explicit achievable contact/attachment positions. Do not "
+    "claim a measured size, thickness, weight, material, licensing or package "
+    "contents that source pixels or confirmed user facts do not establish. "
+    "Keep every canonical module and its buyer question; choose a truthful "
+    "visible demonstration rather than inventing product evidence. All source "
+    "fidelity, copy, layout, native-canvas and final visual checks still apply."
+)
 MODEL_SHA256 = "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"
 MODEL_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx"
 _lock = threading.Lock()
@@ -490,7 +509,10 @@ def positions(context: dict[str, Any], count: int) -> list[list[float]]:
 
 
 def background_prompt(
-    description: str, cells: list[list[float]], copy: tuple[str, ...] = ()
+    description: str,
+    cells: list[list[float]],
+    copy: tuple[str, ...] = (),
+    product_geometry: list[dict[str, Any]] | None = None,
 ) -> str:
     return (
         "BACKGROUND PLATE ONLY. The server will add ORIGINAL PHOTOGRAPHED "
@@ -498,12 +520,22 @@ def background_prompt(
         "packaging, labels-on-products, silhouettes or placeholders. Preserve "
         "the described background/style, placing approved marketing copy "
         "outside the reserved product cells. "
-        "Leave each cell as quiet continuous background: no box, border, "
-        "grid, watermark, text, extra prop or object. Any products in style "
+        "Do not draw a box, border, grid, watermark, text or substitute product "
+        "inside a reserved cell. Preserve all scene actors and supporting props "
+        "explicitly required in the description, including hands, bags and "
+        "attachment loops: those are part of the scene, not products. A reserved "
+        "cell may contain the required supporting surface behind the product. "
+        "Position its visible support/attachment point at the specified product "
+        "anchor so the later photographed product rests on it or hangs from it; "
+        "never replace a required interaction with an empty floating space. "
+        "Do not add unrequested props. Any products in style "
         "references are EXCLUDED; only their background is authoritative. "
         "Return one opaque full-bleed native canvas at the requested size. "
         "Reserved cells (normalized x0,y0,x1,y1): "
         + json.dumps(cells)
+        + "\nMEASURED LATER PRODUCT PLACEMENT (normalized full-canvas geometry; "
+        "the source products themselves must NOT be generated): "
+        + json.dumps(product_geometry or [])
         + "\nEMPTY BACKGROUND DESCRIPTION:\n"
         + description
         + "\nAPPROVED MARKETING COPY (empty means NO TEXT): "

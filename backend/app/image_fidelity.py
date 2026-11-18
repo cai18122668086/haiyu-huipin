@@ -274,7 +274,23 @@ def response_schema(
                             "items": {"type": "number", "minimum": 0, "maximum": 1},
                         },
                         "identity": text,
-                        "visible_print": {"type": "array", "items": text},
+                        "visible_print": {
+                            "type": "array",
+                            "items": {
+                                "anyOf": [
+                                    {"const": "UNREADABLE"},
+                                    {
+                                        **text,
+                                        "not": {
+                                            "pattern": (
+                                                "[Uu][Nn][Rr][Ee][Aa][Dd]"
+                                                "[Aa][Bb][Ll][Ee]"
+                                            )
+                                        },
+                                    },
+                                ]
+                            },
+                        },
                     },
                 },
             },
@@ -455,7 +471,7 @@ def contract_diagnostic(error: ValidationError) -> dict[str, Any]:
 class FidelityGateway:
     def __init__(self, wrapped: Any, sessions: Any, storage: Any) -> None:
         self.wrapped, self.sessions, self.storage = wrapped, sessions, storage
-        self._prepared: dict[str, dict[str, Any]] = {}
+        self._prepared: dict[str, dict[str, Any] | None] = {}
         self._mattes: dict[
             str, tuple[tuple[Any, ...], list[dict[str, Any]]] | None
         ] = {}
@@ -676,7 +692,12 @@ class FidelityGateway:
                     "supplied schema. A compositor adds original photographed "
                     "products later. DO NOT describe/request any product, "
                     "character, hardware, tag, product printing or placeholder. "
-                    "Describe the EMPTY background only. For white-background "
+                    "Describe the scene WITHOUT the source product. Preserve "
+                    "every explicitly approved scene actor, hand, bag, zipper "
+                    "or supporting prop and its interaction geometry. These "
+                    "are scene elements, not source products. Include their "
+                    "positions and visible contact/attachment points, aligned "
+                    "to the actual placed product geometry. For white-background "
                     "work request pure white, no props, objects, shadows or text. "
                     "Style references supply backgrounds only: exclude their "
                     "subjects. Marketing copy, if permitted, must be literal "
@@ -741,44 +762,77 @@ class FidelityGateway:
     ) -> dict[str, Any]:
         lock = self._locks.setdefault(scope, asyncio.Lock())
         async with lock:
+            if scope in self._prepared and self._prepared[scope] is None:
+                raise ValueError(
+                    "Source selection already failed its bounded contract correction"
+                )
             preparation = preparation or self._prepared.get(scope)
             if preparation is None:
-                plan = await self._plan(
-                    request,
-                    PREPARE,
-                    tuple(s for s in original_sources if s.asset_id in ids),
-                    {
-                        **context,
-                        "source_roles": [
-                            (s.asset_id, s.source_role) for s in original_sources
-                        ],
-                        "schema": response_schema(PREPARE, ids, selection),
-                        "original_user_instruction": context["settings"].get(
-                            "instruction", ""
-                        ),
-                        "spatial_selection_constraint": selection,
-                        "instruction": "Select exactly the objects requested "
-                        "by the user from product sources. Give tight "
-                        "complete-object boxes in normalized source-image "
-                        "coordinates. Read the original physical printing, "
-                        "not the style image's text. If unreadable, state "
-                        "UNREADABLE rather than inventing a transcription. "
-                        "visible_print uses separate entries for each physical "
-                        "printed column or copyright line. Join vertical glyphs "
-                        "in their reading order; never combine a name, series "
-                        "column and copyright into one invented text run. "
-                        "When spatial_selection_constraint is present, "
-                        "inventory ALL objects in the first product photo "
-                        "as source_inventory, then select the requested "
-                        "bottom/top/left/right count by "
-                        "their actual positions. Bottom/下面 means LOWER rows, "
-                        "never the upper row or background subjects.",
-                    },
-                )
-                plans.append(plan)
-                if plan.error_code:
-                    raise ValueError("Preparation unavailable")
-                preparation = validate_preparation(plan.payload, ids, selection)
+                preparation_feedback = None
+                for preparation_attempt in range(2):
+                    plan = await self._plan(
+                        request,
+                        PREPARE,
+                        tuple(s for s in original_sources if s.asset_id in ids),
+                        {
+                            **context,
+                            "source_roles": [
+                                (s.asset_id, s.source_role) for s in original_sources
+                            ],
+                            "schema": response_schema(PREPARE, ids, selection),
+                            "contract_feedback": preparation_feedback,
+                            "original_user_instruction": context["settings"].get(
+                                "instruction", ""
+                            ),
+                            "spatial_selection_constraint": selection,
+                            "instruction": "Select exactly the objects requested "
+                            "by the user from product sources. Give tight "
+                            "complete-object boxes in normalized source-image "
+                            "coordinates. Read the original physical printing, "
+                            "not the style image's text. If unreadable, state "
+                            "UNREADABLE alone, never a prefixed/suffixed annotation, "
+                            "rather than inventing a transcription. "
+                            "visible_print uses separate entries for each physical "
+                            "printed column or copyright line. Join vertical glyphs "
+                            "in their reading order; never combine a name, series "
+                            "column and copyright into one invented text run. "
+                            "When spatial_selection_constraint is present, "
+                            "inventory ALL objects in the first product photo "
+                            "as source_inventory, then select the requested "
+                            "bottom/top/left/right count by "
+                            "their actual positions. Bottom/下面 means LOWER rows, "
+                            "never the upper row or background subjects.",
+                        },
+                        suffix=f":source-{preparation_attempt}",
+                    )
+                    plans.append(plan)
+                    if plan.error_code:
+                        raise ValueError("Preparation unavailable")
+                    try:
+                        preparation = validate_preparation(plan.payload, ids, selection)
+                        break
+                    except ValidationError as exc:
+                        if preparation_attempt:
+                            self._prepared[scope] = None
+                            raise
+                        preparation_feedback = {
+                            "diagnostic": contract_diagnostic(exc),
+                            "previous_payload": plan.payload,
+                            "instruction": (
+                                "Correct exact invalid fields against original "
+                                "pixels and the full schema. visible_print is "
+                                "literal columns or exactly UNREADABLE, never "
+                                "descriptive annotations. Preserve source IDs "
+                                "and selection constraints. Every original "
+                                "validator remains mandatory."
+                            ),
+                        }
+                        logger.warning(
+                            "source_selection_contract_retry job_id=%s diagnostic=%s",
+                            request.job_id,
+                            preparation_feedback["diagnostic"],
+                        )
+                assert preparation is not None
                 if len(self._prepared) >= 128:
                     self._prepared.clear()
                 self._prepared[scope] = preparation
@@ -930,7 +984,11 @@ class FidelityGateway:
                 plans.append(matte)
                 if matte.error_code:
                     raise ValueError("Source matte review unavailable")
-                Draft202012Validator(response_schema(MATTE)).validate(matte.payload)
+                try:
+                    Draft202012Validator(response_schema(MATTE)).validate(matte.payload)
+                except ValidationError as exc:
+                    exc.fidelity_profile = MATTE
+                    raise
                 accepted = (
                     not matte.payload["unresolved"]
                     and all(
@@ -1387,8 +1445,11 @@ class FidelityGateway:
                                     "not overlap product cells, other text boxes or "
                                     "the pair seam. Reserve generous readable "
                                     "heading/body space. Background_description "
-                                    "describes the EMPTY style and clear text areas, "
-                                    "never requests the generator to draw letters."
+                                    "describes the product-free scene, all approved "
+                                    "supporting props/actors and clear text areas; "
+                                    "never requests the generator to draw letters. "
+                                    "Required hands, bags and attachment points "
+                                    "must not disappear under an 'empty' rule."
                                 ),
                                 "source_layer_inventory": projection_inventory,
                                 "placement_contract": (
@@ -1466,6 +1527,8 @@ class FidelityGateway:
                                 (text_width, text_height),
                             )
                         except (ValidationError, ValueError) as projection_error:
+                            if isinstance(projection_error, ValidationError):
+                                projection_error.fidelity_profile = BACKGROUND
                             if projection_attempt:
                                 raise
                             projection_feedback = {
@@ -1523,10 +1586,41 @@ class FidelityGateway:
                     )
                 )
                 if pixel_recipe is not None:
+                    cutouts = await self._source_layers(
+                        request, pixel_recipe, original_sources
+                    )
+                    if "placement_indices" in pixel_recipe:
+                        cutouts = tuple(
+                            cutouts[i] for i in pixel_recipe["placement_indices"]
+                        )
+                    cutouts = source_pixels.crop_windows(
+                        cutouts, pixel_recipe.get("source_windows")
+                    )
+                    native_size = tuple(int(v) for v in request.size.split("x"))
+                    placement_geometry = []
+                    for i, (cutout, cell) in enumerate(
+                        zip(cutouts, pixel_recipe["cells"], strict=True)
+                    ):
+                        _, box, _ = source_pixels.placed_layer(
+                            cutout, (native_size[0], native_size[1]), cell
+                        )
+                        x0, y0, x1, y1 = (
+                            value / native_size[axis % 2]
+                            for axis, value in enumerate(box)
+                        )
+                        placement_geometry.append(
+                            {
+                                "placement": i,
+                                "visible_product_bounds": [x0, y0, x1, y1],
+                                "upper_edge_midpoint": [(x0 + x1) / 2, y0],
+                                "center": [(x0 + x1) / 2, (y0 + y1) / 2],
+                            }
+                        )
                     pixel_recipe["wire_prompt"] = source_pixels.background_prompt(
                         pixel_recipe["background_projection"]["background_description"],
                         pixel_recipe["cells"],
                         (),
+                        placement_geometry,
                     )
                 frozen = self._frozen(
                     request,
@@ -1589,7 +1683,7 @@ class FidelityGateway:
                     "image_fidelity_contract_invalid job_id=%s "
                     "profile=%s diagnostic=%s",
                     request.job_id,
-                    PREPARE,
+                    getattr(exc, "fidelity_profile", PREPARE),
                     contract_diagnostic(exc),
                 )
             logger.warning(
@@ -1707,6 +1801,10 @@ class FidelityGateway:
             if pixel_recipe is not None and frozen is not None
             else request
         )
+        if pixel_proof is not None:
+            review_sources += await self.paired_source_evidence(
+                replace(review_request, sources=original_sources), result.artifact
+            )
         return await self._review(
             review_request,
             context,

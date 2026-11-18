@@ -95,6 +95,15 @@ def test_character_name_cannot_replace_original_copyright():
     assert validate_preparation(value, ("product",), allow_stored=True) == value
 
 
+def test_unreadable_annotation_is_a_contract_error_not_a_literal_print_string():
+    value = preparation()
+    value["selected_regions"][0]["visible_print"] = ["底部版权小字：UNREADABLE"]
+    with pytest.raises(ValidationError):
+        validate_preparation(value, ("product",))
+    value["selected_regions"][0]["visible_print"] = ["UNREADABLE"]
+    assert validate_preparation(value, ("product",)) == value
+
+
 def test_all_true_visual_review_cannot_override_candidate_only_ocr():
     class BlindReaderGateway(Gateway):
         async def plan(self, req):
@@ -258,6 +267,44 @@ class ScopedFidelity(FidelityGateway):
     async def _retain(self, request, artifact):
         self.retained = artifact
         return "private-candidate"
+
+
+@pytest.mark.parametrize("corrected", [False, True])
+def test_preparation_contract_correction_is_bounded_before_image_dispatch(corrected):
+    class AnnotatedPreparation(Gateway):
+        async def plan(self, req):
+            if req.planning_profile != PREPARE:
+                return await super().plan(req)
+            self.plans.append(req)
+            value = preparation()
+            if len(self.plans) == 1 or not corrected:
+                value["selected_regions"][0]["visible_print"] = [
+                    "small text: UNREADABLE"
+                ]
+            return PlannerCallResult(value, "source", {}, {"reported": True}, 0.1, 2)
+
+    gateway = AnnotatedPreparation()
+    guard = ScopedFidelity(gateway, None, None)
+    result = asyncio.run(guard.edit(request(gateway)))
+    prepare_calls = [p for p in gateway.plans if p.planning_profile == PREPARE]
+    assert len(prepare_calls) == 2
+    assert prepare_calls[0].sources == prepare_calls[1].sources
+    assert prepare_calls[0].idempotency_key != prepare_calls[1].idempotency_key
+    correction = json.loads(prepare_calls[1].product_information[0])
+    assert correction["contract_feedback"]["diagnostic"]["path"] == (
+        "/selected_regions/0/visible_print/0"
+    )
+    assert len(gateway.edits) == int(corrected)
+    assert result.error_code == (
+        "IMAGE_FIDELITY_REJECTED" if corrected else "IMAGE_FIDELITY_PREPARATION_FAILED"
+    )
+    assert result.actual_cost_micros == (
+        2 * len(gateway.plans) + (10 if corrected else 0)
+    )
+    if not corrected:
+        again = asyncio.run(guard.edit(request(gateway)))
+        assert again.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert len(gateway.plans) == 2 and not gateway.edits
 
 
 def request(gateway):
@@ -795,6 +842,12 @@ def test_source_product_rgb_is_composited_after_one_native_background(monkeypatc
         "source_candidate_comparison",
     ]
     assert comparisons[0].sha256 == hashlib.sha256(comparisons[0].payload).hexdigest()
+    final_review = next(
+        p for p in gateway.plans if p.planning_profile.endswith("_review")
+    )
+    assert any(
+        s.source_role == "source_candidate_comparison" for s in final_review.sources
+    )
 
 
 def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image(

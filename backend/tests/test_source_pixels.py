@@ -52,6 +52,19 @@ def test_background_plate_keeps_required_marketing_copy_outside_product_cells():
     assert "REQUIRED VISIBLE MARKETING TEXT" not in empty
 
 
+def test_scene_plate_preserves_required_supports_and_actual_product_geometry():
+    geometry = [{"visible_product_bounds": [0.4, 0.3, 0.6, 0.8]}]
+    prompt = source_pixels.background_prompt(
+        "An open palm supporting the product and a tote attachment loop",
+        [[0.3, 0.2, 0.7, 0.9]],
+        product_geometry=geometry,
+    )
+    assert "open palm supporting" in prompt and "tote attachment loop" in prompt
+    assert "preserve" in prompt.casefold() and "required supporting surface" in prompt
+    assert '"visible_product_bounds": [0.4, 0.3, 0.6, 0.8]' in prompt
+    assert "Do not draw products" in prompt
+
+
 def test_comparison_checks_real_candidate_opaque_pixels_without_approving_quality():
     background = source_pixels.artifact(Image.new("RGB", (80, 80), "blue"), "bg.png")
     cutout = source_pixels.artifact(Image.new("RGBA", (20, 40), "red"), "source.png")

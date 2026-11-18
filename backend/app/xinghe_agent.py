@@ -2558,6 +2558,16 @@ class TengliOpenAICompatibleGateway:
             ],
             "response_format": _planner_response_format(request),
         }
+        if self.image_fidelity_source_pixels_enabled and request.planning_profile in {
+            "amazon_visual_suite", "amazon_visual_suite_fast",
+            "aurora_domestic_detail", "aurora_domestic_campaign_completion",
+            "aurora_domestic_modules_completion", "aurora_domestic_plan_repair",
+            refined_detail.PROFILE, detail_fast.PROFILE, "aurora_native_fast_identity",
+            "aurora_remix_fast_prepare",
+        }:
+            from .source_pixels import PLANNING_CONSTRAINTS
+
+            content.append({"type": "text", "text": PLANNING_CONSTRAINTS})
         format_feedback = None
         correction_prompt = None
         if request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity"}:
@@ -2637,17 +2647,17 @@ class TengliOpenAICompatibleGateway:
                             "max_completion_tokens": 8192,
                             "enable_thinking": False,
                         })
-                    elif (
-                        route_payload["model"].casefold().startswith("kimi")
-                        and request.planning_profile == "image_fidelity_readback"
-                    ):
-                        # Literal transcription needs no creative reasoning.
-                        # Preserve the independent candidate-only OCR schema.
+                    elif route_payload["model"].casefold().startswith("kimi"):
+                        # Every fidelity profile includes its complete schema
+                        # in the user envelope and validates it locally. Keep
+                        # Kimi's compatible transport and output allowance
+                        # consistent across extraction, OCR and layout calls.
                         route_payload.update({
                             "response_format": {"type": "json_object"},
                             "max_completion_tokens": 8192,
-                            "thinking": {"type": "disabled"},
                         })
+                        if request.planning_profile == "image_fidelity_readback":
+                            route_payload["thinking"] = {"type": "disabled"}
                     elif request.planning_profile in {
                         "image_fidelity_prepare", "image_fidelity_color_mask"
                     }:
