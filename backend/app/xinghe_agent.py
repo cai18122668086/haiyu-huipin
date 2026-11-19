@@ -7726,9 +7726,12 @@ class XingheImageProvider:
             load_source_comparison_inventory,
         )
 
-        expected_comparisons = load_source_comparison_inventory(
-            detail_workspace(request.job_id), native_request, artifact.sha256
-        )
+        try:
+            expected_comparisons = load_source_comparison_inventory(
+                detail_workspace(request.job_id), native_request, artifact.sha256
+            )
+        except DetailReviewError as exc:
+            raise XingheAgentError(exc.code, str(exc)) from exc
         actual_comparisons = [
             {"asset_id": source.asset_id, "role": source.source_role, "sha256": source.sha256}
             for source in sources if source.source_role == "source_candidate_comparison"
