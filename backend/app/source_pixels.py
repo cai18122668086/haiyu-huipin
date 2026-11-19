@@ -814,28 +814,21 @@ def crop_windows(
     return tuple(result)
 
 
-def detail_inset_scale_caps(
+def detail_inset_box_limits(
     cutouts: tuple[ProviderArtifact, ...],
     cells: list[list[float]],
     windows: list[list[float]],
     canvas: tuple[int, int],
     *,
     panels: int,
-) -> dict[int, float]:
+) -> dict[int, tuple[float, float]]:
     try:
         validate_detail_resolution(cutouts, cells, windows, canvas, panels=panels)
     except DetailResolutionError as error:
-        caps = {}
-        for problem in error.diagnostic["violations"]:
-            index = problem["placement_index"]
-            cell = cells[index]
-            caps[index] = min(
-                maximum_extent / ((cell[axis + 2] - cell[axis]) * multiplier)
-                for axis, (maximum_extent, multiplier) in enumerate(
-                    zip(problem["maximum_panel_box_extent"], (1, panels), strict=True)
-                )
-            )
-        return caps
+        return {
+            problem["placement_index"]: tuple(problem["maximum_panel_box_extent"])
+            for problem in error.diagnostic["violations"]
+        }
     return {}
 
 

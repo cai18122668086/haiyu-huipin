@@ -33,7 +33,7 @@ from .models import (
     JobRecord,
     ReplicaDocumentRecord,
 )
-from .provider import ProviderOutcome
+from .provider import ProviderArtifact, ProviderOutcome
 from .services import canonical_hash
 
 VERSION = "image-fidelity-v1"
@@ -1452,47 +1452,76 @@ class FidelityGateway:
                 source = next(
                     s for s in original_sources if s.source_role == "product_reference"
                 )
-                selection = await self._plan(
-                    request,
-                    source_recolor.PROFILE,
-                    (source,),
-                    {
-                        "settings": context["settings"],
-                        "schema": source_recolor.schema(),
-                        "instruction": (
-                            "Inspect the original photo and locate EVERY visible "
-                            "gold metal clasp, ring and link requested for silver "
-                            "recoloring. Return tight original-image normalized "
-                            "boxes around each actual metal component. Preserve "
-                            "printed tags, acrylic heads, background and display "
-                            "stand. Never include a face/tag as metal. Use separate "
-                            "boxes for separate fittings; a box must cover <=4% "
-                            "of the image. No invented/hidden parts. Report any "
-                            "unresolved part instead of guessing. The server "
-                            "changes gold chroma only, retaining original shading, "
-                            "shape, printing, dimensions and every outside pixel."
-                        ),
-                    },
-                )
-                plans.append(selection)
-                if selection.error_code:
-                    raise ValueError("Original metal selection unavailable")
                 if not isinstance(preparation, dict):
                     raise ValueError(
                         "Source metal recolor requires its print authority"
                     )
-                recolor_recipe = {
-                    "version": source_recolor.VERSION,
-                    "source_asset_id": source.asset_id,
-                    "source_sha256": source.sha256,
-                    "selection": selection.payload,
-                    "protected_print_boxes": [
-                        [min(quad[::2]), min(quad[1::2]),
-                         max(quad[::2]), max(quad[1::2])]
-                        for region in preparation["selected_regions"]
-                        for quad in region.get("print_regions", [])
-                    ],
-                }
+                print_boxes = [
+                    [min(quad[::2]), min(quad[1::2]), max(quad[::2]), max(quad[1::2])]
+                    for region in preparation["selected_regions"]
+                    for quad in region.get("print_regions", [])
+                ]
+                selection_feedback = None
+                for mask_attempt in range(2):
+                    selection = await self._plan(
+                        request,
+                        source_recolor.PROFILE,
+                        (source,),
+                        {
+                            "settings": context["settings"],
+                            "schema": source_recolor.schema(),
+                            "protected_print_boxes": print_boxes,
+                            "selection_feedback": selection_feedback,
+                            "instruction": (
+                                "Locate EVERY visible gold metal clasp, ring and "
+                                "link requested for silver recoloring. Return tight "
+                                "original-image normalized boxes around actual "
+                                "metal. Preserve printed tags, faces, acrylic, "
+                                "background and display stand. Keep boxes clear of "
+                                "the protected print regions. A box may cover <=4% "
+                                "of the image. Use separate boxes for separate "
+                                "fittings. If selection_feedback is present, inspect "
+                                "the same parts again at the reported coordinates, "
+                                "narrow erroneous boxes onto actual metal and "
+                                "preserve all unaffected boxes. Return the complete "
+                                "selection. Report uncertainty instead of guessing "
+                                "or silently dropping any visible fitting."
+                            ),
+                        },
+                        suffix=":geometry-repair" if mask_attempt else "",
+                    )
+                    plans.append(selection)
+                    if selection.error_code:
+                        raise ValueError("Original metal selection unavailable")
+                    recolor_recipe = {
+                        "version": source_recolor.VERSION,
+                        "source_asset_id": source.asset_id,
+                        "source_sha256": source.sha256,
+                        "selection": selection.payload,
+                        "protected_print_boxes": print_boxes,
+                    }
+                    try:
+                        recolor_artifact, recolor_proof = await asyncio.to_thread(
+                            source_recolor.render, source, recolor_recipe
+                        )
+                    except source_recolor.MetalSelectionError as exc:
+                        counts = Counter(
+                            problem["reason"] for problem in exc.violations
+                        )
+                        logger.warning(
+                            "source_metal_selection_rejected job_id=%s item_id=%s "
+                            "attempt=%s reasons=%s",
+                            request.job_id, request.job_item_id, mask_attempt + 1,
+                            dict(counts),
+                        )
+                        if mask_attempt:
+                            raise
+                        selection_feedback = {
+                            "previous_selection": selection.payload,
+                            "violations": exc.violations,
+                        }
+                        continue
+                    break
             if frozen is None and not request.reconcile_only:
                 if pixel_recipe is not None:
                     # Original product pixels stay local. Send only background
@@ -1516,6 +1545,26 @@ class FidelityGateway:
                         background_ids = [original_sources[1].asset_id]
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
+                    plain_white_eligible = (
+                        context["job_type"] == "product_image"
+                        and context["settings"].get("task_type") == "white_background"
+                        and not background_ids
+                        and all(
+                            source.source_role == "product_reference"
+                            for source in original_sources
+                        )
+                    )
+                    if plain_white_eligible:
+                        background_schema["properties"]["plain_white_plate"] = {
+                            "type": "boolean",
+                            "description": (
+                                "True only if a uniform #FFFFFF plate and the "
+                                "preserved product cutouts completely satisfy the "
+                                "request. Use false for any requested shadow, "
+                                "reflection, surface, lighting change, support or "
+                                "other visual treatment."
+                            ),
+                        }
                     layout_panels = 2 if self._native_pair else 1
                     background_schema["properties"]["text_layout"] = (
                         source_typography.layout_schema(layout_panels)
@@ -1659,6 +1708,11 @@ class FidelityGateway:
                                 else pixel_recipe["cells"],
                                 "native_pair": self._native_pair,
                                 "canvas_panel_count": layout_panels,
+                                "plain_white_plate_approval": (
+                                    "Inspect the original request and fill "
+                                    "plain_white_plate according to the schema."
+                                    if plain_white_eligible else None
+                                ),
                                 "copy_layout_contract": (
                                     "Keep ALL approved marketing copy with its "
                                     "EXACT original spelling, panel and hierarchy. "
@@ -1709,6 +1763,12 @@ class FidelityGateway:
                                     "replace an approved macro with a tiny full item."
                                     "Inventory width/height are ORIGINAL pixels; "
                                     "the larger inspection preview adds no detail. "
+                                    "Inspect the specific requested component in "
+                                    "the reference before choosing a crop. Frame "
+                                    "the connector with just enough adjacent "
+                                    "product to explain how it attaches. Reserve "
+                                    "space by using the actual crop aspect ratio, "
+                                    "without margins that make the detail smaller. "
                                     "A cropped detail may be enlarged at most "
                                     "max_detail_upscale times. Keep such details "
                                     "as appropriately sized insets; reserve other "
@@ -1729,7 +1789,7 @@ class FidelityGateway:
                             )
                             projection = deepcopy(background_plan.payload)
                             trial_recipe["background_projection"] = projection
-                            detail_scale_caps = {}
+                            detail_box_limits = {}
                             if crop_allowed:
                                 candidate_indices, candidate_cells = (
                                     source_pixels.native_placements(
@@ -1750,8 +1810,8 @@ class FidelityGateway:
                                 detail_width, detail_height = (
                                     int(v) for v in request.size.split("x")
                                 )
-                                detail_scale_caps = (
-                                    source_pixels.detail_inset_scale_caps(
+                                detail_box_limits = (
+                                    source_pixels.detail_inset_box_limits(
                                         detail_cutouts,
                                         candidate_cells,
                                         windows,
@@ -1766,7 +1826,7 @@ class FidelityGateway:
                                     source_layout.place_products_without_collisions(
                                         projection["placements"],
                                         projection["text_layout"], layout_panels,
-                                        detail_scale_caps=detail_scale_caps,
+                                        detail_box_limits=detail_box_limits,
                                     )
                                 )
                                 projection["placements"] = placements
@@ -1880,6 +1940,15 @@ class FidelityGateway:
                         pixel_recipe["format_png_base64"] = base64.b64encode(
                             empty.payload
                         ).decode("ascii")
+                        if (
+                            plain_white_eligible
+                            and pixel_recipe["background_projection"].get(
+                                "plain_white_plate"
+                            ) is True
+                        ):
+                            # This projection authorizes a plain white plate. The
+                            # existing format image already supplies those pixels.
+                            pixel_recipe["local_white_background"] = True
                 prepared_prompt = (
                     request.prompt
                     + "\nORIGINAL USER REQUIREMENT (overrides generated plans): "
@@ -1982,7 +2051,7 @@ class FidelityGateway:
                     )
             if pixel_recipe is not None and frozen is None:
                 raise ValueError("Source pixel dispatch requires its frozen receipt")
-            if recolor_recipe is not None:
+            if recolor_recipe is not None and recolor_artifact is None:
                 source = next(
                     s
                     for s in original_sources
@@ -2041,6 +2110,33 @@ class FidelityGateway:
                 actual_cost_micros=0,
                 estimated_cost_micros=0,
                 artifact=recolor_artifact,
+            )
+        elif pixel_recipe and pixel_recipe.get("local_white_background"):
+            # Older recipes have no local marker and keep their original supplier
+            # request, including read-only reconciliation of an accepted task.
+            (plate,) = request.sources
+            width, height = (int(value) for value in request.size.split("x"))
+            result = ImageCallResult(
+                outcome=ProviderOutcome.SUCCEEDED,
+                provider_request_id=None,
+                raw_usage={"network_requests": 0, "background_origin": "local_white"},
+                normalized_usage={
+                    "reported": True,
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                },
+                api_latency_seconds=0,
+                actual_cost_micros=0,
+                estimated_cost_micros=0,
+                artifact=ProviderArtifact(
+                    payload=plate.payload,
+                    filename="white-background.png",
+                    content_type=plate.content_type,
+                    width=width,
+                    height=height,
+                    sha256=plate.sha256,
+                ),
             )
         else:
             result = await self.wrapped.edit(request)

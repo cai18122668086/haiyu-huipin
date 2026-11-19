@@ -19,6 +19,12 @@ VERSION = "source-gold-metal-to-silver-v2-protected-print"
 PROFILE = "image_fidelity_color_mask"
 
 
+class MetalSelectionError(ValueError):
+    def __init__(self, violations: list[dict[str, Any]]) -> None:
+        super().__init__("Metal mask intersects protected printing or contains no gold")
+        self.violations = violations
+
+
 def enabled(context: dict[str, Any], sources: tuple[Any, ...]) -> bool:
     settings = context["settings"]
     target = str(settings.get("target_color", "")).lower()
@@ -98,7 +104,8 @@ def render(source: Any, recipe: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
             math.ceil(x1 * original.width), math.ceil(y1 * original.height),
         ))
     changed: set[tuple[int, int]] = set()
-    for region in selection["regions"]:
+    violations = []
+    for index, region in enumerate(selection["regions"]):
         x0, y0, x1, y1 = region["box"]
         if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
             raise ValueError("Invalid metal component geometry")
@@ -111,24 +118,36 @@ def render(source: Any, recipe: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
         if (right - left) * (bottom - top) > original.width * original.height * 0.04:
             raise ValueError("Metal component selection is too broad")
         found = False
+        blocked = set()
         for y in range(top, bottom):
             for x in range(left, right):
                 hue, saturation, value = hsv[x, y]
                 # Warm gold only. Neutral highlights/background stay original.
                 if not (10 <= hue <= 50 and saturation >= 55 and value >= 30):
                     continue
-                if any(
-                    pleft <= x < pright and ptop <= y < pbottom
-                    for pleft, ptop, pright, pbottom in protected
-                ):
-                    raise ValueError("Metal recoloring would change protected printing")
+                print_hits = [
+                    i
+                    for i, (pl, pt, pr, pb) in enumerate(protected)
+                    if pl <= x < pr and pt <= y < pb
+                ]
+                if print_hits:
+                    blocked.update(print_hits)
+                    continue
                 red, green, blue = pixels[x, y]
                 luminance = round(red * 0.2126 + green * 0.7152 + blue * 0.0722)
                 edited[x, y] = (luminance, luminance, luminance)
                 changed.add((x, y))
                 found = True
-        if not found:
-            raise ValueError("A selected metal component contains no gold pixels")
+        if blocked or not found:
+            violations.append({
+                "region_index": index,
+                "part": region["part"],
+                "box": region["box"],
+                "reason": "protected_print" if blocked else "no_gold",
+                "intersected_print_boxes": [print_boxes[i] for i in sorted(blocked)],
+            })
+    if violations:
+        raise MetalSelectionError(violations)
     if not changed or len(changed) > original.width * original.height * 0.08:
         raise ValueError("Metal recoloring exceeds its source pixel envelope")
     for y in range(original.height):

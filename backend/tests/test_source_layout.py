@@ -94,11 +94,11 @@ def test_detail_inset_uses_the_original_pixel_budget_and_avoids_approved_heading
             cutouts, cells, windows, canvas, panels=2
         )
 
-    caps = source_pixels.detail_inset_scale_caps(
+    limits = source_pixels.detail_inset_box_limits(
         cutouts, cells, windows, canvas, panels=2
     )
     fixed, changes = source_layout.place_products_without_collisions(
-        rows, text, 2, detail_scale_caps=caps
+        rows, text, 2, detail_box_limits=limits
     )
     assert len(changes) == 1 and changes[0]["placement_index"] == 1
     assert fixed[0] == rows[0]
@@ -108,7 +108,10 @@ def test_detail_inset_uses_the_original_pixel_budget_and_avoids_approved_heading
     source_pixels.validate_detail_resolution(
         cutouts, fixed_cells, windows, canvas, panels=2
     )
-    assert not source_pixels.detail_inset_scale_caps(
+    rendered, _, _ = source_pixels.placed_layer(cutouts[1], canvas, fixed_cells[1])
+    assert rendered.width >= 245
+    assert rendered.height >= 780
+    assert not source_pixels.detail_inset_box_limits(
         cutouts, fixed_cells, windows, canvas, panels=2
     )
 
