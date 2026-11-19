@@ -2686,7 +2686,8 @@ class TengliOpenAICompatibleGateway:
                             ) is True
                         )
                         if precise_print_geometry or request.planning_profile in {
-                            "image_fidelity_color_mask", "image_fidelity_readback"
+                            "image_fidelity_color_mask", "image_fidelity_readback",
+                            "aurora_remix_fast_review",
                         }:
                             route_payload["max_completion_tokens"] = 16384
                         if request.planning_profile in {
@@ -2708,6 +2709,11 @@ class TengliOpenAICompatibleGateway:
                     planner_key += ":literal-ocr:" + hashlib.sha256(
                         route_payload["model"].encode()
                     ).hexdigest()[:12]
+                if request.planning_profile == "aurora_remix_fast_review":
+                    # The complete review schema and reasoning allowance changed.
+                    # Never replay a provider-cached truncated response under
+                    # the previous wire contract. Image submission is separate.
+                    planner_key += ":remix-review-wire-v2"
                 if (request.planning_profile == "aurora_native_fast_identity"
                     and route.planner_model.casefold().startswith("deepseek")):
                     route_payload["max_completion_tokens"] = 32768
@@ -11501,7 +11507,11 @@ def _planner_prompt_body(request: PlannerRequest) -> str:
     if request.planning_profile in {"aurora_remix_fast_prepare", "aurora_remix_fast_review"}:
         return ("Execute only the current fast Skill stage from attached image pixels. "
                 "Return the exact requested JSON contract.\n"
-                + "\n".join(request.product_information))
+                + "\n".join(request.product_information)
+                + "\nresponse_schema=" + json.dumps(
+                    _planner_response_format(request)["json_schema"]["schema"],
+                    ensure_ascii=False,
+                ))
     if request.planning_profile == "replica_native_contract":
         return "Author the requested native Skill contract from actual attached pixels. JSON only.\n" + "\n".join(request.product_information)
     if request.planning_profile in {refined_detail.PROFILE, detail_fast.PROFILE}:

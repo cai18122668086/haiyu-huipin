@@ -19,6 +19,12 @@ from app.xinghe_agent import (
     _planner_call_results,
     _planner_usage_record,
 )
+from app.xinghe_agent import (
+    _planner_prompt as actual_planner_prompt,
+)
+from app.xinghe_agent import (
+    _planner_response_format as actual_planner_response_format,
+)
 
 PROFILES = [
     "aurora_domestic_detail",
@@ -190,15 +196,56 @@ def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expec
         assert payload["response_format"] == {"type": "json_object"}
         assert payload["max_completion_tokens"] == (
             16384 if profile in {
-                "image_fidelity_color_mask", "image_fidelity_readback"
+                "image_fidelity_color_mask", "image_fidelity_readback",
+                "aurora_remix_fast_review",
             } else 8192
         )
-    precise = profile in {"image_fidelity_color_mask", "image_fidelity_readback"}
+    precise = profile in {
+        "image_fidelity_color_mask", "image_fidelity_readback",
+        "aurora_remix_fast_review",
+    }
     if profile.startswith("image_fidelity_") and not precise:
         assert payload["thinking"] == {"type": "disabled"}
         assert payload["max_completion_tokens"] == 8192
     elif precise:
         assert "thinking" not in payload
+
+
+@pytest.mark.parametrize(
+    "profile", ["aurora_remix_fast_prepare", "aurora_remix_fast_review"]
+)
+def test_remix_json_object_transport_receives_complete_unchanged_schema(
+    profile, monkeypatch
+):
+    from app.remix_fast_contract import response_format
+
+    monkeypatch.setattr("app.xinghe_agent._planner_prompt", actual_planner_prompt)
+    monkeypatch.setattr(
+        "app.xinghe_agent._planner_response_format", actual_planner_response_format
+    )
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    asyncio.run(gateway.plan(request(profile)))
+    assert len(transport.calls) == 1
+    call = transport.calls[0]
+    payload = call["payload"]
+    expected = response_format(profile)["json_schema"]["schema"]
+    text = payload["messages"][1]["content"][0]["text"]
+    actual = json.loads(text.rsplit("\nresponse_schema=", 1)[1])
+    assert actual == expected
+    if profile == "aurora_remix_fast_review":
+        assert payload["max_completion_tokens"] == 16384
+        assert "thinking" not in payload
+        assert call["headers"]["Idempotency-Key"].endswith(":remix-review-wire-v2")
+        assert actual["properties"]["checks"]["minItems"] == 4
+        assert actual["properties"]["checks"]["maxItems"] == 4
+        assert actual["properties"]["checks"]["items"]["required"] == [
+            "name", "passed", "evidence"
+        ]
 
 
 @pytest.mark.parametrize("enabled", [False, True])
