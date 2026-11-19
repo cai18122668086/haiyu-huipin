@@ -381,6 +381,38 @@ def test_only_known_preparation_truncation_gets_one_complete_schema_correction(
     assert result.actual_cost_micros == 2 * len(gateway.plans) + 10 * len(gateway.edits)
 
 
+@pytest.mark.parametrize(
+    "status,receipt,expected_calls",
+    [(502, "original-plan", 2), (502, None, 1), (400, "original-plan", 1)],
+)
+def test_only_acknowledged_transient_source_planning_repeats(
+    status, receipt, expected_calls
+):
+    class SourcePlanner(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == PREPARE and len(self.plans) == 1:
+                return replace(
+                    result,
+                    payload=None,
+                    provider_request_id=receipt,
+                    error_code="PLANNER_REQUEST_FAILED",
+                    http_status=status,
+                )
+            return result
+
+    gateway = SourcePlanner()
+    result = asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    calls = [call for call in gateway.plans if call.planning_profile == PREPARE]
+    assert len(calls) == expected_calls
+    assert len(gateway.edits) == int(expected_calls == 2)
+    if len(calls) == 2:
+        assert calls[0].sources == calls[1].sources
+        assert calls[0].product_information == calls[1].product_information
+        assert calls[0].idempotency_key != calls[1].idempotency_key
+    assert result.actual_cost_micros == 2 * len(gateway.plans) + 10 * len(gateway.edits)
+
+
 def test_unknown_source_planning_is_not_repeated_by_another_suite_item():
     class UnknownSource(Gateway):
         async def plan(self, call):

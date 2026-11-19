@@ -6,13 +6,17 @@ import math
 from copy import deepcopy
 from typing import Any
 
-VERSION = "bounded-product-layout-v1"
+VERSION = "bounded-product-layout-v2"
 
 
 def place_products_without_collisions(
-    placements: list[dict[str, Any]], text_layout: list[dict[str, Any]], panels: int
+    placements: list[dict[str, Any]],
+    text_layout: list[dict[str, Any]],
+    panels: int,
+    *,
+    detail_scale_caps: dict[int, float] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Translate at most 0.10 and uniformly reduce at most 10%, or refuse.
+    """Translate at most 0.10; oversize crops may shrink to original-pixel limits.
 
     Source identity, crop, panel, order and text stay unchanged. This only
     compiles an overlapping proposal; the caller must still apply all native
@@ -39,8 +43,19 @@ def place_products_without_collisions(
             one[1], two[1]
         )
 
+    caps = detail_scale_caps or {}
+    if any(
+        index not in range(len(placed))
+        or not math.isfinite(scale)
+        or not 0 < scale < 1
+        or not placed[index].get("source_window")
+        or placed[index]["source_window"] == [0, 0, 1, 1]
+        for index, scale in caps.items()
+    ):
+        return original, []
     changes = []
-    for index, row in enumerate(placed):
+    for index in sorted(range(len(placed)), key=lambda index: index not in caps):
+        row = placed[index]
         products = [
             other["panel_box"]
             for i, other in enumerate(placed)
@@ -50,11 +65,17 @@ def place_products_without_collisions(
             text["panel_box"] for text in text_layout if text["panel"] == row["panel"]
         ]
         old = row["panel_box"]
-        if not any(overlap(old, obstacle) for obstacle in products):
+        is_detail = row.get("source_window") not in (None, [0, 0, 1, 1])
+        max_scale = caps.get(index, 1.0)
+        collision_targets = obstacles if is_detail else products
+        if max_scale == 1 and not any(
+            overlap(old, obstacle) for obstacle in collision_targets
+        ):
             continue
         cx, cy = (old[0] + old[2]) / 2, (old[1] + old[3]) / 2
         candidates = []
-        for scale in (1.0, 0.95, 0.9):
+        for relative_scale in (1.0, 0.95, 0.9):
+            scale = max_scale * relative_scale
             width, height = (old[2] - old[0]) * scale, (old[3] - old[1]) * scale
             xs, ys = {cx - width / 2}, {cy - height / 2}
             for box in obstacles:

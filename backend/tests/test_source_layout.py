@@ -3,6 +3,7 @@
 from copy import deepcopy
 
 import pytest
+from PIL import Image
 
 from app import source_layout, source_pixels
 
@@ -70,6 +71,46 @@ def test_already_valid_layout_and_text_only_collisions_are_not_reinterpreted():
     rows = proposal()[:3]
     text = [{"panel": 0, "panel_box": [0.1, 0.3, 0.8, 0.8]}]
     assert source_layout.place_products_without_collisions(rows, text, 1) == (rows, [])
+
+
+def test_detail_inset_uses_the_original_pixel_budget_and_avoids_approved_heading():
+    rows = [
+        {"layer_index": 0, "panel": 0, "panel_box": [0.1, 0.2, 0.6, 0.8]},
+        {
+            "layer_index": 0,
+            "panel": 1,
+            "panel_box": [0.08, 0.115, 0.58, 0.61],
+            "source_window": [0.1, 0.1, 0.4, 0.8],
+        },
+    ]
+    text = [{"panel": 1, "panel_box": [0.08, 0.09, 0.62, 0.16]}]
+    source = source_pixels.artifact(Image.new("RGBA", (203, 280), "red"), "source.png")
+    windows = [[0, 0, 1, 1], rows[1]["source_window"]]
+    cutouts = source_pixels.crop_windows((source, source), windows)
+    canvas = (1440, 3840)
+    _, cells = source_pixels.native_placements(rows, 1, 2)
+    with pytest.raises(source_pixels.DetailResolutionError):
+        source_pixels.validate_detail_resolution(
+            cutouts, cells, windows, canvas, panels=2
+        )
+
+    caps = source_pixels.detail_inset_scale_caps(
+        cutouts, cells, windows, canvas, panels=2
+    )
+    fixed, changes = source_layout.place_products_without_collisions(
+        rows, text, 2, detail_scale_caps=caps
+    )
+    assert len(changes) == 1 and changes[0]["placement_index"] == 1
+    assert fixed[0] == rows[0]
+    assert fixed[1]["source_window"] == rows[1]["source_window"]
+    assert fixed[1]["panel_box"][1] >= text[0]["panel_box"][3]
+    _, fixed_cells = source_pixels.native_placements(fixed, 1, 2)
+    source_pixels.validate_detail_resolution(
+        cutouts, fixed_cells, windows, canvas, panels=2
+    )
+    assert not source_pixels.detail_inset_scale_caps(
+        cutouts, fixed_cells, windows, canvas, panels=2
+    )
 
 
 @pytest.mark.parametrize("invalid", ["full_overlap", "seam", "nan", "missing_panel"])

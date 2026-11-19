@@ -705,7 +705,7 @@ def background_prompt(
 
 
 def native_placements(
-    value: Any, count: int, panels: int = 2
+    value: Any, count: int, panels: int = 2, *, check_overlap: bool = True
 ) -> tuple[list[int], list[list[float]]]:
     """Validate the approved pair's source-layer placement, including its seam."""
     if (
@@ -738,7 +738,11 @@ def native_placements(
         y0, y1 = (panel + y0) / panels, (panel + y1) / panels
         box = [x0, y0, x1, y1]
         for old_index, old in enumerate(cells):
-            if min(x1, old[2]) > max(x0, old[0]) and min(y1, old[3]) > max(y0, old[1]):
+            if (
+                check_overlap
+                and min(x1, old[2]) > max(x0, old[0])
+                and min(y1, old[3]) > max(y0, old[1])
+            ):
                 raise ValueError(
                     f"placements[{len(cells)}].panel_box overlaps "
                     f"placements[{old_index}].panel_box: "
@@ -794,6 +798,31 @@ def crop_windows(
             raise ValueError("Close-up contains no usable original product pixels")
         result.append(artifact(crop, "original-product-closeup.png"))
     return tuple(result)
+
+
+def detail_inset_scale_caps(
+    cutouts: tuple[ProviderArtifact, ...],
+    cells: list[list[float]],
+    windows: list[list[float]],
+    canvas: tuple[int, int],
+    *,
+    panels: int,
+) -> dict[int, float]:
+    try:
+        validate_detail_resolution(cutouts, cells, windows, canvas, panels=panels)
+    except DetailResolutionError as error:
+        caps = {}
+        for problem in error.diagnostic["violations"]:
+            index = problem["placement_index"]
+            cell = cells[index]
+            caps[index] = min(
+                maximum_extent / ((cell[axis + 2] - cell[axis]) * multiplier)
+                for axis, (maximum_extent, multiplier) in enumerate(
+                    zip(problem["maximum_panel_box_extent"], (1, panels), strict=True)
+                )
+            )
+        return caps
+    return {}
 
 
 def validate_detail_resolution(
