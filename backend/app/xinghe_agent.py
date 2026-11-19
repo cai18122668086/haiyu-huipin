@@ -2679,10 +2679,12 @@ class TengliOpenAICompatibleGateway:
                                 "literal_print_geometry_required"
                             ) is True
                         )
-                        if precise_print_geometry or request.planning_profile == "image_fidelity_color_mask":
+                        if precise_print_geometry or request.planning_profile in {
+                            "image_fidelity_color_mask", "image_fidelity_readback"
+                        }:
                             route_payload["max_completion_tokens"] = 16384
                         if request.planning_profile in {
-                            "image_fidelity_prepare", "image_fidelity_readback",
+                            "image_fidelity_prepare",
                             "image_fidelity_matte", "image_fidelity_background",
                         } and not precise_print_geometry:
                             route_payload["thinking"] = {"type": "disabled"}

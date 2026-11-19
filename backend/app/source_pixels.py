@@ -21,7 +21,7 @@ from PIL import Image, ImageChops, ImageFilter, ImageOps
 
 from .provider import ProviderArtifact
 
-VERSION = "source-pixel-layers-v10-matte-pairs-connected-hardware"
+VERSION = "source-pixel-layers-v11-white-exterior-edge"
 MAX_DETAIL_UPSCALE = 4.0
 PLANNING_CONSTRAINTS = (
     "SOURCE PHOTOGRAPH RENDER CAPABILITIES: Plan from the actual supplied "
@@ -33,6 +33,13 @@ PLANNING_CONSTRAINTS = (
     "letters, or demonstrate an unseen action. Author every module's visual "
     "proof and layout within those capabilities; explain an unseen operation "
     "with approved text rather than promising an unphotographed action image. "
+    "The deterministic renderer draws photographed source views and exact "
+    "approved text only. Do not author leader lines, arrows, numbered circles, "
+    "color dots, rules, badges, diagrams or other precisely positioned graphic "
+    "annotations: these are not supported rendering primitives. Answer each "
+    "module's buyer question using visible original views, bounded detail "
+    "insets and their exact approved captions. Do not promise a different "
+    "mechanical state or attachment interaction than the source photo shows. "
     "Source-only macro crops must specify the actual visible detail. "
     "A photographed detail crop may be enlarged at most 4x linearly. Tiny "
     "original fittings cannot become sharp full-frame macro photos. Plan a "
@@ -252,6 +259,43 @@ def _single_product(mask: Image.Image, cv: Any, np: Any) -> Image.Image:
     return Image.fromarray(alpha, "L")
 
 
+def _trim_white_matte_edge(crop: Image.Image, mask: Image.Image) -> Image.Image:
+    """Remove a narrow white-background rim, never repaint product RGB.
+
+    Re-extracting a flattened white product photo can classify its pure white
+    exterior as foreground. Only near-white pixels in the outer two-pixel band
+    beside colored foreground are eligible. Interior printing and wholly white
+    thin details remain untouched. The resulting alpha still needs matte review.
+    """
+    alpha = mask.convert("L")
+    eroded = alpha.filter(ImageFilter.MinFilter(5))
+    rgb = crop.convert("RGB")
+    colors, opacity = list(rgb.getdata()), list(alpha.getdata())
+    colored = Image.new("L", alpha.size)
+    colored.putdata([
+        255 if a > 0 and min(pixel) < 235 else 0
+        for pixel, a in zip(colors, opacity, strict=True)
+    ])
+    nearby = colored.filter(ImageFilter.MaxFilter(5))
+    coverage = alpha.point(lambda value: 255 if value else 0).filter(
+        ImageFilter.BoxBlur(1)
+    )
+    values = [
+        0 if a > 0 and edge == 0 and neighbor > 0 and density >= 160
+        and min(pixel) >= 248 and max(pixel) - min(pixel) <= 3 else a
+        for pixel, a, edge, neighbor, density in zip(
+            colors, opacity, eroded.getdata(), nearby.getdata(), coverage.getdata(),
+            strict=True,
+        )
+    ]
+    changed = sum(a != b for a, b in zip(opacity, values, strict=True))
+    if changed > sum(a > 0 for a in opacity) * 0.03:
+        raise ValueError("White exterior cleanup exceeds its narrow source-edge bound")
+    cleaned = Image.new("L", alpha.size)
+    cleaned.putdata(values)
+    return cleaned
+
+
 def artifact(image: Image.Image, filename: str) -> ProviderArtifact:
     output = BytesIO()
     image.save(output, "PNG")
@@ -326,6 +370,11 @@ def extract_layers(
                 math.ceil(y1 * image.height) - top,
             ),
         )
+        if getattr(source, "source_role", "") == "white_background_product":
+            alpha = _trim_white_matte_edge(crop, alpha)
+            alpha = _single_product(
+                alpha, importlib.import_module("cv2"), importlib.import_module("numpy")
+            )
         bounds = alpha.point(lambda value: 255 if value >= 128 else 0).getbbox()
         if bounds is None or (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) < 64:
             raise ValueError("Source layer is empty or incomplete")

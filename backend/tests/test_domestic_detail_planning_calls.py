@@ -189,12 +189,15 @@ def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expec
     if expected.startswith("kimi"):
         assert payload["response_format"] == {"type": "json_object"}
         assert payload["max_completion_tokens"] == (
-            16384 if profile == "image_fidelity_color_mask" else 8192
+            16384 if profile in {
+                "image_fidelity_color_mask", "image_fidelity_readback"
+            } else 8192
         )
-    if profile.startswith("image_fidelity_") and profile != "image_fidelity_color_mask":
+    precise = profile in {"image_fidelity_color_mask", "image_fidelity_readback"}
+    if profile.startswith("image_fidelity_") and not precise:
         assert payload["thinking"] == {"type": "disabled"}
         assert payload["max_completion_tokens"] == 8192
-    elif profile == "image_fidelity_color_mask":
+    elif precise:
         assert "thinking" not in payload
 
 

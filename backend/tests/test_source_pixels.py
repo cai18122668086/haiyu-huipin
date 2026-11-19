@@ -7,6 +7,36 @@ from PIL import Image
 from app import source_pixels
 
 
+def test_white_exterior_cleanup_keeps_printing_white_detail_and_original_rgb():
+    from PIL import ImageDraw
+
+    image = Image.new("RGB", (300, 300), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((20, 20, 279, 279), fill=(35, 90, 130))
+    draw.rectangle((35, 35, 55, 55), fill="white")  # Interior physical printing.
+    draw.line((50, 2, 50, 19), fill="white", width=1)  # Thin white detail.
+    alpha = Image.new("L", image.size)
+    mask_draw = ImageDraw.Draw(alpha)
+    mask_draw.rectangle((19, 19, 280, 280), fill=255)
+    mask_draw.line((50, 2, 50, 19), fill=255, width=1)
+    before = image.tobytes()
+    cleaned = source_pixels._trim_white_matte_edge(image, alpha)
+    assert cleaned.getpixel((19, 40)) == 0
+    assert cleaned.getpixel((20, 40)) == 255
+    assert cleaned.getpixel((45, 45)) == 255
+    assert cleaned.getpixel((50, 5)) == 255
+    assert image.tobytes() == before
+
+
+def test_white_edge_cleanup_fails_closed_if_removal_is_not_narrow():
+    image = Image.new("RGB", (20, 20), "white")
+    image.paste((20, 70, 130), (4, 4, 16, 16))
+    alpha = Image.new("L", image.size)
+    alpha.paste(255, (3, 3, 17, 17))
+    with pytest.raises(ValueError, match="narrow source-edge bound"):
+        source_pixels._trim_white_matte_edge(image, alpha)
+
+
 def test_composition_uses_source_pixels_and_keeps_native_background_geometry():
     background = source_pixels.artifact(
         Image.new("RGB", (120, 80), "blue"), "native.png"
