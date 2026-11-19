@@ -93,6 +93,20 @@ def test_scene_plate_preserves_required_supports_and_actual_product_geometry():
     assert "preserve" in prompt.casefold() and "required supporting surface" in prompt
     assert '"visible_product_bounds": [0.4, 0.3, 0.6, 0.8]' in prompt
     assert "Do not draw products" in prompt
+    assert "unless the approved scene explicitly requires that support" in prompt
+
+
+def test_two_screen_background_keeps_one_uninterrupted_backdrop():
+    description = "Blue daylight with a display rod behind the clasp position."
+    cells = [[0.1, 0.1, 0.9, 0.4], [0.1, 0.6, 0.9, 0.9]]
+    prompt = source_pixels.background_prompt(description, cells, continuous_pair=True)
+    assert "horizontal midpoint (y=0.5)" in prompt
+    assert "No hard color band, horizontal divider" in prompt
+    assert "guide composition, not background panels" in prompt
+    assert description in prompt
+    assert "TWO-SCREEN CONTINUITY" not in source_pixels.background_prompt(
+        description, cells
+    )
 
 
 def test_comparison_checks_real_candidate_opaque_pixels_without_approving_quality():

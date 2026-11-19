@@ -983,6 +983,38 @@ def test_model_pose_transfer_reorders_envelope_sources_before_edit(
     ]
 
 
+def test_model_pose_transfer_keeps_rejected_candidate_diagnostics(
+    harness: Harness,
+) -> None:
+    provider, request = _model_pose_request(harness)
+    harness.gateway.result = replace(
+        _success_result(),
+        outcome=ProviderOutcome.FAILED,
+        artifact=None,
+        error_code="IMAGE_FIDELITY_REJECTED",
+        raw_usage={
+            "network_requests": 2,
+            "metrics": {
+                "image_fidelity": {
+                    "accepted": False,
+                    "retained_asset_id": "asset-private-candidate",
+                    "failed_checks": ["requested_change"],
+                }
+            },
+        },
+    )
+    result = asyncio.run(provider.execute(request))
+    assert result.error_code == "IMAGE_FIDELITY_REJECTED"
+    assert result.artifact is None
+    assert result.raw_usage["metrics"]["pose_transfer_mode"] == "direct_two_image"
+    assert result.raw_usage["metrics"]["image_fidelity"] == {
+        "accepted": False,
+        "retained_asset_id": "asset-private-candidate",
+        "failed_checks": ["requested_change"],
+    }
+    assert len(harness.gateway.requests) == 1
+
+
 def test_model_pose_transfer_image_exception_counts_one_two_image_request(
     harness: Harness,
 ) -> None:

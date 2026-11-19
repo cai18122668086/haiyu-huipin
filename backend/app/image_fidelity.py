@@ -919,6 +919,24 @@ class FidelityGateway:
                     )
                     plans.append(plan)
                     if plan.error_code:
+                        if (
+                            not preparation_attempt
+                            and plan.provider_request_id
+                            and (plan.error_code, plan.http_status)
+                            in {
+                                ("PLANNER_RATE_LIMITED", 429),
+                                ("PLANNER_REQUEST_FAILED", 502),
+                                ("PLANNER_REQUEST_FAILED", 503),
+                            }
+                        ):
+                            logger.warning(
+                                "source_selection_planner_retry job_id=%s "
+                                "provider_status=%s",
+                                request.job_id,
+                                plan.http_status,
+                            )
+                            await asyncio.sleep(1)
+                            continue
                         if plan.error_code == "PLANNER_OUTPUT_TRUNCATED":
                             if preparation_attempt:
                                 self._prepared[scope] = None
@@ -1655,6 +1673,14 @@ class FidelityGateway:
                                     "never requests the generator to draw letters. "
                                     "Required hands, bags and attachment points "
                                     "must not disappear under an 'empty' rule."
+                                    + (
+                                        " Describe one continuous backdrop "
+                                        "across the midpoint, including how "
+                                        "light and texture carry across it. "
+                                        "Do not specify separate panel backgrounds."
+                                        if self._native_pair
+                                        else ""
+                                    )
                                 ),
                                 "source_layer_inventory": projection_inventory,
                                 "placement_contract": (
@@ -1703,6 +1729,36 @@ class FidelityGateway:
                             )
                             projection = deepcopy(background_plan.payload)
                             trial_recipe["background_projection"] = projection
+                            detail_scale_caps = {}
+                            if crop_allowed:
+                                candidate_indices, candidate_cells = (
+                                    source_pixels.native_placements(
+                                        projection["placements"],
+                                        len(source_cutouts),
+                                        layout_panels,
+                                        check_overlap=False,
+                                    )
+                                )
+                                windows = [
+                                    p.get("source_window", [0, 0, 1, 1])
+                                    for p in projection["placements"]
+                                ]
+                                detail_cutouts = source_pixels.crop_windows(
+                                    tuple(source_cutouts[i] for i in candidate_indices),
+                                    windows,
+                                )
+                                detail_width, detail_height = (
+                                    int(v) for v in request.size.split("x")
+                                )
+                                detail_scale_caps = (
+                                    source_pixels.detail_inset_scale_caps(
+                                        detail_cutouts,
+                                        candidate_cells,
+                                        windows,
+                                        (detail_width, detail_height),
+                                        panels=layout_panels,
+                                    )
+                                )
                             if planned_layout:
                                 from . import source_layout
 
@@ -1710,6 +1766,7 @@ class FidelityGateway:
                                     source_layout.place_products_without_collisions(
                                         projection["placements"],
                                         projection["text_layout"], layout_panels,
+                                        detail_scale_caps=detail_scale_caps,
                                     )
                                 )
                                 projection["placements"] = placements
@@ -1729,17 +1786,6 @@ class FidelityGateway:
                                 trial_recipe["placement_indices"] = indices
                                 trial_recipe["cells"] = cells
                             if crop_allowed:
-                                windows = [
-                                    p.get("source_window", [0, 0, 1, 1])
-                                    for p in background_plan.payload["placements"]
-                                ]
-                                detail_cutouts = source_pixels.crop_windows(
-                                    tuple(source_cutouts[i] for i in indices),
-                                    windows,
-                                )
-                                detail_width, detail_height = (
-                                    int(v) for v in request.size.split("x")
-                                )
                                 source_pixels.validate_detail_resolution(
                                     detail_cutouts, cells, windows,
                                     (detail_width, detail_height),
@@ -1888,6 +1934,7 @@ class FidelityGateway:
                         pixel_recipe["cells"],
                         (),
                         placement_geometry,
+                        continuous_pair=self._native_pair,
                     )
                 frozen = self._frozen(
                     request,
