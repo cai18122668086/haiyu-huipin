@@ -307,6 +307,63 @@ def test_independent_workflows_recover_only_known_transient_failures(
         assert detail["items"][0]["error_code"] == "PROVIDER_OUTCOME_UNKNOWN"
 
 
+@pytest.mark.parametrize("unknown_item_position", [1, 2])
+def test_creative_job_with_an_unresolved_receipt_cannot_be_reissued(
+    client, unknown_item_position
+):
+    jobs = f"/api/v1/workspaces/{WORKSPACE_ID}/jobs"
+    asset = upload_asset(client, filename="original.png")["id"]
+    created = client.post(
+        jobs,
+        headers=idem(),
+        json={
+            "type": "creative_image",
+            "intent": "submit",
+            "input": {"product_asset_ids": [asset]},
+            "configuration": {"image_count": unknown_item_position},
+        },
+    )
+    assert created.status_code == 202
+    job_id = created.json()["id"]
+
+    class UncertainCreativeProvider(FakeProvider):
+        async def execute(self, request):
+            result = await super().execute(request)
+            if self.call_count == unknown_item_position:
+                return replace(result, outcome=ProviderOutcome.OUTCOME_UNKNOWN)
+            return replace(
+                result,
+                outcome=ProviderOutcome.FAILED,
+                error_code="IMAGE_REQUEST_FAILED",
+            )
+
+    provider = UncertainCreativeProvider()
+    coordinator = ExecutionCoordinator(client.app.state.session_factory, provider)
+    asyncio.run(coordinator.run(job_id))
+    path = f"{jobs}/{job_id}"
+    current = client.get(path).json()
+    item = current["items"][unknown_item_position - 1]
+    assert item["error_code"] == "PROVIDER_OUTCOME_UNKNOWN"
+    if unknown_item_position == 2:
+        assert current["error_code"] == "IMAGE_REQUEST_FAILED"
+    for endpoint, body in (
+        ("retry", {"scope": "failed"}),
+        ("retry", {"scope": "full"}),
+        ("retry", {"scope": "selected", "item_ids": [item["id"]]}),
+        ("clone", None),
+    ):
+        blocked = client.post(f"{path}/{endpoint}", headers=idem(), json=body)
+        assert blocked.status_code == 409
+        assert blocked.json()["error"]["code"] == (
+            "CREATIVE_IMAGE_RECONCILIATION_REQUIRED"
+        )
+    assert not {"retry", "clone"} & set(current["allowed_actions"])
+    listed = client.get(jobs + "?type=creative_image").json()["items"]
+    assert [entry["id"] for entry in listed] == [job_id]
+    assert not {"retry", "clone"} & set(listed[0]["allowed_actions"])
+    assert provider.call_count == unknown_item_position
+
+
 @pytest.mark.parametrize("masked", [False, True])
 @pytest.mark.parametrize(
     "code", ["PROVIDER_TRANSPORT_FAILED", "PROVIDER_RESPONSE_INVALID"]

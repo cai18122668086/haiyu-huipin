@@ -19,6 +19,12 @@ test("technical rejection and unknown outcome keep their distinct recovery messa
   assert.match(safeJobFailureSummary("PROVIDER_OUTCOME_UNKNOWN", { provider_error: { code: "content_policy_violation" } }), /结果尚未确认/);
 });
 
+test("job-level reconciliation asks for the local task ID without exposing supplier metadata", () => {
+  const summary = jobNote({ status: "failed", items: [], error_code: "PROVIDER_OUTCOME_UNKNOWN", error_details: { image_recovery: { original_task_id: "private-supplier-receipt" } } });
+  assert.match(summary, /本站任务编号.*核查原任务/);
+  assert.doesNotMatch(summary, /private-supplier-receipt|稍后重试/);
+});
+
 test("failed original async tasks show the upstream failure without inviting a duplicate", () => {
   const summary = safeJobFailureSummary("IMAGE_ASYNC_TASK_FAILED");
   assert.match(summary, /生成服务报告原任务异常/);

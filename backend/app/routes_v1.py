@@ -162,6 +162,7 @@ from .services import (
     lock_workspace_limits,
     new_id,
     release_credits,
+    require_creative_reconciled,
     require_idempotency_key,
     retry_item_ids,
     settle_credits,
@@ -1690,6 +1691,7 @@ def list_jobs(
         items=[
             job_list_response(
                 item,
+                items=item_groups.get(item.id, []),
                 output_asset_count=output_summaries.get(item.id, (0, None))[0],
                 primary_output_asset_id=output_summaries.get(item.id, (0, None))[1],
                 generated_set_complete=_is_audit_only_generated_set(
@@ -2240,6 +2242,7 @@ async def retry_job(
         )
     from .aurora_main_image_fast import require_recoverable_plan
 
+    require_creative_reconciled(session, source)
     replan_main_image = require_recoverable_plan(
         session, source, allow_replanning=payload.scope == RetryScope.FAILED
     )
@@ -2465,6 +2468,7 @@ def clone_job(
     from .aurora_main_image_fast import require_recoverable_plan
     from .aurora_main_image_fast import selected as fast_main
 
+    require_creative_reconciled(session, source)
     require_recoverable_plan(session, source)
     _validate_domestic_detail_retry(session, source, selected, clone=True)
     cloned = _copy_job_for_retry(session, source, RetryScope.FULL, selected)

@@ -250,8 +250,10 @@ def test_lossless_reference_sheet_tracks_target_aspect_without_changing_sources(
 
 
 class PollingTransport(HaiyuTransport):
-    def __init__(self, delegate, states):
-        super().__init__(delegate, poll_interval=0, task_timeout=1)
+    def __init__(self, delegate, states, *, journal_dir=None):
+        super().__init__(
+            delegate, poll_interval=0, task_timeout=1, journal_dir=journal_dir
+        )
         self.states = iter(states)
         self.polls = []
 
@@ -264,7 +266,9 @@ class PollingTransport(HaiyuTransport):
         return payload
 
 
-def request(transport, model=MODELS[0], prompt="Edit the product"):
+def request(
+    transport, model=MODELS[0], prompt="Edit the product", *, reconcile_only=False
+):
     return asyncio.run(
         transport.post_multipart(
             url="https://api.haiyushuke.com/v1/images/edits",
@@ -279,6 +283,7 @@ def request(transport, model=MODELS[0], prompt="Edit the product"):
             ],
             files=[("image", "product.png", "image/png", png())],
             timeout_seconds=30,
+            reconcile_only=reconcile_only,
         )
     )
 
@@ -308,8 +313,10 @@ def test_unknown_task_outcomes_do_not_allow_automatic_repurchase():
     transport = PollingTransport(
         delegate, [(200, {"status": "failed", "error": {"code": "settlement_pending"}})]
     )
-    with pytest.raises(XingheAgentError, match="reconciliation"):
+    with pytest.raises(XingheAgentError) as caught:
         request(transport)
+    assert caught.value.code == "PROVIDER_RESPONSE_INVALID"
+    assert caught.value.provider_error["code"] == "settlement_pending"
     assert len(delegate.calls) == 1
 
 
@@ -795,6 +802,98 @@ def test_error_response_with_a_task_receipt_does_not_switch_models():
     result = dispatch(HaiyuTransport(delegate))
     assert result.outcome == ProviderOutcome.OUTCOME_UNKNOWN
     assert result.provider_request_id == "possibly-accepted-task"
+    assert len(delegate.calls) == 1
+
+
+@pytest.mark.parametrize("task_state", ["failed", "reconciliation"])
+def test_terminal_gateway_receipt_persists_and_only_requeries_original(
+    tmp_path, task_state
+):
+    task = {
+        "id": "original-task",
+        "object": "image.task",
+        "status": task_state,
+        "error": {
+            "code": "agent3_failed",
+            "message": (
+                "Image result unavailable; do not create a replacement automatically"
+                if task_state == "failed"
+                else "Result unavailable"
+            ),
+        },
+    }
+    delegate = Transport([(502, task)])
+    transport = PollingTransport(delegate, [], journal_dir=tmp_path)
+    with pytest.raises(XingheAgentError) as original:
+        request(transport)
+    assert original.value.provider_request_id == task["id"]
+    assert original.value.provider_error["code"] == "agent3_failed"
+    assert transport.polls == []
+    assert (
+        transport.accepted_task(
+            "https://api.haiyushuke.com/v1/images/edits", "same-task", MODELS[0]
+        )
+        == task["id"]
+    )
+
+    resumed = PollingTransport(delegate, [(200, task)], journal_dir=tmp_path)
+    with pytest.raises(XingheAgentError) as rechecked:
+        request(resumed, reconcile_only=True)
+    assert rechecked.value.code == original.value.code == "PROVIDER_RESPONSE_INVALID"
+    assert rechecked.value.provider_request_id == task["id"]
+    assert rechecked.value.provider_error == original.value.provider_error
+    assert resumed.polls == ["https://api.haiyushuke.com/v1/images/tasks/original-task"]
+    _, image = image_response()
+    resolved = PollingTransport(
+        delegate,
+        [(200, {"id": task["id"], "status": "succeeded", "result": image})],
+        journal_dir=tmp_path,
+    )
+    status, response = request(resolved, reconcile_only=True)
+    assert status == 200 and response["haiyu_task_id"] == task["id"]
+    assert response["data"] == image["data"]
+    assert resolved.polls == resumed.polls
+    assert len(delegate.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "evidence", [{"id": "unverified"}, {"task_id": "unverified"}, {"data": [{}]}]
+)
+def test_ambiguous_error_response_cannot_poll_or_resubmit_after_restart(
+    tmp_path, evidence
+):
+    delegate = Transport([(502, {**evidence, "error": {"code": "model_not_found"}})])
+    for _attempt in range(2):
+        transport = PollingTransport(delegate, [], journal_dir=tmp_path)
+        with pytest.raises(XingheAgentError) as error:
+            request(transport)
+        assert error.value.code == "PROVIDER_RESPONSE_INVALID"
+        assert error.value.provider_request_id == (
+            evidence.get("id") or evidence.get("task_id")
+        )
+        assert error.value.provider_error["code"] == "model_not_found"
+        assert transport.polls == []
+    assert len(delegate.calls) == 1
+
+
+def test_legacy_rate_limit_journal_with_task_id_never_resubmits(tmp_path):
+    delegate = Transport(
+        [
+            (429, {"id": "unverified", "error": {"code": "rate_limit_exceeded"}}),
+        ]
+    )
+    transport = PollingTransport(delegate, [], journal_dir=tmp_path)
+    with pytest.raises(XingheAgentError):
+        request(transport)
+    journal = next(tmp_path.glob("*.json"))
+    record = json.loads(journal.read_text(encoding="utf8"))
+    record.update(state="rejected", retry_after="0")
+    journal.write_text(json.dumps(record), encoding="utf8")
+    resumed = PollingTransport(delegate, [], journal_dir=tmp_path)
+    with pytest.raises(XingheAgentError) as caught:
+        request(resumed)
+    assert caught.value.provider_request_id == "unverified"
+    assert resumed.polls == []
     assert len(delegate.calls) == 1
 
 
