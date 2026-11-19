@@ -46,9 +46,9 @@ from .services import new_id, quota_enabled
 from .skill_runtime import SkillManifestRegistry, SkillRuntimeError
 from .storage import ImageStorage, ValidatedImage
 
-MASKED_REPAIR_WORKFLOW_VERSION = "masked-repair-v3"
+MASKED_REPAIR_WORKFLOW_VERSION = "masked-repair-v4"
 MASKED_REPAIR_PROMPT_VERSION = "masked-repair-master-v2"
-MASKED_REPAIR_REVIEW_VERSION = "masked-repair-visual-review-v1"
+MASKED_REPAIR_REVIEW_VERSION = "masked-repair-delivery-review-v2"
 MASKED_REPAIR_MODEL = "gpt-image-2"
 _RAW_ROLE = "provider_raw"
 _PROVIDER_EDGE_MULTIPLE = 16
@@ -264,7 +264,8 @@ class MaskedRepairProvider:
             payload = _png_bytes(deterministic)
             result = MaskedEditCallResult(
                 outcome=ProviderOutcome.SUCCEEDED,
-                provider_request_id="local-deterministic",
+                provider_request_id="local-deterministic:"
+                + hashlib.sha256(request.idempotency_key.encode()).hexdigest(),
                 raw_usage={"path": "deterministic"},
                 normalized_usage={"reported": True},
                 actual_cost_micros=0,
@@ -377,6 +378,13 @@ class MaskedRepairProvider:
 
         try:
             materialized_candidate = _materialize_candidate(normalized, result.artifact)
+            reviewed_png = _png_bytes(
+                _delivery_pixels(
+                    normalized,
+                    materialized_candidate,
+                    feather_radius=self.feather_radius,
+                )
+            )
         except Exception as error:
             failure = (
                 error
@@ -426,7 +434,10 @@ class MaskedRepairProvider:
         review_request = MaskedVisualReviewRequest(
             source_png=normalized.source_png,
             authority_png=normalized.authority_png,
-            candidate_png=_png_bytes(materialized_candidate),
+            # Review the image we will actually deliver, including real seams.
+            # The original pixels outside the mask are already restored, not
+            # hypothetical future edits for the reviewer to speculate about.
+            candidate_png=reviewed_png,
             instruction=authorized.instruction,
             idempotency_key=f"{request.idempotency_key}:visual-review",
         )
@@ -529,6 +540,7 @@ class MaskedRepairProvider:
                 "visual_review_observable_defect": review.observable_defect,
                 "visual_review_corrective_action": review.corrective_action,
                 "visual_review_version": MASKED_REPAIR_REVIEW_VERSION,
+                "reviewed_delivery_sha256": hashlib.sha256(reviewed_png).hexdigest(),
                 "strict_lock_success": None,
                 "workflow_version": MASKED_REPAIR_WORKFLOW_VERSION,
                 "prompt_version": MASKED_REPAIR_PROMPT_VERSION,
@@ -582,6 +594,11 @@ class MaskedRepairProvider:
                 materialized_candidate,
                 feather_radius=self.feather_radius,
             )
+            if final_artifact.sha256 != hashlib.sha256(reviewed_png).hexdigest():
+                raise MaskedRepairError(
+                    "LOCAL_EDIT_REVIEW_BINDING_CHANGED",
+                    "Reviewed delivery changed before publication.",
+                )
         except Exception as error:
             failure = (
                 error
@@ -1455,12 +1472,12 @@ def _materialize_candidate(
     )
 
 
-def _strict_composite(
+def _delivery_pixels(
     normalized: _NormalizedInputs,
     materialized: Image.Image,
     *,
     feather_radius: int,
-) -> tuple[ProviderArtifact, int]:
+) -> Image.Image:
     generated = materialized.convert("RGBA")
     if generated.size != normalized.source_image.size:
         raise MaskedRepairError(
@@ -1469,16 +1486,42 @@ def _strict_composite(
         )
     inward = normalized.authority
     if feather_radius:
-        blurred = normalized.authority.filter(
-            ImageFilter.GaussianBlur(radius=feather_radius)
+        # A blurred binary mask is still about 50% opaque at its boundary.
+        # Restoring the adjacent locked pixel then creates a visible color seam.
+        # Scale the transition to the source canvas and keep it wholly inside
+        # authority, with zero contribution at the editable boundary itself.
+        bbox = normalized.authority.getbbox()
+        assert bbox is not None
+        span = min(bbox[2] - bbox[0], bbox[3] - bbox[1])
+        radius = min(
+            64,
+            max(
+                feather_radius,
+                round(min(generated.size) * feather_radius / 100),
+                span // 2 if span >= 32 else 1,
+            ),
+            max(1, span // 2 if span >= 32 else span // 6),
         )
-        inward = ImageChops.multiply(blurred, normalized.authority)
+        blurred = normalized.authority.filter(ImageFilter.GaussianBlur(radius=radius))
+        ramp = blurred.point(lambda value: max(0, round((value - 160) * 255 / 95)))
+        interior = normalized.authority.filter(ImageFilter.MinFilter(3))
+        inward = ImageChops.multiply(ramp, interior)
     candidate = Image.composite(generated, normalized.source_image, inward)
     locked = Image.composite(
         candidate,
         normalized.source_image,
         normalized.authority,
     )
+    return locked
+
+
+def _strict_composite(
+    normalized: _NormalizedInputs,
+    materialized: Image.Image,
+    *,
+    feather_radius: int,
+) -> tuple[ProviderArtifact, int]:
+    locked = _delivery_pixels(normalized, materialized, feather_radius=feather_radius)
     outside_changed = _outside_changed_pixels(
         normalized.source_image,
         locked,
@@ -1553,7 +1596,23 @@ _NAMED_COLOURS = {
     "绿色": (34, 150, 80),
     "蓝色": (32, 96, 220),
     "黄色": (245, 196, 32),
+    "淡粉色": (255, 210, 225),
+    "浅粉色": (255, 210, 225),
 }
+
+
+def _wall_recolour_colour(instruction: str) -> tuple[int, int, int] | None:
+    """Accept one unambiguous masked-wall colour change, no extra operations."""
+    colours = "|".join(re.escape(name) for name in _NAMED_COLOURS)
+    pattern = (
+        r"(?:仅|只)?(?:将|把)?(?:蒙版|选区)(?:中|内)(?:的)?"
+        r"(?:左侧|右侧|上方|下方|左边|右边)?(?:墙面|墙壁)"
+        rf"(?:改为|换成|变成)(?P<colour>{colours})"
+        r"(?:(?:[，,。；;\s])|其余像素不变|其余区域不变|"
+        r"不增加文字或物体|不添加文字或物体|保持原有纹理|保持原有光影)*"
+    )
+    match = re.fullmatch(pattern, instruction.strip(), re.I)
+    return _NAMED_COLOURS[match["colour"]] if match else None
 
 
 def _deterministic_repair(
@@ -1568,6 +1627,33 @@ def _deterministic_repair(
     """
 
     lowered = instruction.casefold()
+    wall_colour = _wall_recolour_colour(instruction)
+    if wall_colour is not None:
+        # Preserve measured shading/texture rather than asking a generator to
+        # redraw a flat wall. The same exact-preview visual review still runs.
+        source = source.convert("RGBA")
+        luminance = source.convert("L")
+        reference_luma = round(
+            sum(
+                c * w
+                for c, w in zip(
+                    wall_colour,
+                    (0.299, 0.587, 0.114),
+                    strict=True,
+                )
+            )
+        )
+        channels = [
+            luminance.point(
+                [
+                    max(0, min(255, channel + value - reference_luma))
+                    for value in range(256)
+                ]
+            )
+            for channel in wall_colour
+        ]
+        coloured = Image.merge("RGBA", (*channels, source.getchannel("A")))
+        return Image.composite(coloured, source, authority)
     if not any(token in lowered for token in ("填充", "改为", "换成", "solid", "fill")):
         return None
     match = _HEX_COLOUR_RE.search(lowered)
@@ -1608,6 +1694,13 @@ def _effective_execution_path(
 
     if requested != "auto":
         return requested
+    if _wall_recolour_colour(instruction) is not None:
+        # An exact masked-wall tint needs no generative redraw of its geometry.
+        # Preserve source luminance/texture and propose only the authorized
+        # colour change. The same complete final visual review still rejects
+        # wrong selections, altered objects or an unsatisfactory transition;
+        # never buy a fallback image to hide a rejected local proposal.
+        return "deterministic"
     selected = sum(1 for value in authority.getdata() if value > 0)  # type: ignore[attr-defined,misc]
     total = authority.width * authority.height
     fraction = selected / total if total else 1.0

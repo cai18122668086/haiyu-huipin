@@ -37,6 +37,7 @@ def intake_response_schema(
     force_no_logo: bool = False,
 ) -> dict[str, Any]:
     native_input, identity = _native_schemas()
+    native_input = deepcopy(native_input)
     identity = deepcopy(identity)
     logo_schema = identity["properties"]["brand_logo_source"]
     logo_schema["properties"].update(
@@ -172,6 +173,31 @@ def intake_response_schema(
             result["properties"]["identity"] = identity
             result["properties"]["brand_confirmation_required"] = {"const": False}
     reference = result["properties"]["reference_materials"]["items"]["properties"]
+    if style_asset_ids:
+        # The native schema's example IDs are not asset identifiers. Bind both
+        # fields to the supplied sources instead of asking the model to invent IDs.
+        ids = list(dict.fromkeys(style_asset_ids))
+        reference["id"] = {**reference["id"], "enum": ids}
+        reference["path"] = {
+            **reference["path"],
+            "enum": [f"asset:{value}" for value in ids],
+        }
+        reference_schema = result["properties"]["reference_materials"]
+        reference_schema.update(minItems=len(ids), maxItems=len(ids))
+        reference_schema["items"]["allOf"] = [
+            *reference_schema["items"].get("allOf", []),
+            {
+                "anyOf": [
+                    {
+                        "properties": {
+                            "id": {"const": value},
+                            "path": {"const": f"asset:{value}"},
+                        }
+                    }
+                    for value in ids
+                ]
+            },
+        ]
     for field in (
         "visual_carrier",
         "composition_logic",
@@ -377,6 +403,7 @@ def intake_prompt(
     sources: Sequence[Mapping[str, Any]],
     resolution: Mapping[str, Any] | None = None,
     brand_repair: Mapping[str, Any] | None = None,
+    contract_repair: Mapping[str, Any] | None = None,
 ) -> str:
     return (
         "Perform source intake BEFORE identity lock or any storyboard. "
@@ -448,7 +475,12 @@ def intake_prompt(
         )
         + "Analyze every style asset as reference_materials "
         "using its asset ID, path=asset:<id>, concrete analyzed_units "
-        "and observed_expression_methods. Do not fabricate ANALYZED "
+        "and observed_expression_methods. Every analyzed_units entry's "
+        "observed_expression_method must be copied VERBATIM from one entry "
+        "in that same reference's observed_expression_methods array. "
+        "That parent array must equal the deduplicated methods from the "
+        "individual units EXACTLY; no extra ungrounded method is permitted. "
+        "Do not paraphrase these cross-references. Do not fabricate ANALYZED "
         "references. No full plan/modules/copy is permitted in this "
         "response. Observed facts are atomic: include atomic_key and "
         "atomicity=ONE_INDEPENDENT_PROPOSITION. When the user supplied "
@@ -469,6 +501,7 @@ def intake_prompt(
             "SOURCES": list(sources),
             "HUMAN_RESOLUTION": resolution,
             "AUTOMATIC_BRAND_REANALYSIS": brand_repair,
+            "CONTRACT_CORRECTION": contract_repair,
             "AUTOMATIC_NO_INDEPENDENT_LOGO_BASIS": automatic_brand.fallback_basis(
                 settings
             ),
@@ -573,6 +606,7 @@ def intake_binding(
     resolution: Mapping[str, Any] | None,
     dispatch_route: Mapping[str, Any] | None = None,
     brand_repair: Mapping[str, Any] | None = None,
+    contract_repair: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     source_root = Path(__file__).parent
     value = {
@@ -602,6 +636,8 @@ def intake_binding(
     }
     if brand_repair is not None:
         value["automatic_brand_repair"] = deepcopy(dict(brand_repair))
+    if contract_repair is not None:
+        value["contract_repair"] = deepcopy(dict(contract_repair))
     return {**value, "sha256": canonical_hash(value)}
 
 
@@ -631,6 +667,8 @@ class IntakeStore:
                 "INTAKE_BINDING_CHANGED", "The original intake binding hash changed"
             )
         if not self.path.exists():
+            correction = self.binding.get("contract_repair")
+            predecessor_found = False
             for previous in self.root.glob("*.json"):
                 if previous.name.endswith(".response.json"):
                     continue
@@ -641,11 +679,69 @@ class IntakeStore:
                     old.get(key) == self.binding.get(key)
                     for key in ("settings", "sources", "resolution")
                 ):
+                    # A bounded correction is a new, durably receipted call,
+                    # never permission to repeat an unknown intake. Validate
+                    # all earlier calls and require the exact terminal parent.
+                    if (
+                        isinstance(correction, Mapping)
+                        and all(
+                            old.get(key) == value
+                            for key, value in self.binding.items()
+                            if key not in {"sha256", "contract_repair"}
+                        )
+                        and set(old) - {"contract_repair"}
+                        == set(self.binding) - {"contract_repair"}
+                    ):
+                        attempt = correction.get("attempt")
+                        old_attempt = (old.get("contract_repair") or {}).get(
+                            "attempt", 0
+                        )
+                        if (
+                            type(attempt) is int
+                            and 1 <= attempt <= 2
+                            and (
+                                type(old_attempt) is int and 0 <= old_attempt < attempt
+                            )
+                        ):
+                            prior = IntakeStore(self.root, old, self.job_id).completed()
+                            if prior is None:
+                                raise DetailIntakeError(
+                                    "INTAKE_OUTCOME_UNKNOWN",
+                                    "Missing correction parent",
+                                )
+                            if old_attempt == attempt - 1:
+                                code = correction.get("error_code")
+                                allowed = (
+                                    code
+                                    in {
+                                        "INTAKE_REFERENCE_METHOD_MISMATCH",
+                                        "INTAKE_REFERENCE_COVERAGE_INVALID",
+                                        "INTAKE_SCHEMA_INVALID",
+                                    }
+                                    and prior.get("error_code") is None
+                                )
+                                allowed = allowed or (
+                                    code == "PLANNER_OUTPUT_TRUNCATED"
+                                    and prior.get("error_code") == code
+                                )
+                                if not allowed or canonical_hash(
+                                    prior.get("payload") or {}
+                                ) != canonical_hash(correction.get("previous_payload")):
+                                    raise DetailIntakeError(
+                                        "INTAKE_RECEIPT_INVALID",
+                                        "Correction does not match its terminal parent",
+                                    )
+                                predecessor_found = True
+                            continue
                     raise DetailIntakeError(
                         "INTAKE_BINDING_CHANGED",
                         "An existing intake has a different code, Skill, or model "
                         "binding; reconcile it before dispatch",
                     )
+            if correction is not None and not predecessor_found:
+                raise DetailIntakeError(
+                    "INTAKE_RECEIPT_INVALID", "No verified terminal correction parent"
+                )
             return None
         request = json.loads(self.path.read_text(encoding="utf-8"))
         if self.job_id is not None and request.get("job_id") != self.job_id:

@@ -68,6 +68,110 @@ OPERATION = "product_image"
 SECRET = "sk-test-never-leak-123456789"
 
 
+def _white_lineage_metrics():
+    binding = {
+        "version": "owned-white-product-lineage-v1",
+        "workspace_id": "ws_test", "job_id": "job_test", "item_id": "item_test",
+        "receipt_key": "1" * 64, "recipe_sha256": "2" * 64,
+        "output_sha256": "3" * 64, "background_sha256": "4" * 64,
+    }
+    return {
+        "white_product_lineage": binding,
+        "image_fidelity": {"accepted": True},
+        "rendering": {
+            "kind": "native_background_source_products",
+            "result_sha256": binding["output_sha256"],
+            "background_sha256": binding["background_sha256"],
+        },
+        "provider_prompt": SECRET,
+    }
+
+
+def test_single_image_adapter_retains_complete_accepted_white_lineage(harness):
+    metrics = _white_lineage_metrics()
+    harness.gateway.result = _success_result(raw_usage={"metrics": metrics})
+    result = asyncio.run(harness.provider().execute(_request(_envelope())))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert result.raw_usage["metrics"]["white_product_lineage"] == metrics["white_product_lineage"]
+    assert SECRET not in json.dumps(result.raw_usage)
+
+
+def test_compositor_lineage_survives_adapter_and_durable_output_link(
+    harness, client, monkeypatch,
+):
+    from app import source_pixels
+    from app.execution import AttemptLease, ExecutionCoordinator
+    from app.models import WorkspaceLimitRecord
+    from tests.test_image_fidelity import PixelGateway, PixelGuard, pixel_extraction
+    from tests.test_image_fidelity import request as pixel_request
+
+    monkeypatch.setattr(source_pixels, "extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+    call = replace(
+        pixel_request(gateway), workspace_id="ws_test", job_id="job_test",
+        job_item_id="item_test", attempt_id="attempt_test",
+        idempotency_key="idem-test",
+    )
+    composed = asyncio.run(PixelGuard(gateway, None, None).edit(call))
+    assert composed.outcome == ProviderOutcome.SUCCEEDED
+    binding = composed.raw_usage["metrics"]["white_product_lineage"]
+    assert binding["output_sha256"] == composed.artifact.sha256
+    harness.gateway.result = composed
+    provider = harness.provider()
+    result = asyncio.run(provider.execute(_request(_envelope(width=40, height=40))))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert result.raw_usage["metrics"]["white_product_lineage"] == binding
+    coordinator = ExecutionCoordinator(
+        harness.session_factory, provider, worker_id="test-worker",
+        artifact_storage=client.app.state.storage,
+    )
+    lease = AttemptLease(
+        "ws_test", "job_test", "item_test", "attempt_test", "lease-test",
+        "idem-test", OPERATION, {},
+    )
+    result = asyncio.run(coordinator._persist_provider_artifact(lease, result))
+    assert result.outcome == ProviderOutcome.SUCCEEDED, result.error_message
+    assert result.persisted_artifact is not None
+    with harness.session_factory() as db:
+        db.add(WorkspaceLimitRecord(workspace_id="ws_test"))
+        db.commit()
+    assert coordinator.finish_attempt(lease, result)
+    with harness.session_factory() as db:
+        output = db.query(JobAssetRecord).filter_by(
+            job_id="job_test", direction="output", is_deliverable=True,
+        ).one()
+        assert output.validation["white_product_lineage"] == binding
+        assert output.validation["sha256"] == composed.artifact.sha256
+
+
+@pytest.mark.parametrize("defect", [
+    "version", "hash", "owner", "extra", "missing", "rejected", "output", "background",
+])
+def test_adapter_drops_incomplete_or_unbound_white_lineage(harness, defect):
+    metrics = _white_lineage_metrics()
+    pointer = metrics["white_product_lineage"]
+    if defect == "version":
+        pointer["version"] = "unknown"
+    elif defect == "hash":
+        pointer["recipe_sha256"] = SECRET
+    elif defect == "owner":
+        pointer["workspace_id"] = "x" * 129
+    elif defect == "extra":
+        pointer["prompt"] = SECRET
+    elif defect == "missing":
+        pointer.pop("receipt_key")
+    elif defect == "rejected":
+        metrics["image_fidelity"]["accepted"] = False
+    elif defect == "output":
+        metrics["rendering"]["result_sha256"] = "f" * 64
+    else:
+        metrics["rendering"]["background_sha256"] = "f" * 64
+    harness.gateway.result = _success_result(raw_usage={"metrics": metrics})
+    result = asyncio.run(harness.provider().execute(_request(_envelope())))
+    assert "white_product_lineage" not in result.raw_usage["metrics"]
+    assert SECRET not in json.dumps(result.raw_usage)
+
+
 def test_adapter_retains_gateway_error_for_durable_usage(harness):
     harness.gateway.result = ImageCallResult(
         outcome=ProviderOutcome.FAILED,

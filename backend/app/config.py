@@ -187,10 +187,18 @@ class Settings(BaseSettings):
     image_base_url: str = "https://api.artflow.vip"
     image_model: str = "gpt-image-2.5-flare"
     image_fallback_models: tuple[str, ...] = ()
+    image_fidelity_review_enabled: bool = True
+    image_fidelity_readback_model: str = ""
+    image_fidelity_precision_model: str = ""
+    image_fidelity_matte_model: str = ""
+    image_fidelity_font_path: Path = Path("/app/fonts/NotoSansCJKsc-Regular.otf")
+    image_fidelity_source_pixels_enabled: bool = False
+    image_fidelity_source_model_path: Path = Path("/app/models/u2net.onnx")
     # Exact CDN hosts trusted by the operator for local proxy fake-IP DNS.
     # Public DNS results require no allowlist; private/LAN addresses stay denied.
     image_result_allowed_hosts: tuple[str, ...] = ()
     haiyu_image_size_enabled: bool = False
+    haiyu_native_references_enabled: bool = False
     # Optional second OpenAI-compatible route. The primary analysis/image
     # settings above remain intact; this route is only used when explicitly
     # enabled and can be placed first through provider_rotation_order.

@@ -175,6 +175,48 @@ def current(client, job):
     return client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
 
 
+def test_direct_verified_facts_keep_full_native_coverage_and_compile(client):
+    from app.aurora_detail_runtime import detail_workspace
+    from app.domestic_detail.native_approval import load_native_approval
+
+    source = upload_asset(client, filename="verified-fact-source.png")
+    response = client.post(
+        f"/api/v1/workspaces/{WORKSPACE_ID}/jobs",
+        headers=idem(),
+        json={
+            "type": "detail_pack",
+            "intent": "submit",
+            "input": {
+                "product_groups": [
+                    {"group_key": "primary", "asset_ids": [source["id"]]}
+                ]
+            },
+            "configuration": {
+                "product_name": "Synthetic product",
+                "selling_points": ["合成商品外观"],
+                "verified_facts": ["保持原图案和印刷文字", "仅展示指定款式"],
+                "platform_code": "tmall",
+                "market_region": "domestic",
+                "page_count": 8,
+                "website_contract_version": "WEBSITE_DIRECT_V2",
+                "auto_start_after_plan": False,
+            },
+        },
+    )
+    assert response.status_code == 202, response.text
+    job = response.json()
+    dispatch_pending(client)
+    result = current(client, job)
+    assert result["status"] == "awaiting_confirmation", result
+    plan = result["plan"]["payload"]
+    assert plan["native_approval"]["document_sha256"]
+    contracts = load_native_approval(
+        detail_workspace(job["id"]), plan["native_approval"]
+    )
+    # Both displayed brief and native Harness require ALL supplied user facts.
+    assert set(contracts["compiled_plan"]["required_fact_ids"]) == {"F01", "F02", "F03"}
+
+
 def test_unknown_brand_website_generates_without_brand_confirmation(
     client,
 ):

@@ -154,3 +154,43 @@ def test_cross_runtime_intake_does_not_ignore_missing_original_reply(original_in
     )
     with pytest.raises(DetailIntakeError, match="Reconcile the original intake"):
         IntakeStore(store.root, changed, store.job_id).recover_for_revalidation()
+
+
+@pytest.mark.parametrize("tamper", [None, "payload", "attempt", "unknown", "missing"])
+def test_correction_requires_exact_completed_parent_before_dispatch(
+    original_intake, tamper
+):
+    store, value, transport = original_intake
+    if tamper == "unknown":
+        from app.domestic_detail.planner_dispatch import dispatch_metadata
+
+        value["error_code"] = "INTAKE_OUTCOME_UNKNOWN"
+        dispatch = value["provider_envelope"]["native_planner_dispatch"]
+        value["provider_envelope"]["native_planner_dispatch"] = dispatch_metadata(
+            store.binding["dispatch_route"],
+            attempts=dispatch["transport_attempts"],
+            response_received=dispatch["response_received"],
+            status=dispatch["http_status"],
+            error_code=value["error_code"],
+            reported_model=dispatch.get("reported_model"),
+        )
+    if tamper != "missing":
+        store.finish(value)
+    correction = {
+        "attempt": 3 if tamper == "attempt" else 1,
+        "error_code": "INTAKE_SCHEMA_INVALID",
+        "previous_payload": {"changed": True}
+        if tamper == "payload"
+        else value["payload"],
+    }
+    binding = {**store.binding, "contract_repair": correction}
+    binding["sha256"] = canonical_hash(
+        {k: v for k, v in binding.items() if k != "sha256"}
+    )
+    current = IntakeStore(store.root, binding, store.job_id)
+    if tamper is None:
+        assert current.completed() is None
+    else:
+        with pytest.raises(DetailIntakeError):
+            current.completed()
+    assert len(transport.calls) == 1

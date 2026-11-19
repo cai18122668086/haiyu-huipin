@@ -1,8 +1,8 @@
-"""Haiyu's one-reference, asynchronous image API at the transport boundary.
+"""Haiyu's asynchronous image API at the transport boundary.
 
 Original assets and workflow contracts remain in the existing job/storage layer.
-Only the provider wire format is adapted here; no request is replayed after an
-unknown outcome. See https://www.haiyushuke.com/docs/guides/image.
+Only the provider wire format is adapted here; native references/controls are
+operator-gated, and no request is replayed after an unknown outcome.
 """
 
 from __future__ import annotations
@@ -110,8 +110,112 @@ def download_result(
     return data
 
 
-def pack_references(files: Sequence[tuple[str, str, str, bytes]]) -> tuple[list, str]:
+def pack_references(
+    files: Sequence[tuple[str, str, str, bytes]],
+    *,
+    target_size: str = "",
+) -> tuple[list, str]:
     """Retain every source in a numbered sheet; never silently drop references."""
+    images = [item for item in files if item[0] == "image"]
+    masks = [item for item in files if item[0] == "mask"]
+    if len(images) == 1 and not masks and len(images[0][3]) <= 10 * 1024 * 1024:
+        return images, ""
+    panels: list[Image.Image] = []
+    labels: list[str] = []
+    for _, name, _, data in images:
+        with Image.open(BytesIO(data)) as source_image:
+            panels.append(ImageOps.exif_transpose(source_image).convert("RGB"))
+        labels.append(name)
+    if masks and panels:
+        # API mask alpha=0 denotes the authorized area. Make it visible in an
+        # extra reference panel; the existing server compositor still enforces
+        # the exact delivery mask and rejects failed visual reviews.
+        with Image.open(BytesIO(masks[0][3])) as source_mask:
+            mask = source_mask.convert("RGBA")
+            alpha = ImageOps.invert(mask.getchannel("A"))
+            if alpha.getbbox() is None:
+                alpha = ImageOps.invert(mask.convert("L"))
+            alpha = alpha.resize(panels[0].size)
+        overlay = Image.new("RGB", panels[0].size, "#a977e7")
+        marked = Image.blend(panels[0], overlay, 0.55)
+        panels.append(Image.composite(marked, panels[0], alpha))
+        labels.append("EDIT MAP: purple marks the only editable region")
+    if not panels:
+        raise _error("Image edit requires at least one reference image.")
+    try:
+        target_width, target_height = (int(v) for v in target_size.split("x"))
+        ratio = target_width / target_height
+        if not 1 / 4 <= ratio <= 4:
+            raise ValueError("unsupported reference canvas ratio")
+    except (ValueError, ZeroDivisionError):
+        ratio = 1.0
+    columns = max(1, min(len(panels), round(math.sqrt(len(panels) * ratio))))
+    rows = math.ceil(len(panels) / columns)
+    longest = min(
+        4096,
+        max(1024, max(max(p.size) for p in panels)) * math.ceil(math.sqrt(len(panels))),
+    )
+    while True:
+        width, height = (
+            (longest, round(longest / ratio))
+            if ratio >= 1
+            else (round(longest * ratio), longest)
+        )
+        cell_width, cell_height = width // columns, height // rows
+        sheet = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(sheet)
+        for index, image in enumerate(panels):
+            # Keep native detail when it fits and use lossless pixels. A wider
+            # contact sheet must not accidentally become the output canvas.
+            thumb = ImageOps.contain(
+                image,
+                (
+                    min(image.width, cell_width - 16),
+                    min(image.height, cell_height - 46),
+                ),
+            )
+            x, y = (index % columns) * cell_width, (index // columns) * cell_height
+            draw.text((x + 8, y + 8), f"REFERENCE {index + 1}", fill="black")
+            sheet.paste(
+                thumb,
+                (
+                    x + (cell_width - thumb.width) // 2,
+                    y + 30 + (cell_height - 30 - thumb.height) // 2,
+                ),
+            )
+        output = BytesIO()
+        sheet.save(output, format="PNG", optimize=True)
+        if len(output.getvalue()) <= 10 * 1024 * 1024:
+            break
+        if longest <= 768:
+            raise _error("Reference sheet exceeds the provider input limit.")
+        longest = max(768, longest * 3 // 4)
+    note = (
+        "\nREFERENCE SHEET (input evidence only, never reproduce this grid):\n"
+        "This one attachment contains numbered panels. Every 'image N', "
+        "'reference image N' and IMAGE_BINDINGS entry in the prompt refers "
+        "to panel REFERENCE N inside this sheet, not to a separate attachment. "
+        "Follow those roles: composition_reference controls layout and "
+        "presence/absence; product_original and product_detail supply product "
+        "identity only. Do not insert packaging into a context-only scene.\n"
+    )
+    note += "\n".join(f"Reference {i + 1}: {label}" for i, label in enumerate(labels))
+    note += (
+        "\nProduce one final image, using all relevant evidence. "
+        "Preserve the product identity."
+    )
+    if masks:
+        note += (
+            " Modify only the purple area shown in the EDIT MAP; "
+            "do not render the purple overlay."
+        )
+    return [("image", "references.png", "image/png", output.getvalue())], note
+
+
+def _legacy_pack_references(
+    files: Sequence[tuple[str, str, str, bytes]],
+) -> tuple[list, str]:
+    """Frozen encoder for exact matching of pre-upgrade receipts only."""
     images = [item for item in files if item[0] == "image"]
     masks = [item for item in files if item[0] == "mask"]
     if len(images) == 1 and not masks and len(images[0][3]) <= 10 * 1024 * 1024:
@@ -183,6 +287,7 @@ class HaiyuTransport:
         task_timeout: float = 900,
         result_allowed_hosts: tuple[str, ...] = (),
         send_size: bool = False,
+        native_references: bool = False,
         journal_dir: Path | None = None,
     ) -> None:
         self.delegate = delegate
@@ -190,6 +295,7 @@ class HaiyuTransport:
         self.task_timeout = task_timeout
         self.result_allowed_hosts = result_allowed_hosts
         self.send_size = send_size
+        self.native_references = native_references
         self.journal_dir = journal_dir
 
     def _request_journal(
@@ -391,11 +497,55 @@ class HaiyuTransport:
                 timeout_seconds=timeout_seconds,
             )
         values = dict(fields)
-        wire_files, note = await asyncio.to_thread(pack_references, files)
-        # Haiyu currently verifies the default canvas only; explicitly passing
-        # size returns 503 "No verified channel supports these parameters".
-        # Express the target in the prompt and let existing workflow validators
-        # reject a native artifact that does not meet its delivery contract.
+        if self.native_references:
+            # Operator-enabled only after end-to-end multi-reference validation.
+            # Keep original ordered bytes and native image indices; a contact
+            # sheet is not equivalent to separate product/background sources.
+            wire_files = [part for part in files if part[0] == "image"]
+            masks = [part for part in files if part[0] == "mask"]
+            note = ""
+            if masks and wire_files:
+                if len(masks) != 1:
+                    raise _error("One edit-authority mask is required.")
+                with Image.open(BytesIO(wire_files[0][3])) as source:
+                    original = ImageOps.exif_transpose(source).convert("RGB")
+                with Image.open(BytesIO(masks[0][3])) as source_mask:
+                    mask = source_mask.convert("RGBA")
+                    alpha = ImageOps.invert(mask.getchannel("A"))
+                if alpha.size != original.size:
+                    raise _error("Edit map must match its original source canvas.")
+                tinted = Image.blend(
+                    original, Image.new("RGB", original.size, "#a977e7"), 0.55
+                )
+                guide = Image.composite(tinted, original, alpha)
+                buf = BytesIO()
+                guide.save(buf, "PNG")
+                wire_files.append(
+                    ("image", "edit-authority.png", "image/png", buf.getvalue())
+                )
+                note = (
+                    "\nThe LAST image is an EDIT MAP ONLY: purple marks the "
+                    "authorized editable area on image 1. Never copy the purple "
+                    "overlay. Image 1 is the original canvas and product authority; "
+                    "change only the requested content within that map."
+                )
+            if (
+                not 1 <= len(wire_files) <= 16
+                or sum(len(part[3]) for part in wire_files) > 50 * 1024 * 1024
+                or any(len(part[3]) > 20 * 1024 * 1024 for part in wire_files)
+            ):
+                return 400, {
+                    "error": {
+                        "code": "invalid_parameter",
+                        "message": "Native reference input limit exceeded",
+                    }
+                }
+        else:
+            wire_files, note = await asyncio.to_thread(
+                pack_references, files, target_size=values.get("size", "")
+            )
+        # Native controls remain operator-gated until their upstream bindings
+        # pass acceptance. The workflow always validates the returned pixels.
         if values.get("size"):
             note += f"\nTarget output canvas: {values['size']} pixels."
         from .haiyu_prompt import fit_prompt
@@ -415,7 +565,10 @@ class HaiyuTransport:
                     "message": str(prompt_error),
                 }
             }
-        wire_fields = [(key, value) for key, value in fields if key in {"model", "n"}]
+        allowed_fields = {"model", "n"}
+        if self.native_references:
+            allowed_fields.update({"quality", "input_fidelity"})
+        wire_fields = [(key, value) for key, value in fields if key in allowed_fields]
         if self.send_size and values.get("size"):
             wire_fields.append(("size", values["size"]))
         wire_fields += [
@@ -440,13 +593,65 @@ class HaiyuTransport:
         )
         receipt_warning = None
         try:
-            journal, receipt, fresh = self._request_journal(
-                url,
-                wire_headers["Idempotency-Key"],
-                wire_fields,
-                wire_files,
-                reconcile_only=reconcile_only,
-            )
+            from .xinghe_agent import XingheAgentError
+
+            try:
+                journal, receipt, fresh = self._request_journal(
+                    url,
+                    wire_headers["Idempotency-Key"],
+                    wire_fields,
+                    wire_files,
+                    reconcile_only=reconcile_only,
+                )
+            except XingheAgentError as exc:
+                if "parameters changed" not in str(exc):
+                    raise
+                # Reconstruct the historical encoder and require an EXACT
+                # fingerprint match. This read-only path cannot reserve or send
+                # a new request, nor accept changed source bytes/instructions.
+                matched = False
+                for encoder in (pack_references, _legacy_pack_references):
+                    if encoder is pack_references:
+                        old_files, old_note = await asyncio.to_thread(
+                            encoder, files, target_size=values.get("size", "")
+                        )
+                    else:
+                        old_files, old_note = await asyncio.to_thread(encoder, files)
+                    if values.get("size"):
+                        old_note += f"\nTarget output canvas: {values['size']} pixels."
+                    old_prompt = fit_prompt(values.get("prompt", "") + old_note)
+                    for old_size in (True, False):
+                        old_fields = [
+                            (name, value)
+                            for name, value in fields
+                            if name in {"model", "n"}
+                        ]
+                        if old_size and values.get("size"):
+                            old_fields.append(("size", values["size"]))
+                        old_fields += [
+                            ("prompt", old_prompt),
+                            ("async", "true"),
+                            ("response_format", "url"),
+                        ]
+                        try:
+                            journal, receipt, fresh = self._request_journal(
+                                url,
+                                wire_headers["Idempotency-Key"],
+                                old_fields,
+                                old_files,
+                                reconcile_only=True,
+                            )
+                        except XingheAgentError as mismatch:
+                            if "parameters changed" not in str(mismatch):
+                                raise
+                            continue
+                        wire_fields, wire_files = old_fields, old_files
+                        matched = True
+                        break
+                    if matched:
+                        break
+                if not matched:
+                    raise exc
         except OSError as exc:
             raise _error(
                 "Image request journal is unavailable; reconcile before retry."
@@ -689,6 +894,29 @@ class HaiyuTransport:
             if state in {"failed", "expired", "cancelled"}:
                 error = payload.get("error") or {}
                 code = str(error.get("code", "")) if isinstance(error, dict) else ""
+                message = (
+                    str(error.get("message", "")) if isinstance(error, dict) else ""
+                )
+                if any(
+                    word in message.casefold()
+                    for word in (
+                        "do not create a replacement",
+                        "do not resubmit",
+                        "do not retry",
+                        "requires review",
+                        "结算待处理",
+                        "不得重试",
+                    )
+                ):
+                    from .provider_diagnostics import error_summary
+                    from .xinghe_agent import XingheAgentError
+
+                    raise XingheAgentError(
+                        "PROVIDER_RESPONSE_INVALID",
+                        "原任务未取得图片且上游要求核查，已停止替代生成。",
+                        provider_request_id=task_id,
+                        provider_error=error_summary({"error": error}),
+                    )
                 if state != "failed" or any(
                     word in code.lower()
                     for word in ("unknown", "pending", "settlement", "reconcil")

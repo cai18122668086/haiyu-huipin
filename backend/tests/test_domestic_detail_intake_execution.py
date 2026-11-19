@@ -6,6 +6,58 @@ from tests.test_api import WORKSPACE_ID, dispatch_pending, upload_asset
 from tests.test_domestic_detail_execution import _create_detail_job, _gateway
 
 
+@pytest.mark.parametrize("recover", [True, False])
+def test_intake_explicit_truncation_has_bounded_retry_and_durable_costs(
+    client, monkeypatch, recover
+):
+    from dataclasses import replace
+
+    gateway = _gateway(client)
+    original = gateway.plan
+    intakes = []
+
+    async def truncated(request):
+        result = await original(request)
+        if request.planning_profile == "aurora_domestic_intake":
+            intakes.append(request)
+            result = replace(result, external_request=True, actual_cost_micros=17)
+            if len(intakes) == 1 or not recover:
+                return replace(
+                    result,
+                    payload={},
+                    error_code="PLANNER_OUTPUT_TRUNCATED",
+                    error_message="Known terminal finish_reason=length",
+                )
+        return result
+
+    monkeypatch.setattr(gateway, "plan", truncated)
+    source = upload_asset(client, filename="truncated-intake.png")
+    job = _create_detail_job(
+        client, source["id"], market_region="domestic", auto_start_after_plan=False
+    )
+    dispatch_pending(client)
+    planned = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
+    assert len(intakes) == (2 if recover else 3), (
+        planned.get("error_code"),
+        planned.get("error_message"),
+    )
+    assert len({r.idempotency_key for r in intakes}) == len(intakes)
+    assert all(r.sources == intakes[0].sources for r in intakes)
+    assert intakes[1].intake_contract_repair["attempt"] == 1
+    assert gateway.image_calls == []
+    if recover:
+        assert planned["status"] == "awaiting_confirmation", planned.get("error_code")
+    else:
+        assert planned["status"] == "failed"
+        assert planned["error_code"] == "PLANNER_OUTPUT_TRUNCATED"
+    usage = planned["plan"]["payload"]["usage"]["planner"]
+    intake_usage = [
+        row for row in usage if row.get("phase") == "aurora_domestic_intake"
+    ]
+    assert len(intake_usage) == len(intakes)
+    assert sum(row["actual_cost_micros"] for row in intake_usage) == 17 * len(intakes)
+
+
 @pytest.mark.parametrize("with_style", [False, True])
 def test_model_intake_precedes_actual_native_preflight(client, with_style):
     source = upload_asset(client, filename="intake-product.png")
@@ -228,7 +280,8 @@ def test_material_conflicts_are_batched_and_human_choice_reaches_native_harness(
     client.app.state.storage.validator.max_image_pixels = 6_000_000
     confirmed = client.post(
         f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}/plan/confirm",
-        headers=idem(), json=_aurora_approval_payload(planned),
+        headers=idem(),
+        json=_aurora_approval_payload(planned),
     )
     assert confirmed.status_code == 202, confirmed.text
     dispatch_pending(client)
@@ -248,7 +301,6 @@ def test_material_conflicts_are_batched_and_human_choice_reaches_native_harness(
         raw = (detail_workspace(job["id"]) / f"generation-{page:03d}.json").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == context["signed_request_sha256"]
         assert "review_authority" not in json.loads(raw)
-
 
 
 @pytest.mark.parametrize("cost", [None, 0, 1700])

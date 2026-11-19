@@ -9,7 +9,7 @@ from uuid import uuid4
 import pytest
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-from sqlalchemy import func, select, text
+from sqlalchemy import event, func, select, text
 
 from app import services
 from app.auth import Principal, WorkspaceContext
@@ -83,6 +83,59 @@ def test_parallel_signup_and_trial_binding_grant_only_once(welcome_pg):
 
     with ThreadPoolExecutor(max_workers=6) as pool:
         assert list(pool.map(lambda _: claim(), range(6))).count(True) == 1
+
+
+def test_signup_observes_grant_committed_between_lookups(welcome_pg):
+    factory, engine = welcome_pg
+    observed = []
+
+    def commit_winner(connection, cursor, statement, parameters, context, executemany):
+        if (
+            observed
+            or "WHERE replica_welcome_grants.phone_key =" not in statement
+        ):
+            return
+        observed.append(True)
+        # The first lookup has missed; another transaction now wins the grant.
+        with factory() as winner:
+            assert ensure_grant(winner, winner.get(UserRecord, "usr_test"))
+            winner.commit()
+
+    event.listen(engine, "before_cursor_execute", commit_winner)
+    try:
+        with factory() as session:
+            grant = ensure_grant(session, session.get(UserRecord, "usr_test"))
+            assert grant is not None and grant.user_id == "usr_test"
+            session.commit()
+    finally:
+        event.remove(engine, "before_cursor_execute", commit_winner)
+    assert observed == [True]
+    with factory() as session:
+        assert session.scalar(
+            select(func.count()).select_from(ReplicaWelcomeGrantRecord)
+        ) == 1
+
+
+def test_reassigned_phone_does_not_receive_a_second_grant(welcome_pg):
+    factory, _ = welcome_pg
+    with factory() as session:
+        original = session.get(UserRecord, "usr_test")
+        assert ensure_grant(session, original)
+        phone = original.phone_number
+        original.phone_number = None
+        session.flush()
+        other = UserRecord(
+            id="usr_other", auth_provider="test", auth_subject="other",
+            phone_number=phone, created_at=utc_now(),
+        )
+        session.add(other)
+        ensure_personal_workspace(session, other)
+        session.commit()
+    with factory() as session:
+        assert ensure_grant(session, session.get(UserRecord, "usr_other")) is None
+        assert session.scalar(
+            select(func.count()).select_from(ReplicaWelcomeGrantRecord)
+        ) == 1
 
 
 def test_different_checkout_keys_reuse_single_newcomer_order(welcome_pg, monkeypatch):

@@ -21,6 +21,7 @@ from PIL import Image
 from .config import default_aurora_work_root
 from .models import JobItemRecord, JobRecord
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
+from .provider_diagnostics import retained_metrics
 from .remix_fast_contract import (
     CHECKS,
     GEOMETRY_FIELDS,
@@ -99,6 +100,43 @@ class RemixFastProvider(XingheSingleImageProvider):
                 }
                 self._save_state(request, state)
             if "brief" not in state:
+                planning_sources = sources
+                prepare_identity = getattr(
+                    self.gateway, "prepare_source_identity", None
+                )
+                if callable(prepare_identity):
+                    identity = await prepare_identity(
+                        ImageEditRequest(
+                            workspace_id=request.workspace_id,
+                            job_id=request.job_id,
+                            job_item_id=request.job_item_id,
+                            attempt_id=request.attempt_id,
+                            page_number=envelope.item_ordinal + 1,
+                            group_key=envelope.item_key,
+                            sources=sources,
+                            prompt="",
+                            quality="high",
+                            idempotency_key=request.idempotency_key,
+                            size=size,
+                            output_format="png",
+                            preserve_provider_artifact=True,
+                            single_dispatch=True,
+                        ),
+                        stored_preparation=state.get("source_preparation"),
+                    )
+                    state["calls"].extend(
+                        _call("source_selection", c) for c in identity["calls"]
+                    )
+                    if identity.get("error"):
+                        self._save_state(request, state)
+                        return self._result(
+                            state, error="REMIX_FAST_SOURCE_PREPARATION_FAILED"
+                        )
+                    if identity.get("enabled"):
+                        planning_sources = sources + identity["sources"]
+                        state["source_preparation"] = identity["preparation"]
+                        state["measured_source_geometry"] = identity["geometry"]
+                        self._save_state(request, state)
                 context = {
                     "target_canvas": {"width": width, "height": height},
                     "canvas_authority": (
@@ -107,6 +145,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                         "canvas directive inside generation_brief."
                     ),
                     "user_facts": envelope.prompt_input.get("product_information", []),
+                    "measured_source_geometry": state.get("measured_source_geometry"),
                     "user_instruction": envelope.prompt_input.get(
                         "reference_guidance", ""
                     ),
@@ -128,15 +167,24 @@ class RemixFastProvider(XingheSingleImageProvider):
                         "re; normalized on generated canvas"
                     ),
                     "copy_authority": (
-                        "Only user facts and visible current-product text. Omit "
-                        "unverified claims, prices, source branding and exact so"
-                        "urce copy."
+                        "User facts and physical printing on the product are "
+                        "authoritative. Preserve every original character, logo "
+                        "and illustration on the selected product. Only omit "
+                        "unverified claims/prices and the BENCHMARK's marketing "
+                        "copy/branding; never erase or rewrite PRODUCT printing."
                     ),
                     "image_order": (
                         "Image 1 PRODUCT_IDENTITY_AUTHORITY; Image 2 BENCHMARK_C"
                         "OMPOSITION_ONLY"
                     ),
                     "geometry_contract": (
+                        "Use the measured original source geometry and attached "
+                        "original-selected crops. Only uniform scaling is allowed: "
+                        "full-object width MUST equal its height times the "
+                        "measured width_over_height. Do not author contradictory "
+                        "width/height/occupancy locks or alter physical proportions "
+                        "to fit the benchmark. Actual original printing/features "
+                        "override guesses based on familiar character names. "
                         "Quantified silhouette/proportions/structure/relationshi"
                         "ps. Lock directional details with positive wording and "
                         "explicit exclusions."
@@ -145,7 +193,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                 result = await self.gateway.plan(
                     _planner_request(
                         request,
-                        sources,
+                        planning_sources,
                         size,
                         PREPARE_PROFILE,
                         context,
@@ -172,6 +220,22 @@ class RemixFastProvider(XingheSingleImageProvider):
                 )
                 self._save_state(request, state)
             brief = state["brief"]
+            image_request = ImageEditRequest(
+                workspace_id=request.workspace_id,
+                job_id=request.job_id,
+                job_item_id=request.job_item_id,
+                attempt_id=request.attempt_id,
+                page_number=envelope.item_ordinal + 1,
+                group_key=envelope.item_key,
+                sources=sources,
+                prompt=state["prompt"],
+                quality="high",
+                idempotency_key=request.idempotency_key,
+                size=size,
+                output_format="png",
+                preserve_provider_artifact=True,
+                single_dispatch=True,
+            )
             if state.get("phase") in {"image_started", "image_unknown"}:
                 return self._result(
                     state, error="REMIX_FAST_IMAGE_OUTCOME_UNKNOWN", unknown=True
@@ -185,24 +249,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                         state, error="REMIX_FAST_IMAGE_OUTCOME_UNKNOWN", unknown=True
                     )
                 try:
-                    image_result = await self.gateway.edit(
-                        ImageEditRequest(
-                            workspace_id=request.workspace_id,
-                            job_id=request.job_id,
-                            job_item_id=request.job_item_id,
-                            attempt_id=request.attempt_id,
-                            page_number=envelope.item_ordinal + 1,
-                            group_key=envelope.item_key,
-                            sources=sources,
-                            prompt=state["prompt"],
-                            quality="high",
-                            idempotency_key=request.idempotency_key,
-                            size=size,
-                            output_format="png",
-                            preserve_provider_artifact=True,
-                            single_dispatch=True,
-                        )
-                    )
+                    image_result = await self.gateway.edit(image_request)
                 except Exception:
                     state["phase"] = "image_unknown"
                     state["calls"].append(
@@ -293,6 +340,16 @@ class RemixFastProvider(XingheSingleImageProvider):
                 review_sources = list(sources) + [
                     _source("candidate", payload, artifact.content_type)
                 ]
+                source_evidence = getattr(
+                    self.gateway, "selected_source_evidence", None
+                )
+                paired_evidence = getattr(self.gateway, "paired_source_evidence", None)
+                if callable(paired_evidence):
+                    review_sources.extend(
+                        await paired_evidence(image_request, artifact)
+                    )
+                elif callable(source_evidence):
+                    review_sources.extend(source_evidence(image_request))
                 review_sources.append(
                     _source("watermark_detail", wm.read_bytes(), "image/png")
                 )
@@ -332,13 +389,52 @@ class RemixFastProvider(XingheSingleImageProvider):
                                 "unresolved": ["all unresolved issues"],
                             },
                             "brief": brief,
+                            "original_user_instruction": envelope.prompt_input.get(
+                                "reference_guidance", ""
+                            ),
+                            "identity_authority": (
+                                "The original product photo and original-selected "
+                                "source crops are physical identity authority. "
+                                "The brief is a generated plan, not a replacement "
+                                "for actual source pixels. Never remove visible "
+                                "source features to match a familiar character "
+                                "stereotype. Compare source/candidate details "
+                                "directly; existing source reflections, folds or "
+                                "marks are not newly invented defects. Real "
+                                "changed/missing printing or hardware still fails."
+                            ),
+                            "comparison_pairs": (
+                                "source_candidate_comparison images show LEFT "
+                                "SOURCE: original photographed product RGB with "
+                                "its reviewed source mask on neutral grey; RIGHT "
+                                "CANDIDATE: actual complete destination crop with "
+                                "its background. Both use the SAME uniform scale "
+                                "and full product geometry. Compare printed "
+                                "strokes and fittings directly in each pair. "
+                                "The unmasked full candidate remains authority "
+                                "for background, layout and source leakage. "
+                                "Original physical copyright, logos, curved tag "
+                                "baselines and reflections are protected source "
+                                "features. A brief's exclusion of added branding "
+                                "or benchmark text cannot forbid those originals. "
+                                "Never guess a familiar copyright/name from blur; "
+                                "compare the actual paired printed strokes."
+                            ),
+                            "measured_candidate_dimensions": [
+                                artifact.width,
+                                artifact.height,
+                            ],
                         },
                         (
                             "Inspect real candidate pixels, watermark detail and enl"
                             "arged identity regions against original product and ben"
                             "chmark. Never accept receipts as pixel proof. Return fo"
                             "ur checks with concrete evidence. Missing/uncertain evi"
-                            "dence fails. No redraw.\n"
+                            "dence fails. A check with an unresolved defect must "
+                            "have passed=false; never claim all passed while "
+                            "unresolved is non-empty. Preserve product printing "
+                            "from Image 1; benchmark marketing text is separate. "
+                            "Use server-measured dimensions as facts. No redraw.\n"
                         )
                         + json.dumps(protocol.prompt_payload(), ensure_ascii=False),
                     )
@@ -454,6 +550,11 @@ class RemixFastProvider(XingheSingleImageProvider):
                 "input_images": 2,
                 "output_images": int(artifact is not None),
                 "metrics": {
+                    **{
+                        key: value
+                        for call in calls
+                        for key, value in call.get("metrics", {}).items()
+                    },
                     "skill_id": SKILL_ID,
                     "skill_version": "1.0.0",
                     "quick_check": state.get("review"),
@@ -629,7 +730,9 @@ def _validate_review(value: object) -> dict[str, Any]:
     ):
         raise ValueError("Quick review needs differences and unresolved issues")
     if value["unresolved"] and all(c["passed"] for c in checks):
-        raise ValueError("Unresolved issues cannot be automatically accepted")
+        # Contradictory acceptance is a failed quality verdict, never a pass.
+        # Retain the evidence and classify a known bad candidate as rejected.
+        value = {**value, "checks": [{**c, "passed": False} for c in checks]}
     return value
 
 
@@ -666,4 +769,5 @@ def _call(phase: str, result: Any) -> dict[str, Any]:
         "actual_cost_micros": result.actual_cost_micros,
         "estimated_cost_micros": getattr(result, "estimated_cost_micros", None),
         "network_requests": max(1, int((raw or {}).get("network_requests", 1))),
+        "metrics": retained_metrics(raw),
     }

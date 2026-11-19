@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
@@ -159,8 +159,9 @@ async function assertBrowserAuthContract(origin) {
     executable,
     "A Chromium browser is required for the production authentication regression",
   );
-  const debugPort = await reservePort();
   const profile = await mkdtemp(path.join(os.tmpdir(), "polaris-browser-"));
+  let startupFailure = "";
+  let browserStderr = "";
   const browserProcess = spawn(
     executable,
     [
@@ -171,19 +172,26 @@ async function assertBrowserAuthContract(origin) {
       "--disable-extensions",
       "--disable-features=OptimizationHints,OptimizationGuideModelDownloading",
       "--disable-gpu",
+      "--disable-dev-shm-usage",
       "--no-default-browser-check",
       "--no-first-run",
       "--no-sandbox",
-      `--remote-debugging-port=${debugPort}`,
+      "--remote-debugging-port=0",
       `--user-data-dir=${profile}`,
       "about:blank",
     ],
-    { stdio: "ignore", windowsHide: true },
+    { stdio: ["ignore", "ignore", "pipe"], windowsHide: true },
   );
+  browserProcess.once("error", (error) => { startupFailure = error.message; });
+  browserProcess.stderr.on("data", (chunk) => {
+    browserStderr = (browserStderr + chunk.toString()).slice(-8000);
+  });
 
   let cdp;
   try {
-    const target = await waitForBrowserTarget(debugPort, browserProcess);
+    const target = await waitForBrowserTarget(
+      profile, browserProcess, () => startupFailure, () => browserStderr,
+    );
     cdp = await CdpClient.connect(target.webSocketDebuggerUrl);
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
@@ -248,14 +256,24 @@ function findBrowserExecutable() {
   return candidates.find(existsSync);
 }
 
-async function waitForBrowserTarget(port, browserProcess) {
+async function waitForBrowserTarget(profile, browserProcess, startupFailure, stderr) {
   const deadline = Date.now() + 20_000;
+  let lastError = "No DevTools endpoint announced";
   while (Date.now() < deadline) {
-    if (browserProcess.exitCode !== null) {
-      throw new Error("Chromium exited before its debugging target was ready");
+    if (startupFailure() || browserProcess.exitCode !== null || browserProcess.signalCode) {
+      throw new Error(`Chromium failed before its debugging target was ready: ${startupFailure() || stderr()}`);
     }
     try {
-      const response = await fetch(`http://${host}:${port}/json/list`);
+      // Chromium announces the port it actually bound. Reserving then closing
+      // an unrelated socket left a race with other parallel test processes.
+      const announced = await readFile(path.join(profile, "DevToolsActivePort"), "utf8");
+      const port = Number(announced.split(/\r?\n/, 1)[0]);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        throw new Error("Chromium announced an invalid DevTools port");
+      }
+      const response = await fetch(`http://${host}:${port}/json/list`, {
+        signal: AbortSignal.timeout(1000),
+      });
       if (response.ok) {
         const targets = await response.json();
         const page = targets.find(
@@ -263,12 +281,13 @@ async function waitForBrowserTarget(port, browserProcess) {
         );
         if (page) return page;
       }
-    } catch {
+    } catch (error) {
+      lastError = error.message;
       // The debugging endpoint has not bound yet.
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error("Chromium debugging target did not become ready");
+  throw new Error(`Chromium debugging target did not become ready: ${lastError}\n${stderr()}`);
 }
 
 async function navigate(cdp, url) {

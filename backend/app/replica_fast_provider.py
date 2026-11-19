@@ -21,7 +21,7 @@ from .models import (
 )
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
-from .provider_diagnostics import retained_metrics, safe_text
+from .provider_diagnostics import retained_metrics, retained_request_count, safe_text
 from .replica_exact_contracts import canonical_hash
 from .replica_fast import (
     SKILLS,
@@ -349,6 +349,13 @@ class FastReplicaProvider:
                         document_id, plan, unit, request, skip_rejected_cache=True
                     )
                 else:
+                    reviewer = getattr(self.gateway, "review_existing", None)
+                    if callable(reviewer):
+                        return await reviewer(
+                            request, sources=tuple(sources),
+                            prompt=image_prompt(plan, unit),
+                            size=f"{canvas[0]}x{canvas[1]}", artifact=cached_artifact,
+                        )
                     return ProviderResult(
                         outcome=ProviderOutcome.SUCCEEDED,
                         artifact=cached_artifact,
@@ -389,7 +396,7 @@ class FastReplicaProvider:
             )
             usage = {
                 **(result.normalized_usage or {}),
-                "network_requests": 1,
+                "network_requests": retained_request_count(result.raw_usage),
                 "review_status": "NOT_REVIEWED",
                 "replica_speed": "fast",
                 "planning_rounds": 1,

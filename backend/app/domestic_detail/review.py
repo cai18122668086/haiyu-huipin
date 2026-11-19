@@ -35,13 +35,24 @@ AUDIT_PROFILES = frozenset({"aurora_detail_pair_audit", "aurora_detail_identity_
 
 
 class DetailReviewError(ValueError):
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(
+        self, code: str, message: str, *, diagnostic: dict[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.code = code
+        self.diagnostic = diagnostic
 
 
-def _invalid(path: str, reason: str) -> NoReturn:
-    raise DetailReviewError("AURORA_NATIVE_AUDIT_INVALID", f"{path}: {reason}")
+def _invalid(
+    path: str, reason: str, *, missing_fields: tuple[str, ...] = ()
+) -> NoReturn:
+    raise DetailReviewError(
+        "AURORA_NATIVE_AUDIT_INVALID", f"{path}: {reason}",
+        diagnostic={"issue_count": 1, "issues": [{
+            "contract_path": path, "validator": "pixel_contract",
+            "missing_fields": list(missing_fields),
+        }]},
+    )
 
 
 def _authority_invalid(path: str) -> NoReturn:
@@ -279,7 +290,26 @@ def _pair_observation(
                 ]
             )
         path = "/" + "/".join(parts)
-        _invalid(path, "missing, unknown or incorrectly typed pixel observation")
+        # Log only names from the pinned schema, never response values, OCR,
+        # unknown property names or jsonschema's value-bearing error message.
+        issues = []
+        for issue in errors[:8]:
+            issues.append({
+                "schema_path": "/" + "/".join(
+                    str(part) for part in issue.absolute_schema_path
+                ),
+                "validator": issue.validator,
+                "missing_fields": [
+                    name for name in issue.validator_value
+                    if name not in issue.instance
+                ] if issue.validator == "required"
+                and isinstance(issue.instance, dict) else [],
+            })
+        raise DetailReviewError(
+            "AURORA_NATIVE_AUDIT_INVALID",
+            f"{path}: missing, unknown or incorrectly typed pixel observation",
+            diagnostic={"issue_count": len(errors), "issues": issues},
+        )
     if value["pair_id"] != request.get("pair_id"):
         _invalid("/pair_id", "does not identify the attached candidate request")
     if value["module_ids"] != request.get("module_ids"):
@@ -297,7 +327,10 @@ def _pair_observation(
         if not isinstance(value.get(key), list) or any(
             not isinstance(item, str) for item in value[key]
         ):
-            _invalid("/" + key, "must explicitly report the observed text list")
+            _invalid(
+                "/" + key, "must explicitly report the observed text list",
+                missing_fields=(key,) if key not in value else (),
+            )
     if value["ocr_text"] != binding["ocr_text"]:
         _invalid("/artifact_binding/ocr_text", "disagrees with the raw OCR list")
     if binding["visual_inspection_output"] in (None, "", {}, []):
@@ -377,7 +410,9 @@ def _pair_observation(
     if not isinstance(information, dict):
         if not website:
             _invalid(
-                "/information_audit", "explicit information observations are required"
+                "/information_audit", "explicit information observations are required",
+                missing_fields=("information_audit",)
+                if "information_audit" not in value else (),
             )
         information = {}
     negative = (

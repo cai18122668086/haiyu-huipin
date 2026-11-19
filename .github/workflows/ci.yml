@@ -28,7 +28,9 @@ jobs:
       - run: npm run audit:security
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      # Give headless Chromium its own valid bus instead of inheriting a
+      # desktop-session address that is unavailable on the hosted runner.
+      - run: dbus-run-session -- npm test
 
   backend:
     name: Backend shard ${{ matrix.shard }}

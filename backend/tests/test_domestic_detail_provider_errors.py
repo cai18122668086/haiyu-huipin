@@ -1,6 +1,8 @@
 """Native rejection diagnostics preserve the cause and redact echoed credentials."""
 
 import asyncio
+import json
+from dataclasses import replace
 
 import pytest
 
@@ -112,3 +114,50 @@ def test_provider_intake_root_is_plain_object_and_local_conditions_remain():
     assert original.pop("allOf")
     assert wire == original
     assert '"allOf"' in _planner_prompt(value)
+
+
+def test_deepseek_direct_brief_has_complete_schema_and_output_allowance():
+    from app.xinghe_agent import _planner_response_format
+
+    class Transport:
+        async def post_json(self, **kwargs):
+            self.payload = kwargs["payload"]
+            return 200, {
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": "{}",
+                        },
+                    }
+                ]
+            }
+
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="synthetic",
+        base_url="https://offline.invalid/",
+        planner_model="deepseek-v4.1-flash-1017",
+        image_model="synthetic",
+        transport=transport,
+    )
+    value = replace(
+        request(),
+        authoring_stage="direct",
+        detail_intake={
+            "user_facts": [],
+            "observed_facts": [],
+        },
+    )
+    result = asyncio.run(gateway.plan(value))
+    assert result.error_code is None
+    payload = transport.payload
+    assert payload["max_completion_tokens"] == 32768
+    assert payload["reasoning_effort"] == "low"
+    assert payload["response_format"] == {"type": "json_object"}
+    schema = _planner_response_format(value)["json_schema"]["schema"]
+    assert "response_schema=" + json.dumps(
+        schema,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ) in str(payload["messages"])

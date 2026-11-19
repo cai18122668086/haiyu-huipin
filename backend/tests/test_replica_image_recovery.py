@@ -6,6 +6,7 @@ import json
 from datetime import timedelta
 from io import BytesIO
 from urllib.error import HTTPError
+from uuid import uuid4
 
 import pytest
 from PIL import Image
@@ -213,16 +214,27 @@ def test_supplier_stop_instruction_is_terminal_and_preserves_reason(
     client, monkeypatch, tmp_path, fallback
 ):
     gateway, transport = hybrid_gateway(tmp_path, terminal=True)
-    _, _, _, jid = create_case(
+    _, route, did, jid = create_case(
         client, monkeypatch, tmp_path, fallback=fallback, gateway_override=gateway
     )
     dispatch_pending(client)
     job = client.get(f"/api/v1/workspaces/ws_test/jobs/{jid}").json()
     assert job["status"] == "failed"
-    assert job["error_code"] == "IMAGE_ASYNC_TASK_FAILED"
+    assert job["error_code"] == "PROVIDER_OUTCOME_UNKNOWN"
     assert job["error_details"]["provider_request_id"] == "task-1"
     assert job["error_details"]["provider_error"]["code"] == "agent3_failed"
     assert len(transport.posts) == 1 and len(gateway.image_requests) == 1
+    for url, body in (
+        (f"/api/v1/workspaces/ws_test/jobs/{jid}/retry", {"scope": "failed"}),
+        (route + f"/sessions/{did}/jobs/{jid}/retry", {"request_id": str(uuid4())}),
+    ):
+        response = client.post(
+            url,
+            headers={"Idempotency-Key": str(uuid4())},
+            json=body,
+        )
+        assert response.status_code == 409
+    assert len(transport.posts) == 1
 
 
 def test_query_recovery_exhaustion_is_bounded_and_keeps_original_id(

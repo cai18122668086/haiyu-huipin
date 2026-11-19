@@ -112,6 +112,51 @@ def validate(value, **kwargs):
     )
 
 
+def test_reference_parent_methods_cannot_add_unobserved_units():
+    value = intake()
+    value["reference_materials"][0]["observed_expression_methods"].append(
+        "不存在于任一实际分析单元的额外三栏图文方法"
+    )
+    with pytest.raises(DetailIntakeError) as caught:
+        validate(value)
+    assert caught.value.code == "INTAKE_REFERENCE_METHOD_MISMATCH"
+
+
+@pytest.mark.parametrize(
+    "id_value,path",
+    [
+        ("style_style-1", "asset:style-1"),
+        ("foreign", "asset:foreign"),
+        ("style-1", "asset:style-2"),
+    ],
+)
+def test_reference_schema_binds_exact_source_id_and_path(id_value, path):
+    from jsonschema import Draft202012Validator, ValidationError
+
+    from app.domestic_detail.intake import intake_response_schema
+
+    schema = intake_response_schema(
+        ["product-1"],
+        style_asset_ids=["style-1", "style-2"],
+    )["properties"]["reference_materials"]["items"]
+    value = intake()["reference_materials"][0]
+    value.update(id=id_value, path=path)
+    with pytest.raises(ValidationError):
+        Draft202012Validator(schema).validate(value)
+
+
+def test_reference_schema_is_detached_between_requests():
+    from app.domestic_detail.intake import intake_response_schema
+
+    first = intake_response_schema(["product-1"], style_asset_ids=["style-1"])
+    second = intake_response_schema(["product-2"], style_asset_ids=["style-2"])
+    ref = "reference_materials"
+    first_id = first["properties"][ref]["items"]["properties"]["id"]
+    second_id = second["properties"][ref]["items"]["properties"]["id"]
+    assert first_id["enum"] == ["style-1"]
+    assert second_id["enum"] == ["style-2"]
+
+
 def test_user_facts_keep_verbatim_text_and_original_source_positions():
     rows = user_fact_ledger(SETTINGS)
     assert [row["text"] for row in rows] == SETTINGS["selling_points"] + SETTINGS[

@@ -246,11 +246,15 @@ def build_tengli_task_runner(
 
     from .xinghe_agent import build_tengli_gateway
 
+    gateway = build_tengli_gateway(settings)
+    if getattr(gateway, "image_fidelity_review_enabled", False):
+        from .image_fidelity import FidelityGateway
+        gateway = FidelityGateway(gateway, session_factory, storage)  # type: ignore[assignment]
     return MockTaskRunner(
         session_factory,
         0,
         storage=storage,
-        xinghe_gateway=build_tengli_gateway(settings),
+        xinghe_gateway=gateway,
         domestic_revision_settings=settings,
         xinghe_concurrency=concurrency,
         budget_limit_micros=int(settings.tengli_smoke_budget_usd * 1_000_000),

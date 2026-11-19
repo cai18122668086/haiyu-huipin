@@ -24,6 +24,7 @@ from .errors import ApiError
 from .models import JobAttemptRecord, JobItemRecord, JobPlanRecord, JobRecord
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
+from .provider_diagnostics import retained_metrics, retained_request_count
 from .services import canonical_hash, get_ready_assets
 from .storage import ValidatedImage
 from .xinghe_agent import ImageEditRequest, SourceImage
@@ -464,6 +465,11 @@ class AmazonFastProvider:
                         "review_status": "NOT_REVIEWED",
                     },
                 )
+                if callable(getattr(self.gateway, "review_existing", None)):
+                    output = await self.gateway.review_existing(
+                        request, sources=tuple(sources), prompt=frozen["prompt"],
+                        size=f"{spec.width}x{spec.height}", artifact=artifact,
+                    )
                 break
             if not cached:
                 invoked = True
@@ -488,10 +494,11 @@ class AmazonFastProvider:
                 usage = {
                     **(result.raw_usage or {}),
                     **(result.normalized_usage or {}),
-                    "network_requests": 1,
+                    "network_requests": retained_request_count(result.raw_usage),
                     "review_status": "NOT_REVIEWED",
                     "amazon_speed": "fast",
                     "metrics": {
+                        **retained_metrics(result.raw_usage),
                         "api_latency_seconds": result.api_latency_seconds,
                         "skill_id": SKILL_ID,
                     },

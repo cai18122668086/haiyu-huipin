@@ -325,8 +325,8 @@ def test_async_failure_keeps_original_error_and_blocks_another_purchase(
     job_id = confirm(client, doc)
     assert execute(client, gateway, job_id) == "failed"
     job = client.get(f"/api/v1/workspaces/ws_test/jobs/{job_id}").json()
-    assert job["error_code"] == "IMAGE_ASYNC_TASK_FAILED"
-    assert "生成服务报告原任务异常" in job["error_message"]
+    assert job["error_code"] == "PROVIDER_OUTCOME_UNKNOWN"
+    assert "原生图结果尚未核实" in job["error_message"]
     assert job["error_details"]["provider_request_id"] == "original-task"
     assert job["error_details"]["provider_error"]["code"] == "supplier_request_failed"
     assert job["error_details"]["provider_attempts"][0]["request_id"] == "original-task"

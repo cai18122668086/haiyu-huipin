@@ -709,8 +709,9 @@ def test_amazon_real_provider_reserves_complete_automation_envelope(
             )
         )
     assert reservation is not None
-    assert reservation.details["provider_request_count"] == 51
-    assert reservation.details["estimated_cost_micros"] == 6_030_000
+    # 21 items each reserve five bounded source/readback/review calls.
+    assert reservation.details["provider_request_count"] == 156
+    assert reservation.details["estimated_cost_micros"] == 32_280_000
     assert reservation.details["image_budget_micros"] == 1_890_000
     assert reservation.details["planner_reserve_micros"] == 250_000
 
@@ -756,8 +757,8 @@ def test_real_provider_estimates_are_idempotent_without_daily_limits(
             )
         ).all()
     assert len(reservations) == 2
-    assert reservations[0].details["estimated_cost_micros"] == 430_000
-    assert reservations[0].details["provider_request_count"] == 3
+    assert reservations[0].details["estimated_cost_micros"] == 930_000
+    assert reservations[0].details["provider_request_count"] == 5
 
 
 def test_real_provider_daily_request_estimate_does_not_block_dispatch(
@@ -863,8 +864,8 @@ def test_unknown_planner_outcome_is_charged_conservatively_and_releases_images(
         assert settlement.details["cost_basis"] == "conservative_unknown"
         assert settlement.details["actual_cost_reported_count"] == 0
         assert settlement.details["conservative_unknown_count"] == 1
-        assert release.details["released_cost_micros"] == 180_000
-        assert release.details["released_request_count"] == 2
+        assert release.details["released_cost_micros"] == 680_000
+        assert release.details["released_request_count"] == 4
 
 
 def test_missing_historical_attempt_evidence_does_not_block_new_submissions(

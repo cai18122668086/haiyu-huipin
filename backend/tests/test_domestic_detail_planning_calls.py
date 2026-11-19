@@ -19,6 +19,12 @@ from app.xinghe_agent import (
     _planner_call_results,
     _planner_usage_record,
 )
+from app.xinghe_agent import (
+    _planner_prompt as actual_planner_prompt,
+)
+from app.xinghe_agent import (
+    _planner_response_format as actual_planner_response_format,
+)
 
 PROFILES = [
     "aurora_domestic_detail",
@@ -118,6 +124,190 @@ class Transport:
                 "cost_micros": 37,
             },
         }
+
+
+@pytest.mark.parametrize("failure", [None, "timeout", "server_with_cost"])
+def test_remix_literal_review_uses_configured_vision_and_never_falls_back(failure):
+    import hashlib
+
+    from app.xinghe_agent import SourceImage
+
+    transport = Transport(failure)
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline",
+        base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model",
+        image_model="image-model",
+        transport=transport,
+        failover_enabled=True,
+        failover_api_key="offline-alternate",
+        failover_base_url="https://alternate.offline.invalid/",
+        failover_model="alternate-model",
+    )
+    gateway.image_fidelity_readback_model = "qwen3.5-plus"
+    source = SourceImage(
+        "paired-original",
+        "primary",
+        "source.png",
+        "image/png",
+        hashlib.sha256(b"synthetic-pixels").hexdigest(),
+        b"synthetic-pixels",
+        source_role="product_authority_detail",
+    )
+    req = replace(request("aurora_remix_fast_review"), sources=(source,))
+    result = asyncio.run(gateway.plan(req))
+    assert len(transport.calls) == 1
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == "qwen3.5-plus"
+    assert payload["enable_thinking"] is False
+    assert payload["max_completion_tokens"] == 8192
+    images = [v for v in payload["messages"][1]["content"] if v["type"] == "image_url"]
+    assert len(images) == 1 and images[0]["image_url"]["detail"] == "high"
+    assert result.actual_cost_micros == (37 if failure != "timeout" else None)
+
+
+@pytest.mark.parametrize(
+    "profile,expected",
+    [
+        ("image_fidelity_readback", "kimi-k2.6"),
+        ("aurora_remix_fast_review", "kimi-k2.6"),
+        ("image_fidelity_matte", "kimi-k2.6"),
+        ("image_fidelity_background", "kimi-k2.6"),
+        ("image_fidelity_prepare", "kimi-k2.6"),
+        ("image_fidelity_color_mask", "kimi-k2.6"),
+    ],
+)
+def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expected):
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline",
+        base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model",
+        image_model="image-model",
+        transport=transport,
+    )
+    gateway.image_fidelity_readback_model = "qwen3.5-plus"
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    asyncio.run(gateway.plan(request(profile)))
+    assert len(transport.calls) == 1
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == expected
+    if expected.startswith("kimi"):
+        assert payload["response_format"] == {"type": "json_object"}
+        assert payload["max_completion_tokens"] == (
+            16384 if profile in {
+                "image_fidelity_color_mask", "image_fidelity_readback",
+                "aurora_remix_fast_review",
+            } else 8192
+        )
+    precise = profile in {
+        "image_fidelity_color_mask", "image_fidelity_readback",
+        "aurora_remix_fast_review",
+    }
+    if profile.startswith("image_fidelity_") and not precise:
+        assert payload["thinking"] == {"type": "disabled"}
+        assert payload["max_completion_tokens"] == 8192
+    elif precise:
+        assert "thinking" not in payload
+
+
+@pytest.mark.parametrize(
+    "profile", ["aurora_remix_fast_prepare", "aurora_remix_fast_review"]
+)
+def test_remix_json_object_transport_receives_complete_unchanged_schema(
+    profile, monkeypatch
+):
+    from app.remix_fast_contract import response_format
+
+    monkeypatch.setattr("app.xinghe_agent._planner_prompt", actual_planner_prompt)
+    monkeypatch.setattr(
+        "app.xinghe_agent._planner_response_format", actual_planner_response_format
+    )
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    asyncio.run(gateway.plan(request(profile)))
+    assert len(transport.calls) == 1
+    call = transport.calls[0]
+    payload = call["payload"]
+    expected = response_format(profile)["json_schema"]["schema"]
+    text = payload["messages"][1]["content"][0]["text"]
+    actual = json.loads(text.rsplit("\nresponse_schema=", 1)[1])
+    assert actual == expected
+    if profile == "aurora_remix_fast_review":
+        assert payload["max_completion_tokens"] == 16384
+        assert "thinking" not in payload
+        assert call["headers"]["Idempotency-Key"].endswith(":remix-review-wire-v2")
+        assert actual["properties"]["checks"]["minItems"] == 4
+        assert actual["properties"]["checks"]["maxItems"] == 4
+        assert actual["properties"]["checks"]["items"]["required"] == [
+            "name", "passed", "evidence"
+        ]
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_source_preserving_planning_receives_real_render_capabilities(enabled):
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_source_pixels_enabled = enabled
+    asyncio.run(gateway.plan(request("amazon_visual_suite_fast")))
+    texts = [c["text"] for c in transport.calls[0]["payload"]["messages"][1]["content"]
+             if c["type"] == "text"]
+    assert any("SOURCE PHOTOGRAPH RENDER CAPABILITIES" in t for t in texts) is enabled
+
+
+def test_precise_print_surface_selection_keeps_its_reasoning_budget():
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    asyncio.run(gateway.plan(replace(
+        request("image_fidelity_prepare"),
+        product_information=(json.dumps({"literal_print_geometry_required": True}),),
+    )))
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == "kimi-k2.6"
+    assert payload["max_completion_tokens"] == 16384
+    assert "thinking" not in payload
+
+
+@pytest.mark.parametrize(
+    "profile,expected",
+    [
+        ("image_fidelity_matte", "doubao-seed-2.0-pro"),
+        ("image_fidelity_readback", "kimi-k2.6"),
+        ("image_fidelity_prepare", "kimi-k2.6"),
+        ("image_fidelity_background", "kimi-k2.6"),
+        ("aurora_domestic_detail", "analysis-model"),
+    ],
+)
+def test_explicit_matte_reader_is_scoped_and_keeps_original_contract(profile, expected):
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    gateway.image_fidelity_matte_model = "doubao-seed-2.0-pro"
+    contract = {"strict_schema": {"complete_objects": "boolean"}}
+    asyncio.run(gateway.plan(replace(
+        request(profile), product_information=(json.dumps(contract),),
+    )))
+    assert len(transport.calls) == 1
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == expected
+    assert "strict_schema" in json.dumps(payload["messages"])
+    if profile == "image_fidelity_matte":
+        assert payload["response_format"] == {"type": "json_object"}
+        assert payload["max_completion_tokens"] == 8192
 
 
 @pytest.mark.parametrize("profile", PROFILES)
