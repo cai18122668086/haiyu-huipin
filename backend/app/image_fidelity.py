@@ -965,6 +965,7 @@ class FidelityGateway:
         authorities: tuple[Any, ...],
         preparation: dict[str, Any],
         plans: list[Any],
+        inherited_layers: tuple[Any, ...] | None = None,
     ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
         from . import source_pixels
         from .xinghe_agent import SourceImage
@@ -977,6 +978,10 @@ class FidelityGateway:
                 "model": source_pixels.MODEL_SHA256,
                 "sources": [(s.asset_id, s.sha256) for s in authorities],
                 "preparation": preparation,
+                "inherited_layers": (
+                    [layer.artifact.sha256 for layer in inherited_layers]
+                    if inherited_layers is not None else None
+                ),
             }
         )
         lock = self._locks.setdefault("source-matte:" + key, asyncio.Lock())
@@ -993,18 +998,20 @@ class FidelityGateway:
             # Do not re-review identical failed pixels on another suite item.
             # Only a completed strict audit replaces this fail-closed marker.
             self._mattes[key] = None
-            layers = await asyncio.to_thread(
-                source_pixels.extract_layers,
-                original_sources,
-                preparation,
-                self.wrapped.image_fidelity_source_model_path,
+            layers = (
+                inherited_layers if inherited_layers is not None
+                else await asyncio.to_thread(
+                    source_pixels.extract_layers, original_sources, preparation,
+                    self.wrapped.image_fidelity_source_model_path,
+                )
             )
             mask_audits = []
             for mask_review in range(2):
                 previews = []
                 for index, layer in enumerate(layers):
                     original = next(
-                        s for s in authorities if s.asset_id == layer.source_asset_id
+                        s for s in original_sources
+                        if s.asset_id == layer.source_asset_id
                     )
                     with Image.open(BytesIO(original.payload)) as opened:
                         from PIL import ImageOps
@@ -1173,6 +1180,7 @@ class FidelityGateway:
         recolor_recipe = None
         recolor_artifact = None
         recolor_proof = None
+        inherited_white = None
         try:
             context = self._context(request)
             if any(
@@ -1190,6 +1198,22 @@ class FidelityGateway:
                 # Native Harness image requests are signed and have their own
                 # source/pixel audits. Never modify a signed request downstream.
                 return await self.wrapped.edit(request)
+            if (
+                context["job_type"] == "amazon_visual_suite"
+                and getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False)
+            ):
+                from . import white_product_lineage
+
+                inherited_white = await white_product_lineage.load(
+                    self.sessions, self.storage, request
+                )
+                if inherited_white is not None:
+                    request = replace(
+                        request,
+                        sources=inherited_white.augment_sources(request.sources),
+                    )
+                    original_request = request
+                    original_sources = request.sources
             frozen = self._frozen(request)
             from . import source_pixels, source_recolor, source_typography
 
@@ -1300,12 +1324,17 @@ class FidelityGateway:
                     )
                 edited_sources = original_sources + tuple(crops)
                 if frozen is None and pixel_mode:
+                    inherited_layers = (
+                        inherited_white.selected_layers(preparation)
+                        if inherited_white is not None else None
+                    )
                     layers, mask_audits = await self._approved_source_layers(
                         request,
                         original_sources,
                         authorities,
                         preparation,
                         plans,
+                        inherited_layers,
                     )
                     saved_layers = []
                     for index, layer in enumerate(layers):
@@ -1331,6 +1360,8 @@ class FidelityGateway:
                         "mask_audits": mask_audits,
                         "cells": source_pixels.positions(context, len(layers)),
                     }
+                    if inherited_layers is not None and inherited_white is not None:
+                        pixel_recipe["white_product_parent"] = inherited_white.binding
                 if frozen is None and crops and not pixel_mode:
                     readback_crops = tuple(crops)
                     if source_recolor.enabled(context, original_sources) and getattr(
@@ -1640,9 +1671,8 @@ class FidelityGateway:
                             Draft202012Validator(background_schema).validate(
                                 background_plan.payload
                             )
-                            trial_recipe["background_projection"] = (
-                                background_plan.payload
-                            )
+                            projection = deepcopy(background_plan.payload)
+                            trial_recipe["background_projection"] = projection
                             if planned_layout:
                                 indices, cells = source_pixels.native_placements(
                                     background_plan.payload["placements"],
@@ -1672,9 +1702,23 @@ class FidelityGateway:
                             text_width, text_height = (
                                 int(v) for v in request.size.split("x")
                             )
+                            layout, adjustments = (
+                                source_typography.place_text_without_collisions(
+                                    projection["text_layout"], trial_recipe["cells"],
+                                    layout_panels,
+                                )
+                            )
+                            projection["text_layout"] = layout
+                            if adjustments:
+                                trial_recipe["text_layout_adjustments"] = {
+                                    "original_projection_sha256": canonical_hash(
+                                        background_plan.payload
+                                    ),
+                                    "changes": adjustments,
+                                }
                             trial_recipe["text_recipe"] = source_typography.recipe(
-                                background_plan.payload["marketing_copy"],
-                                background_plan.payload["text_layout"],
+                                projection["marketing_copy"],
+                                layout,
                                 trial_recipe["cells"],
                                 layout_panels,
                                 getattr(
@@ -1688,6 +1732,19 @@ class FidelityGateway:
                             if isinstance(projection_error, ValidationError):
                                 projection_error.fidelity_profile = BACKGROUND
                             if projection_attempt:
+                                logger.warning(
+                                    "background_projection_rejected job_id=%s "
+                                    "item_id=%s attempt=2 diagnostic=%s",
+                                    request.job_id, request.job_item_id,
+                                    contract_diagnostic(projection_error)
+                                    if isinstance(projection_error, ValidationError)
+                                    else projection_error.diagnostic
+                                    if isinstance(
+                                        projection_error,
+                                        source_pixels.DetailResolutionError,
+                                    )
+                                    else {"reason": str(projection_error)[:240]},
+                                )
                                 raise
                             projection_feedback = {
                                 "diagnostic": contract_diagnostic(projection_error)
@@ -1936,12 +1993,26 @@ class FidelityGateway:
                         "typography": text_proof,
                     }
                     composed = texted
+                derived_metrics = {}
+                if (
+                    context["job_type"] == "product_image"
+                    and context["settings"].get("task_type") == "white_background"
+                ):
+                    from .white_product_lineage import pointer
+
+                    derived_metrics["white_product_lineage"] = pointer(
+                        original_request, pixel_recipe, pixel_proof, composed.sha256
+                    )
                 result = replace(
                     result,
                     artifact=composed,
                     raw_usage={
                         **dict(result.raw_usage or {}),
                         "source_pixel_preservation": pixel_proof,
+                        "metrics": {
+                            **dict((result.raw_usage or {}).get("metrics", {})),
+                            **derived_metrics,
+                        },
                     },
                 )
             except Exception as exc:

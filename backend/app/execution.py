@@ -2725,6 +2725,15 @@ class ExecutionCoordinator:
                     "actual_width": stored.width,
                     "actual_height": stored.height,
                     "requested_size": item.configuration.get("size"),
+                    **(
+                        {
+                            "white_product_lineage": result_metrics[
+                                "white_product_lineage"
+                            ]
+                        }
+                        if isinstance(result_metrics.get("white_product_lineage"), dict)
+                        else {}
+                    ),
                     "canonical_width": (
                         canonical_dimensions[0]
                         if canonical_dimensions is not None

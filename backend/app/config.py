@@ -190,6 +190,7 @@ class Settings(BaseSettings):
     image_fidelity_review_enabled: bool = True
     image_fidelity_readback_model: str = ""
     image_fidelity_precision_model: str = ""
+    image_fidelity_matte_model: str = ""
     image_fidelity_font_path: Path = Path("/app/fonts/NotoSansCJKsc-Regular.otf")
     image_fidelity_source_pixels_enabled: bool = False
     image_fidelity_source_model_path: Path = Path("/app/models/u2net.onnx")

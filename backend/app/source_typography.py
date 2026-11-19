@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .source_pixels import artifact
 
-VERSION = "approved-native-copy-v1"
+VERSION = "approved-native-copy-v2-punctuation-safe"
 FONT_SHA256 = "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
 FONT_URL = (
     "https://raw.githubusercontent.com/notofonts/noto-cjk/"
@@ -53,6 +54,76 @@ def _overlap(one: list[float], two: list[float]) -> bool:
     return min(one[2], two[2]) > max(one[0], two[0]) and (
         min(one[3], two[3]) > max(one[1], two[1])
     )
+
+
+def place_text_without_collisions(
+    layout: list[dict[str, Any]], cells: list[list[float]], panels: int
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Translate a text block locally; preserve size, order, panel and styling.
+
+    This is bounded renderer layout, not a relaxation of collision or type
+    checks. The caller still validates every resulting block and its copy.
+    """
+    from jsonschema import Draft202012Validator
+
+    Draft202012Validator(layout_schema(panels)).validate(layout)
+    original, placed = deepcopy(layout), deepcopy(layout)
+
+    def box(row: dict[str, Any]) -> list[float]:
+        x0, y0, x1, y1 = row["panel_box"]
+        return [x0, (row["panel"] + y0) / panels, x1, (row["panel"] + y1) / panels]
+
+    original_boxes = [box(row) for row in original]
+    changes = []
+    for index in sorted(range(len(placed)), key=lambda i: original_boxes[i][1]):
+        row = placed[index]
+        others = [box(other) for i, other in enumerate(placed) if i != index]
+        obstacles = cells + others
+        if not any(_overlap(box(row), other) for other in obstacles):
+            continue
+        x0, y0, x1, y1 = row["panel_box"]
+        height = y1 - y0
+        candidates = {y0}
+        for obstacle in obstacles:
+            candidates.add(obstacle[1] * panels - row["panel"] - height)
+            candidates.add(obstacle[3] * panels - row["panel"])
+        chosen = None
+        for top in sorted(candidates, key=lambda y: (abs(y - y0), y)):
+            top, bottom = round(top, 12), round(top + height, 12)
+            if not (0.04 <= top < bottom <= 0.96) or abs(top - y0) > 0.08:
+                continue
+            trial = {**row, "panel_box": [x0, top, x1, bottom]}
+            actual = box(trial)
+            if any(_overlap(actual, obstacle) for obstacle in obstacles):
+                continue
+            ordered = True
+            for other_index, other in enumerate(placed):
+                if other_index == index or other["panel"] != row["panel"]:
+                    continue
+                old = original_boxes[other_index]
+                if min(x1, old[2]) <= max(x0, old[0]):
+                    continue
+                before = sum(original_boxes[index][1::2]) - sum(old[1::2])
+                after = sum(actual[1::2]) - sum(box(other)[1::2])
+                if before * after <= 0:
+                    ordered = False
+                    break
+            if ordered:
+                chosen = trial
+                break
+        if chosen is None:
+            return original, []
+        placed[index] = chosen
+        changes.append(
+            {
+                "layout_index": index,
+                "copy_index": row["copy_index"],
+                "panel": row["panel"],
+                "before": row["panel_box"],
+                "after": chosen["panel_box"],
+            }
+        )
+    return placed, changes
 
 
 def recipe(
@@ -112,9 +183,21 @@ def _lines(text: str, font: ImageFont.FreeTypeFont, width: int) -> list[str]:
     for paragraph in text.split("\n"):
         line = ""
         # Preserve English words; Chinese/Japanese wrap at glyph boundaries.
-        for token in re.findall(
-            r"[A-Za-z0-9]+(?:['’\-][A-Za-z0-9]+)*|\s+|.", paragraph
-        ):
+        tokens = re.findall(r"[A-Za-z0-9]+(?:['’\-][A-Za-z0-9]+)*|\s+|.", paragraph)
+        grouped: list[str] = []
+        for token in tokens:
+            # A period on a line of its own looks like an added bullet. Keep
+            # closing punctuation with its actual word/glyph; never delete it
+            # or permit extra lines/smaller-than-approved type to make it fit.
+            if (
+                token in ".,!?;:%。、」』】〕〉》）］｝，！？；：…’”\"')]}"
+                and grouped
+                and not grouped[-1].isspace()
+            ):
+                grouped[-1] += token
+            else:
+                grouped.append(token)
+        for token in grouped:
             proposed = line + token
             if font.getlength(proposed) > width and line.strip():
                 lines.append(line.rstrip())

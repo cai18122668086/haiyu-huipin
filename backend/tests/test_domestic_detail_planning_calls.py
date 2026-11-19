@@ -232,6 +232,37 @@ def test_precise_print_surface_selection_keeps_its_reasoning_budget():
     assert "thinking" not in payload
 
 
+@pytest.mark.parametrize(
+    "profile,expected",
+    [
+        ("image_fidelity_matte", "doubao-seed-2.0-pro"),
+        ("image_fidelity_readback", "kimi-k2.6"),
+        ("image_fidelity_prepare", "kimi-k2.6"),
+        ("image_fidelity_background", "kimi-k2.6"),
+        ("aurora_domestic_detail", "analysis-model"),
+    ],
+)
+def test_explicit_matte_reader_is_scoped_and_keeps_original_contract(profile, expected):
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="analysis-model", image_model="image-model", transport=transport,
+    )
+    gateway.image_fidelity_precision_model = "kimi-k2.6"
+    gateway.image_fidelity_matte_model = "doubao-seed-2.0-pro"
+    contract = {"strict_schema": {"complete_objects": "boolean"}}
+    asyncio.run(gateway.plan(replace(
+        request(profile), product_information=(json.dumps(contract),),
+    )))
+    assert len(transport.calls) == 1
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == expected
+    assert "strict_schema" in json.dumps(payload["messages"])
+    if profile == "image_fidelity_matte":
+        assert payload["response_format"] == {"type": "json_object"}
+        assert payload["max_completion_tokens"] == 8192
+
+
 @pytest.mark.parametrize("profile", PROFILES)
 def test_native_replay_uses_one_original_call_and_charges_once(
     client, tmp_path, profile

@@ -2300,6 +2300,7 @@ class TengliOpenAICompatibleGateway:
         self.image_fidelity_review_enabled = False
         self.image_fidelity_readback_model = ""
         self.image_fidelity_precision_model = ""
+        self.image_fidelity_matte_model = ""
         self.image_fidelity_font_path = Path("/app/fonts/NotoSansCJKsc-Regular.otf")
         self.image_fidelity_source_pixels_enabled = False
         self.image_fidelity_source_model_path = Path("/app/models/u2net.onnx")
@@ -2654,6 +2655,11 @@ class TengliOpenAICompatibleGateway:
                         if request.planning_profile == "image_fidelity_prepare"
                         else self.image_fidelity_readback_model or route.planner_model
                     )
+                    if (
+                        request.planning_profile == "image_fidelity_matte"
+                        and self.image_fidelity_matte_model
+                    ):
+                        route_payload["model"] = self.image_fidelity_matte_model
                     if route_payload["model"].casefold().startswith("qwen"):
                         # Literal OCR uses its complete schema in the prompt.
                         # Qwen's compatible JSON transport requires json_object;
@@ -2688,6 +2694,11 @@ class TengliOpenAICompatibleGateway:
                             "image_fidelity_matte", "image_fidelity_background",
                         } and not precise_print_geometry:
                             route_payload["thinking"] = {"type": "disabled"}
+                    elif route_payload["model"].casefold().startswith("doubao"):
+                        route_payload.update({
+                            "response_format": {"type": "json_object"},
+                            "max_completion_tokens": 8192,
+                        })
                     elif request.planning_profile in {
                         "image_fidelity_prepare", "image_fidelity_color_mask"
                     }:
@@ -3731,6 +3742,7 @@ def build_tengli_gateway(settings: Settings) -> TengliOpenAICompatibleGateway:
     gateway.image_fidelity_review_enabled = settings.image_fidelity_review_enabled
     gateway.image_fidelity_readback_model = settings.image_fidelity_readback_model
     gateway.image_fidelity_precision_model = settings.image_fidelity_precision_model
+    gateway.image_fidelity_matte_model = settings.image_fidelity_matte_model
     gateway.image_fidelity_font_path = settings.image_fidelity_font_path
     gateway.image_fidelity_source_pixels_enabled = settings.image_fidelity_source_pixels_enabled
     gateway.image_fidelity_source_model_path = settings.image_fidelity_source_model_path

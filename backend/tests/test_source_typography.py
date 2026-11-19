@@ -1,4 +1,5 @@
 import hashlib
+import math
 from io import BytesIO
 
 import pytest
@@ -89,6 +90,17 @@ def test_empty_approved_copy_needs_no_font_or_text_blocks(tmp_path):
     assert result["blocks"] == []
 
 
+@pytest.mark.parametrize("copy", ["Spot your choice faster.", "Select the original!"])
+def test_wrapping_cannot_turn_approved_terminal_punctuation_into_a_bullet(copy):
+    raster = ImageFont.load_default(size=24)
+    width = math.ceil(raster.getlength(copy[:-1]))
+    lines = source_typography._lines(copy, raster, width)
+    assert len(lines) >= 2
+    assert all(line.strip() not in {".", "!"} for line in lines)
+    assert lines[-1].endswith(copy.split()[-1])
+    assert "".join("".join(lines).split()) == "".join(copy.split())
+
+
 def test_pair_layout_feedback_identifies_collision_without_copy_values(font):
     heading = {**block(), "panel": 1, "panel_box": [0.07, 0.16, 0.61, 0.24]}
     cells = [[0.07, 0.145, 0.31, 0.42], [0.53, 0.61, 0.92, 0.98]]
@@ -101,3 +113,41 @@ def test_pair_layout_feedback_identifies_collision_without_copy_values(font):
     assert "placements indices=[1]" in diagnostic
     assert "PRIVATE APPROVED COPY" not in diagnostic
     assert len(diagnostic) <= 240
+
+
+@pytest.mark.parametrize("panels,panel", [(1, 0), (2, 1)])
+def test_small_collision_translation_preserves_copy_order_and_exact_type_boxes(
+    font, panels, panel
+):
+    from copy import deepcopy
+
+    layout = [
+        {**block(0), "panel": panel, "panel_box": [0.06, 0.06, 0.43, 0.2]},
+        {**block(1), "panel": panel, "panel_box": [0.06, 0.22, 0.43, 0.29]},
+    ]
+    cells = [[0.39, (panel + 0.27) / panels, 0.61, (panel + 0.95) / panels]]
+    before = deepcopy(layout)
+    corrected, changes = source_typography.place_text_without_collisions(
+        layout, cells, panels
+    )
+    assert layout == before
+    assert corrected[0] == before[0]
+    assert corrected[1]["panel_box"] == [0.06, 0.2, 0.43, 0.27]
+    assert len(changes) == 1 and changes[0]["copy_index"] == 1
+    for key, value in before[1].items():
+        if key != "panel_box":
+            assert corrected[1][key] == value
+    source_typography.recipe(
+        ["TITLE", "BODY"], corrected, cells, panels, font, (1440, 3840)
+    )
+
+
+def test_unrepairable_layout_remains_rejected_without_shrinking_or_reordering(font):
+    layout = [block()]
+    cells = [[0.04, 0.04, 0.96, 0.96]]
+    corrected, changes = source_typography.place_text_without_collisions(
+        layout, cells, 1
+    )
+    assert corrected == layout and changes == []
+    with pytest.raises(ValueError, match="overlaps"):
+        source_typography.recipe(["TITLE"], corrected, cells, 1, font, (400, 400))

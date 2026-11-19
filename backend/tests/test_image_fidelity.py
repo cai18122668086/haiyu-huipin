@@ -871,7 +871,7 @@ def test_local_silver_render_preserves_original_and_never_submits_an_image(
 
 @pytest.mark.parametrize("recover", [True, False])
 def test_invalid_text_projection_retries_once_before_buying_any_background(
-    monkeypatch, recover
+    monkeypatch, recover, caplog
 ):
     monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
 
@@ -906,6 +906,10 @@ def test_invalid_text_projection_retries_once_before_buying_any_background(
     else:
         assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
         assert gateway.edits == []
+        rejected = [r for r in caplog.records
+                    if "background_projection_rejected" in r.getMessage()]
+        assert len(rejected) == 1 and "attempt=2" in rejected[0].getMessage()
+        assert "APPROVED COPY" not in rejected[0].getMessage()
 
 
 def test_source_product_rgb_is_composited_after_one_native_background(monkeypatch):
