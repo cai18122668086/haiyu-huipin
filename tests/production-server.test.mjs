@@ -172,6 +172,7 @@ async function assertBrowserAuthContract(origin) {
       "--disable-extensions",
       "--disable-features=OptimizationHints,OptimizationGuideModelDownloading",
       "--disable-gpu",
+      "--disable-dev-shm-usage",
       "--no-default-browser-check",
       "--no-first-run",
       "--no-sandbox",
