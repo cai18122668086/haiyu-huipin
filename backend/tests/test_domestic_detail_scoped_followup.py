@@ -82,9 +82,6 @@ def test_scoped_review_followup_is_bounded_truthful_and_reused(
     native = review_context(context_root)
     authority = approved_review_authority(compiled_review_session())
     native.update(
-        token=json.loads(
-            (context_root / "unit-native-token.json").read_bytes()
-        )["token"],
         review_authority=authority,
         product_name=authority["product_name"],
         product_information=authority["product_information"],

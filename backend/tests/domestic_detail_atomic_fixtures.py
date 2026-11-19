@@ -55,6 +55,7 @@ def review_context(root):
     )["module_contracts"]
     return {
         "pair_id": "P01",
+        "token": lineage["token"],
         "module_ids": ["M01", "M02"],
         "approved_module_contracts": contracts,
         "pixel_lineage": lineage,
