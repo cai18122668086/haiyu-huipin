@@ -174,6 +174,35 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
                 and all(isinstance(v, str) and len(v) <= 80 for v in value)
             )
         }
+    # This server-created receipt links a delivered white image to its owned
+    # original alpha layers. Dropping it here forces downstream re-extraction
+    # from flattened white pixels. Retain only the complete bounded binding,
+    # consistent with the accepted compositor receipt; never arbitrary metadata.
+    lineage = metrics.get("white_product_lineage")
+    hashes = {"receipt_key", "recipe_sha256", "output_sha256", "background_sha256"}
+    owners = {"workspace_id", "job_id", "item_id"}
+    if (
+        isinstance(lineage, Mapping)
+        and set(lineage) == hashes | owners | {"version"}
+        and lineage.get("version") == "owned-white-product-lineage-v1"
+        and all(
+            isinstance(lineage[key], str)
+            and re.fullmatch(r"[0-9a-f]{64}", lineage[key])
+            for key in hashes
+        )
+        and all(
+            isinstance(lineage[key], str)
+            and re.fullmatch(r"[a-zA-Z0-9_-]{1,128}", lineage[key])
+            for key in owners
+        )
+        and result.get("image_fidelity", {}).get("accepted") is True
+        and result.get("rendering", {}).get("kind")
+        == "native_background_source_products"
+        and result["rendering"].get("result_sha256") == lineage["output_sha256"]
+        and result["rendering"].get("background_sha256")
+        == lineage["background_sha256"]
+    ):
+        result["white_product_lineage"] = dict(lineage)
     recovery = metrics.get("image_recovery")
     if isinstance(recovery, Mapping):
         result["image_recovery"] = {
