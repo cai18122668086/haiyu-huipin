@@ -1695,9 +1695,12 @@ def _effective_execution_path(
     if requested != "auto":
         return requested
     if _wall_recolour_colour(instruction) is not None:
-        # A colour token does not prove every selected pixel is wall. Preserve
-        # object boundaries/lighting through the contextual edit and review.
-        return "full"
+        # An exact masked-wall tint needs no generative redraw of its geometry.
+        # Preserve source luminance/texture and propose only the authorized
+        # colour change. The same complete final visual review still rejects
+        # wrong selections, altered objects or an unsatisfactory transition;
+        # never buy a fallback image to hide a rejected local proposal.
+        return "deterministic"
     selected = sum(1 for value in authority.getdata() if value > 0)  # type: ignore[attr-defined,misc]
     total = authority.width * authority.height
     fraction = selected / total if total else 1.0

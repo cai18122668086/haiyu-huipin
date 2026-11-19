@@ -144,7 +144,7 @@ def test_wall_recolour_is_texture_preserving_and_never_expands_authority():
             instruction=instruction,
             authority=authority,
         )
-        == "full"
+        == "deterministic"
     )
     candidate = masked_repair_module._deterministic_repair(
         source, authority, instruction
@@ -653,6 +653,49 @@ def test_visual_review_rejection_retains_raw_without_delivery_or_regeneration(
 
     assert len(gateway.masked_calls) == 1
     assert len(gateway.review_calls) == 1
+
+
+@pytest.mark.parametrize("accepted", [True, False])
+def test_auto_explicit_wall_tint_preserves_review_and_never_orders_an_image(
+    client, accepted,
+):
+    gateway = OfflineMaskedGateway(review_success=accepted)
+    _install_runner(client, gateway)
+    source, mask, source_bytes = _valid_inputs(client)
+    status, job = _create_job(
+        client, source["id"], mask["id"],
+        instruction="仅将蒙版中的左侧墙面改为淡粉色，其余像素不变，不增加文字或物体。",
+    )
+    assert status == 202 and _dispatch(client) == 1
+    body = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
+    assert len(gateway.masked_calls) == 0 and len(gateway.review_calls) == 1
+    with client.app.state.session_factory() as db:
+        relations = db.scalars(select(JobAssetRecord).where(
+            JobAssetRecord.job_id == job["id"]
+        )).all()
+        raw = next(row for row in relations if row.role == "provider_raw")
+        assert raw.validation["raw_visual_success"] is accepted
+        delivered = [row for row in relations if row.is_deliverable]
+        if not accepted:
+            assert body["status"] == "failed" and not delivered
+            assert body["items"][0]["error_code"] == "LOCAL_EDIT_VISUAL_REVIEW_REJECTED"
+            return
+        assert body["status"] == "completed" and len(delivered) == 1
+        asset = db.get(AssetRecord, delivered[0].asset_id)
+        payload = asyncio.run(client.app.state.storage.read_bytes(asset.object_key))
+    assert payload == gateway.review_calls[0].candidate_png
+    with (
+        Image.open(BytesIO(payload)) as result,
+        Image.open(BytesIO(source_bytes)) as original,
+    ):
+        result_pixels = result.convert("RGBA")
+        original_pixels = original.convert("RGBA")
+        for y in range(8):
+            for x in range(8):
+                if not (2 <= x < 6 and 2 <= y < 6):
+                    assert result_pixels.getpixel((x, y)) == (
+                        original_pixels.getpixel((x, y))
+                    )
 
 
 def test_non_multiple_source_and_relay_drift_map_back_without_authority_leak(

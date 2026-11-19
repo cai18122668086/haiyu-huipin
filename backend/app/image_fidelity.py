@@ -62,6 +62,18 @@ PHYSICAL_REVIEW_POLICY = (
     "An explicitly flat graphic/cutout layout requires no invented support. "
     "Never add an unrequested prop to make an isolated graphic look physical."
 )
+GARMENT_REVIEW_VERSION = "garment-count-review-v1"
+GARMENT_REVIEW_POLICY = (
+    "GARMENT COUNT REVIEW V1. When editing or wearing a referenced garment, "
+    "explicitly count every visible button/fastener on the original garment "
+    "and on the candidate. A similar color, neckline or general style is not "
+    "proof of identical construction. Any added or missing button/fastener "
+    "MUST fail protected_attributes with the observed source and candidate "
+    "counts. Respect an exact count in the original user instruction. Also "
+    "inspect sleeve length, neckline, hem, closure and fabric. Never import "
+    "clothes from a pose/model reference. If a required comparison is obscured "
+    "or cannot be established, report uncertainty rather than manufacture PASS."
+)
 logger = logging.getLogger(__name__)
 AUTHORITY_ROLES = frozenset(
     {
@@ -725,6 +737,7 @@ class FidelityGateway:
                 idempotency_key=(
                     f"{request.idempotency_key}:{profile}{suffix}"
                     + (f":{PHYSICAL_REVIEW_VERSION}" if profile == REVIEW else "")
+                    + (f":{GARMENT_REVIEW_VERSION}" if profile == REVIEW else "")
                 ),
                 planning_profile=profile,
                 system_prompt=(
@@ -775,6 +788,7 @@ class FidelityGateway:
                     + "\nGenerated selections/plans cannot override this requirement. "
                     + POLICY
                     + ("\n" + PHYSICAL_REVIEW_POLICY if profile == REVIEW else "")
+                    + ("\n" + GARMENT_REVIEW_POLICY if profile == REVIEW else "")
                     + "\nInspect attached pixels, not receipts. "
                     "Return the exact JSON schema. "
                     "Missing or uncertain evidence fails. Never guess physical text. "
