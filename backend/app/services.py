@@ -338,7 +338,46 @@ def _raise_amazon_review_retry_not_applicable(blocker_ids: set[str]) -> None:
     )
 
 
-def allowed_actions(job: JobRecord) -> list[str]:
+_UNRECONCILED_CREATIVE_ERRORS = frozenset({
+    "PROVIDER_OUTCOME_UNKNOWN",
+    "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED",
+    "IMAGE_TASK_QUERY_UNCONFIRMED",
+    "IMAGE_ASYNC_TASK_FAILED",
+})
+
+
+def _creative_reissue_blocked(
+    job: JobRecord, items: Sequence[JobItemRecord]
+) -> bool:
+    return job.type == JobType.CREATIVE_IMAGE.value and (
+        job.error_code in _UNRECONCILED_CREATIVE_ERRORS
+        or any(item.error_code in _UNRECONCILED_CREATIVE_ERRORS for item in items)
+    )
+
+
+def require_creative_reconciled(session: Session, job: JobRecord) -> None:
+    if job.type != JobType.CREATIVE_IMAGE.value:
+        return
+    blocked = _creative_reissue_blocked(job, ()) or session.scalar(
+        select(JobItemRecord.id)
+        .where(
+            JobItemRecord.job_id == job.id,
+            JobItemRecord.workspace_id == job.workspace_id,
+            JobItemRecord.error_code.in_(_UNRECONCILED_CREATIVE_ERRORS),
+        )
+        .limit(1)
+    ) is not None
+    if blocked:
+        raise ApiError(
+            status.HTTP_409_CONFLICT,
+            "CREATIVE_IMAGE_RECONCILIATION_REQUIRED",
+            "请把本站任务编号发给客服核查原任务，避免重复生成。",
+        )
+
+
+def allowed_actions(
+    job: JobRecord, items: Sequence[JobItemRecord] = ()
+) -> list[str]:
     if job.type == "product_replica":
         return []
     current = JobStatus(job.status)
@@ -377,6 +416,8 @@ def allowed_actions(job: JobRecord) -> list[str]:
 
             if not eligible(job) and not automatic_amazon(job):
                 actions.extend(["edit_plan", "confirm_plan"])
+    if _creative_reissue_blocked(job, items):
+        return actions
     if current in {
         JobStatus.PARTIAL,
         JobStatus.FAILED,
@@ -425,6 +466,7 @@ def _is_audit_only_generated_set(
 def job_list_response(
     job: JobRecord,
     *,
+    items: Sequence[JobItemRecord] = (),
     output_asset_count: int = 0,
     primary_output_asset_id: str | None = None,
     generated_set_complete: bool = False,
@@ -448,7 +490,9 @@ def job_list_response(
         failed_item_count=0 if generated_set_complete else job.failed_item_count,
         output_asset_count=output_asset_count,
         primary_output_asset_id=primary_output_asset_id,
-        allowed_actions=["clone"] if generated_set_complete else allowed_actions(job),
+        allowed_actions=(
+            ["clone"] if generated_set_complete else allowed_actions(job, items)
+        ),
         cost=cost_summary(job),
         created_at=job.created_at,
         updated_at=job.updated_at,
@@ -492,6 +536,7 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
     )
     base = job_list_response(
         job,
+        items=items,
         output_asset_count=len(deliverable_outputs),
         primary_output_asset_id=(
             deliverable_outputs[0].asset_id if deliverable_outputs else None

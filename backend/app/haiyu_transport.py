@@ -39,6 +39,42 @@ from .haiyu_recovery import (
 )
 
 MAX_IMAGE_BYTES = 32 * 1024 * 1024
+TERMINAL_TASK_STATES = frozenset({"failed", "expired", "cancelled", "reconciliation"})
+POLL_TASK_STATES = TERMINAL_TASK_STATES | {
+    "queued",
+    "running",
+    "delivering",
+    "succeeded",
+}
+
+
+def _has_submission_evidence(payload: Mapping[str, Any]) -> bool:
+    return any(
+        payload.get(key)
+        for key in (
+            "id",
+            "task_id",
+            "generation_id",
+            "data",
+            "images",
+            "output",
+            "url",
+            "b64_json",
+        )
+    )
+
+
+def _terminal_task_receipt(status: int, payload: Mapping[str, Any]) -> bool:
+    task_id = payload.get("id")
+    state = payload.get("status")
+    return (
+        status == 502
+        and payload.get("object") == "image.task"
+        and isinstance(task_id, str)
+        and bool(task_id.strip())
+        and isinstance(state, str)
+        and state in TERMINAL_TASK_STATES
+    )
 
 
 def _error(message: str, task_id: str | None = None) -> Exception:
@@ -666,6 +702,7 @@ class HaiyuTransport:
         replay_rate_limit = (
             not reconcile_only
             and receipt.get("state") == "rejected"
+            and not receipt.get("task_id")
             and no_acceptance_rate_limit(
                 receipt.get("http_status", 0), {"error": receipt.get("error")}
             )
@@ -691,11 +728,17 @@ class HaiyuTransport:
             receipt.update(
                 task_id=payload.get("id"), request_id=payload.get("request_id")
             )
-            if status >= 400:
+            accepted = status < 400 or _terminal_task_receipt(status, payload)
+            if not accepted:
                 from .provider_diagnostics import error_summary
 
                 receipt.update(
-                    state="rejected", http_status=status, error=error_summary(payload)
+                    state=(
+                        "uncertain" if _has_submission_evidence(payload) else "rejected"
+                    ),
+                    task_id=payload.get("id") or payload.get("task_id"),
+                    http_status=status,
+                    error=error_summary(payload),
                 )
                 receipt["retry_after"] = payload.get("_transport_retry_after")
             else:
@@ -703,7 +746,7 @@ class HaiyuTransport:
             try:
                 self._save_journal(journal, receipt)
             except OSError as exc:
-                if status >= 400 or not isinstance(payload.get("id"), str):
+                if not accepted or not isinstance(payload.get("id"), str):
                     raise _error(
                         "Image task receipt could not be persisted; "
                         f"reconciliation required (errno={exc.errno}, "
@@ -733,7 +776,7 @@ class HaiyuTransport:
                     timeout_seconds=max(0.01, deadline - time.monotonic()),
                     _deadline=deadline,
                 )
-        elif receipt.get("task_id"):
+        elif receipt.get("state") == "accepted" and receipt.get("task_id"):
             # Continue the already accepted task; do not call images/edits.
             status, payload = (
                 202,
@@ -743,37 +786,38 @@ class HaiyuTransport:
                     "status": "queued",
                 },
             )
-        elif receipt.get("state") == "rejected":
+        elif receipt.get("state") == "rejected" and not receipt.get("task_id"):
             status, payload = receipt["http_status"], {"error": receipt["error"]}
+        elif receipt.get("state") in {"uncertain", "rejected"}:
+            from .xinghe_agent import XingheAgentError
+
+            raise XingheAgentError(
+                "PROVIDER_RESPONSE_INVALID",
+                "Image request outcome requires reconciliation; do not resubmit.",
+                provider_request_id=receipt.get("task_id"),
+                provider_error=receipt.get("error"),
+            )
         else:
             raise _error(
-                "Image request outcome requires reconciliation; do not resubmit."
+                "Image request outcome requires reconciliation; do not resubmit.",
+                receipt.get("task_id"),
             )
-        if status >= 400:
-            if any(
-                payload.get(k)
-                for k in (
-                    "id",
-                    "task_id",
-                    "generation_id",
-                    "data",
-                    "images",
-                    "output",
-                    "url",
-                    "b64_json",
-                )
-            ):
-                raise _error(
+        if status >= 400 and not _terminal_task_receipt(status, payload):
+            from .provider_diagnostics import error_summary, image_content_refusal
+            from .xinghe_agent import XingheAgentError
+
+            if _has_submission_evidence(payload):
+                raise XingheAgentError(
+                    "PROVIDER_RESPONSE_INVALID",
                     "Image request may have been accepted; reconciliation required.",
-                    payload.get("id") or payload.get("task_id"),
+                    provider_request_id=payload.get("id") or payload.get("task_id"),
+                    provider_error=error_summary(payload),
                 )
             error = payload.get("error")
             code = str(error.get("code", "")) if isinstance(error, Mapping) else ""
             message = (
                 str(error.get("message", "")) if isinstance(error, Mapping) else ""
             )
-            from .provider_diagnostics import error_summary, image_content_refusal
-
             explicit_stop = any(
                 word in message.casefold()
                 for word in (
@@ -802,8 +846,6 @@ class HaiyuTransport:
                 or (status == 429 and not no_acceptance_rate_limit(status, payload))
             ) and not image_content_refusal(payload)
             if explicit_stop or uncertain_rejection:
-                from .xinghe_agent import XingheAgentError
-
                 raise XingheAgentError(
                     "PROVIDER_RESPONSE_INVALID",
                     f"生成接口返回 HTTP {status}，未确认尚未接单或明确禁止替代；"
@@ -822,7 +864,7 @@ class HaiyuTransport:
             # A 409 is a key/parameter conflict; switching models cannot repair
             # it. Convert it to a terminal parameter rejection for the gateway.
             return (400 if status == 409 else status), payload
-        if payload.get("data"):
+        if status < 400 and payload.get("data"):
             return status, await self.image_data(
                 {**payload, "haiyu_task_id": payload.get("id")},
                 min(timeout_seconds, 60),
@@ -891,39 +933,39 @@ class HaiyuTransport:
                         else {}
                     ),
                 }
-            if state in {"failed", "expired", "cancelled"}:
+            if isinstance(state, str) and state in TERMINAL_TASK_STATES:
                 error = payload.get("error") or {}
                 code = str(error.get("code", "")) if isinstance(error, dict) else ""
                 message = (
                     str(error.get("message", "")) if isinstance(error, dict) else ""
                 )
-                if any(
-                    word in message.casefold()
-                    for word in (
-                        "do not create a replacement",
-                        "do not resubmit",
-                        "do not retry",
-                        "requires review",
-                        "结算待处理",
-                        "不得重试",
-                    )
-                ):
-                    from .provider_diagnostics import error_summary
-                    from .xinghe_agent import XingheAgentError
+                from .provider_diagnostics import error_summary
+                from .xinghe_agent import XingheAgentError
 
+                requires_reconciliation = (
+                    state != "failed"
+                    or any(
+                        word in code.casefold()
+                        for word in ("unknown", "pending", "settlement", "reconcil")
+                    )
+                    or any(
+                        word in message.casefold()
+                        for word in (
+                            "do not create a replacement",
+                            "do not resubmit",
+                            "do not retry",
+                            "requires review",
+                            "结算待处理",
+                            "不得重试",
+                        )
+                    )
+                )
+                if requires_reconciliation:
                     raise XingheAgentError(
                         "PROVIDER_RESPONSE_INVALID",
                         "原任务未取得图片且上游要求核查，已停止替代生成。",
                         provider_request_id=task_id,
                         provider_error=error_summary({"error": error}),
-                    )
-                if state != "failed" or any(
-                    word in code.lower()
-                    for word in ("unknown", "pending", "settlement", "reconcil")
-                ):
-                    raise _error(
-                        f"Image task {task_id} requires outcome reconciliation.",
-                        task_id,
                     )
                 invalid_input = code in {
                     "invalid_image",
@@ -937,9 +979,6 @@ class HaiyuTransport:
                         "error": error,
                         "request_id": initial_request_id or task_id,
                     }
-                from .provider_diagnostics import error_summary
-                from .xinghe_agent import XingheAgentError
-
                 # The accepted async task has already run. Its terminal error
                 # is not a routing rejection and must not buy another image.
                 raise XingheAgentError(
@@ -968,15 +1007,11 @@ class HaiyuTransport:
                     raise _error(
                         "Image task query returned a different task ID.", task_id
                     )
-                if polled.get("status") not in {
-                    "queued",
-                    "running",
-                    "delivering",
-                    "succeeded",
-                    "failed",
-                    "expired",
-                    "cancelled",
-                }:
+                polled_state = polled.get("status")
+                if (
+                    not isinstance(polled_state, str)
+                    or polled_state not in POLL_TASK_STATES
+                ):
                     poll_errors += 1
                     if poll_errors > MAX_POLL_ERRORS:
                         raise pending("原任务状态响应连续不完整，未重新生成。")

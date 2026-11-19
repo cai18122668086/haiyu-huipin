@@ -115,6 +115,7 @@ export function jobNote(job: Job | JobDetail): string {
   if (job.status === "failed" && "items" in job) {
     const failed = job.items.find((item) => item.status === "failed");
     if (failed?.error_code) return safeJobFailureSummary(failed.error_code, failed.error_details);
+    if (job.error_code) return safeJobFailureSummary(job.error_code, job.error_details);
   }
   if (job.status === "partial") return "部分结果已完成，可在详情中查看并重试失败项目。";
   if (job.status === "failed") return "生成未完成，请查看详情中的安全错误摘要。";
@@ -133,8 +134,8 @@ export function safeJobFailureSummary(errorCode?: string | null, errorDetails?: 
   if (errorCode === "IMAGE_ASYNC_TASK_FAILED") {
     return "生成服务报告原任务异常，本站尚未取得图片。原任务编号和素材已保留，请先核查原任务，避免重复生成。";
   }
-  if (errorCode === "PROVIDER_OUTCOME_UNKNOWN") {
-    return "生成请求的结果尚未确认，系统已停止自动重试，请联系管理员核查，避免重复生成。";
+  if (errorCode === "PROVIDER_OUTCOME_UNKNOWN" || errorCode === "IMAGE_TASK_QUERY_UNCONFIRMED" || errorCode === "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED") {
+    return "生成请求的结果尚未确认，系统已停止自动重试。请把本站任务编号发给客服核查原任务，避免重复生成。";
   }
   const details = errorDetails && typeof errorDetails === "object" ? errorDetails as Record<string, unknown> : {};
   const providerError = details.provider_error && typeof details.provider_error === "object" ? details.provider_error as Record<string, unknown> : {};
