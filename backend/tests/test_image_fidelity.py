@@ -838,7 +838,7 @@ def pixel_extraction(sources, preparation, model):
     return (PixelLayer(layer, sources[0].asset_id, sources[0].sha256, (0, 0, 40, 40)),)
 
 
-@pytest.mark.parametrize("mask_accepted", [True, False])
+@pytest.mark.parametrize("mask_accepted", [True, False, "repair"])
 def test_local_silver_render_preserves_original_and_never_submits_an_image(
     mask_accepted,
 ):
@@ -857,10 +857,22 @@ def test_local_silver_render_preserves_original_and_never_submits_an_image(
             elif call.planning_profile == READBACK:
                 payload = {"text_runs": ["モモンガ"]}
             elif call.planning_profile == source_recolor.PROFILE:
+                box = [0.2, 0.2, 0.35, 0.35]
+                if mask_accepted == "repair":
+                    context = json.loads(call.product_information[0])
+                    if call.idempotency_key.endswith(":geometry-repair"):
+                        violation = context["selection_feedback"]["violations"][0]
+                        assert violation["region_index"] == 0
+                        assert violation["reason"] == "protected_print"
+                        assert violation["intersected_print_boxes"] == [
+                            [0.1, 0.6, 0.9, 0.9]
+                        ]
+                    else:
+                        box = [0.2, 0.55, 0.35, 0.68]
                 payload = {
-                    "pixel_inspected": mask_accepted,
+                    "pixel_inspected": bool(mask_accepted),
                     "unresolved": [],
-                    "regions": [{"part": "metal_clasp", "box": [0.2, 0.2, 0.35, 0.35]}],
+                    "regions": [{"part": "metal_clasp", "box": box}],
                 }
             else:
                 payload = review()
@@ -885,10 +897,9 @@ def test_local_silver_render_preserves_original_and_never_submits_an_image(
     assert gateway.edits == []
     if mask_accepted:
         assert result.outcome == ProviderOutcome.SUCCEEDED
-        assert (
-            result.actual_cost_micros == 10
-            and result.raw_usage["network_requests"] == 5
-        )
+        plan_count = 6 if mask_accepted == "repair" else 5
+        assert result.actual_cost_micros == 2 * plan_count
+        assert result.raw_usage["network_requests"] == plan_count
         assert result.raw_usage["source_recolor"]["outside_mask_changed_pixels"] == 0
         reader = [p for p in gateway.plans if p.planning_profile == READBACK][-1]
         assert all(s.source_role == "candidate_detail" for s in reader.sources)
@@ -972,6 +983,33 @@ def test_source_product_rgb_is_composited_after_one_native_background(monkeypatc
     assert any(
         s.source_role == "source_candidate_comparison" for s in final_review.sources
     )
+
+
+def test_approved_plain_white_has_no_supplier_image_and_retains_lineage(monkeypatch):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class WhiteGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == BACKGROUND:
+                assert "plain_white_plate" in json.loads(call.product_information[0])[
+                    "schema"
+                ]["properties"]
+                result.payload["plain_white_plate"] = True
+            return result
+
+    gateway = WhiteGateway()
+    guard = PixelGuard(gateway, None, None)
+    result = asyncio.run(guard.edit(request(gateway)))
+
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert gateway.edits == []
+    assert result.raw_usage["background_origin"] == "local_white"
+    assert result.raw_usage["metrics"]["white_product_lineage"]
+    assert result.actual_cost_micros == 2 * len(gateway.plans)
+    with Image.open(BytesIO(result.artifact.payload)) as image:
+        assert image.getpixel((0, 0)) == (255, 255, 255, 255)
+        assert image.getpixel((20, 20)) == (255, 0, 0, 255)
 
 
 def test_colliding_product_proposal_is_compiled_and_frozen_before_one_image(

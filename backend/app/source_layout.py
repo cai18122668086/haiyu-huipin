@@ -6,7 +6,7 @@ import math
 from copy import deepcopy
 from typing import Any
 
-VERSION = "bounded-product-layout-v2"
+VERSION = "bounded-product-layout-v3"
 
 
 def place_products_without_collisions(
@@ -14,7 +14,7 @@ def place_products_without_collisions(
     text_layout: list[dict[str, Any]],
     panels: int,
     *,
-    detail_scale_caps: dict[int, float] | None = None,
+    detail_box_limits: dict[int, tuple[float, float]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Translate at most 0.10; oversize crops may shrink to original-pixel limits.
 
@@ -43,18 +43,17 @@ def place_products_without_collisions(
             one[1], two[1]
         )
 
-    caps = detail_scale_caps or {}
+    limits = detail_box_limits or {}
     if any(
         index not in range(len(placed))
-        or not math.isfinite(scale)
-        or not 0 < scale < 1
+        or not all(math.isfinite(extent) and extent > 0 for extent in extents)
         or not placed[index].get("source_window")
         or placed[index]["source_window"] == [0, 0, 1, 1]
-        for index, scale in caps.items()
+        for index, extents in limits.items()
     ):
         return original, []
     changes = []
-    for index in sorted(range(len(placed)), key=lambda index: index not in caps):
+    for index in sorted(range(len(placed)), key=lambda index: index not in limits):
         row = placed[index]
         products = [
             other["panel_box"]
@@ -66,17 +65,20 @@ def place_products_without_collisions(
         ]
         old = row["panel_box"]
         is_detail = row.get("source_window") not in (None, [0, 0, 1, 1])
-        max_scale = caps.get(index, 1.0)
+        max_width, max_height = limits.get(index, (1.0, 1.0))
         collision_targets = obstacles if is_detail else products
-        if max_scale == 1 and not any(
+        if index not in limits and not any(
             overlap(old, obstacle) for obstacle in collision_targets
         ):
             continue
         cx, cy = (old[0] + old[2]) / 2, (old[1] + old[3]) / 2
         candidates = []
-        for relative_scale in (1.0, 0.95, 0.9):
-            scale = max_scale * relative_scale
-            width, height = (old[2] - old[0]) * scale, (old[3] - old[1]) * scale
+        # The renderer contains the crop and centers it inside this box. Trim
+        # empty space per axis so the limiting side keeps its full pixel budget.
+        base_width = min(old[2] - old[0], max_width)
+        base_height = min(old[3] - old[1], max_height)
+        for scale in (1.0, 0.95, 0.9):
+            width, height = base_width * scale, base_height * scale
             xs, ys = {cx - width / 2}, {cy - height / 2}
             for box in obstacles:
                 xs.update((box[0] - width, box[2]))
