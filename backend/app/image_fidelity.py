@@ -1673,6 +1673,14 @@ class FidelityGateway:
                                     "never requests the generator to draw letters. "
                                     "Required hands, bags and attachment points "
                                     "must not disappear under an 'empty' rule."
+                                    + (
+                                        " Describe one continuous backdrop "
+                                        "across the midpoint, including how "
+                                        "light and texture carry across it. "
+                                        "Do not specify separate panel backgrounds."
+                                        if self._native_pair
+                                        else ""
+                                    )
                                 ),
                                 "source_layer_inventory": projection_inventory,
                                 "placement_contract": (
@@ -1926,6 +1934,7 @@ class FidelityGateway:
                         pixel_recipe["cells"],
                         (),
                         placement_geometry,
+                        continuous_pair=self._native_pair,
                     )
                 frozen = self._frozen(
                     request,

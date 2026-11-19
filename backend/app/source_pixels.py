@@ -661,6 +661,8 @@ def background_prompt(
     cells: list[list[float]],
     copy: tuple[str, ...] = (),
     product_geometry: list[dict[str, Any]] | None = None,
+    *,
+    continuous_pair: bool = False,
 ) -> str:
     return (
         "BACKGROUND PLATE ONLY. The server will add ORIGINAL PHOTOGRAPHED "
@@ -679,7 +681,18 @@ def background_prompt(
         "Do not add unrequested props. Any products in style "
         "references are EXCLUDED; only their background is authoritative. "
         "Return one opaque full-bleed native canvas at the requested size. "
-        "Reserved cells (normalized x0,y0,x1,y1): "
+        + (
+            "TWO-SCREEN CONTINUITY: paint one uninterrupted scene through the "
+            "horizontal midpoint (y=0.5). Continue the same background field, "
+            "lighting, texture and relevant scene geometry across that line. "
+            "No hard color band, horizontal divider, frame, collage, separate "
+            "upper/lower backdrops or abrupt horizon at the midpoint. "
+            "Reserved placement cells guide composition, not background panels. "
+            "This continuity rule overrides conflicting layout prose. "
+            if continuous_pair
+            else ""
+        )
+        + "Reserved cells (normalized x0,y0,x1,y1): "
         + json.dumps(cells)
         + "\nMEASURED LATER PRODUCT PLACEMENT (normalized full-canvas geometry; "
         "the source products themselves must NOT be generated): "
@@ -689,8 +702,9 @@ def background_prompt(
         + "\nAPPROVED MARKETING COPY (empty means NO TEXT): "
         + json.dumps(copy, ensure_ascii=False)
         + "\nFINAL REQUIREMENT: empty background plate only, with absolutely "
-        "no product, character, keychain, charm, metal clasp, tag, rack, "
-        "silhouette, placeholder or lettering on a product."
+        "no product, character, keychain, charm, metal clasp, tag, "
+        "silhouette, placeholder or lettering on a product. Exclude any source "
+        "display rack unless the approved scene explicitly requires that support."
         + (
             "\nREQUIRED VISIBLE MARKETING TEXT: Render EVERY approved copy "
             "string above exactly, using the approved panel layout and hierarchy "
