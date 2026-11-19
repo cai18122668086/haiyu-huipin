@@ -1,0 +1,81 @@
+{
+  "status": "activated",
+  "released_at_beijing": "2026-11-19T15:54:43.111761+08:00",
+  "application_commit": "de793a8cbf6536010570512ebc02a097b1845448",
+  "application_merge_commit": "7e807f3fa11831e9f08463e92ac62f447a3aa7c5",
+  "application_pr": "https://github.com/cai18122668086/haiyu-huipin/pull/19",
+  "backend_image": "huipin-content-fidelity/backend:de793a8",
+  "backend_image_id": "sha256:359b0f5b34b9b3dab1548fc76ae7aa93cf3a1e6fd7d1a202fc37a65e7275a9d5",
+  "backend_services": 3,
+  "source_files_verified_per_service": 663,
+  "ci": {
+    "checks_passed": 14,
+    "tested_commit": "de793a8cbf6536010570512ebc02a097b1845448",
+    "run_url": "https://github.com/cai18122668086/haiyu-huipin/actions/runs/44474821578"
+  },
+  "upstream_overlay_commit": "546d42c2d91326708cc165e0070283558fea41e5",
+  "upstream_images": {
+    "gateway": {
+      "tag": "haiyushuke/native-image-size-gateway:20261119-546d42c-pinned",
+      "image_id": "sha256:0a3b246f4c620b6987355157a8559ceaf009bf153672420b50500a912615eb34",
+      "binary_sha256": "a7466ab98997746550ebe09896242c0e5e53a0b2cd88589e01d6917276b2adc0"
+    },
+    "platform": {
+      "tag": "haiyushuke/native-image-size-platform:20261119-546d42c-pinned",
+      "image_id": "sha256:4f2fc5efed3456efaeff25df4100f4dbf0b3fd3e8ebb8adfeb03ca908e145f01",
+      "binary_sha256": "5f0f8f86c6b78a05c26bf19700c2d50f79ec215170f7803392da19eae5c73862"
+    }
+  },
+  "upstream_full_go_tests": "passed",
+  "upstream_pinned_linux_postgres_and_image_tests": "passed",
+  "verified_size_binding": "agent3:image-2.5",
+  "verified_sizes": [
+    "1024x1024",
+    "1086x1448",
+    "1184x1184",
+    "1200x1600",
+    "1440x3840",
+    "1464x600",
+    "1600x1200",
+    "2000x2000"
+  ],
+  "other_model_bindings_preserved": true,
+  "schema_migration": "20261106_0040",
+  "frontend_preserved": true,
+  "payment_sms_and_other_runtime_configuration_preserved": true,
+  "concurrency_limits_preserved": true,
+  "public_routes_verified": 7,
+  "postrelease_wall_edit": {
+    "status": "completed",
+    "source_and_instruction": "same agreed fixture",
+    "dimensions": [
+      800,
+      800
+    ],
+    "outside_mask_changed_pixels": 0,
+    "original_download_and_idempotency": "passed",
+    "visual_reviews": 1,
+    "paid_image_calls": 0,
+    "customer_credits_charged": false,
+    "production_database_used_for_test": false
+  },
+  "prior_user_task_statuses": {
+    "completed": 8
+  },
+  "historical_customer_jobs_repeated": false,
+  "quality_checks_relaxed": false,
+  "complete_functional_and_visual_acceptance": false,
+  "outstanding_acceptance": [
+    "domestic main physical support/contact",
+    "transparent white-background rack traces",
+    "metal recolouring protected-print conflict",
+    "complete eight-image native detail delivery",
+    "complete twenty-one-image Amazon delivery and ZIP"
+  ],
+  "user_explicitly_requested_merge_and_deployment_after_status_report": true,
+  "two_protective_rollbacks_before_success": true,
+  "deployment_guard_fix": "order-independent environment/bind comparison with exact values, mount semantics and resource checks",
+  "deployment_guard_changed_value_counterexamples_rejected": 9,
+  "database_backups_verified": true,
+  "admission_gate_removed": true
+}
