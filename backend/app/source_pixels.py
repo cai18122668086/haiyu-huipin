@@ -110,6 +110,12 @@ class MatteFragmentError(ValueError):
     """The foreground is ambiguous; no image may be dispatched from this matte."""
 
 
+class DetailResolutionError(ValueError):
+    def __init__(self, message: str, diagnostic: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.diagnostic = diagnostic
+
+
 def _alpha(
     crop: Image.Image,
     model_path: Path,
@@ -795,9 +801,14 @@ def validate_detail_resolution(
     cells: list[list[float]],
     windows: list[list[float]],
     canvas: tuple[int, int],
+    *,
+    panels: int = 1,
 ) -> None:
+    if panels not in (1, 2):
+        raise ValueError("Invalid resolution panel count")
     if len(cutouts) != len(cells) or len(windows) != len(cells):
         raise ValueError("Detail resolution cannot change its placement count")
+    violations: list[dict[str, Any]] = []
     for index, (cutout, cell, window) in enumerate(
         zip(cutouts, cells, windows, strict=True)
     ):
@@ -813,12 +824,37 @@ def validate_detail_resolution(
             math.floor((cell[3] - cell[1]) * canvas[1]) / height,
         )
         if factor > MAX_DETAIL_UPSCALE:
-            raise ValueError(
-                f"placement[{index}] enlarges an original {width}x{height} detail "
-                f"by {factor:.2f}x; maximum is {MAX_DETAIL_UPSCALE:g}x. "
-                "Use a resolution-bounded inset and supporting original views; "
-                "do not invent detail pixels or omit approved copy."
+            maximum = [math.floor(width * MAX_DETAIL_UPSCALE),
+                       math.floor(height * MAX_DETAIL_UPSCALE)]
+            violations.append(
+                {
+                    "placement_index": index,
+                    "original_detail_pixels": [width, height],
+                    "observed_upscale": round(factor, 4),
+                    "maximum_upscale": MAX_DETAIL_UPSCALE,
+                    "maximum_inset_pixels": maximum,
+                    "maximum_panel_box_extent": [
+                        maximum[0] / canvas[0], maximum[1] * panels / canvas[1]
+                    ],
+                }
             )
+    if violations:
+        first = violations[0]
+        width, height = first["original_detail_pixels"]
+        raise DetailResolutionError(
+            f"placement[{first['placement_index']}] enlarges an original "
+            f"{width}x{height} detail by {first['observed_upscale']:.2f}x; "
+            f"maximum is {MAX_DETAIL_UPSCALE:g}x. All {len(violations)} oversized "
+            "insets must respect their original source resolution.",
+            {
+                "constraint": "original_detail_resolution",
+                "violations": violations,
+                "instruction": "Correct ALL listed placements together. Make "
+                "each inset no larger than its given panel extents; use "
+                "surrounding space for approved copy and original full-product "
+                "supporting views. Never invent detail pixels or omit copy.",
+            },
+        )
 
 
 def layer_reference(cutout: ProviderArtifact) -> ProviderArtifact:

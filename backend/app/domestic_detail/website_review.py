@@ -267,6 +267,12 @@ def legacy_prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
         """Inspect the attached real product references, both generated fixed
 screen slices, and the final full 3:8 candidate canvas. Only product_reference
 images establish product truth. Return WEBSITE_LEAN_V1 JSON matching the schema.
+When source_candidate_comparison images are attached, LEFT SOURCE contains
+original photographed product pixels and RIGHT CANDIDATE is the actual final
+destination crop at the same scale. Use these actual pixel pairs to inspect
+small printing and fittings; they are inspection evidence, never delivery
+contact sheets or replacement authority. Inspect the full canvas and both
+fixed slices independently for completeness, layout, leakage and approved copy.
 Return every required root field and exactly two complete module_judgments in
 the supplied module order, including when status is MATERIAL_FAIL.
 Each module must contain all six checks and its actual observations. An aggregate
@@ -304,6 +310,12 @@ def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
         """Inspect the attached real product references, both generated fixed
 screen slices, and the final full 3:8 candidate canvas. Only product_reference
 images establish product truth. Return WEBSITE_LEAN_V1 JSON matching the schema.
+When source_candidate_comparison images are attached, LEFT SOURCE contains
+original photographed product pixels and RIGHT CANDIDATE is the actual final
+destination crop at the same scale. Use these actual pixel pairs to inspect
+small printing and fittings; they are inspection evidence, never delivery
+contact sheets or replacement authority. Inspect the full canvas and both
+fixed slices independently for completeness, layout, leakage and approved copy.
 Return every required root field and exactly two complete module_judgments in
 the supplied module order, including when status is MATERIAL_FAIL.
 Each module must contain all six checks and its actual observations. An aggregate

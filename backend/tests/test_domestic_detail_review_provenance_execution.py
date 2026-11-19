@@ -62,6 +62,7 @@ def test_complete_job_recovery_verifies_original_messages_without_resend(
         context = json.loads(request.product_information[0])
         candidate = request.sources[-1]
         if request.planning_profile == "aurora_detail_pair_audit":
+            assert request.idempotency_key.endswith(":" + candidate.sha256)
             artifact = _artifact_from_bytes(
                 candidate.payload,
                 filename=candidate.filename,

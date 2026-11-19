@@ -6894,6 +6894,18 @@ class XingheImageProvider:
                         raise DetailPixelError("Native pixels differ from their original provider invocation")
                     native_detail_request["pixel_lineage"] = pixel_review_context(lineage)
                     canvas_artifact = native_pixels.canvas
+                    source_comparisons: tuple[SourceImage, ...] = ()
+                    if hasattr(self.gateway, "native_source_evidence"):
+                        try:
+                            source_comparisons = await self.gateway.native_source_evidence(
+                                image_request, request,
+                                token=str(native_detail_request["token"]),
+                                candidate=canvas_artifact,
+                            )
+                        except Exception as exc:
+                            raise DetailPixelError(
+                                "The bound source comparison pixels could not be verified"
+                            ) from exc
                     native_judgment_path = native_detail_session.parent / f"judgment-{pair_id}.json"
                     write_detail_contract(
                         native_judgment_path,
@@ -6905,7 +6917,7 @@ class XingheImageProvider:
                                 group_key=str(configuration["group_key"]), filename=sliced.filename,
                                 content_type=sliced.content_type, sha256=sliced.sha256,
                                 payload=sliced.payload, source_role=f"generated_module_candidate:{module_id}",
-                            ) for module_id, sliced in zip(native_detail_request["module_ids"], native_pixels.screens, strict=True))),
+                            ) for module_id, sliced in zip(native_detail_request["module_ids"], native_pixels.screens, strict=True)), *source_comparisons),
                             canvas_artifact,
                         ),
                     )
@@ -7823,7 +7835,7 @@ class XingheImageProvider:
                 product_information=(json.dumps(contract, ensure_ascii=False),),
                 platform_code="domestic-detail",
                 size="1440x3840",
-                idempotency_key=f"{request.idempotency_key}:native-pair-audit",
+                idempotency_key=f"{request.idempotency_key}:native-pair-audit:{artifact.sha256}",
                 domestic_protocol=True,
                 planning_profile="aurora_detail_pair_audit",
             )

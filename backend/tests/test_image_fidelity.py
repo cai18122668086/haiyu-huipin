@@ -381,6 +381,26 @@ def test_only_known_preparation_truncation_gets_one_complete_schema_correction(
     assert result.actual_cost_micros == 2 * len(gateway.plans) + 10 * len(gateway.edits)
 
 
+def test_unknown_source_planning_is_not_repeated_by_another_suite_item():
+    class UnknownSource(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            return replace(
+                result, payload=None, error_code="PLANNER_TRANSPORT_OUTCOME_UNKNOWN"
+            )
+
+    gateway = UnknownSource()
+    guard = ScopedFidelity(gateway, None, None)
+    original = request(gateway)
+    first = asyncio.run(guard.edit(original))
+    second = asyncio.run(guard.edit(replace(
+        original, job_item_id="different-suite-item", idempotency_key="different-key"
+    )))
+    assert first.error_code == second.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+    assert len(gateway.plans) == 1 and gateway.edits == []
+    assert first.actual_cost_micros == 2 and second.actual_cost_micros == 0
+
+
 @pytest.mark.parametrize("malformed,review_calls", [(False, 1), (True, 2)])
 def test_rejected_or_malformed_review_never_regenerates(malformed, review_calls):
     gateway = Gateway(malformed=malformed)
@@ -505,6 +525,19 @@ def test_native_child_requires_exact_signed_key_and_parent_scope(monkeypatch):
         asyncio.run(guard.edit_native(signed, parent, token="signed-token")) == "scoped"
     )
     assert captured == [(parent.idempotency_key, True, signed)]
+    evidence_calls = []
+
+    async def evidence_only(bound, call, candidate):
+        evidence_calls.append((bound._parent_key, bound._native_pair, call, candidate))
+        return ("exact-source-comparison",)
+
+    monkeypatch.setattr(FidelityGateway, "paired_source_evidence", evidence_only)
+    assert asyncio.run(guard.native_source_evidence(
+        signed, parent, token="signed-token", candidate=gateway.artifact
+    )) == ("exact-source-comparison",)
+    assert evidence_calls == [
+        (parent.idempotency_key, True, signed, gateway.artifact)
+    ]
     for bad in (
         replace(signed, workspace_id="foreign"),
         replace(signed, attempt_id="other"),
@@ -512,6 +545,11 @@ def test_native_child_requires_exact_signed_key_and_parent_scope(monkeypatch):
     ):
         with pytest.raises(ValueError, match="binding"):
             asyncio.run(guard.edit_native(bad, parent, token="signed-token"))
+        with pytest.raises(ValueError, match="binding"):
+            asyncio.run(guard.native_source_evidence(
+                bad, parent, token="signed-token", candidate=gateway.artifact
+            ))
+    assert len(evidence_calls) == 1
     assert len(captured) == 1 and gateway.edits == []
 
 

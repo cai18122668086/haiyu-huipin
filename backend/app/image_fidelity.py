@@ -522,10 +522,13 @@ class FidelityGateway:
         Called only after the native Harness has fenced this invocation. The
         logical request, approval hash and supplier key remain unchanged.
         """
-        from .domestic_detail.generation import wire_idempotency_key
-
         if not getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False):
             return await self.wrapped.edit(request)
+        return await self._native_bound(request, parent, token).edit(request)
+
+    def _native_bound(self, request: Any, parent: Any, token: str) -> FidelityGateway:
+        from .domestic_detail.generation import wire_idempotency_key
+
         if self._context(request)["job_type"] != "detail_pack":
             raise ValueError("Signed native image scope is not a detail pair")
         if (
@@ -543,7 +546,16 @@ class FidelityGateway:
         bound._native_pair = True
         bound._prepared, bound._locks = self._prepared, self._locks
         bound._mattes = self._mattes
-        return await bound.edit(request)
+        return bound
+
+    async def native_source_evidence(
+        self, request: Any, parent: Any, *, token: str, candidate: Any
+    ) -> tuple[Any, ...]:
+        """Read the same signed receipt, never replan or dispatch an image."""
+        if not getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False):
+            return ()
+        bound = self._native_bound(request, parent, token)
+        return await bound.paired_source_evidence(request, candidate)
 
     def _context(self, request: Any) -> dict[str, Any]:
         with self.sessions() as session:
@@ -801,7 +813,7 @@ class FidelityGateway:
         async with lock:
             if scope in self._prepared and self._prepared[scope] is None:
                 raise ValueError(
-                    "Source selection already failed its bounded contract correction"
+                    "Original source selection is unavailable; do not redispatch it"
                 )
             preparation = preparation or self._prepared.get(scope)
             if preparation is None:
@@ -905,6 +917,7 @@ class FidelityGateway:
                                 preparation_feedback["diagnostic"],
                             )
                             continue
+                        self._prepared[scope] = None
                         raise ValueError("Preparation unavailable")
                     try:
                         Draft202012Validator(preparation_schema).validate(plan.payload)
@@ -1653,6 +1666,7 @@ class FidelityGateway:
                                 source_pixels.validate_detail_resolution(
                                     detail_cutouts, cells, windows,
                                     (detail_width, detail_height),
+                                    panels=layout_panels,
                                 )
                                 trial_recipe["source_windows"] = windows
                             text_width, text_height = (
@@ -1678,6 +1692,11 @@ class FidelityGateway:
                             projection_feedback = {
                                 "diagnostic": contract_diagnostic(projection_error)
                                 if isinstance(projection_error, ValidationError)
+                                else projection_error.diagnostic
+                                if isinstance(
+                                    projection_error,
+                                    source_pixels.DetailResolutionError,
+                                )
                                 else {"reason": str(projection_error)[:240]},
                                 "previous_projection": background_plan.payload,
                                 "instruction": (

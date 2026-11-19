@@ -149,10 +149,20 @@ def test_macro_layout_cannot_enlarge_tiny_original_details_into_a_pixelated_hero
     source_pixels.validate_detail_resolution(
         cropped, [[0.1, 0.1, 0.4, 0.4]], windows, (400, 400)
     )
-    with pytest.raises(ValueError, match="maximum is 4x"):
+    with pytest.raises(
+        source_pixels.DetailResolutionError, match="maximum is 4x"
+    ) as error:
         source_pixels.validate_detail_resolution(
-            cropped, [[0.1, 0.1, 0.9, 0.9]], windows, (1440, 1920)
+            cropped * 2, [[0.1, 0.1, 0.9, 0.4], [0.1, 0.6, 0.9, 0.9]],
+            windows * 2, (1440, 3840), panels=2,
         )
+    violations = error.value.diagnostic["violations"]
+    assert [row["placement_index"] for row in violations] == [0, 1]
+    diagnostic = violations[0]
+    assert diagnostic["placement_index"] == 0
+    assert diagnostic["original_detail_pixels"] == [40, 60]
+    assert diagnostic["maximum_inset_pixels"] == [160, 240]
+    assert diagnostic["maximum_panel_box_extent"] == pytest.approx([160 / 1440, 0.125])
     assert original.sha256 == hashlib.sha256(original.payload).hexdigest()
 
 
