@@ -83,6 +83,17 @@ def project_native_negative_decisions(
             raise DetailReviewError("AURORA_NATIVE_AUDIT_INVALID", str(exc)) from exc
         if not negative:
             continue
+        negative = deepcopy(negative)
+        for finding in negative:
+            evidence = finding.get("visible_evidence")
+            if isinstance(evidence, str) and evidence.strip() and len(evidence) < 8:
+                # Native computes literal short OCR tokens as negative evidence.
+                # Describe the failing check without changing that token or any
+                # decision. Otherwise the failure itself violates the pinned
+                # eight-character diagnostic schema and crashes the handoff.
+                finding["visible_evidence"] = (
+                    f"Native {finding['check']} observation: {evidence}"
+                )
         report["status"] = "MATERIAL_FAIL"
         report["material_failures"] = negative
         failed = {row["check"] for row in negative}

@@ -193,8 +193,9 @@ def test_website_explicit_conflicting_view_is_not_overwritten(client):
     assert authoring.stage_errors(projected, story)
 
 
+@pytest.mark.parametrize("mark", ["UNAPPROVED_SOURCE_MARK_9000", "BAD"])
 def test_native_negative_ocr_uses_bounded_repair_without_accepting_model_pass(
-    client, monkeypatch
+    client, monkeypatch, mark
 ):
     job = planned(client)
     originals = []
@@ -203,7 +204,7 @@ def test_native_negative_ocr_uses_bounded_repair_without_accepting_model_pass(
         raw = self._native_detail_judgment(native, artifact)
         if native["pair_id"] == "P01":
             report = raw["module_judgments"][0]
-            report["observations"]["ocr_text"].append("UNAPPROVED_SOURCE_MARK_9000")
+            report["observations"]["ocr_text"].append(mark)
             report["artifact_binding"]["ocr_text"] = deepcopy(
                 report["observations"]["ocr_text"]
             )
@@ -212,6 +213,10 @@ def test_native_negative_ocr_uses_bounded_repair_without_accepting_model_pass(
             assert raw == before and raw["status"] == "PASS"
             assert result["status"] == "MATERIAL_FAIL"
             assert result["module_judgments"][0]["checks"] == report["checks"]
+            assert any(
+                mark in failure["visible_evidence"]
+                for failure in result["material_failures"]
+            )
             originals.append(before)
             return result
         return self._normalize_native_pair_judgment(raw, native, artifact)

@@ -942,6 +942,60 @@ def test_source_product_rgb_is_composited_after_one_native_background(monkeypatc
     )
 
 
+def test_colliding_product_proposal_is_compiled_and_frozen_before_one_image(
+    monkeypatch,
+):
+    from app import source_layout
+    from tests.test_source_layout import proposal
+
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+    original = proposal()
+    for row in original:
+        row["layer_index"] = 0  # This synthetic fixture has one original layer.
+    original.append(
+        {"layer_index": 0, "panel": 1, "panel_box": [0.2, 0.3, 0.7, 0.9]}
+    )
+
+    class MainGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == BACKGROUND:
+                destination = json.loads(call.product_information[0])["schema"][
+                    "properties"
+                ]["placements"]["items"]["properties"]["panel_box"]["items"]
+                assert destination["minimum"] == 0.04
+                assert destination["maximum"] == 0.96
+                result.payload["placements"] = deepcopy(original)
+                self.original_projection = result.payload
+            return result
+
+        async def edit(self, call):
+            from app.source_pixels import artifact
+
+            result = await super().edit(call)
+            return replace(result, artifact=artifact(
+                Image.new("RGB", (40, 80), "blue"), "native-pair.png"
+            ))
+
+    class MainGuard(PixelGuard):
+        def _context(self, call):
+            return {"job_type": "detail_pack", "item_key": "M01",
+                    "settings": {"instruction": "Keep the original product"}}
+
+    gateway = MainGateway()
+    guard = MainGuard(gateway, None, None)
+    guard._native_pair = True
+    result = asyncio.run(guard.edit(replace(request(gateway), size="40x80")))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    assert len(gateway.edits) == 1
+    recipe = guard.frozen["pixel_recipe"]
+    assert recipe["product_layout_adjustments"]["version"] == source_layout.VERSION
+    assert recipe["background_projection"]["placements"] != original
+    assert gateway.original_projection["placements"] == original
+    assert recipe["source_windows"][-2] == original[-2]["source_window"]
+    assert recipe["placement_indices"] == [0, 0, 0, 0, 0]
+
+
 def test_final_comparison_uses_original_frozen_binding_not_the_projected_prompt(
     monkeypatch,
 ):

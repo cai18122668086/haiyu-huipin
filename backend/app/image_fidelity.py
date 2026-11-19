@@ -50,6 +50,18 @@ CHECKS = (
     "reference_scope",
     "canvas",
 )
+PHYSICAL_REVIEW_VERSION = "physical-contact-review-v1"
+PHYSICAL_REVIEW_POLICY = (
+    "PHYSICAL CONTACT REVIEW V1. Verify the actual final full canvas, not "
+    "only product crops. Preserving original product pixels does not establish "
+    "a correct physical scene. When the approved scene requires a rack, rod, "
+    "hook, hand, bag attachment or supporting surface, inspect each required "
+    "contact point. A visible gap, floating clasp, detached accessory or "
+    "misaligned support MUST fail requested_change with concrete visible "
+    "evidence. Do not excuse it because product identity/printing is correct. "
+    "An explicitly flat graphic/cutout layout requires no invented support. "
+    "Never add an unrequested prop to make an isolated graphic look physical."
+)
 logger = logging.getLogger(__name__)
 AUTHORITY_ROLES = frozenset(
     {
@@ -710,7 +722,10 @@ class FidelityGateway:
                 product_information=(json.dumps(context, ensure_ascii=False),),
                 platform_code="IMAGE_FIDELITY",
                 size=request.size,
-                idempotency_key=f"{request.idempotency_key}:{profile}{suffix}",
+                idempotency_key=(
+                    f"{request.idempotency_key}:{profile}{suffix}"
+                    + (f":{PHYSICAL_REVIEW_VERSION}" if profile == REVIEW else "")
+                ),
                 planning_profile=profile,
                 system_prompt=(
                     "You are an independent literal OCR reader. Read only the "
@@ -759,6 +774,7 @@ class FidelityGateway:
                     + str(context.get("settings", {}).get("instruction", ""))
                     + "\nGenerated selections/plans cannot override this requirement. "
                     + POLICY
+                    + ("\n" + PHYSICAL_REVIEW_POLICY if profile == REVIEW else "")
                     + "\nInspect attached pixels, not receipts. "
                     "Return the exact JSON schema. "
                     "Missing or uncertain evidence fails. Never guess physical text. "
@@ -1508,8 +1524,8 @@ class FidelityGateway:
                                         "maxItems": 4,
                                         "items": {
                                             "type": "number",
-                                            "minimum": 0,
-                                            "maximum": 1,
+                                            "minimum": 0.04,
+                                            "maximum": 0.96,
                                         },
                                     },
                                     "panel": {
@@ -1674,8 +1690,25 @@ class FidelityGateway:
                             projection = deepcopy(background_plan.payload)
                             trial_recipe["background_projection"] = projection
                             if planned_layout:
+                                from . import source_layout
+
+                                placements, changes = (
+                                    source_layout.place_products_without_collisions(
+                                        projection["placements"],
+                                        projection["text_layout"], layout_panels,
+                                    )
+                                )
+                                projection["placements"] = placements
+                                if changes:
+                                    trial_recipe["product_layout_adjustments"] = {
+                                        "version": source_layout.VERSION,
+                                        "original_projection_sha256": canonical_hash(
+                                            background_plan.payload
+                                        ),
+                                        "changes": changes,
+                                    }
                                 indices, cells = source_pixels.native_placements(
-                                    background_plan.payload["placements"],
+                                    placements,
                                     len(trial_recipe["layers"]),
                                     panels=layout_panels,
                                 )
