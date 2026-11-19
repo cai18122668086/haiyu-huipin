@@ -267,16 +267,6 @@ def legacy_prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
         """Inspect the attached real product references, both generated fixed
 screen slices, and the final full 3:8 candidate canvas. Only product_reference
 images establish product truth. Return WEBSITE_LEAN_V1 JSON matching the schema.
-When source_candidate_comparison images are attached, LEFT SOURCE contains
-original photographed product pixels and RIGHT CANDIDATE is the actual final
-destination crop at the same scale. Use these actual pixel pairs to inspect
-small printing and fittings; they are inspection evidence, never delivery
-contact sheets or replacement authority. Inspect the full canvas and both
-fixed slices independently for completeness, layout, leakage and approved copy.
-Return every required root field and exactly two complete module_judgments in
-the supplied module order, including when status is MATERIAL_FAIL.
-Each module must contain all six checks and its actual observations. An aggregate
-failure summary alone is incomplete; preserve negative findings in the complete JSON.
 For each actual slice report six core checks: identity, facts, legibility,
 approved_plan_fidelity, composition_and_continuity, proof_integrity. Each boolean
 needs a distinct concrete visible observation. Inspect shape/parts/color against
@@ -303,23 +293,13 @@ approved copy may carry product claims; do not reproduce source watermarks.
     )
 
 
-def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
+def _owned_metadata_prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
     if context.get("review_transport_version") != "WEBSITE_OWNED_METADATA_V2":
         return legacy_prompt(context, schema)
     return (
         """Inspect the attached real product references, both generated fixed
 screen slices, and the final full 3:8 candidate canvas. Only product_reference
 images establish product truth. Return WEBSITE_LEAN_V1 JSON matching the schema.
-When source_candidate_comparison images are attached, LEFT SOURCE contains
-original photographed product pixels and RIGHT CANDIDATE is the actual final
-destination crop at the same scale. Use these actual pixel pairs to inspect
-small printing and fittings; they are inspection evidence, never delivery
-contact sheets or replacement authority. Inspect the full canvas and both
-fixed slices independently for completeness, layout, leakage and approved copy.
-Return every required root field and exactly two complete module_judgments in
-the supplied module order, including when status is MATERIAL_FAIL.
-Each module must contain all six checks and its actual observations. An aggregate
-failure summary alone is incomplete; preserve negative findings in the complete JSON.
 For each actual slice report six core checks: identity, facts, legibility,
 approved_plan_fidelity, composition_and_continuity, proof_integrity. Each boolean
 needs a distinct concrete visible observation. Inspect shape/parts/color against
@@ -347,6 +327,31 @@ approved copy may carry product claims; do not reproduce source watermarks.
         + "\nINPUT_JSON="
         + json.dumps(context, ensure_ascii=False, separators=(",", ":"))
     )
+
+
+# Never change a published prompt version: recovery verifies its exact bytes.
+_SOURCE_COMPARISON_PROMPT_V1 = """SOURCE COMPARISON REVIEW V1
+When source_candidate_comparison images are attached, LEFT SOURCE contains
+original photographed product pixels and RIGHT CANDIDATE is the actual final
+destination crop at the same scale. Use these actual pixel pairs to inspect
+small printing and fittings; they are inspection evidence, never delivery
+contact sheets or replacement authority. Inspect the full canvas and both
+fixed slices independently for completeness, layout, leakage and approved copy.
+Return every required root field and exactly two complete module_judgments in
+the supplied module order, including when status is MATERIAL_FAIL.
+Each module must contain all six checks and its actual observations. An aggregate
+failure summary alone is incomplete; preserve negative findings in complete JSON.
+"""
+
+
+def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
+    base = _owned_metadata_prompt(context, schema)
+    version = context.get("review_prompt_version")
+    if version is None:
+        return base
+    if version != "SOURCE_COMPARISON_V1":
+        raise ValueError("Unknown immutable native review prompt version")
+    return _SOURCE_COMPARISON_PROMPT_V1 + base
 
 
 def synthetic_reports(reports: list[dict[str, Any]]) -> list[dict[str, Any]]:

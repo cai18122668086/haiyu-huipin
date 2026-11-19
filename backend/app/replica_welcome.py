@@ -77,12 +77,15 @@ def ensure_grant(
         return None
     # phone_number is persisted only by the verified identity adapter.
     phone_key = sha256(user.phone_number.encode()).hexdigest()
-    if session.scalar(
-        select(ReplicaWelcomeGrantRecord.user_id).where(
+    phone_grant = session.scalar(
+        select(ReplicaWelcomeGrantRecord).where(
             ReplicaWelcomeGrantRecord.phone_key == phone_key
         )
-    ):
-        return None
+    )
+    if phone_grant:
+        # A concurrent signup may commit after the initial primary-key lookup.
+        # Return that user's existing grant without granting the phone twice.
+        return phone_grant if phone_grant.user_id == user.id else None
     try:
         with session.begin_nested():
             grant = ReplicaWelcomeGrantRecord(

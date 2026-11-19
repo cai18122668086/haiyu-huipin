@@ -6906,6 +6906,21 @@ class XingheImageProvider:
                             raise DetailPixelError(
                                 "The bound source comparison pixels could not be verified"
                             ) from exc
+                    from .domestic_detail.source_comparison_evidence import (
+                        save_source_comparisons,
+                    )
+
+                    try:
+                        save_source_comparisons(
+                            native_detail_session.parent, native_detail_request,
+                            canvas_artifact.sha256, source_comparisons,
+                        )
+                    except DetailReviewError as exc:
+                        raise XingheAgentError(exc.code, str(exc)) from exc
+                    except OSError as exc:
+                        raise DetailPixelError(
+                            "Original comparison evidence could not be persisted"
+                        ) from exc
                     native_judgment_path = native_detail_session.parent / f"judgment-{pair_id}.json"
                     write_detail_contract(
                         native_judgment_path,
@@ -7707,6 +7722,22 @@ class XingheImageProvider:
         except DetailReviewError as exc:
             raise XingheAgentError(exc.code, str(exc)) from exc
         audit_sources = tuple(sources) + originals + (candidate,)
+        from .domestic_detail.source_comparison_evidence import (
+            load_source_comparison_inventory,
+        )
+
+        expected_comparisons = load_source_comparison_inventory(
+            detail_workspace(request.job_id), native_request, artifact.sha256
+        )
+        actual_comparisons = [
+            {"asset_id": source.asset_id, "role": source.source_role, "sha256": source.sha256}
+            for source in sources if source.source_role == "source_candidate_comparison"
+        ]
+        if actual_comparisons != expected_comparisons:
+            raise XingheAgentError(
+                "NATIVE_DETAIL_REVIEW_PROVENANCE_INVALID",
+                "Actual comparison images differ from their original persisted bytes",
+            )
         if any(hashlib.sha256(source.payload).hexdigest() != source.sha256 for source in audit_sources):
             raise XingheAgentError("AURORA_NATIVE_REVIEW_SOURCE_CHANGED", "Review source bytes differ from their manifest")
         source_inventory = [

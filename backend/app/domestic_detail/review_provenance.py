@@ -50,6 +50,7 @@ def review_runtime_hash() -> str:
                     "revision_runtime",
                     "revision_accounts",
                     "website_review",
+                    "source_comparison_evidence",
                 )
             },
         }
@@ -93,6 +94,8 @@ def pair_review_contract(
 
     if "review_transport_version" in native:
         value["review_transport_version"] = native["review_transport_version"]
+    if any(row["role"] == "source_candidate_comparison" for row in inventory):
+        value["review_prompt_version"] = "SOURCE_COMPARISON_V1"
     from .revision_review import baseline_inventory, local_model_context
 
     local = local_model_context(native)
@@ -247,6 +250,11 @@ def _verify_review_provenance(
         }
         for row in lineage["slices"]
     ]
+    from .source_comparison_evidence import load_source_comparison_inventory
+
+    inventory += load_source_comparison_inventory(
+        root, native, lineage["canvas"]["sha256"]
+    )
     from .revision_review import original_revision_sources
 
     original_sources = original_revision_sources(native)

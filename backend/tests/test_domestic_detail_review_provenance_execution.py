@@ -31,7 +31,9 @@ from tests.test_domestic_detail_plans import planned_job
 
 @pytest.mark.parametrize(
     "mode",
-    ["complete", "identity_followup", "repair", "residual", "missing_before_second"],
+    ["complete", "identity_followup", "repair", "residual", "missing_before_second",
+     "source_comparisons", "comparison_missing_before_second",
+     "comparison_tampered_before_second"],
 )
 def test_complete_job_recovery_verifies_original_messages_without_resend(
     client, monkeypatch, mode
@@ -51,6 +53,20 @@ def test_complete_job_recovery_verifies_original_messages_without_resend(
     observations = {}
     pair_calls = {}
     review_calls = []
+    comparisons = mode.startswith("comparison_") or mode == "source_comparisons"
+    if comparisons:
+        from app.xinghe_agent import SourceImage
+
+        async def source_evidence(image_request, parent, *, token, candidate):
+            return (SourceImage(
+                "source-candidate-pair-0", image_request.group_key, "comparison.png",
+                candidate.content_type, candidate.sha256, candidate.payload,
+                source_role="source_candidate_comparison",
+            ),)
+
+        monkeypatch.setattr(
+            gateway, "native_source_evidence", source_evidence, raising=False
+        )
 
     async def review(request):
         if request.planning_profile not in {
@@ -96,7 +112,11 @@ def test_complete_job_recovery_verifies_original_messages_without_resend(
 
     monkeypatch.setattr(gateway, "plan", review)
     removed = []
-    if mode == "missing_before_second":
+    missing_modes = {
+        "missing_before_second", "comparison_missing_before_second",
+        "comparison_tampered_before_second",
+    }
+    if mode in missing_modes:
         original_execute = XingheImageProvider.execute
 
         async def interrupt_original_evidence(self, request):
@@ -113,7 +133,12 @@ def test_complete_job_recovery_verifies_original_messages_without_resend(
                 ][0]
                 req = root / ref["request_file"]
                 raw = req.with_name(req.name.replace(".request.json", ".reply.txt"))
-                raw.unlink()
+                if mode != "missing_before_second":
+                    raw = next((root / "reviews").glob("source-comparison-view-*.png"))
+                if mode == "comparison_tampered_before_second":
+                    raw.write_bytes(b"changed original comparison")
+                else:
+                    raw.unlink()
                 removed.append(raw)
             return result
 
@@ -131,9 +156,10 @@ def test_complete_job_recovery_verifies_original_messages_without_resend(
     current = client.get(
         f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{planned['id']}"
     ).json()
-    if mode == "missing_before_second":
+    if mode in missing_modes:
         assert current["status"] == "partial", current
-        assert len(removed) == 1 and not removed[0].exists()
+        assert len(removed) == 1
+        assert removed[0].exists() == (mode == "comparison_tampered_before_second")
         with client.app.state.session_factory() as db:
             items = db.scalars(
                 select(JobItemRecord)
