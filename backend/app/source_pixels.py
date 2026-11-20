@@ -23,6 +23,7 @@ from .provider import ProviderArtifact
 
 VERSION = "source-pixel-layers-v11-white-exterior-edge"
 MAX_DETAIL_UPSCALE = 4.0
+MAX_MATTE_WORK_PIXELS = 8_000_000
 PLANNING_CONSTRAINTS = (
     "SOURCE PHOTOGRAPH RENDER CAPABILITIES: Plan from the actual supplied "
     "product photographs. The final renderer preserves their photographed RGB, "
@@ -363,17 +364,31 @@ def extract_layers(
             image.size,
             (left, top, right, bottom),
         )
-        crop = image.crop((left, top, right, bottom))
-        if crop.width * crop.height > 8_000_000:
-            raise ValueError("Source selection exceeds the bounded matte pixel budget")
+        width, height = right - left, bottom - top
+        work_size = (width, height)
+        if width * height > MAX_MATTE_WORK_PIXELS:
+            scale = math.sqrt(MAX_MATTE_WORK_PIXELS / (width * height))
+            work_width = min(MAX_MATTE_WORK_PIXELS, max(1, int(width * scale)))
+            work_height = min(
+                MAX_MATTE_WORK_PIXELS // work_width, max(1, int(height * scale))
+            )
+            work_size = (work_width, work_height)
+        crop = (
+            image.crop((left, top, right, bottom))
+            if work_size == (width, height)
+            else image.resize(
+                work_size, Image.Resampling.LANCZOS, box=(left, top, right, bottom)
+            )
+        )
+        scale_x, scale_y = work_size[0] / width, work_size[1] / height
         alpha = _alpha(
             crop,
             model_path,
             (
-                math.floor(x0 * image.width) - left,
-                math.floor(y0 * image.height) - top,
-                math.ceil(x1 * image.width) - left,
-                math.ceil(y1 * image.height) - top,
+                math.floor((math.floor(x0 * image.width) - left) * scale_x),
+                math.floor((math.floor(y0 * image.height) - top) * scale_y),
+                math.ceil((math.ceil(x1 * image.width) - left) * scale_x),
+                math.ceil((math.ceil(y1 * image.height) - top) * scale_y),
             ),
         )
         if getattr(source, "source_role", "") == "white_background_product":
@@ -381,27 +396,32 @@ def extract_layers(
             alpha = _single_product(
                 alpha, importlib.import_module("cv2"), importlib.import_module("numpy")
             )
+        if alpha.size != (width, height):
+            alpha = alpha.resize((width, height), Image.Resampling.NEAREST)
         bounds = alpha.point(lambda value: 255 if value >= 128 else 0).getbbox()
         if bounds is None or (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) < 64:
             raise ValueError("Source layer is empty or incomplete")
         bounds = (
             max(0, bounds[0] - 8),
             max(0, bounds[1] - 8),
-            min(crop.width, bounds[2] + 8),
-            min(crop.height, bounds[3] + 8),
+            min(width, bounds[2] + 8),
+            min(height, bounds[3] + 8),
+        )
+        source_box = (
+            left + bounds[0], top + bounds[1], left + bounds[2], top + bounds[3]
         )
         # RGB is copied unchanged. Only alpha comes from segmentation.
-        rgba = crop.convert("RGBA")
-        rgba.putalpha(alpha)
-        if rgba.convert("RGB").tobytes() != crop.tobytes():
+        original = image.crop(source_box)
+        rgba = original.convert("RGBA")
+        rgba.putalpha(alpha.crop(bounds))
+        if rgba.convert("RGB").tobytes() != original.tobytes():
             raise ValueError("Source layer unexpectedly changed product RGB")
-        rgba = rgba.crop(bounds)
         layers.append(
             PixelLayer(
                 artifact(rgba, f"source-product-{index + 1}.png"),
                 source.asset_id,
                 source.sha256,
-                (left + bounds[0], top + bounds[1], left + bounds[2], top + bounds[3]),
+                source_box,
             )
         )
     return tuple(layers)

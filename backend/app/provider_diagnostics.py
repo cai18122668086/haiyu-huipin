@@ -11,6 +11,14 @@ MAX_PROVIDER_ATTEMPTS = 32
 CONTENT_REJECTION_MESSAGE = (
     "生成服务因内容限制拒绝了本次请求，未返回图片。原素材和要求已保留。"
 )
+PREPARATION_FAILED = "IMAGE_FIDELITY_PREPARATION_FAILED"
+PREPARATION_FAILED_MESSAGE = (
+    "商品素材未通过生图前检查，本次未发送生图请求。请核对商品位置与印字是否清晰后重试。"
+)
+_FIDELITY_PREPARATION_STAGES = frozenset({
+    "source_binding", "source_selection", "source_matte", "source_readback",
+    "source_recolor", "background_layout", "freeze_receipt",
+})
 
 
 def image_content_refusal(payload: Mapping[str, Any]) -> bool:
@@ -166,6 +174,11 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
                 key in {"version", "candidate_sha256", "retained_asset_id"}
                 and isinstance(value, str)
                 and len(value) <= 255
+            )
+            or (
+                key == "preparation_stage"
+                and isinstance(value, str)
+                and value in _FIDELITY_PREPARATION_STAGES
             )
             or (
                 key == "failed_checks"

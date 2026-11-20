@@ -198,7 +198,7 @@ def test_explicit_spatial_selection_is_verified_against_full_source_inventory(
         == value
     )
     wire["selected_object_ids"] = [f"object-{inventory.index(r)}" for r in ordered[-3:]]
-    with pytest.raises(ValueError, match="spatial subset"):
+    with pytest.raises(ValidationError, match="spatial subset"):
         validate_preparation(wire, ("product",), constraint)
 
 
@@ -316,6 +316,84 @@ def test_preparation_contract_correction_is_bounded_before_image_dispatch(
         again = asyncio.run(guard.edit(request(gateway)))
         assert again.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
         assert len(gateway.plans) == 2 and not gateway.edits
+
+
+def test_invalid_selection_geometry_is_corrected_with_the_original_sources():
+    class InvertedBoxGateway(Gateway):
+        async def plan(self, call):
+            if self.plans or call.planning_profile != PREPARE:
+                return await super().plan(call)
+            self.plans.append(call)
+            value = preparation()
+            value["selected_regions"][0]["box"] = [0.8, 0.5, 0.1, 1]
+            return PlannerCallResult(value, "source", {}, {"reported": True}, 0.1, 2)
+
+    gateway = InvertedBoxGateway()
+    asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    first, correction = gateway.plans[:2]
+    assert first.sources == correction.sources
+    assert first.idempotency_key != correction.idempotency_key
+    context = json.loads(correction.product_information[0])
+    diagnostic = context["contract_feedback"]["diagnostic"]
+    assert diagnostic["path"] == "/selected_regions/0/box"
+    assert diagnostic["constraint"] == "invalid_object_bounds"
+    assert len(gateway.edits) == 1
+
+
+@pytest.mark.parametrize("focused_matches", [True, False, None])
+def test_creative_print_check_uses_new_evidence_and_remains_fail_closed(
+    focused_matches,
+):
+    from app.provider_diagnostics import retained_metrics
+
+    class CreativeGuard(ScopedFidelity):
+        def _context(self, call):
+            return {"job_type": "creative_image", "settings": {"instruction": "换背景"}}
+
+    class CreativeGateway(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == PREPARE:
+                quad = [0.2, 0.6, 0.8, 0.6, 0.8, 0.9, 0.2, 0.9]
+                result.payload["selected_regions"][0]["print_regions"] = [
+                    quad * (2 if focused_matches is None else 1),
+                ]
+            if (
+                call.planning_profile == READBACK
+                and call.idempotency_key.endswith(":source")
+                and focused_matches is not None
+            ):
+                result.payload["text_runs"] = ["UNREADABLE"]
+            if (
+                call.planning_profile == READBACK
+                and call.idempotency_key.endswith(":source-physical-print-regions")
+                and not focused_matches
+            ):
+                result.payload["text_runs"] = ["another product"]
+            return result
+
+    gateway = CreativeGateway()
+    result = asyncio.run(CreativeGuard(gateway, None, None).edit(request(gateway)))
+    readbacks = [
+        call for call in gateway.plans if call.planning_profile == READBACK
+    ]
+    if focused_matches is None:
+        assert len(gateway.edits) == 1
+        assert not any(
+            call.idempotency_key.endswith(":source-physical-print-regions")
+            for call in readbacks
+        )
+        return
+    first, focused, *_ = readbacks
+    assert focused.sources[0].sha256 != first.sources[0].sha256
+    assert json.loads(focused.product_information[0]).keys() == {"schema"}
+    assert len(gateway.edits) == int(focused_matches)
+    if not focused_matches:
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        metrics = retained_metrics(result.raw_usage)
+        assert metrics["image_fidelity"]["preparation_stage"] == "source_readback"
+        assert metrics["image_fidelity"]["image_requests"] == 0
+        assert metrics["image_fidelity"]["planning_requests"] == 3
 
 
 def request(gateway):
@@ -836,6 +914,29 @@ def pixel_extraction(sources, preparation, model):
     with Image.open(BytesIO(sources[0].payload)) as im:
         layer = artifact(im.convert("RGBA"), "source-original.png")
     return (PixelLayer(layer, sources[0].asset_id, sources[0].sha256, (0, 0, 40, 40)),)
+
+
+def test_creative_pixel_path_does_not_require_readback_crop_geometry(monkeypatch):
+    from app import source_pixels
+
+    class CreativePixelGuard(PixelGuard):
+        def _context(self, call):
+            return {
+                "job_type": "creative_image",
+                "item_key": "image-001",
+                "settings": {"instruction": "换背景，保留原商品图案"},
+            }
+
+    monkeypatch.setattr(source_pixels, "extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+    result = asyncio.run(CreativePixelGuard(gateway, None, None).edit(request(gateway)))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    selection_call = gateway.plans[0]
+    assert selection_call.planning_profile == PREPARE
+    content = json.loads(selection_call.product_information[0])
+    fields = content["schema"]["properties"]["selected_regions"]["items"]["properties"]
+    assert "print_regions" not in fields
+    assert all(call.planning_profile != READBACK for call in gateway.plans)
 
 
 @pytest.mark.parametrize("mask_accepted", [True, False, "repair"])

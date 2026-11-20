@@ -209,6 +209,43 @@ def test_matte_copies_rgb_without_drawing_or_inventing_print(monkeypatch):
     assert layer.source_sha256 == source.sha256
 
 
+def test_high_resolution_matte_bounds_inference_and_keeps_native_rgb(monkeypatch):
+    from types import SimpleNamespace
+
+    from PIL import ImageDraw
+
+    original = Image.new("RGB", (3072, 4096), "white")
+    draw = ImageDraw.Draw(original)
+    draw.rectangle((0, 0, 2500, 3800), fill=(30, 80, 210))
+    draw.line((430, 430, 2500, 2400), fill=(20, 40, 80), width=3)
+    source = source_pixels.artifact(original, "source.png")
+    authority = SimpleNamespace(
+        asset_id="own-source", payload=source.payload, sha256=source.sha256
+    )
+
+    def alpha(image, model, selection):
+        width, height = image.size
+        assert width * height <= source_pixels.MAX_MATTE_WORK_PIXELS
+        assert selection == (0, 0, width, height)
+        mask = Image.new("L", image.size)
+        mask.paste(255, (width // 8, height // 8, width * 7 // 8, height * 7 // 8))
+        return mask
+
+    monkeypatch.setattr(source_pixels, "_alpha", alpha)
+    layer = source_pixels.extract_layers(
+        (authority,),
+        {"selected_regions": [{"asset_id": "own-source", "box": [0, 0, 1, 1]}]},
+        None,
+    )[0]
+    with Image.open(BytesIO(layer.artifact.payload)) as result:
+        source_region = original.crop(layer.source_box)
+        assert result.size == source_region.size
+        assert result.height > 3000
+        assert result.convert("RGB").tobytes() == source_region.tobytes()
+        assert result.getpixel((0, 0))[3] == 0
+    assert layer.source_sha256 == source.sha256
+
+
 def test_refinement_recovers_small_fitting_without_erasing_coarse_foreground(
     monkeypatch, tmp_path
 ):
