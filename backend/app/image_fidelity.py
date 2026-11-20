@@ -1505,18 +1505,24 @@ class FidelityGateway:
                 if frozen is None and crops and not pixel_mode:
                     preparation_stage = "source_readback"
                     readback_crops = tuple(crops)
-                    if source_recolor.enabled(context, original_sources) and getattr(
+                    recolor_readback = source_recolor.enabled(
+                        context, original_sources
+                    ) and getattr(
                         self.wrapped, "image_fidelity_source_pixels_enabled", False
-                    ):
+                    )
+                    if recolor_readback:
                         readback_crops = self._literal_print_evidence(
-                            original_request, preparation, "product_detail"
+                            original_request, preparation, "product_detail",
+                            luminance_only=True,
                         )
                     source_readback = await self._plan(
                         request,
                         READBACK,
                         readback_crops,
                         {"schema": response_schema(READBACK)},
-                        suffix=":source",
+                        suffix=(
+                            ":source-luminance-v1" if recolor_readback else ":source"
+                        ),
                     )
                     plans.append(source_readback)
                     verified = verify_source_print(source_readback, preparation)
@@ -1633,6 +1639,7 @@ class FidelityGateway:
                         raise ValueError("Original metal selection unavailable")
                     recolor_recipe = {
                         "version": source_recolor.VERSION,
+                        "print_evidence": source_recolor.PRINT_EVIDENCE,
                         "source_asset_id": source.asset_id,
                         "source_sha256": source.sha256,
                         "selection": selection.payload,
@@ -2560,7 +2567,8 @@ class FidelityGateway:
         return tuple(evidence)
 
     def _literal_print_evidence(
-        self, request: Any, preparation: dict[str, Any], role: str
+        self, request: Any, preparation: dict[str, Any], role: str,
+        *, luminance_only: bool = False,
     ) -> tuple[Any, ...]:
         from .source_print_evidence import crops
         from .xinghe_agent import SourceImage
@@ -2570,7 +2578,9 @@ class FidelityGateway:
                 f"print-detail-{i}", request.group_key, f"print-detail-{i}.png",
                 view.content_type, view.sha256, view.payload, source_role=role,
             )
-            for i, view in enumerate(crops(request.sources, preparation))
+            for i, view in enumerate(
+                crops(request.sources, preparation, luminance_only=luminance_only)
+            )
         )
 
     async def prepare_source_identity(
@@ -2972,7 +2982,13 @@ class FidelityGateway:
                 # No original, expected transcription, generated plan or user
                 # prompt is supplied: the reader cannot copy the answer key.
                 readback_sources = (review_source,)
+                luminance_only = False
                 if recolor_proof is not None:
+                    from .source_recolor import PRINT_EVIDENCE
+
+                    luminance_only = (
+                        recolor_proof.get("print_evidence") == PRINT_EVIDENCE
+                    )
                     # Local recoloring keeps original dimensions and geometry.
                     # Give the independent reader actual candidate crops at the
                     # same evidence scale as source OCR, without any answer key.
@@ -2990,7 +3006,8 @@ class FidelityGateway:
                         )
                         for i, view in enumerate(
                             self._literal_print_evidence(
-                                candidate_request, preparation, "candidate_detail"
+                                candidate_request, preparation, "candidate_detail",
+                                luminance_only=luminance_only,
                             )
                         )
                     )
@@ -2999,6 +3016,7 @@ class FidelityGateway:
                     READBACK,
                     readback_sources,
                     {"schema": response_schema(READBACK)},
+                    suffix=":candidate-luminance-v1" if luminance_only else "",
                 )
                 plans.append(readback)
                 if readback.error_code or not readback_matches(

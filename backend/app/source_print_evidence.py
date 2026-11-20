@@ -83,7 +83,10 @@ def validate(region: dict[str, Any]) -> None:
 
 
 def crops(
-    sources: tuple[Any, ...], preparation: dict[str, Any]
+    sources: tuple[Any, ...],
+    preparation: dict[str, Any],
+    *,
+    luminance_only: bool = False,
 ) -> tuple[ProviderArtifact, ...]:
     """One sheet per product, containing only real nearest-neighbor crops.
 
@@ -120,6 +123,13 @@ def crops(
                 image.height, math.ceil(max(quad[1::2]) * image.height) + padding
             )
             piece = image.crop((left, top, right, bottom))
+            if luminance_only:
+                from .source_recolor import silver_luminance
+
+                # Preserve the full context at the same brightness before and
+                # after an authorized gold-to-silver change near this surface.
+                values = bytes(silver_luminance(*pixel) for pixel in piece.getdata())
+                piece = Image.frombytes("L", piece.size, values).convert("RGB")
             mask = Image.new("L", piece.size)
             ImageDraw.Draw(mask).polygon([
                 (round(x * image.width) - left, round(y * image.height) - top)

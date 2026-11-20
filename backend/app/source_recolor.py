@@ -17,12 +17,17 @@ from .source_pixels import artifact
 
 VERSION = "source-gold-metal-to-silver-v2-protected-print"
 PROFILE = "image_fidelity_color_mask"
+PRINT_EVIDENCE = "luminance-v1"
 
 
 class MetalSelectionError(ValueError):
     def __init__(self, violations: list[dict[str, Any]]) -> None:
         super().__init__("Metal mask intersects protected printing or contains no gold")
         self.violations = violations
+
+
+def silver_luminance(red: int, green: int, blue: int) -> int:
+    return round(red * 0.2126 + green * 0.7152 + blue * 0.0722)
 
 
 def enabled(context: dict[str, Any], sources: tuple[Any, ...]) -> bool:
@@ -133,8 +138,7 @@ def render(source: Any, recipe: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
                 if print_hits:
                     blocked.update(print_hits)
                     continue
-                red, green, blue = pixels[x, y]
-                luminance = round(red * 0.2126 + green * 0.7152 + blue * 0.0722)
+                luminance = silver_luminance(*pixels[x, y])
                 edited[x, y] = (luminance, luminance, luminance)
                 changed.add((x, y))
                 found = True
@@ -164,4 +168,5 @@ def render(source: Any, recipe: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
         "outside_mask_changed_pixels": 0,
         "dimensions": [original.width, original.height],
         "image_requests": 0,
+        "print_evidence": recipe.get("print_evidence"),
     }
