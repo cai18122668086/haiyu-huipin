@@ -695,9 +695,13 @@ def background_prompt(
         "explicitly required in the description, including hands, bags and "
         "attachment loops: those are part of the scene, not products. A reserved "
         "cell may contain the required supporting surface behind the product. "
-        "Position its visible support/attachment point at the specified product "
-        "anchor so the later photographed product rests on it or hangs from it; "
-        "never replace a required interaction with an empty floating space. "
+        "For an approved hanging scene, the visible support must extend through "
+        "each measured upper contact band. For an approved standing scene, the "
+        "surface must meet each measured lower contact band. Bands mark actual "
+        "visible source contours in full-canvas coordinates. Keep required support "
+        "visible beside and between the silhouettes even when it is transparent; "
+        "a distant horizon, soft shadow or empty upper margin cannot attach them. "
+        "Never replace a required interaction with an empty floating space. "
         "Do not add unrequested props. Any products in style "
         "references are EXCLUDED; only their background is authoritative. "
         "Return one opaque full-bleed native canvas at the requested size. "
@@ -958,6 +962,44 @@ def placed_layer(
     left = round(x0 * size[0] + (width - resized.width) / 2)
     top = round(y0 * size[1] + (height - resized.height) / 2)
     return resized, (left, top, left + resized.width, top + resized.height), visible_box
+
+
+def placement_geometry(
+    cutout: ProviderArtifact, size: tuple[int, int], cell: list[float]
+) -> dict[str, list[float]]:
+    layer, (left, top, _, _), _ = placed_layer(cutout, size, cell)
+    alpha = layer.getchannel("A")
+    foreground = alpha.point(lambda value: 255 if value >= 128 else 0)
+    bounds = foreground.getbbox()
+    if bounds is None:
+        foreground = alpha
+        bounds = foreground.getbbox()
+    if bounds is None:
+        raise ValueError("Placed product has no visible contact contour")
+    x0, y0, x1, y1 = bounds
+    band_height = max(1, round((y1 - y0) * 0.06))
+
+    def normalize(box: tuple[int, int, int, int]) -> list[float]:
+        return [
+            round((left + box[0]) / size[0], 5),
+            round((top + box[1]) / size[1], 5),
+            round((left + box[2]) / size[0], 5),
+            round((top + box[3]) / size[1], 5),
+        ]
+
+    def contact_band(start: int) -> list[float]:
+        band = foreground.crop((x0, start, x1, start + band_height))
+        contact = band.getbbox()
+        assert contact is not None  # Each band includes an occupied edge row.
+        return normalize(
+            (x0 + contact[0], start + contact[1], x0 + contact[2], start + contact[3])
+        )
+
+    return {
+        "visible_product_bounds": normalize(bounds),
+        "upper_contact_band": contact_band(y0),
+        "lower_contact_band": contact_band(y1 - band_height),
+    }
 
 
 def comparison_panels(

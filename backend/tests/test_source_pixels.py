@@ -92,6 +92,8 @@ def test_scene_plate_preserves_required_supports_and_actual_product_geometry():
     assert "open palm supporting" in prompt and "tote attachment loop" in prompt
     assert "preserve" in prompt.casefold() and "required supporting surface" in prompt
     assert '"visible_product_bounds": [0.4, 0.3, 0.6, 0.8]' in prompt
+    assert "measured upper contact band" in prompt
+    assert "measured lower contact band" in prompt
     assert "Do not draw products" in prompt
     assert "unless the approved scene explicitly requires that support" in prompt
 
@@ -107,6 +109,21 @@ def test_two_screen_background_keeps_one_uninterrupted_backdrop():
     assert "TWO-SCREEN CONTINUITY" not in source_pixels.background_prompt(
         description, cells
     )
+
+
+def test_placement_geometry_uses_the_actual_asymmetric_attachment_contour():
+    original = Image.new("RGBA", (100, 100))
+    original.paste((40, 50, 60, 255), (15, 30, 85, 95))
+    original.paste((80, 60, 40, 255), (70, 5, 85, 30))
+    cutout = source_pixels.artifact(original, "physical-original.png")
+    geometry = source_pixels.placement_geometry(cutout, (100, 100), [0, 0, 1, 1])
+    x0, y0, x1, y1 = geometry["visible_product_bounds"]
+    upper_x, upper_y, _, _ = geometry["upper_contact_band"]
+    lower_x, _, lower_end_x, lower_y = geometry["lower_contact_band"]
+    assert upper_x > (x0 + x1) / 2
+    assert upper_y == y0
+    assert (lower_x, lower_end_x) == (x0, x1)
+    assert lower_y == y1
 
 
 def test_comparison_checks_real_candidate_opaque_pixels_without_approving_quality():

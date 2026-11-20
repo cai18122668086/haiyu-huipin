@@ -2117,26 +2117,18 @@ class FidelityGateway:
                     cutouts = source_pixels.crop_windows(
                         cutouts, pixel_recipe.get("source_windows")
                     )
-                    native_size = tuple(int(v) for v in request.size.split("x"))
-                    placement_geometry = []
-                    for i, (cutout, cell) in enumerate(
-                        zip(cutouts, pixel_recipe["cells"], strict=True)
-                    ):
-                        _, box, _ = source_pixels.placed_layer(
-                            cutout, (native_size[0], native_size[1]), cell
+                    width, height = (int(v) for v in request.size.split("x"))
+                    placement_geometry = [
+                        {
+                            "placement": index,
+                            **source_pixels.placement_geometry(
+                                cutout, (width, height), cell
+                            ),
+                        }
+                        for index, (cutout, cell) in enumerate(
+                            zip(cutouts, pixel_recipe["cells"], strict=True)
                         )
-                        x0, y0, x1, y1 = (
-                            value / native_size[axis % 2]
-                            for axis, value in enumerate(box)
-                        )
-                        placement_geometry.append(
-                            {
-                                "placement": i,
-                                "visible_product_bounds": [x0, y0, x1, y1],
-                                "upper_edge_midpoint": [(x0 + x1) / 2, y0],
-                                "center": [(x0 + x1) / 2, (y0 + y1) / 2],
-                            }
-                        )
+                    ]
                     pixel_recipe["wire_prompt"] = source_pixels.background_prompt(
                         pixel_recipe["background_projection"]["background_description"],
                         pixel_recipe["cells"],
