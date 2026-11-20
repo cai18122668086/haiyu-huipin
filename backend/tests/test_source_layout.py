@@ -73,6 +73,29 @@ def test_already_valid_layout_and_text_only_collisions_are_not_reinterpreted():
     assert source_layout.place_products_without_collisions(rows, text, 1) == (rows, [])
 
 
+def test_mobile_layout_can_move_outer_products_and_keep_the_middle_in_place():
+    boxes = [
+        [0.28, 0.16, 0.5, 0.72],
+        [0.43, 0.1, 0.63, 0.72],
+        [0.57, 0.15, 0.8, 0.72],
+    ]
+    rows = [
+        {"layer_index": i, "panel": 0, "panel_box": box}
+        for i, box in enumerate(boxes)
+    ]
+    text = [
+        {"panel": 0, "panel_box": [0.06, 0.84, 0.52, 0.92]},
+        {"panel": 0, "panel_box": [0.06, 0.75, 0.58, 0.82]},
+    ]
+
+    fixed, changes = source_layout.place_products_without_collisions(rows, text, 1)
+    indices, _ = source_pixels.native_placements(fixed, 3, 1)
+    assert indices == [0, 1, 2]
+    assert fixed[1] == rows[1]
+    assert [change["placement_index"] for change in changes] == [0, 2]
+    assert rows[0]["panel_box"] == [0.28, 0.16, 0.5, 0.72]
+
+
 def test_detail_inset_uses_the_original_pixel_budget_and_avoids_approved_heading():
     rows = [
         {"layer_index": 0, "panel": 0, "panel_box": [0.1, 0.2, 0.6, 0.8]},
