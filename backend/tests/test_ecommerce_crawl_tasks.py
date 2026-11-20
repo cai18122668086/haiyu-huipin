@@ -11,12 +11,14 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from PIL import Image
+from sqlalchemy import select
 
 import app.ecommerce_crawl_tasks as crawl_tasks
 import app.ecommerce_worker as ecommerce_worker
 from app.main import create_app
 from app.models import (
     AssetRecord,
+    CrawlEventRecord,
     CrawlProfileLeaseRecord,
     CrawlTaskRecord,
     EcommerceWorkerRecord,
@@ -82,6 +84,44 @@ def test_crawl_task_create_query_events_and_result(
     assert statuses[:2] == ["created", "queued"]
     assert "running" in statuses
     assert statuses[-1] == "succeeded"
+
+
+def test_crawl_timeline_lists_creation_before_queueing_with_equal_timestamps(
+    client: TestClient, monkeypatch,
+) -> None:
+    monkeypatch.setattr(crawl_tasks, "_schedule", lambda app, task_id: None)
+    original_id = crawl_tasks._new_id
+    event_ids = iter(("cev_" + "f" * 32, "cev_" + "0" * 32))
+    monkeypatch.setattr(
+        crawl_tasks, "_new_id",
+        lambda prefix: next(event_ids) if prefix == "cev" else original_id(prefix),
+    )
+    created = client.post(
+        "/api/ecommerce/crawl-tasks",
+        headers={"Idempotency-Key": "crawl-same-clock-tick"},
+        json={
+            "workspace_id": "ws_test",
+            "url": "https://item.taobao.com/item.htm?id=123456789012",
+            "platform": "taobao",
+        },
+    )
+    assert created.status_code == 202
+    task_id = created.json()["data"]["id"]
+    with client.app.state.session_factory() as session:
+        events = session.scalars(
+            select(CrawlEventRecord).where(CrawlEventRecord.task_id == task_id)
+        ).all()
+        assert len(events) == 2
+        timestamp = min(event.created_at for event in events)
+        for event in events:
+            event.created_at = timestamp
+        session.commit()
+
+    response = client.get(f"/api/ecommerce/crawl-tasks/{task_id}/events")
+    assert response.status_code == 200
+    assert [event["to_status"] for event in response.json()["data"]] == [
+        "created", "queued",
+    ]
 
 
 def test_crawl_task_idempotency_reuses_task_and_rejects_payload_change(
