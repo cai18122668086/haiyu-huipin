@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import math
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
 
 from PIL import Image, ImageFilter, ImageOps
 
@@ -128,7 +128,10 @@ def crops(
 
                 # Preserve the full context at the same brightness before and
                 # after an authorized gold-to-silver change near this surface.
-                values = bytes(silver_luminance(*pixel) for pixel in piece.getdata())
+                pixels = cast(
+                    tuple[tuple[int, int, int], ...], piece.get_flattened_data()
+                )
+                values = bytes(silver_luminance(*pixel) for pixel in pixels)
                 piece = Image.frombytes("L", piece.size, values).convert("RGB")
             mask = Image.new("L", piece.size)
             ImageDraw.Draw(mask).polygon([
