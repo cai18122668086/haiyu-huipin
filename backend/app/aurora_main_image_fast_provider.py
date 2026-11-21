@@ -21,7 +21,11 @@ from .errors import ApiError
 from .models import JobAttemptRecord, JobItemRecord, JobPlanRecord, JobRecord, utc_now
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
-from .provider_diagnostics import retained_metrics, retained_request_count
+from .provider_diagnostics import (
+    public_failure_message,
+    retained_metrics,
+    retained_request_count,
+)
 from .services import canonical_hash, get_ready_assets
 from .storage import ValidatedImage
 from .xinghe_agent import ImageEditRequest, SourceImage, XingheGateway
@@ -490,7 +494,9 @@ class FastMainImageProvider:
                     else result.error_code or "FAST_MAIN_IMAGE_IMAGE_FAILED",
                     error_message="原生图结果尚未核实，请先核对原任务。"
                     if unknown
-                    else "本张主图生成未完成，可重试。",
+                    else public_failure_message(
+                        result.error_code, "本张主图生成未完成，可重试。"
+                    ),
                     provider_request_id=result.provider_request_id,
                     raw_usage=usage,
                     usage_reported=bool(usage.get("reported")),

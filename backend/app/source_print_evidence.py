@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import math
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
 
 from PIL import Image, ImageFilter, ImageOps
 
@@ -82,8 +82,46 @@ def validate(region: dict[str, Any]) -> None:
         polygons.append(points)
 
 
+def identical_print_regions(
+    source: Any, candidate: Any, preparation: dict[str, Any]
+) -> bool:
+    """Check every original protected print rectangle at native RGB resolution."""
+    if any(
+        hashlib.sha256(s.payload).hexdigest() != s.sha256 for s in (source, candidate)
+    ):
+        return False
+    with (
+        Image.open(BytesIO(source.payload)) as first,
+        Image.open(BytesIO(candidate.payload)) as second,
+    ):
+        a = ImageOps.exif_transpose(first).convert("RGB")
+        b = ImageOps.exif_transpose(second).convert("RGB")
+    if a.size != b.size:
+        return False
+    regions = preparation.get("selected_regions", [])
+    if not regions:
+        return False
+    for region in regions:
+        validate(region)
+        if region["asset_id"] != source.asset_id or not region.get("print_regions"):
+            return False
+        for quad in region["print_regions"]:
+            area = (
+                math.floor(min(quad[::2]) * a.width),
+                math.floor(min(quad[1::2]) * a.height),
+                math.ceil(max(quad[::2]) * a.width),
+                math.ceil(max(quad[1::2]) * a.height),
+            )
+            if a.crop(area).tobytes() != b.crop(area).tobytes():
+                return False
+    return True
+
+
 def crops(
-    sources: tuple[Any, ...], preparation: dict[str, Any]
+    sources: tuple[Any, ...],
+    preparation: dict[str, Any],
+    *,
+    luminance_only: bool = False,
 ) -> tuple[ProviderArtifact, ...]:
     """One sheet per product, containing only real nearest-neighbor crops.
 
@@ -120,6 +158,16 @@ def crops(
                 image.height, math.ceil(max(quad[1::2]) * image.height) + padding
             )
             piece = image.crop((left, top, right, bottom))
+            if luminance_only:
+                from .source_recolor import silver_luminance
+
+                # Preserve the full context at the same brightness before and
+                # after an authorized gold-to-silver change near this surface.
+                pixels = cast(
+                    tuple[tuple[int, int, int], ...], piece.get_flattened_data()
+                )
+                values = bytes(silver_luminance(*pixel) for pixel in pixels)
+                piece = Image.frombytes("L", piece.size, values).convert("RGB")
             mask = Image.new("L", piece.size)
             ImageDraw.Draw(mask).polygon([
                 (round(x * image.width) - left, round(y * image.height) - top)

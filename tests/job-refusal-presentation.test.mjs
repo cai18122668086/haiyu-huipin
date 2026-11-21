@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { jobNote, safeJobFailureSummary } from "../lib/jobs/presentation.ts";
 
+test("unclear photos request the right replacement while inspection outages stay retryable", () => {
+  for (const [code, advice] of [["SOURCE_PRODUCT_UNCLEAR", /完整轮廓/], ["SOURCE_PRINT_UNREADABLE", /对焦印字/], ["SOURCE_DETAIL_UNCLEAR", /细节近照/]]) {
+    const message = safeJobFailureSummary(code);
+    assert.match(message, advice);
+    assert.match(message, /上传/);
+    assert.equal(jobNote({ status: "partial", items: [{ status: "failed", error_code: code }] }), message);
+  }
+  assert.doesNotMatch(safeJobFailureSummary("IMAGE_FIDELITY_PREPARATION_FAILED"), /重新上传/);
+});
+
 test("content refusal has an actionable safe summary for new and historical jobs", () => {
   const summary = safeJobFailureSummary("IMAGE_CONTENT_REJECTED");
   assert.match(summary, /内容限制/);
@@ -31,4 +41,14 @@ test("failed original async tasks show the upstream failure without inviting a d
   assert.match(summary, /核查原任务/);
   assert.doesNotMatch(summary, /结果尚未确认|稍后重试/);
   assert.equal(jobNote({ status: "failed", items: [{ status: "failed", error_code: "IMAGE_ASYNC_TASK_FAILED" }] }), summary);
+});
+
+test("partial results with a held provider task direct users to reconciliation", () => {
+  const note = jobNote({ status: "partial", allowed_actions: [], items: [
+    { status: "succeeded" }, { status: "failed", error_code: "PROVIDER_OUTCOME_UNKNOWN" },
+  ] });
+  assert.match(note, /部分结果已完成.*核查原任务/);
+  assert.doesNotMatch(note, /重试失败项目|重新上传/);
+  assert.doesNotMatch(jobNote({ status: "partial", allowed_actions: [] }), /重试/);
+  assert.match(jobNote({ status: "partial", allowed_actions: ["retry"] }), /重试失败项目/);
 });

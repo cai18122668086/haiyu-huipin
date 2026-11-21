@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import json
 from contextlib import suppress
+from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ from typing import Any
 from PIL import Image
 
 from .models import JobItemRecord, JobRecord, ReplicaDocumentRecord, utc_now
+from .native_portrait_delivery import follows_native_square
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
 from .replica_canvas import delivery_receipt, native_budget_matches, receipt_matches
 from .replica_layout import exact_review_context
@@ -697,6 +699,14 @@ class NativeReplicaProvider:
             "visual_evidence_policy_version": VISUAL_EVIDENCE_POLICY_VERSION,
             "inflight_format_attempt": format_start,
         }
+        if (
+            not (format_start or reconcile_only)
+            and run.method == "style"
+            and follows_native_square(getattr(run, "context", {}), canvas)
+        ):
+            # Pin the relay's supported native square before the first dispatch.
+            # The module canvas and actual pixel checks retain their own contract.
+            ledger[token]["haiyu_native_canvas"] = "2000x2000"
         if reconcile_only:
             ledger[token]["reconciliation_attempts"] = resumed_receipt.get("reconciliation_attempts", 0) + 1
         if resolution_recovery is not None:
@@ -737,25 +747,50 @@ class NativeReplicaProvider:
                 write_json(ledger_path, ledger)
                 await self._save(run, request.job_id)
             before = getattr(self.gateway, "external_network_request_count", None)
-            result = await self.gateway.edit(
-                ImageEditRequest(
-                    workspace_id=request.workspace_id,
-                    job_id=request.job_id,
-                    job_item_id=request.job_item_id,
-                    attempt_id=request.attempt_id,
-                    page_number=1,
-                    group_key=key,
-                    sources=render_sources,
-                    prompt=attempt_prompt,
-                    quality="high",
-                    idempotency_key=f"replica-native:{request.job_id}:{token}"
-                    + (f":format-{format_attempt + 1}" if format_attempt else ""),
-                    size=f"{canvas[0]}x{canvas[1]}",
-                    preserve_provider_artifact=True,
-                    single_dispatch=False,
-                    reconcile_only=reconcile_only,
-                )
+            image_request = ImageEditRequest(
+                workspace_id=request.workspace_id,
+                job_id=request.job_id,
+                job_item_id=request.job_item_id,
+                attempt_id=request.attempt_id,
+                page_number=1,
+                group_key=key,
+                sources=render_sources,
+                prompt=attempt_prompt,
+                quality="high",
+                idempotency_key=f"replica-native:{request.job_id}:{token}"
+                + (f":format-{format_attempt + 1}" if format_attempt else ""),
+                size=f"{canvas[0]}x{canvas[1]}",
+                preserve_provider_artifact=True,
+                single_dispatch=False,
+                reconcile_only=reconcile_only,
+                haiyu_native_canvas=ledger[token].get("haiyu_native_canvas"),
             )
+            edit_replica = getattr(self.gateway, "edit_replica", None)
+            if edit_replica is None:
+                result = await self.gateway.edit(image_request)
+            else:
+                # Preserve the native wire order while identifying original views
+                # separately from approved crops for spatial selection.
+                fidelity_sources = tuple(
+                    replace(
+                        source,
+                        source_role=(
+                            "product_original"
+                            if Path(source.asset_id).parent == run.root / "inputs"
+                            else "product_detail"
+                        ),
+                    )
+                    if source.source_role == "product_reference"
+                    else source
+                    for source in image_request.sources
+                )
+                image_request = replace(image_request, sources=fidelity_sources)
+                result = await edit_replica(
+                    image_request,
+                    request,
+                    token=token,
+                    format_attempt=format_attempt,
+                )
             after = getattr(self.gateway, "external_network_request_count", None)
             was_reconciliation = reconcile_only
             # A known returned file may authorize a remaining format correction;

@@ -93,6 +93,7 @@ from .models import (
     WorkspaceRecord,
     utc_now,
 )
+from .provider_diagnostics import SOURCE_UPLOAD_MESSAGES
 from .provider_quota import reserve_provider_job_quota
 from .schemas_v1 import (
     AccessUrlRequest,
@@ -164,6 +165,7 @@ from .services import (
     release_credits,
     require_creative_reconciled,
     require_idempotency_key,
+    require_usable_retry_sources,
     retry_item_ids,
     settle_credits,
     transition_job,
@@ -2302,7 +2304,11 @@ async def retry_job(
         )
     enforce_active_job_limit(session, workspace.workspace_id)
     selected = retry_item_ids(session, source, payload.scope, payload.item_ids)
-    if not selected:
+    from .services import can_retry_complete_set_audit
+
+    if not selected and not can_retry_complete_set_audit(
+        session, source, payload.scope
+    ):
         raise ApiError(
             status.HTTP_409_CONFLICT,
             "JOB_NOT_RETRYABLE",
@@ -2465,6 +2471,7 @@ def clone_job(
         select(JobItemRecord).where(JobItemRecord.job_id == source.id)
     ).all()
     selected = [item.id for item in source_items]
+    require_usable_retry_sources(source, source_items)
     from .aurora_main_image_fast import require_recoverable_plan
     from .aurora_main_image_fast import selected as fast_main
 
@@ -5213,7 +5220,17 @@ def _copy_job_relations_for_retry(
                         else JobItemStatus.SKIPPED.value
                     )
                 ),
-                stage="retry" if retry_this else "reused",
+                stage=(
+                    item.stage
+                    if item.error_code in SOURCE_UPLOAD_MESSAGES
+                    else "retry"
+                    if retry_this
+                    else "reused"
+                ),
+                error_code=item.error_code
+                if item.error_code in SOURCE_UPLOAD_MESSAGES
+                else None,
+                error_message=SOURCE_UPLOAD_MESSAGES.get(item.error_code or ""),
                 quality=item.quality,
                 configuration=copied_configuration,
                 source_job_item_id=item.id,

@@ -582,7 +582,7 @@ class HaiyuTransport:
             )
         # Native controls remain operator-gated until their upstream bindings
         # pass acceptance. The workflow always validates the returned pixels.
-        if values.get("size"):
+        if values.get("size") and values["size"] != "auto":
             note += f"\nTarget output canvas: {values['size']} pixels."
         from .haiyu_prompt import fit_prompt
 

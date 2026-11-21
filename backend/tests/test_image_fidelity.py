@@ -198,7 +198,7 @@ def test_explicit_spatial_selection_is_verified_against_full_source_inventory(
         == value
     )
     wire["selected_object_ids"] = [f"object-{inventory.index(r)}" for r in ordered[-3:]]
-    with pytest.raises(ValueError, match="spatial subset"):
+    with pytest.raises(ValidationError, match="spatial subset"):
         validate_preparation(wire, ("product",), constraint)
 
 
@@ -316,6 +316,84 @@ def test_preparation_contract_correction_is_bounded_before_image_dispatch(
         again = asyncio.run(guard.edit(request(gateway)))
         assert again.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
         assert len(gateway.plans) == 2 and not gateway.edits
+
+
+def test_invalid_selection_geometry_is_corrected_with_the_original_sources():
+    class InvertedBoxGateway(Gateway):
+        async def plan(self, call):
+            if self.plans or call.planning_profile != PREPARE:
+                return await super().plan(call)
+            self.plans.append(call)
+            value = preparation()
+            value["selected_regions"][0]["box"] = [0.8, 0.5, 0.1, 1]
+            return PlannerCallResult(value, "source", {}, {"reported": True}, 0.1, 2)
+
+    gateway = InvertedBoxGateway()
+    asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    first, correction = gateway.plans[:2]
+    assert first.sources == correction.sources
+    assert first.idempotency_key != correction.idempotency_key
+    context = json.loads(correction.product_information[0])
+    diagnostic = context["contract_feedback"]["diagnostic"]
+    assert diagnostic["path"] == "/selected_regions/0/box"
+    assert diagnostic["constraint"] == "invalid_object_bounds"
+    assert len(gateway.edits) == 1
+
+
+@pytest.mark.parametrize("focused_matches", [True, False, None])
+def test_creative_print_check_uses_new_evidence_and_remains_fail_closed(
+    focused_matches,
+):
+    from app.provider_diagnostics import retained_metrics
+
+    class CreativeGuard(ScopedFidelity):
+        def _context(self, call):
+            return {"job_type": "creative_image", "settings": {"instruction": "换背景"}}
+
+    class CreativeGateway(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == PREPARE:
+                quad = [0.2, 0.6, 0.8, 0.6, 0.8, 0.9, 0.2, 0.9]
+                result.payload["selected_regions"][0]["print_regions"] = [
+                    quad * (2 if focused_matches is None else 1),
+                ]
+            if (
+                call.planning_profile == READBACK
+                and call.idempotency_key.endswith(":source")
+                and focused_matches is not None
+            ):
+                result.payload["text_runs"] = ["モモンガ", "UNREADABLE"]
+            if (
+                call.planning_profile == READBACK
+                and call.idempotency_key.endswith(":source-physical-print-regions")
+                and not focused_matches
+            ):
+                result.payload["text_runs"] = ["another product"]
+            return result
+
+    gateway = CreativeGateway()
+    result = asyncio.run(CreativeGuard(gateway, None, None).edit(request(gateway)))
+    readbacks = [
+        call for call in gateway.plans if call.planning_profile == READBACK
+    ]
+    if focused_matches is None:
+        assert len(gateway.edits) == 1
+        assert not any(
+            call.idempotency_key.endswith(":source-physical-print-regions")
+            for call in readbacks
+        )
+        return
+    first, focused, *_ = readbacks
+    assert focused.sources[0].sha256 != first.sources[0].sha256
+    assert json.loads(focused.product_information[0]).keys() == {"schema"}
+    assert len(gateway.edits) == int(focused_matches)
+    if not focused_matches:
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        metrics = retained_metrics(result.raw_usage)
+        assert metrics["image_fidelity"]["preparation_stage"] == "source_readback"
+        assert metrics["image_fidelity"]["image_requests"] == 0
+        assert metrics["image_fidelity"]["planning_requests"] == 3
 
 
 def request(gateway):
@@ -773,6 +851,13 @@ class PixelGateway(Gateway):
                 "repairs": [],
                 "edge_feather_px": 0,
             }
+        elif call.planning_profile == "image_fidelity_source_window":
+            rows = json.loads(call.product_information[0])["placements_in_image_order"]
+            payload = {"crops": [
+                {"placement": row["index"], "window": row["source_window"],
+                 "verdict": "matches", "evidence": "Synthetic approved crop"}
+                for row in rows
+            ]}
         elif call.planning_profile == BACKGROUND:
             payload = {
                 "background_description": "Pure white empty background",
@@ -836,6 +921,34 @@ def pixel_extraction(sources, preparation, model):
     with Image.open(BytesIO(sources[0].payload)) as im:
         layer = artifact(im.convert("RGBA"), "source-original.png")
     return (PixelLayer(layer, sources[0].asset_id, sources[0].sha256, (0, 0, 40, 40)),)
+
+
+@pytest.mark.parametrize("instruction", [
+    "换背景，保留原商品图案", "增加图案桌布背景，不额外增加内容",
+])
+def test_creative_pixel_path_does_not_require_readback_crop_geometry(
+    monkeypatch, instruction,
+):
+    from app import source_pixels
+
+    class CreativePixelGuard(PixelGuard):
+        def _context(self, call):
+            return {
+                "job_type": "creative_image",
+                "item_key": "image-001",
+                "settings": {"instruction": instruction},
+            }
+
+    monkeypatch.setattr(source_pixels, "extract_layers", pixel_extraction)
+    gateway = PixelGateway()
+    result = asyncio.run(CreativePixelGuard(gateway, None, None).edit(request(gateway)))
+    assert result.outcome == ProviderOutcome.SUCCEEDED
+    selection_call = gateway.plans[0]
+    assert selection_call.planning_profile == PREPARE
+    content = json.loads(selection_call.product_information[0])
+    fields = content["schema"]["properties"]["selected_regions"]["items"]["properties"]
+    assert "print_regions" not in fields
+    assert all(call.planning_profile != READBACK for call in gateway.plans)
 
 
 @pytest.mark.parametrize("mask_accepted", [True, False, "repair"])
@@ -1134,8 +1247,8 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
 ):
     extractions = []
 
-    def extraction(*args):
-        extractions.append(1)
+    def extraction(*args, tight_context=False):
+        extractions.append(tight_context)
         return pixel_extraction(*args)
 
     monkeypatch.setattr("app.source_pixels.extract_layers", extraction)
@@ -1167,7 +1280,7 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
             )
         )
     )
-    assert len(extractions) == 1
+    assert extractions == ([False] if accepted else [False, True])
     assert len([p for p in gateway.plans if p.planning_profile == MATTE]) == 1
     if accepted:
         assert one.outcome == two.outcome == ProviderOutcome.SUCCEEDED
@@ -1177,19 +1290,20 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
             == second.frozen["pixel_recipe"]["layers"]
         )
     else:
-        assert one.error_code == two.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert one.error_code == two.error_code == "SOURCE_PRODUCT_UNCLEAR"
         assert gateway.edits == []
 
 
 @pytest.mark.parametrize("second_pass", [True, False])
+@pytest.mark.parametrize("use_alternate", [True, False])
 def test_one_changed_source_mask_is_reaudited_before_any_image(
-    monkeypatch, second_pass
+    monkeypatch, second_pass, use_alternate
 ):
     from PIL import ImageDraw
 
     from app import source_pixels
 
-    def extraction(sources, preparation, model):
+    def extraction(sources, preparation, model, *, tight_context=False):
         layer = pixel_extraction(sources, preparation, model)[0]
         with Image.open(BytesIO(layer.artifact.payload)) as opened:
             rgba = opened.convert("RGBA")
@@ -1197,7 +1311,7 @@ def test_one_changed_source_mask_is_reaudited_before_any_image(
         draw = ImageDraw.Draw(alpha)
         draw.rectangle((18, 2, 22, 8), fill=255)
         draw.rectangle((8, 9, 32, 38), fill=255)
-        alpha.putpixel((20, 5), 0)
+        alpha.putpixel((20, 5), 255 if tight_context else 0)
         rgba.putalpha(alpha)
         return (replace(layer, artifact=source_pixels.artifact(rgba, "source.png")),)
 
@@ -1212,7 +1326,7 @@ def test_one_changed_source_mask_is_reaudited_before_any_image(
                     result.payload.update(
                         complete_objects=False,
                         unresolved=["Missing source edge"],
-                        repairs=[
+                        repairs=[] if use_alternate else [
                             {
                                 "layer_index": 0,
                                 "action": "restore_foreground",
@@ -1243,8 +1357,82 @@ def test_one_changed_source_mask_is_reaudited_before_any_image(
         assert len(gateway.edits) == 1
         assert len(guard.frozen["pixel_recipe"]["mask_audits"]) == 2
     else:
-        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert result.error_code == "SOURCE_PRODUCT_UNCLEAR"
         assert gateway.edits == []
+
+
+@pytest.mark.parametrize("issue_stage", [PREPARE, MATTE])
+def test_indistinct_source_stops_at_first_visual_finding(monkeypatch, issue_stage):
+    from app.provider_diagnostics import SOURCE_UPLOAD_MESSAGES, SUBJECT_UNCLEAR
+
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class UnclearSource(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile != issue_stage:
+                return result
+            if issue_stage == PREPARE:
+                return replace(result, payload={"source_issue": SUBJECT_UNCLEAR})
+            result.payload.update(complete_objects=False, no_context_leak=False)
+            return result
+
+    gateway = UnclearSource()
+    guard = PixelGuard(gateway, None, None)
+    original = request(gateway)
+    for item in ("first", "second"):
+        result = asyncio.run(
+            guard.edit(replace(original, job_item_id=item, idempotency_key=item))
+        )
+        assert result.error_code == SUBJECT_UNCLEAR
+        assert result.error_message == SOURCE_UPLOAD_MESSAGES[SUBJECT_UNCLEAR]
+        assert not result.retryable
+    assert sum(p.planning_profile == issue_stage for p in gateway.plans) == 1
+    assert not gateway.edits
+
+
+@pytest.mark.parametrize("photo_problem", [True, False])
+def test_empty_foreground_and_inspection_failure_have_distinct_recovery(
+    monkeypatch, photo_problem
+):
+    from app.source_pixels import SourceForegroundUnclear
+
+    def extract(*args):
+        if photo_problem:
+            raise SourceForegroundUnclear("No reliable foreground")
+        raise OSError("Model file unavailable")
+
+    monkeypatch.setattr("app.source_pixels.extract_layers", extract)
+    gateway = PixelGateway()
+    guard = PixelGuard(gateway, None, None)
+    original = request(gateway)
+    for item in ("first", "second"):
+        result = asyncio.run(
+            guard.edit(replace(original, job_item_id=item, idempotency_key=item))
+        )
+        assert result.error_code == (
+            "SOURCE_PRODUCT_UNCLEAR"
+            if photo_problem
+            else "IMAGE_FIDELITY_PREPARATION_FAILED"
+        )
+        assert ("重新上传" in result.error_message) is photo_problem
+    assert not gateway.edits
+
+
+def test_unreadable_original_print_requests_a_closeup_without_dispatch():
+    class Unreadable(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == READBACK:
+                result.payload["text_runs"] = ["UNREADABLE"]
+            return result
+
+    gateway = Unreadable()
+    result = asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    assert result.error_code == "SOURCE_PRINT_UNREADABLE"
+    assert "对焦印字" in result.error_message
+    assert sum(call.planning_profile == READBACK for call in gateway.plans) == 1
+    assert not gateway.edits
 
 
 def test_failed_source_preflight_retains_planner_receipt_without_buying_an_image(

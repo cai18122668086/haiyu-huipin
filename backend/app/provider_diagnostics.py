@@ -11,6 +11,76 @@ MAX_PROVIDER_ATTEMPTS = 32
 CONTENT_REJECTION_MESSAGE = (
     "生成服务因内容限制拒绝了本次请求，未返回图片。原素材和要求已保留。"
 )
+PREPARATION_FAILED = "IMAGE_FIDELITY_PREPARATION_FAILED"
+PREPARATION_FAILED_MESSAGE = (
+    "生图前检查未能完成，本次未开始生成。请稍后重试。"
+)
+SUBJECT_UNCLEAR = "SOURCE_PRODUCT_UNCLEAR"
+PRINT_UNREADABLE = "SOURCE_PRINT_UNREADABLE"
+DETAIL_UNCLEAR = "SOURCE_DETAIL_UNCLEAR"
+SOURCE_UPLOAD_MESSAGES = {
+    DETAIL_UNCLEAR: "原图里看不清这处商品细节，这一项已停止生成。请上传商品全图，"
+    "并附上一张对焦清楚的细节近照。",
+    SUBJECT_UNCLEAR: (
+        "照片里看不清商品的完整轮廓，这一项已停止生成。"
+        "请把商品放在纯色背景前，移开遮挡物，拍清主体和配件后重新上传。"
+    ),
+    PRINT_UNREADABLE: (
+        "原图上的商品印字看不清，这一项已停止生成。"
+        "请对焦印字，避开反光，重新上传能看清文字的原图。"
+    ),
+}
+FIDELITY_REJECTED = "IMAGE_FIDELITY_REJECTED"
+FIDELITY_REJECTED_MESSAGE = (
+    "生成图未通过商品保真审核，候选图已保留。请核对商品外观、图案与文字要求。"
+)
+_FIDELITY_PREPARATION_STAGES = frozenset({
+    "source_binding", "source_selection", "source_matte", "source_readback",
+    "source_recolor", "background_layout", "freeze_receipt",
+})
+
+
+def preparation_message(stage: object) -> str:
+    if stage == "source_matte":
+        return (
+            "商品轮廓未能与背景完整分开，本次未发送生图请求。"
+            "请换用主体完整、周围没有遮挡物的商品实拍图。"
+        )
+    if stage == "source_readback":
+        return (
+            "商品原图上的文字未能核对，本次未发送生图请求。"
+            "请上传能看清印字的原图。"
+        )
+    return PREPARATION_FAILED_MESSAGE
+
+
+def public_failure_message(
+    code: str | None, stored: str | None, details: object = None,
+) -> str | None:
+    if code in SOURCE_UPLOAD_MESSAGES:
+        return SOURCE_UPLOAD_MESSAGES[code]
+    # Read historical generic adapter errors without rewriting task history.
+    if code == "IMAGE_REQUEST_FAILED" and isinstance(details, Mapping):
+        error = details.get("provider_error")
+        if (
+            details.get("http_status") == 400 and isinstance(error, Mapping)
+            and error.get("code") == "unsupported_size"
+        ):
+            return "生成服务不支持所选尺寸。请更换图片尺寸后重新提交。"
+    if stored in {
+        None,
+        "Image provider returned a controlled failure.",
+        "本张主图生成未完成，可重试。",
+    }:
+        if code == PREPARATION_FAILED:
+            if isinstance(details, Mapping):
+                fidelity = details.get("image_fidelity")
+                if isinstance(fidelity, Mapping):
+                    return preparation_message(fidelity.get("preparation_stage"))
+            return PREPARATION_FAILED_MESSAGE
+        if code == FIDELITY_REJECTED:
+            return FIDELITY_REJECTED_MESSAGE
+    return stored
 
 
 def image_content_refusal(payload: Mapping[str, Any]) -> bool:
@@ -104,6 +174,10 @@ def known_image_route_rejection(status: int, payload: Mapping[str, Any]) -> bool
     ):
         return False
     code = error.get("code")
+    if code == "unsupported_size":
+        # This model rejected the unchanged dimensions at admission.
+        # An accepted task must be reconciled instead of being redispatched.
+        return error.get("type") == "invalid_request_error" and not payload.get("id")
     if code == "upstream_text_reply":
         return error.get("type") == "invalid_request_error"
     return code in {
@@ -156,16 +230,31 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
         result["image_fidelity"] = {
             key: value
             for key, value in fidelity.items()
-            if (key in {"accepted", "costs_aggregated"} and type(value) is bool)
+            if (
+                key in {"accepted", "costs_aggregated", "independent_ocr_matched"}
+                and type(value) is bool
+            )
             or (
                 key in {"image_requests", "planning_requests"}
                 and type(value) is int
                 and 0 <= value <= MAX_PROVIDER_ATTEMPTS
             )
             or (
-                key in {"version", "candidate_sha256", "retained_asset_id"}
+                key
+                in {
+                    "version",
+                    "candidate_sha256",
+                    "retained_asset_id",
+                    "detail_review_version",
+                }
                 and isinstance(value, str)
                 and len(value) <= 255
+            )
+            or (key == "print_verification" and value == "original_rgb_exact")
+            or (
+                key == "preparation_stage"
+                and isinstance(value, str)
+                and value in _FIDELITY_PREPARATION_STAGES
             )
             or (
                 key == "failed_checks"

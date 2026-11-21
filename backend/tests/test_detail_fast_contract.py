@@ -83,6 +83,20 @@ def test_complete_compact_strategy_preserves_all_pages_and_copy(count):
     detail_fast.validate_payload(payload(normalized), count)
 
 
+def test_trailing_empty_rhythm_slots_preserve_the_eight_authored_pages():
+    value = raw(8)
+    authored = list(value["plan"]["visual_rhythm_plan"])
+    value["plan"]["visual_rhythm_plan"].extend(["", "  "])
+    normalized = detail_fast.normalize_strategy(value)
+    detail_fast.validate_strategy(normalized, 8)
+    assert normalized["plan"]["visual_rhythm_plan"] == authored
+    assert len(value["plan"]["visual_rhythm_plan"]) == 10
+    for invalid in (authored + ["extra authored page"], [""] + authored):
+        value["plan"]["visual_rhythm_plan"] = invalid
+        with pytest.raises(XingheAgentError):
+            detail_fast.normalize_strategy(value)
+
+
 def test_truncated_page_count_and_incomplete_shared_locks_fail_closed():
     value = detail_fast.normalize_strategy(raw())
     value["plan"]["screens"].pop()

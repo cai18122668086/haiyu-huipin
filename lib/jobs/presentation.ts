@@ -112,12 +112,22 @@ export function jobCount(job: Job | JobDetail): string { return `${job.succeeded
 
 export function jobNote(job: Job | JobDetail): string {
   if (job.type === "detail_pack" && job.stage === "intake_confirmation_required") return "请先确认商品事实，随后审阅完整详情规划。";
+  const upload = jobSourceUploadMessage(job);
+  if (upload) return upload;
   if (job.status === "failed" && "items" in job) {
     const failed = job.items.find((item) => item.status === "failed");
     if (failed?.error_code) return safeJobFailureSummary(failed.error_code, failed.error_details);
     if (job.error_code) return safeJobFailureSummary(job.error_code, job.error_details);
   }
-  if (job.status === "partial") return "部分结果已完成，可在详情中查看并重试失败项目。";
+  if (job.status === "partial") {
+    if ("items" in job) {
+      const heldCodes = ["PROVIDER_OUTCOME_UNKNOWN", "IMAGE_TASK_QUERY_UNCONFIRMED", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED", "IMAGE_ASYNC_TASK_FAILED"];
+      const held = job.items.find(item => item.status === "failed" && heldCodes.includes(item.error_code ?? ""));
+      const code = held?.error_code ?? job.error_code;
+      if (code && heldCodes.includes(code)) return `部分结果已完成。${safeJobFailureSummary(code)}`;
+    }
+    return job.allowed_actions?.includes("retry") ? "部分结果已完成，可在详情中查看并重试失败项目。" : "部分结果已完成，可在详情中查看。";
+  }
   if (job.status === "failed") return "生成未完成，请查看详情中的安全错误摘要。";
   if (job.status === "awaiting_confirmation") return "生成方案已经就绪，等待确认后继续。";
   if (job.status === "cancelling") return "正在安全取消任务。";
@@ -130,7 +140,25 @@ export function jobNote(job: Job | JobDetail): string {
   return job.stage ? `当前阶段：${jobStageLabel(job.stage, job.status)}` : "任务正在处理中。";
 }
 
+export function sourceUploadMessage(errorCode?: string | null): string | undefined {
+  if (errorCode === "SOURCE_DETAIL_UNCLEAR") return "原图里看不清这处商品细节，这一项已停止生成。请上传商品全图，并附上一张对焦清楚的细节近照。";
+  if (errorCode === "SOURCE_PRODUCT_UNCLEAR") {
+    return "照片里看不清商品的完整轮廓，这一项已停止生成。请把商品放在纯色背景前，移开遮挡物，拍清主体和配件后重新上传。";
+  }
+  if (errorCode === "SOURCE_PRINT_UNREADABLE") {
+    return "原图上的商品印字看不清，这一项已停止生成。请对焦印字，避开反光，重新上传能看清文字的原图。";
+  }
+}
+
+export function jobSourceUploadMessage(job?: Job | JobDetail): string | undefined {
+  if (!job || !("items" in job) || !["failed", "partial"].includes(job.status)) return;
+  return sourceUploadMessage(job.error_code) ?? job.items.map((item) => sourceUploadMessage(item.error_code)).find(Boolean);
+}
+
 export function safeJobFailureSummary(errorCode?: string | null, errorDetails?: unknown): string {
+  const upload = sourceUploadMessage(errorCode);
+  if (upload) return upload;
+  if (errorCode === "IMAGE_FIDELITY_PREPARATION_FAILED") return "生图前检查未能完成，本次未开始生成。请稍后重试。";
   if (errorCode === "IMAGE_ASYNC_TASK_FAILED") {
     return "生成服务报告原任务异常，本站尚未取得图片。原任务编号和素材已保留，请先核查原任务，避免重复生成。";
   }

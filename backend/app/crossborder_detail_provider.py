@@ -40,6 +40,9 @@ _CROSSBORDER_PLATFORM_ALIASES = {
     "\u901a\u7528\u8de8\u5883pdp": "generic_crossborder_pdp",
 }
 _RUSSIAN_VERTICAL_PLATFORMS = {"ozon", "wildberries"}
+# These website destinations use the skill's general PDP profile. Keep the
+# actual marketplace in planner input and the customer-selected export size.
+_GENERAL_PDP_MARKETPLACES = {"ebay", "walmart", "etsy", "shopee", "mercado_libre"}
 
 
 def _explicit_size(configuration: Mapping[str, Any]) -> tuple[int, int] | None:
@@ -75,7 +78,10 @@ def crossborder_detail_prompt_configuration(
     requested_platform = normalized_text(
         configuration.get("platform_code", CROSSBORDER_DEFAULT_PLATFORM)
     )
-    platform_code = _CROSSBORDER_PLATFORM_ALIASES.get(requested_platform)
+    platform_code = (
+        requested_platform if requested_platform in _GENERAL_PDP_MARKETPLACES
+        else _CROSSBORDER_PLATFORM_ALIASES.get(requested_platform)
+    )
     if platform_code is None:
         raise AdapterValidationError(
             "DETAIL_PLATFORM_UNSUPPORTED",
@@ -115,7 +121,11 @@ def crossborder_detail_prompt_configuration(
         resolved_size = CROSSBORDER_DEFAULT_SIZE
         aspect_ratio = "16:9"
     return {
-        "profile_id": f"crossborder_{platform_code}_v1",
+        "profile_id": (
+            f"crossborder_{CROSSBORDER_DEFAULT_PLATFORM}_v1"
+            if platform_code in _GENERAL_PDP_MARKETPLACES
+            else f"crossborder_{platform_code}_v1"
+        ),
         "platform_code": platform_code,
         "language": requested_language(configuration, default_language),
         "requested_page_count": requested_page_count(configuration),

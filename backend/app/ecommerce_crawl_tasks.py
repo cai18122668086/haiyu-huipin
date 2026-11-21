@@ -20,7 +20,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -2016,7 +2016,12 @@ def get_crawl_task_events(
     events = session.scalars(
         select(CrawlEventRecord)
         .where(CrawlEventRecord.task_id == task.id)
-        .order_by(CrawlEventRecord.created_at, CrawlEventRecord.id)
+        .order_by(
+            CrawlEventRecord.created_at,
+            # Creation and queueing can share a clock tick. Their IDs are random.
+            case((CrawlEventRecord.event_type == "created", 0), else_=1),
+            CrawlEventRecord.id,
+        )
     ).all()
     return {
         "success": True,

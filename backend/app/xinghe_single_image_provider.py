@@ -1797,6 +1797,7 @@ class XingheSingleImageProvider:
                 CONTENT_REJECTION_CODE,
                 CONTENT_REJECTION_MESSAGE,
                 image_content_refusal,
+                public_failure_message,
             )
 
             content_rejected = call_result.outcome == ProviderOutcome.FAILED and (
@@ -1813,7 +1814,7 @@ class XingheSingleImageProvider:
                     CONTENT_REJECTION_MESSAGE if content_rejected else
                     "服务已返回结果，但读取图片失败；请核对原任务，勿重复生成。"
                     if call_result.error_code == "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED"
-                    else "Image provider returned a controlled failure."
+                    else public_failure_message(call_result.error_code, "Image provider returned a controlled failure.")
                 ),
                 retryable=bool(call_result.retryable) and not content_rejected,
                 provider_request_id=provider_request_id,

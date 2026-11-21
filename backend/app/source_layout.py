@@ -6,7 +6,7 @@ import math
 from copy import deepcopy
 from typing import Any
 
-VERSION = "bounded-product-layout-v3"
+VERSION = "bounded-product-layout-v4"
 
 
 def place_products_without_collisions(
@@ -53,6 +53,7 @@ def place_products_without_collisions(
     ):
         return original, []
     changes = []
+    deferred = []
     for index in sorted(range(len(placed)), key=lambda index: index not in limits):
         row = placed[index]
         products = [
@@ -108,8 +109,19 @@ def place_products_without_collisions(
                         continue
                     candidates.append(((1 - scale, dx * dx + dy * dy, box), box))
         if not candidates:
-            return original, []
+            if is_detail:
+                return original, []
+            # A middle product can stay put when a later neighbor has room.
+            deferred.append(index)
+            continue
         chosen = min(candidates, key=lambda candidate: candidate[0])[1]
         row["panel_box"] = chosen
         changes.append({"placement_index": index, "before": old, "after": chosen})
+    if any(
+        overlap(placed[index]["panel_box"], other["panel_box"])
+        for index in deferred
+        for i, other in enumerate(placed)
+        if i != index and other["panel"] == placed[index]["panel"]
+    ):
+        return original, []
     return placed, changes

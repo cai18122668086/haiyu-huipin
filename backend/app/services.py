@@ -46,6 +46,7 @@ from .models import (
     WorkspaceLimitRecord,
     utc_now,
 )
+from .provider_diagnostics import SOURCE_UPLOAD_MESSAGES, public_failure_message
 from .schemas_v1 import (
     AssetResponse,
     CostSummary,
@@ -375,6 +376,27 @@ def require_creative_reconciled(session: Session, job: JobRecord) -> None:
         )
 
 
+def require_usable_retry_sources(
+    job: JobRecord, items: Sequence[JobItemRecord], selected: set[str] | None = None,
+) -> None:
+    affected = [item for item in items if item.error_code in SOURCE_UPLOAD_MESSAGES]
+    if (
+        selected is not None
+        and affected
+        and not any(
+            item.id in selected
+            and (
+                item in affected or (item.error_code or "").endswith("SEQUENCE_HALTED")
+            )
+            for item in items
+        )
+    ):
+        return
+    code = affected[0].error_code if affected else job.error_code
+    if code and code in SOURCE_UPLOAD_MESSAGES:
+        raise ApiError(409, code, SOURCE_UPLOAD_MESSAGES[code])
+
+
 def allowed_actions(
     job: JobRecord, items: Sequence[JobItemRecord] = ()
 ) -> list[str]:
@@ -418,13 +440,23 @@ def allowed_actions(
                 actions.extend(["edit_plan", "confirm_plan"])
     if _creative_reissue_blocked(job, items):
         return actions
+    needs_upload = getattr(job, "error_code", None) in SOURCE_UPLOAD_MESSAGES or any(
+        item.error_code in SOURCE_UPLOAD_MESSAGES for item in items
+    )
     if current in {
         JobStatus.PARTIAL,
         JobStatus.FAILED,
         JobStatus.CANCELLED,
-    } and _amazon_review_retry_is_available(job):
+    } and _amazon_review_retry_is_available(job) and (
+        not needs_upload or any(
+            item.status == JobItemStatus.FAILED.value and item.error_code
+            and item.error_code not in SOURCE_UPLOAD_MESSAGES
+            and not item.error_code.endswith("SEQUENCE_HALTED")
+            for item in items
+        )
+    ):
         actions.append("retry")
-    if current in TERMINAL_JOB_STATUSES:
+    if current in TERMINAL_JOB_STATUSES and not needs_upload:
         actions.append("clone")
     return actions
 
@@ -454,6 +486,9 @@ def _is_audit_only_generated_set(
         job.type == JobType.DOMESTIC_MAIN_IMAGE.value
         and job.status == JobStatus.PARTIAL.value
         and output_asset_count == job.expected_item_count == 6
+        and not any(
+            (item.error_details or {}).get("scope") == "set_audit" for item in items
+        )
         and any(item.error_code == "AURORA_SET_AUDIT_FAILED" for item in items)
         and all(
             item.status in {JobItemStatus.SUCCEEDED.value, JobItemStatus.REUSED.value}
@@ -461,6 +496,51 @@ def _is_audit_only_generated_set(
             for item in items
         )
     )
+
+
+def can_retry_complete_set_audit(
+    session: Session, job: JobRecord, scope: RetryScope
+) -> bool:
+    if (
+        job.type != JobType.DOMESTIC_MAIN_IMAGE.value
+        or job.status != JobStatus.PARTIAL.value
+        or scope != RetryScope.FAILED
+        or job.expected_item_count != 6
+    ):
+        return False
+    items = list(
+        session.scalars(
+            select(JobItemRecord).where(
+                JobItemRecord.job_id == job.id,
+                JobItemRecord.workspace_id == job.workspace_id,
+            )
+        )
+    )
+    if len(items) != 6 or not any(
+        i.error_code == "AURORA_SET_AUDIT_FAILED" for i in items
+    ):
+        return False
+    if not all(
+        i.status in {"succeeded", "reused"}
+        or (
+            i.status == "failed"
+            and i.error_code == "AURORA_SET_AUDIT_FAILED"
+            and (i.error_details or {}).get("scope") == "set_audit"
+        )
+        for i in items
+    ):
+        return False
+    outputs = list(
+        session.scalars(
+            select(JobAssetRecord.job_item_id).where(
+                JobAssetRecord.job_id == job.id,
+                JobAssetRecord.workspace_id == job.workspace_id,
+                JobAssetRecord.direction == "output",
+                JobAssetRecord.is_deliverable.is_(True),
+            )
+        )
+    )
+    return len(outputs) == 6 and set(outputs) == {i.id for i in items}
 
 
 def job_list_response(
@@ -580,7 +660,9 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
         retry_scope=job.retry_scope,
         state_version=job.state_version,
         error_code=job.error_code,
-        error_message=job.error_message,
+        error_message=public_failure_message(
+            job.error_code, job.error_message, job.error_details
+        ),
         error_details=job.error_details,
         api_request_count=job.api_request_count,
         cancel_requested_at=job.cancel_requested_at,
@@ -597,7 +679,9 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
                 quality=item.quality,
                 result_source=item.result_source,
                 error_code=item.error_code,
-                error_message=item.error_message,
+                error_message=public_failure_message(
+                    item.error_code, item.error_message, item.error_details
+                ),
                 error_details=item.error_details,
                 started_at=item.started_at,
                 finished_at=item.finished_at,
@@ -1172,6 +1256,9 @@ def retry_item_ids(
                 {"item_ids": unknown},
             )
 
+    require_usable_retry_sources(
+        source, items, set(selected_item_ids) if scope == RetryScope.SELECTED else None
+    )
     blocker_ids, has_retryable_non_blocker = _amazon_review_retry_state(source, items)
     if blocker_ids and not has_retryable_non_blocker:
         _raise_amazon_review_retry_not_applicable(blocker_ids)

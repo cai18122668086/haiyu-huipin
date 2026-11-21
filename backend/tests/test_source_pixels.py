@@ -92,6 +92,8 @@ def test_scene_plate_preserves_required_supports_and_actual_product_geometry():
     assert "open palm supporting" in prompt and "tote attachment loop" in prompt
     assert "preserve" in prompt.casefold() and "required supporting surface" in prompt
     assert '"visible_product_bounds": [0.4, 0.3, 0.6, 0.8]' in prompt
+    assert "measured upper contact band" in prompt
+    assert "measured lower contact band" in prompt
     assert "Do not draw products" in prompt
     assert "unless the approved scene explicitly requires that support" in prompt
 
@@ -107,6 +109,21 @@ def test_two_screen_background_keeps_one_uninterrupted_backdrop():
     assert "TWO-SCREEN CONTINUITY" not in source_pixels.background_prompt(
         description, cells
     )
+
+
+def test_placement_geometry_uses_the_actual_asymmetric_attachment_contour():
+    original = Image.new("RGBA", (100, 100))
+    original.paste((40, 50, 60, 255), (15, 30, 85, 95))
+    original.paste((80, 60, 40, 255), (70, 5, 85, 30))
+    cutout = source_pixels.artifact(original, "physical-original.png")
+    geometry = source_pixels.placement_geometry(cutout, (100, 100), [0, 0, 1, 1])
+    x0, y0, x1, y1 = geometry["visible_product_bounds"]
+    upper_x, upper_y, _, _ = geometry["upper_contact_band"]
+    lower_x, _, lower_end_x, lower_y = geometry["lower_contact_band"]
+    assert upper_x > (x0 + x1) / 2
+    assert upper_y == y0
+    assert (lower_x, lower_end_x) == (x0, x1)
+    assert lower_y == y1
 
 
 def test_comparison_checks_real_candidate_opaque_pixels_without_approving_quality():
@@ -209,6 +226,43 @@ def test_matte_copies_rgb_without_drawing_or_inventing_print(monkeypatch):
     assert layer.source_sha256 == source.sha256
 
 
+def test_high_resolution_matte_bounds_inference_and_keeps_native_rgb(monkeypatch):
+    from types import SimpleNamespace
+
+    from PIL import ImageDraw
+
+    original = Image.new("RGB", (3072, 4096), "white")
+    draw = ImageDraw.Draw(original)
+    draw.rectangle((0, 0, 2500, 3800), fill=(30, 80, 210))
+    draw.line((430, 430, 2500, 2400), fill=(20, 40, 80), width=3)
+    source = source_pixels.artifact(original, "source.png")
+    authority = SimpleNamespace(
+        asset_id="own-source", payload=source.payload, sha256=source.sha256
+    )
+
+    def alpha(image, model, selection):
+        width, height = image.size
+        assert width * height <= source_pixels.MAX_MATTE_WORK_PIXELS
+        assert selection == (0, 0, width, height)
+        mask = Image.new("L", image.size)
+        mask.paste(255, (width // 8, height // 8, width * 7 // 8, height * 7 // 8))
+        return mask
+
+    monkeypatch.setattr(source_pixels, "_alpha", alpha)
+    layer = source_pixels.extract_layers(
+        (authority,),
+        {"selected_regions": [{"asset_id": "own-source", "box": [0, 0, 1, 1]}]},
+        None,
+    )[0]
+    with Image.open(BytesIO(layer.artifact.payload)) as result:
+        source_region = original.crop(layer.source_box)
+        assert result.size == source_region.size
+        assert result.height > 3000
+        assert result.convert("RGB").tobytes() == source_region.tobytes()
+        assert result.getpixel((0, 0))[3] == 0
+    assert layer.source_sha256 == source.sha256
+
+
 def test_refinement_recovers_small_fitting_without_erasing_coarse_foreground(
     monkeypatch, tmp_path
 ):
@@ -250,6 +304,44 @@ def test_source_pixel_mode_cannot_undo_requested_garment_or_color_changes():
             }
         )
     assert not source_pixels.enabled_for({"job_type": "detail_pack", "settings": {}})
+
+
+@pytest.mark.parametrize(("instruction", "enabled"), [
+    ("增加图案背景，不额外增加内容", True),
+    ("更换吸引外国客户购买的背景，不额外增加内容", True),
+    ("替换背景，同时修改商品颜色", False),
+    ("添加配件并更换背景", False),
+    ("添加项链和蓝色背景", False),
+    ("把背景换成浅灰色", True),
+    ("将背景改成红色再把商品放大", False),
+    ("修改图案，不额外增加内容", False),
+])
+def test_creative_background_only_selection(instruction, enabled):
+    assert source_pixels.enabled_for({
+        "job_type": "creative_image", "settings": {"instruction": instruction},
+    }) is enabled
+
+
+@pytest.mark.parametrize(("target", "expected"), [
+    ("200x100", (61, 40, 91, 66)), ("200x200", (61, 90, 91, 116)),
+])
+def test_background_edit_preserves_subject_size_and_position(target, expected):
+    from types import SimpleNamespace
+
+    full = source_pixels.artifact(Image.new("RGB", (200, 100), "white"), "source.png")
+    source = SimpleNamespace(
+        asset_id="source", sha256=full.sha256, payload=full.payload,
+    )
+    cutout = Image.new("RGBA", (50, 35))
+    cutout.paste((10, 25, 60, 255), (5, 4, 35, 30))
+    layer = source_pixels.PixelLayer(
+        source_pixels.artifact(cutout, "layer.png"), "source", full.sha256,
+        (56, 36, 106, 71),
+    )
+    cell, = source_pixels.original_positions((layer,), source, target)
+    w, h = map(int, target.split("x"))
+    _, bounds, _ = source_pixels.placed_layer(layer.artifact, (w, h), cell)
+    assert bounds == expected
 
 
 def repair_fixture():

@@ -6,6 +6,7 @@ import pytest
 from PIL import Image
 
 from app import source_pixels, source_print_evidence
+from app.source_recolor import silver_luminance
 
 
 def fixture():
@@ -44,6 +45,31 @@ def test_actual_edge_glyphs_remain_visible_in_the_original_evidence_margin():
     evidence = source_print_evidence.crops((source,), prep)[0]
     with Image.open(BytesIO(evidence.payload)) as sheet:
         assert sheet.getpixel((64, 400)) == (241, 19, 77)
+
+
+def test_silver_evidence_keeps_padding_but_ignores_authorized_metal_hue():
+    original, source, prep = fixture()
+    gold = (185, 145, 60)
+    original.putpixel((9, 61), gold)
+    silver = (silver_luminance(*gold),) * 3
+    candidate = original.copy()
+    candidate.putpixel((9, 61), silver)
+    before = source_pixels.artifact(original, "original.png")
+    after = source_pixels.artifact(candidate, "candidate.png")
+    source.payload, source.sha256 = before.payload, before.sha256
+    result = SimpleNamespace(
+        asset_id=source.asset_id, payload=after.payload, sha256=after.sha256
+    )
+    assert source_print_evidence.crops((source,), prep)[0].sha256 != (
+        source_print_evidence.crops((result,), prep)[0].sha256
+    )
+    reference, candidate_crop = (
+        source_print_evidence.crops((image,), prep, luminance_only=True)[0]
+        for image in (source, result)
+    )
+    assert reference.sha256 == candidate_crop.sha256
+    with Image.open(BytesIO(candidate_crop.payload)) as sheet:
+        assert sheet.getpixel((64, 400)) == silver
 
 
 @pytest.mark.parametrize("fault", ["missing", "overlap", "outside", "hash"])

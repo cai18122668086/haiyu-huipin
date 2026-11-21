@@ -1,5 +1,6 @@
 "use client";
 
+import { jobSourceUploadMessage } from "@/lib/jobs/presentation";
 import { CheckCircle2, Clock3, Info, LoaderCircle, RefreshCw } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { errorMessage } from "@/lib/api/request";
@@ -48,10 +49,11 @@ export function JobProgressFeedback({ job, pending = false, pendingLabel = "正�
   const moving = !disconnected && (pending || presentation?.running);
   const indeterminate = pending || presentation?.indeterminate;
   const elapsed = job && !pending ? jobElapsedMilliseconds(job, now) : null;
-  const detail = !suppressFailureDetails && job && "error_message" in job ? job.error_message : null;
+  const upload = jobSourceUploadMessage(job);
+  const detail = !upload && !suppressFailureDetails && job && "error_message" in job ? job.error_message : null;
   if (!job && !pending) return null;
-  const title = pending ? pendingLabel : presentation!.title;
-  const description = pending ? "正在保存素材与参数，请稍候。" : presentation!.description;
+  const title = pending ? pendingLabel : upload && job?.status === "failed" ? "请更换商品照片" : presentation!.title;
+  const description = pending ? "正在保存素材与参数，请稍候。" : upload ?? presentation!.description;
   return <section className={styles.feedback} aria-label="任务进度反馈" data-state={presentation?.terminal ? "ended" : "active"}>
     <div className={styles.heading}>
       <span className={styles.icon} aria-hidden="true">{moving ? <LoaderCircle className={styles.spin} size={20} /> : job?.status === "completed" ? <CheckCircle2 size={20} /> : <Info size={20} />}</span>

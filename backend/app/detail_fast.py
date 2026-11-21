@@ -134,6 +134,9 @@ def planner_prompt(request: PlannerRequest) -> str:
         "creative decisions. Keep all requested pages, titles, labels, exact body copy, buyer "
         "question, evidence and scene layers. Meaningful layout/scale diversity is required. "
         "Ranks start at 1, module page/role/buyer_demand_id match corresponding screens. "
+        f"Use exactly {request.page_count} nonempty entries in module_plan, "
+        "visual_rhythm_plan, design_strength_lock.rhythm_map and screens, in page order. "
+        "Do not append an empty entry after the last page. "
         "Only confirmed facts may appear in visible text; reasonable inference and missing "
         "evidence stay in private risk notes. Distinguish product truth from style inspiration. "
         + _BOUNDARIES

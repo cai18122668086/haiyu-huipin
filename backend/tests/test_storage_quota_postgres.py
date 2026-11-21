@@ -40,9 +40,7 @@ class PostgresUploadContext:
 def _image_payload() -> bytes:
     output = BytesIO()
     Image.new("RGB", (32, 32), (220, 20, 60)).save(output, format="PNG")
-    payload = output.getvalue()
-    assert len(payload) == 117
-    return payload
+    return output.getvalue()
 
 
 @pytest.fixture

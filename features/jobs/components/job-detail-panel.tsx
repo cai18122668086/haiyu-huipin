@@ -29,6 +29,7 @@ import {
   jobTitle,
   jobTypeLabel,
   safeJobFailureSummary,
+  jobSourceUploadMessage,
 } from "@/lib/jobs/presentation";
 import {
   canDownloadJobArchive,
@@ -42,6 +43,7 @@ import { JobItemList } from "./job-item-list";
 import { JobProgress } from "./job-progress";
 
 function resultEmptyMessage(job: JobDetail): string {
+  if (jobSourceUploadMessage(job)) return "请更换商品照片后重新提交。";
   if (job.status === "completed") {
     return "任务已经完成，但后端没有登记可交付输出资产。输入素材不会被当作生成结果。";
   }
@@ -87,6 +89,7 @@ export function JobDetailPanel({
   const resultAssets = selectJobResultAssets(job);
   const intermediateAssets = selectJobIntermediateAssets(job);
   const permittedActions = job?.allowed_actions ?? [];
+  const needsUpload = jobSourceUploadMessage(job);
 
   return (
     <>
@@ -184,7 +187,8 @@ export function JobDetailPanel({
             <section className="job-detail-actions" aria-label="任务操作">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">可用操作</span><h3>继续处理</h3></div></div>
               <div className="job-action-buttons"><Link className="secondary-button" href={`/account?jobId=${encodeURIComponent(job.id)}#help`}>就此任务联系客服</Link>
-                {allowsJobAction(permittedActions, "retry") && <button type="button" className="secondary-button" onClick={() => onRetry(job)} disabled={retryPending}><RotateCcw size={15} />重试失败项</button>}
+                {needsUpload && <Link className="primary-button" href={["domestic_main_image", "detail_pack", "product_image"].includes(job.type) ? jobWorkspaceHref(job) : jobWorkspaceHref(job).split("?")[0]}>前往工作台换图</Link>}
+                {!needsUpload && allowsJobAction(permittedActions, "retry") && <button type="button" className="secondary-button" onClick={() => onRetry(job)} disabled={retryPending}><RotateCcw size={15} />重试失败项</button>}
                 {allowsJobAction(permittedActions, "cancel") && <button type="button" className="secondary-button danger-button" onClick={() => onCancel(job)} disabled={cancelPending}><Ban size={15} />取消任务</button>}
                 {allowsJobAction(permittedActions, "confirm_plan") && job.plan && <button type="button" className="primary-button" onClick={() => onConfirmPlan(job)} disabled={confirmPending}><Check size={15} />确认方案</button>}
                 {!permittedActions.length && <p className="job-no-actions"><ShieldAlert size={15} />当前任务没有可用操作</p>}

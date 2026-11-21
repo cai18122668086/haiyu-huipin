@@ -43,7 +43,7 @@ import { detailSkillSettings, savedDetailSkill } from "@/lib/detail-skills";
 import { detailSpeedSettings, savedDetailSpeed, type DetailSpeed } from "@/lib/detail-speed";
 import type { Asset } from "@/lib/api/types";
 import { allowsJobAction } from "@/lib/jobs/actions";
-import { jobNote } from "@/lib/jobs/presentation";
+import { jobNote, jobSourceUploadMessage } from "@/lib/jobs/presentation";
 import { selectJobResultAssets } from "@/lib/jobs/results";
 import {
   marketplaceGroups,
@@ -51,7 +51,7 @@ import {
   type MarketRegion,
 } from "@/lib/marketplaces";
 
-type UploadedSource = { asset: Asset; previewUrl: string; role: "product_reference" | "style_reference" };
+type UploadedSource = { asset: Pick<Asset, "id">; previewUrl: string; role: "product_reference" | "style_reference" };
 type PlanPage = { title: string; description?: string; quality?: string };
 
 const DOMESTIC_DETAIL_SIZE: MarketplaceImageSize = "1440x1920";
@@ -334,6 +334,27 @@ function DetailPackWorkspace() {
     router.replace(`/workspace/detail-pack?jobId=${encodeURIComponent(retried.id)}`);
   };
 
+  const photoIssue = job.data?.id === jobId ? jobSourceUploadMessage(job.data) : undefined;
+  const replaceProductPhotos = () => {
+    if (!photoIssue || !workspace?.id || !saved) return;
+    setProductName(productName);
+    setCategory(category);
+    setTargetBuyer(targetBuyer);
+    setSellingPoints(sellingPoints);
+    setMarketRegion(marketRegion);
+    setMarketplaceId(marketplaceId);
+    setImageSize(imageSize);
+    setLanguage(language);
+    setPageCount(pageCount);
+    setDetailSpeed(detailSkill === "quick" && marketRegion === "domestic" ? "fast" : detailSpeed);
+    const styleIds = Array.isArray(savedInput?.reference_asset_ids) ? savedInput.reference_asset_ids : [];
+    setSources(styleIds.filter((id): id is string => typeof id === "string" && !savedAssetIds.includes(id))
+      .map(id => ({ asset: { id }, role: "style_reference", previewUrl: "" })));
+    setUploadError(undefined);
+    setLocalJobId(undefined);
+    router.push("/workspace/detail-pack#product-photos");
+  };
+
   const step = jobId ? job.data?.status === "awaiting_confirmation" || job.data?.status === "planning" ? 3 : 4 : !productSources.length ? 0 : !productName.trim() ? 1 : 2;
 
   return (
@@ -351,7 +372,7 @@ function DetailPackWorkspace() {
             {["商品素材", "商品信息", "输出设置", "后台规划", workflow.mode === "provider" ? "图片生成" : workflow.mode === "mock" ? "保存任务" : "服务确认中"].map((label, index) => <div key={label} className={index < step ? "done" : index === step ? "active" : ""}><i>{index < step ? <Check size={14} /> : index + 1}</i><span>{label}</span>{index < 4 && <em />}</div>)}
           </div>
 
-          <section className="detail-form-card">
+          <section id="product-photos" className="detail-form-card">
             <div className="form-section-head"><span className="number-chip">1</span><div><h2>商品素材</h2><p>每张图片都会先保存到当前工作区。</p></div>{sourceCount > 0 && <span className="validation-chip"><CheckCircle2 size={15} />已上传 {sourceCount} 张</span>}</div>
             <ImageDropZone label="详情商品素材" multiple maxFiles={Math.max(0, 8 - sources.length)}
               disabled={Boolean(jobId) || !workspace?.id || createJob.isPending} busy={uploadingSources || handoff.loading} onFiles={addFiles}>
@@ -454,8 +475,10 @@ function DetailPackWorkspace() {
             </div>
             <div className="generation-actions">
               {!jobId && <CreditCostHint jobType="detail_pack" count={pageCount} variant={isFastDetail ? "fast" : undefined} />}
-              <p><Info size={14} />{workflow.mode === "provider" ? marketRegion === "domestic" ? "提交后自动完成规划、生成和交付。" : "确认后将开始整套图片生成。" : workflow.mode === "mock" ? "确认后将保存任务计划，当前暂不生成图片。" : "生成服务状态确认中，确认入口暂时关闭。"}</p>
-              {job.data && allowsJobAction(job.data.allowed_actions, "retry") ? (
+              <p><Info size={14} />{photoIssue ?? (workflow.mode === "provider" ? marketRegion === "domestic" ? "提交后自动完成规划、生成和交付。" : "确认后将开始整套图片生成。" : workflow.mode === "mock" ? "确认后将保存任务计划，当前暂不生成图片。" : "生成服务状态确认中，确认入口暂时关闭。")}</p>
+              {photoIssue ? (
+                <button className="primary-button" onClick={replaceProductPhotos}><Upload size={17} />{marketRegion === "domestic" && detailSkill === "quick" ? "到当前快速版重新上传商品图" : "重新上传商品图"}</button>
+              ) : job.data && allowsJobAction(job.data.allowed_actions, "retry") ? (
                 <button className="primary-button" onClick={() => void retry()} disabled={retryJob.isPending}>{retryJob.isPending ? <LoaderCircle className="spin" size={17} /> : <RotateCcw size={17} />}重试失败项目</button>
               ) : !jobId ? (
                 <button className="primary-button" onClick={() => void createPlanningJob()} disabled={!workflowAvailable || !productSources.length || !productName.trim() || createJob.isPending || uploadingSources}>{createJob.isPending ? <LoaderCircle className="spin" size={17} /> : <Upload size={17} />}{workflowAvailable ? workflow.mode === "provider" ? marketRegion === "domestic" ? "生成整套详情图" : "生成整套详情图" : "保存套图规划" : "服务状态确认中，暂不可创建"}<ArrowRight size={17} /></button>
