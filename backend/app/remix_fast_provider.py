@@ -130,7 +130,9 @@ class RemixFastProvider(XingheSingleImageProvider):
                     if identity.get("error"):
                         self._save_state(request, state)
                         return self._result(
-                            state, error=identity["error"] if identity["error"] in SOURCE_UPLOAD_MESSAGES
+                            state,
+                            error=identity["error"]
+                            if identity["error"] in SOURCE_UPLOAD_MESSAGES
                             else "REMIX_FAST_SOURCE_PREPARATION_FAILED",
                         )
                     if identity.get("enabled"):

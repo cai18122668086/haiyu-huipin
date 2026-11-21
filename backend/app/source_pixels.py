@@ -252,7 +252,9 @@ def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
         np.where(confidence >= 230, cv.GC_FGD, cv.GC_PR_FGD),
     ).astype(np.uint8)
     if not np.any(labels == cv.GC_FGD) or not np.any(labels == cv.GC_BGD):
-        raise SourceForegroundUnclear("Source matte lacks foreground/background evidence")
+        raise SourceForegroundUnclear(
+            "Source matte lacks foreground/background evidence"
+        )
     cv.setRNGSeed(0)
     cv.grabCut(
         cv.cvtColor(rgb, cv.COLOR_RGB2BGR),

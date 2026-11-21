@@ -1381,7 +1381,9 @@ def test_indistinct_source_stops_at_first_visual_finding(monkeypatch, issue_stag
     guard = PixelGuard(gateway, None, None)
     original = request(gateway)
     for item in ("first", "second"):
-        result = asyncio.run(guard.edit(replace(original, job_item_id=item, idempotency_key=item)))
+        result = asyncio.run(
+            guard.edit(replace(original, job_item_id=item, idempotency_key=item))
+        )
         assert result.error_code == SUBJECT_UNCLEAR
         assert result.error_message == SOURCE_UPLOAD_MESSAGES[SUBJECT_UNCLEAR]
         assert not result.retryable
@@ -1390,7 +1392,9 @@ def test_indistinct_source_stops_at_first_visual_finding(monkeypatch, issue_stag
 
 
 @pytest.mark.parametrize("photo_problem", [True, False])
-def test_empty_foreground_and_inspection_failure_have_distinct_recovery(monkeypatch, photo_problem):
+def test_empty_foreground_and_inspection_failure_have_distinct_recovery(
+    monkeypatch, photo_problem
+):
     from app.source_pixels import SourceForegroundUnclear
 
     def extract(*args):
@@ -1403,8 +1407,14 @@ def test_empty_foreground_and_inspection_failure_have_distinct_recovery(monkeypa
     guard = PixelGuard(gateway, None, None)
     original = request(gateway)
     for item in ("first", "second"):
-        result = asyncio.run(guard.edit(replace(original, job_item_id=item, idempotency_key=item)))
-        assert result.error_code == ("SOURCE_PRODUCT_UNCLEAR" if photo_problem else "IMAGE_FIDELITY_PREPARATION_FAILED")
+        result = asyncio.run(
+            guard.edit(replace(original, job_item_id=item, idempotency_key=item))
+        )
+        assert result.error_code == (
+            "SOURCE_PRODUCT_UNCLEAR"
+            if photo_problem
+            else "IMAGE_FIDELITY_PREPARATION_FAILED"
+        )
         assert ("重新上传" in result.error_message) is photo_problem
     assert not gateway.edits
 

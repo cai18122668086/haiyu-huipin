@@ -284,7 +284,9 @@ class DurableFastDetailGateway:
                 "binding": binding,
                 "binding_hash": _hash(binding),
                 "haiyu_native_canvas": (
-                    recovery["haiyu_native_canvas"] if recovery else request.haiyu_native_canvas
+                    recovery["haiyu_native_canvas"]
+                    if recovery
+                    else request.haiyu_native_canvas
                 ),
                 "started_at": utc_now().isoformat(),
                 "finished_at": None,

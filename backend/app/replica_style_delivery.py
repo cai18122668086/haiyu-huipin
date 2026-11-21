@@ -147,14 +147,22 @@ def validate_source(
 
 
 def _approved_native_square(
-    run: NativeReplicaRun, expected: list[int], size: list[int], sha: str, target: str | None
+    run: NativeReplicaRun,
+    expected: list[int],
+    size: list[int],
+    sha: str,
+    target: str | None,
 ) -> bool:
     """Accept the larger native square only for a ratio-selected style preset."""
-    if size != [2000, 2000] or not follows_native_square(getattr(run, "context", {}), expected):
+    if size != [2000, 2000] or not follows_native_square(
+        getattr(run, "context", {}), expected
+    ):
         return False
     ledger = run.root / "invocations.json"
     return ledger.is_file() and any(
-        target is not None and row.get("target") == target and row.get("state") == "returned"
+        target is not None
+        and row.get("target") == target
+        and row.get("state") == "returned"
         and row.get("haiyu_native_canvas") == "2000x2000"
         and row.get("actual_size") == size
         and row.get("sha256") == sha
@@ -196,14 +204,20 @@ def inspect_artwork(
             raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
     record: dict[str, Any] = {"artwork": str(file), "sha256": sha, "size": size}
     if not detail and size != job["canvas"]:
-        native_square = _approved_native_square(run, job["canvas"], size, sha, job.get("id"))
-        if not native_square and not style_native_budget_matches(job["canvas"], (size[0], size[1])):
+        native_square = _approved_native_square(
+            run, job["canvas"], size, sha, job.get("id")
+        )
+        if not native_square and not style_native_budget_matches(
+            job["canvas"], (size[0], size[1])
+        ):
             raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
         # Keep the approved plan intact; record actual dimensions separately.
         # The provider bytes are delivered unchanged, including after recovery.
         record["delivery_canvas"] = {
             **delivery_receipt(job["canvas"], (size[0], size[1]), sha),
-            "policy": "style-follow-reference-native-square-v1" if native_square else STYLE_NATIVE_POLICY,
+            "policy": "style-follow-reference-native-square-v1"
+            if native_square
+            else STYLE_NATIVE_POLICY,
         }
     return record
 

@@ -285,7 +285,10 @@ def repair_findings(
                 if role in complete_roles
                 else "请按批准的范围展示，移除完整商品视图。"
             )
-            change = f"{module_id} 完整商品出镜要求为 {role}，实际观察为 {presence}。{instruction}"
+            change = (
+                f"{module_id} 完整商品出镜要求为 {role}，"
+                f"实际观察为 {presence}。{instruction}"
+            )
         if change and change not in seen:
             result.append(
                 {"visible_evidence": evidence or change, "required_change": change}
@@ -419,13 +422,16 @@ def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
         )
         return (
             pair_scope
-            + "EXTERNAL COPY INSPECTION V3. For joint and per-screen ocr_text read ONLY "
+            + "EXTERNAL COPY INSPECTION V3. For joint and per-screen ocr_text read "
+            "ONLY "
             "the separately attached external-copy-inspection.png (screen 1 left, "
-            "screen 2 right). Ignore its English inspection headers. It contains actual "
+            "screen 2 right). Ignore its English inspection headers. It contains "
+            "actual "
             "final pixels with verified opaque source subjects masked gray. Transcribe "
             "all visible editorial copy literally without annotations or commentary. "
             "Any unauthorized text outside the photographed product must still fail. "
-            "Use the unmasked original photo, full canvas, fixed slices and pixel pairs "
+            "Use the unmasked original photo, full canvas, fixed slices and pixel "
+            "pairs "
             "for identity, all on-product text, layout, visual proof and continuity. "
             "Record photographed inscriptions in identity evidence.\n"
             + _SURFACE_PRINT_REVIEW

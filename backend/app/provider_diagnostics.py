@@ -19,7 +19,8 @@ SUBJECT_UNCLEAR = "SOURCE_PRODUCT_UNCLEAR"
 PRINT_UNREADABLE = "SOURCE_PRINT_UNREADABLE"
 DETAIL_UNCLEAR = "SOURCE_DETAIL_UNCLEAR"
 SOURCE_UPLOAD_MESSAGES = {
-    DETAIL_UNCLEAR: "原图里看不清这处商品细节，这一项已停止生成。请上传商品全图，并附上一张对焦清楚的细节近照。",
+    DETAIL_UNCLEAR: "原图里看不清这处商品细节，这一项已停止生成。请上传商品全图，"
+    "并附上一张对焦清楚的细节近照。",
     SUBJECT_UNCLEAR: (
         "照片里看不清商品的完整轮廓，这一项已停止生成。"
         "请把商品放在纯色背景前，移开遮挡物，拍清主体和配件后重新上传。"
@@ -229,14 +230,23 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
         result["image_fidelity"] = {
             key: value
             for key, value in fidelity.items()
-            if (key in {"accepted", "costs_aggregated", "independent_ocr_matched"} and type(value) is bool)
+            if (
+                key in {"accepted", "costs_aggregated", "independent_ocr_matched"}
+                and type(value) is bool
+            )
             or (
                 key in {"image_requests", "planning_requests"}
                 and type(value) is int
                 and 0 <= value <= MAX_PROVIDER_ATTEMPTS
             )
             or (
-                key in {"version", "candidate_sha256", "retained_asset_id", "detail_review_version"}
+                key
+                in {
+                    "version",
+                    "candidate_sha256",
+                    "retained_asset_id",
+                    "detail_review_version",
+                }
                 and isinstance(value, str)
                 and len(value) <= 255
             )

@@ -91,10 +91,15 @@ def save_source_comparisons(
             _invalid()
         filename = "source-comparison-view-" + source.sha256 + ".png"
         _write_once(_path(root, filename, create=True), source.payload)
-        rows.append({
-            "asset_id": source.asset_id, "role": source.source_role, "sha256": source.sha256,
-            "filename": filename, "byte_size": len(source.payload),
-        })
+        rows.append(
+            {
+                "asset_id": source.asset_id,
+                "role": source.source_role,
+                "sha256": source.sha256,
+                "filename": filename,
+                "byte_size": len(source.payload),
+            }
+        )
     value = {"version": VERSION, "binding": binding, "sources": rows}
     payload = {**value, "manifest_sha256": canonical_hash(value)}
     filename = "source-comparisons-" + canonical_hash(binding) + ".json"
@@ -133,7 +138,9 @@ def load_source_comparison_inventory(
                 _invalid()
             if (
                 set(row) != {"asset_id", "role", "sha256", "filename", "byte_size"}
-                or not valid_view(row["asset_id"], row["role"], index, len(value["sources"]))
+                or not valid_view(
+                    row["asset_id"], row["role"], index, len(value["sources"])
+                )
                 or not _SHA.fullmatch(row["sha256"])
                 or row["filename"] != "source-comparison-view-" + row["sha256"] + ".png"
                 or type(row["byte_size"]) is not int

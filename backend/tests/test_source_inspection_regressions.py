@@ -17,7 +17,10 @@ def test_native_square_recovery_binds_size_instructions_target_and_original(tmp_
 
     from app.replica_style_delivery import _approved_native_square
 
-    context = {"references": [{"aspect_ratio": "follow-reference"}], "user_facts": "保留商品原图"}
+    context = {
+        "references": [{"aspect_ratio": "follow-reference"}],
+        "user_facts": "保留商品原图",
+    }
     run = SimpleNamespace(context=context, root=tmp_path)
     entry = {"target": "U01", "state": "returned", "haiyu_native_canvas": "2000x2000",
              "actual_size": [2000, 2000], "sha256": "a" * 64}
@@ -200,7 +203,8 @@ def test_detail_window_checks_actual_pixels_before_acceptance(outcome):
                         {
                             "placement": 1,
                             "verdict": verdict,
-                            "evidence": "Actual source and detail compared on both views.",
+                            "evidence": "Actual source and detail compared on both "
+                            "views.",
                             "window": corrected
                             if verdict == "wrong_window"
                             else placements[1]["source_window"],

@@ -35,8 +35,11 @@ from .models import (
 )
 from .provider import ProviderArtifact, ProviderOutcome
 from .provider_diagnostics import (
-    PREPARATION_FAILED, PREPARATION_FAILED_MESSAGE, PRINT_UNREADABLE,
-    SOURCE_UPLOAD_MESSAGES, SUBJECT_UNCLEAR,
+    PREPARATION_FAILED,
+    PREPARATION_FAILED_MESSAGE,
+    PRINT_UNREADABLE,
+    SOURCE_UPLOAD_MESSAGES,
+    SUBJECT_UNCLEAR,
 )
 from .services import canonical_hash
 
@@ -938,7 +941,8 @@ class FidelityGateway:
                     "missing body, context leakage or unresolved defect fails. "
                     "Return the exact supplied JSON schema."
                     if profile == MATTE
-                    else "Independently inspect the actual original-product crop against the requested detail. JSON only."
+                    else "Independently inspect the actual original-product crop "
+                    "against the requested detail. JSON only."
                     if profile == "image_fidelity_source_window"
                     else "Project ONLY the background/style and approved "
                     "marketing copy from the final-image contract into the "
@@ -1059,9 +1063,14 @@ class FidelityGateway:
                             "if": {"properties": {"visible_print": {"minItems": 1}}},
                             "then": {"properties": {"print_regions": {"minItems": 1}}},
                         }]
-                preparation_schema["properties"]["source_issue"] = {"const": SUBJECT_UNCLEAR}
+                preparation_schema["properties"]["source_issue"] = {
+                    "const": SUBJECT_UNCLEAR
+                }
                 preparation_schema["oneOf"] = [
-                    {"required": preparation_schema.pop("required"), "not": {"required": ["source_issue"]}},
+                    {
+                        "required": preparation_schema.pop("required"),
+                        "not": {"required": ["source_issue"]},
+                    },
                     {"required": ["source_issue"], "maxProperties": 1},
                 ]
                 preparation_feedback = None
@@ -1083,9 +1092,12 @@ class FidelityGateway:
                             ),
                             "spatial_selection_constraint": selection,
                             "instruction": "Select exactly the objects requested "
-                            "by the user from product sources. If the requested subject "
-                            "cannot be distinguished because of blur or occlusion, return "
-                            "only source_issue=SOURCE_PRODUCT_UNCLEAR. Never guess its boundaries. Give tight "
+                            "by the user from product sources. If the requested "
+                            "subject "
+                            "cannot be distinguished because of blur or occlusion, "
+                            "return "
+                            "only source_issue=SOURCE_PRODUCT_UNCLEAR. Never guess "
+                            "its boundaries. Give tight "
                             "complete-object boxes in normalized source-image "
                             "coordinates. Read the original physical printing, "
                             "not the style image's text. If unreadable, state "
@@ -1278,7 +1290,9 @@ class FidelityGateway:
                     self._mattes[key] = SUBJECT_UNCLEAR
                     raise SourcePhotoUnusable(SUBJECT_UNCLEAR) from exc
 
-            layers = inherited_layers if inherited_layers is not None else await extract()
+            layers = (
+                inherited_layers if inherited_layers is not None else await extract()
+            )
             mask_audits = []
             for mask_review in range(2):
                 previews = []
@@ -1428,10 +1442,13 @@ class FidelityGateway:
                     len(matte.payload["unresolved"]),
                 )
                 if mask_review or (
-                    not matte.payload["complete_objects"] and not matte.payload["no_context_leak"]
+                    not matte.payload["complete_objects"]
+                    and not matte.payload["no_context_leak"]
                 ):
                     if inherited_layers is not None:
-                        raise ValueError("Inherited source layer failed visual acceptance")
+                        raise ValueError(
+                            "Inherited source layer failed visual acceptance"
+                        )
                     self._mattes[key] = SUBJECT_UNCLEAR
                     raise SourcePhotoUnusable(SUBJECT_UNCLEAR)
                 if matte.payload["repairs"] or matte.payload["edge_feather_px"]:
@@ -1535,7 +1552,11 @@ class FidelityGateway:
                 inherited_recolor = prior_recolor_evidence(
                     self.sessions,
                     request,
-                    next(s for s in original_sources if s.source_role == "product_reference"),
+                    next(
+                        s
+                        for s in original_sources
+                        if s.source_role == "product_reference"
+                    ),
                 )
                 if inherited_recolor:
                     preparation = inherited_recolor["preparation"]
@@ -1674,7 +1695,11 @@ class FidelityGateway:
                         "model_sha256": source_pixels.MODEL_SHA256,
                         "layers": saved_layers,
                         "mask_audits": mask_audits,
-                        **({"copy_inspection": "opaque-source-v1"} if self._native_pair else {}),
+                        **(
+                            {"copy_inspection": "opaque-source-v1"}
+                            if self._native_pair
+                            else {}
+                        ),
                         "cells": source_pixels.positions(context, len(layers)),
                     }
                     if (
@@ -1689,7 +1714,12 @@ class FidelityGateway:
                         )
                     if inherited_layers is not None and inherited_white is not None:
                         pixel_recipe["white_product_parent"] = inherited_white.binding
-                if frozen is None and not inherited_recolor and crops and not pixel_mode:
+                if (
+                    frozen is None
+                    and not inherited_recolor
+                    and crops
+                    and not pixel_mode
+                ):
                     preparation_stage = "source_readback"
                     readback_crops = tuple(crops)
                     recolor_readback = source_recolor.enabled(
@@ -1714,9 +1744,14 @@ class FidelityGateway:
                     plans.append(source_readback)
                     if (
                         not source_readback.error_code
-                        and Draft202012Validator(response_schema(READBACK)).is_valid(source_readback.payload)
+                        and Draft202012Validator(response_schema(READBACK)).is_valid(
+                            source_readback.payload
+                        )
                         and source_readback.payload["text_runs"]
-                        and all(t.strip().upper() == "UNREADABLE" for t in source_readback.payload["text_runs"])
+                        and all(
+                            t.strip().upper() == "UNREADABLE"
+                            for t in source_readback.payload["text_runs"]
+                        )
                     ):
                         raise SourcePhotoUnusable(PRINT_UNREADABLE)
                     verified = verify_source_print(source_readback, preparation)
@@ -1773,8 +1808,13 @@ class FidelityGateway:
                     if not verified:
                         if (
                             not source_readback.error_code
-                            and Draft202012Validator(response_schema(READBACK)).is_valid(source_readback.payload)
-                            and any("UNREADABLE" in t.upper() for t in source_readback.payload["text_runs"])
+                            and Draft202012Validator(
+                                response_schema(READBACK)
+                            ).is_valid(source_readback.payload)
+                            and any(
+                                "UNREADABLE" in t.upper()
+                                for t in source_readback.payload["text_runs"]
+                            )
                         ):
                             raise SourcePhotoUnusable(PRINT_UNREADABLE)
                         raise ValueError(
@@ -1899,15 +1939,24 @@ class FidelityGateway:
                         background_schema["properties"]["scene_support"] = {
                             "enum": ["upper_attachment", "resting_surface", "graphic"],
                             "description": (
-                                "Classify the approved scene from the FINAL image contract, including both screens. "
-                                "For a hanging display case, rod, hook or bag loop pick "
-                                "upper_attachment. For a product resting on a surface choose "
-                                "resting_surface. Choose graphic for isolated design layouts. "
-                                "Describe how each placement is supported. An unattached "
-                                "subject in a lifestyle still life rests on the visible "
-                                "surface. For a top-down flat lay the support is the whole "
-                                "surface directly behind every object. Only require a loop "
-                                "at the placement whose contract actually specifies a loop."
+                                "Classify the approved scene from the FINAL image "
+                                "contract, including both screens. "
+                                "For a hanging display case, rod, hook or bag loop "
+                                "pick "
+                                "upper_attachment. For a product resting on a "
+                                "surface choose "
+                                "resting_surface. Choose graphic for isolated "
+                                "design layouts. "
+                                "Describe how each placement is supported. An "
+                                "unattached "
+                                "subject in a lifestyle still life rests on the "
+                                "visible "
+                                "surface. For a top-down flat lay the support is "
+                                "the whole "
+                                "surface directly behind every object. Only require "
+                                "a loop "
+                                "at the placement whose contract actually specifies "
+                                "a loop."
                             ),
                         }
                     plain_white_eligible = (
@@ -2174,11 +2223,17 @@ class FidelityGateway:
                                     from . import source_window_review
 
                                     window_checks = await source_window_review.check(
-                                        self, request, source_cutouts, projection["placements"],
-                                        plans, projection_attempt,
+                                        self,
+                                        request,
+                                        source_cutouts,
+                                        projection["placements"],
+                                        plans,
+                                        projection_attempt,
                                     )
                                     if window_checks:
-                                        trial_recipe["source_window_reviews"] = window_checks
+                                        trial_recipe["source_window_reviews"] = (
+                                            window_checks
+                                        )
                                 windows = [
                                     p.get("source_window", [0, 0, 1, 1])
                                     for p in projection["placements"]
@@ -2398,20 +2453,38 @@ class FidelityGateway:
                             guide.payload
                         ).decode("ascii")
                         pixel_recipe["wire_prompt"] += (
-                            "\nThe attached diagram is a registration guide. Gray regions "
-                            "show where photographed products will cover the plate. Cyan crosses "
-                            "mark the contour at the support side. Gray silhouettes contain the actual "
-                            "openings in the photographed objects. Show the approved support (display-case pegs, rod, or fabric loop) "
-                            "passing behind the opening of the required clasp, clearly visible on "
-                            "both sides. Only depict actual approved attachment points. For resting "
-                            "items photograph the tabletop straight down so the flat photographed "
-                            "products rest along their backs on the surface. Replace EVERY diagram mark "
-                            "with the actual approved scene. No boxes, crosshairs or outlines "
-                            "may appear in the photograph. Position the required physical "
-                            "support behind its product so adjacent material and stitches, "
-                            "rail, strap or surface remain visible outside the gray region. An approved transparent display case is a real required scene object. Render its frame and mounting pegs at the indicated points; leaving empty reserved space does not depict the case. A flat "
-                            "lay uses a continuous supporting surface beneath every subject. "
-                            "Return an actual scene with all required props, no product."
+                            "\nThe attached diagram is a registration guide. Gray "
+                            "regions "
+                            "show where photographed products will cover the plate. "
+                            "Cyan crosses "
+                            "mark the contour at the support side. Gray silhouettes "
+                            "contain the actual "
+                            "openings in the photographed objects. Show the "
+                            "approved support (display-case pegs, rod, or fabric "
+                            "loop) "
+                            "passing behind the opening of the required clasp, "
+                            "clearly visible on "
+                            "both sides. Only depict actual approved attachment "
+                            "points. For resting "
+                            "items photograph the tabletop straight down so the "
+                            "flat photographed "
+                            "products rest along their backs on the surface. "
+                            "Replace EVERY diagram mark "
+                            "with the actual approved scene. No boxes, crosshairs "
+                            "or outlines "
+                            "may appear in the photograph. Position the required "
+                            "physical "
+                            "support behind its product so adjacent material and "
+                            "stitches, "
+                            "rail, strap or surface remain visible outside the gray "
+                            "region. An approved transparent display case is a real "
+                            "required scene object. Render its frame and mounting "
+                            "pegs at the indicated points; leaving empty reserved "
+                            "space does not depict the case. A flat "
+                            "lay uses a continuous supporting surface beneath every "
+                            "subject. "
+                            "Return an actual scene with all required props, no "
+                            "product."
                         )
                 preparation_stage = "freeze_receipt"
                 frozen = self._frozen(
@@ -2513,8 +2586,12 @@ class FidelityGateway:
                     0.0,
                     0,
                     estimated_cost_micros=0,
-                    error_code=exc.code if isinstance(exc, SourcePhotoUnusable) else PREPARATION_FAILED,
-                    error_message=str(exc) if isinstance(exc, SourcePhotoUnusable) else PREPARATION_FAILED_MESSAGE,
+                    error_code=exc.code
+                    if isinstance(exc, SourcePhotoUnusable)
+                    else PREPARATION_FAILED,
+                    error_message=str(exc)
+                    if isinstance(exc, SourcePhotoUnusable)
+                    else PREPARATION_FAILED_MESSAGE,
                 ),
                 plans,
                 preparation_stage=preparation_stage,
@@ -2805,7 +2882,11 @@ class FidelityGateway:
         return tuple(cutouts)
 
     async def paired_source_evidence(
-        self, request: Any, candidate: Any, *, registered_cells: list[list[float]] | None = None
+        self,
+        request: Any,
+        candidate: Any,
+        *,
+        registered_cells: list[list[float]] | None = None,
     ) -> tuple[Any, ...]:
         from .source_pixels import comparison_panels, crop_windows
         from .xinghe_agent import SourceImage
@@ -2995,7 +3076,9 @@ class FidelityGateway:
             return {
                 "enabled": True,
                 "calls": plans,
-                "error": exc.code if isinstance(exc, SourcePhotoUnusable) else "SOURCE_IDENTITY_PREPARATION_FAILED",
+                "error": exc.code
+                if isinstance(exc, SourcePhotoUnusable)
+                else "SOURCE_IDENTITY_PREPARATION_FAILED",
             }
 
     async def review_existing(
@@ -3199,7 +3282,9 @@ class FidelityGateway:
             source_role="candidate",
         )
         kind = detail_review_kind(context)
-        views = detail_review_views(original_sources, review_source, kind) if kind else ()
+        views = (
+            detail_review_views(original_sources, review_source, kind) if kind else ()
+        )
         accepted = False
         failed = ["review_unavailable"]
         technical = technical_contract(context, request, candidate)
@@ -3268,14 +3353,20 @@ class FidelityGateway:
                 review_context["detail_views"] = {
                     "roles": [s.source_role for s in views],
                     "inspection": (
-                        "Inspect the full source and candidate and their separate enlarged "
-                        "pixel crops. Enumerate visible closures top to bottom on EACH garment "
-                        "before comparing. Inspect the neckline and ribbed hem separately. "
+                        "Inspect the full source and candidate and their separate "
+                        "enlarged "
+                        "pixel crops. Enumerate visible closures top to bottom on "
+                        "EACH garment "
+                        "before comparing. Inspect the neckline and ribbed hem "
+                        "separately. "
                         "Only count distinct actual buttons, never seams or shadows."
                         if kind == "garment"
-                        else "Compare the actual pose reference with the candidate. Describe the "
-                        "stance, actual gaps or occlusion between ankles and shoes, weight "
-                        "bearing leg and which foot is forward. Check the full body as well."
+                        else "Compare the actual pose reference with the candidate. "
+                        "Describe the "
+                        "stance, actual gaps or occlusion between ankles and shoes, "
+                        "weight "
+                        "bearing leg and which foot is forward. Check the full body "
+                        "as well."
                     ),
                 }
             try:
@@ -3284,7 +3375,8 @@ class FidelityGateway:
                     REVIEW,
                     original_sources + views + (review_source,),
                     review_context,
-                    suffix=f":{attempt + 1}" + (f":{DETAIL_REVIEW_VERSION}" if views else ""),
+                    suffix=f":{attempt + 1}"
+                    + (f":{DETAIL_REVIEW_VERSION}" if views else ""),
                 )
             except Exception as exc:
                 logger.warning(

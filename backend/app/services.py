@@ -380,9 +380,16 @@ def require_usable_retry_sources(
     job: JobRecord, items: Sequence[JobItemRecord], selected: set[str] | None = None,
 ) -> None:
     affected = [item for item in items if item.error_code in SOURCE_UPLOAD_MESSAGES]
-    if selected is not None and affected and not any(
-        item.id in selected and (item in affected or (item.error_code or "").endswith("SEQUENCE_HALTED"))
-        for item in items
+    if (
+        selected is not None
+        and affected
+        and not any(
+            item.id in selected
+            and (
+                item in affected or (item.error_code or "").endswith("SEQUENCE_HALTED")
+            )
+            for item in items
+        )
     ):
         return
     code = affected[0].error_code if affected else job.error_code
@@ -479,7 +486,9 @@ def _is_audit_only_generated_set(
         job.type == JobType.DOMESTIC_MAIN_IMAGE.value
         and job.status == JobStatus.PARTIAL.value
         and output_asset_count == job.expected_item_count == 6
-        and not any((item.error_details or {}).get("scope") == "set_audit" for item in items)
+        and not any(
+            (item.error_details or {}).get("scope") == "set_audit" for item in items
+        )
         and any(item.error_code == "AURORA_SET_AUDIT_FAILED" for item in items)
         and all(
             item.status in {JobItemStatus.SUCCEEDED.value, JobItemStatus.REUSED.value}

@@ -565,13 +565,18 @@ def test_failed_retry_recovers_only_unique_haiyu_accepted_task_with_gets(
         async def post_multipart(self, **kwargs):
             self.posts += 1
             assert self.posts == 1, "A recovery must never purchase another image"
-            assert dict(kwargs["fields"])["size"] == ("1440x1920" if admission == "legacy_canvas" else "1200x1600")
+            assert dict(kwargs["fields"])["size"] == (
+                "1440x1920" if admission == "legacy_canvas" else "1200x1600"
+            )
             return 202, {"id": "already-paid-task", "status": "queued"}
 
     class JournalTransport(HaiyuTransport):
         def __init__(self, delegate):
             super().__init__(
-                delegate, journal_dir=tmp_path / "journal", poll_interval=0, send_size=True
+                delegate,
+                journal_dir=tmp_path / "journal",
+                poll_interval=0,
+                send_size=True,
             )
             self.gets = []
 
@@ -623,7 +628,10 @@ def test_failed_retry_recovers_only_unique_haiyu_accepted_task_with_gets(
     with monkeypatch.context() as initial:
         if admission == "legacy_canvas":
             initial.setattr("app.refined_detail.HAIYU_NATIVE_CANVASES", {})
-        assert asyncio.run(durable.edit(original)).outcome == ProviderOutcome.OUTCOME_UNKNOWN
+        assert (
+            asyncio.run(durable.edit(original)).outcome
+            == ProviderOutcome.OUTCOME_UNKNOWN
+        )
     assert receipt(client, original)["state"] == "unknown"
     assert delegate.posts == 1 and len(transport.gets) == 1
     # Even accepted evidence never makes the same job automatically repeat.

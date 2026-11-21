@@ -31,7 +31,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from starlette.concurrency import run_in_threadpool
 
 from . import detail_fast, detail_fast_runtime, refined_detail
-from .provider_diagnostics import SOURCE_UPLOAD_MESSAGES
 from .amazon_visual_suite_provider import AMAZON_EXPECTED_ITEM_COUNT
 from .archive_response import ArchiveResponse, close_archive, open_archive
 from .aurora_execution_modes import is_parallel_aurora_mode, is_v20_aurora_mode
@@ -94,6 +93,7 @@ from .models import (
     WorkspaceRecord,
     utc_now,
 )
+from .provider_diagnostics import SOURCE_UPLOAD_MESSAGES
 from .provider_quota import reserve_provider_job_quota
 from .schemas_v1 import (
     AccessUrlRequest,
@@ -164,8 +164,8 @@ from .services import (
     new_id,
     release_credits,
     require_creative_reconciled,
-    require_usable_retry_sources,
     require_idempotency_key,
+    require_usable_retry_sources,
     retry_item_ids,
     settle_credits,
     transition_job,
@@ -2306,7 +2306,9 @@ async def retry_job(
     selected = retry_item_ids(session, source, payload.scope, payload.item_ids)
     from .services import can_retry_complete_set_audit
 
-    if not selected and not can_retry_complete_set_audit(session, source, payload.scope):
+    if not selected and not can_retry_complete_set_audit(
+        session, source, payload.scope
+    ):
         raise ApiError(
             status.HTTP_409_CONFLICT,
             "JOB_NOT_RETRYABLE",
@@ -5219,10 +5221,15 @@ def _copy_job_relations_for_retry(
                     )
                 ),
                 stage=(
-                    item.stage if item.error_code in SOURCE_UPLOAD_MESSAGES
-                    else "retry" if retry_this else "reused"
+                    item.stage
+                    if item.error_code in SOURCE_UPLOAD_MESSAGES
+                    else "retry"
+                    if retry_this
+                    else "reused"
                 ),
-                error_code=item.error_code if item.error_code in SOURCE_UPLOAD_MESSAGES else None,
+                error_code=item.error_code
+                if item.error_code in SOURCE_UPLOAD_MESSAGES
+                else None,
                 error_message=SOURCE_UPLOAD_MESSAGES.get(item.error_code or ""),
                 quality=item.quality,
                 configuration=copied_configuration,

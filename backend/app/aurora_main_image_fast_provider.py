@@ -494,7 +494,9 @@ class FastMainImageProvider:
                     else result.error_code or "FAST_MAIN_IMAGE_IMAGE_FAILED",
                     error_message="原生图结果尚未核实，请先核对原任务。"
                     if unknown
-                    else public_failure_message(result.error_code, "本张主图生成未完成，可重试。"),
+                    else public_failure_message(
+                        result.error_code, "本张主图生成未完成，可重试。"
+                    ),
                     provider_request_id=result.provider_request_id,
                     raw_usage=usage,
                     usage_reported=bool(usage.get("reported")),

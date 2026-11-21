@@ -117,10 +117,16 @@ def test_unusable_photo_exposes_reupload_message_and_blocks_same_input_reissue(c
         job.failed_item_count = 1
         job.error_code = item.error_code = SUBJECT_UNCLEAR
     result = client.get(url).json()
-    assert result["error_message"] == result["items"][0]["error_message"] == SOURCE_UPLOAD_MESSAGES[SUBJECT_UNCLEAR]
+    assert (
+        result["error_message"]
+        == result["items"][0]["error_message"]
+        == SOURCE_UPLOAD_MESSAGES[SUBJECT_UNCLEAR]
+    )
     assert {"retry", "clone"}.isdisjoint(result["allowed_actions"])
     for route, body in [("retry", {"scope": "failed"}), ("clone", {})]:
-        response = client.post(f"{url}/{route}", json=body, headers={"Idempotency-Key": str(uuid4())})
+        response = client.post(
+            f"{url}/{route}", json=body, headers={"Idempotency-Key": str(uuid4())}
+        )
         assert response.status_code == 409
         assert SUBJECT_UNCLEAR in response.text
 
@@ -149,11 +155,16 @@ def test_selected_retry_keeps_the_other_items_reupload_requirement(client):
         photos.error_code = SUBJECT_UNCLEAR
         service.error_code = "IMAGE_REQUEST_FAILED"
         retry_id = service.id
-    response = client.post(f"{base}/{job_id}/retry", headers={"Idempotency-Key": str(uuid4())},
-                           json={"scope": "selected", "item_ids": [retry_id]})
+    response = client.post(
+        f"{base}/{job_id}/retry",
+        headers={"Idempotency-Key": str(uuid4())},
+        json={"scope": "selected", "item_ids": [retry_id]},
+    )
     assert response.status_code == 201, response.text
     preserved, pending = response.json()["items"]
-    assert preserved["error_code"] == SUBJECT_UNCLEAR and preserved["status"] == "skipped"
+    assert (
+        preserved["error_code"] == SUBJECT_UNCLEAR and preserved["status"] == "skipped"
+    )
     assert pending["status"] == "pending" and not pending["error_code"]
 
 
