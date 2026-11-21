@@ -126,7 +126,11 @@ def prompt(request: Any) -> str:
         "Author exactly the requested number of screen briefs. "
         "First screen has a dominant product hero. "
         "Do not repeat the same view, composition and conclusion on adjacent screens. "
-        "A detail crop may use IDENTITY_TOKEN_ONLY. "
+        "Set product_role by the presence of a COMPLETE photographed product "
+        "on that screen. If every view is a fragment, use IDENTITY_TOKEN_ONLY, "
+        "even when several large crops fill the screen. DOMINANT or SUPPORTING "
+        "requires an explicit full product view in visual_direction and space "
+        "for it in composition. A close-up can accompany that full view. "
         "Preserve all real user facts without forcing separate screens "
         "for duplicate observations.\n"
         + json.dumps(value, ensure_ascii=False, separators=(",", ":"))

@@ -251,15 +251,41 @@ def transport_schema(schema: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def repair_findings(value: dict[str, Any]) -> list[dict[str, str]]:
+def repair_findings(
+    value: dict[str, Any], modules: list[dict[str, Any]]
+) -> list[dict[str, str]]:
     """Carry each repair instruction once; immutable audits retain full prose."""
     result = []
     seen = set()
+    observations = {
+        row["module_id"]: row["observations"]
+        for row in value.get("module_judgments") or []
+    }
+    roles = {row["id"]: row["plan"].get("complete_product_role") for row in modules}
+    complete_roles = {"DOMINANT", "SUPPORTING"}
+    known_roles = complete_roles | {"IDENTITY_TOKEN_ONLY", "ABSENT"}
     for finding in value.get("material_failures") or []:
         if not isinstance(finding, dict):
             finding = {"visible_evidence": str(finding)}
         evidence = str(finding.get("visible_evidence") or "").strip()
         change = str(finding.get("required_change") or evidence).strip()
+        module_id = finding.get("module_id")
+        observed = observations.get(module_id, {})
+        role = roles.get(module_id)
+        presence = observed.get("product_presence_observed")
+        if (
+            finding.get("check") == "approved_plan_fidelity"
+            and evidence == observed.get("composition_observation")
+            and role in known_roles
+            and presence in known_roles
+            and (role in complete_roles) != (presence in complete_roles)
+        ):
+            instruction = (
+                "请按批准的主次布局加入完整原图商品，并保留要求的细节。"
+                if role in complete_roles
+                else "请按批准的范围展示，移除完整商品视图。"
+            )
+            change = f"{module_id} 完整商品出镜要求为 {role}，实际观察为 {presence}。{instruction}"
         if change and change not in seen:
             result.append(
                 {"visible_evidence": evidence or change, "required_change": change}
@@ -380,9 +406,20 @@ def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
     version = context.get("review_prompt_version")
     if version is None:
         return base
-    if version == "SOURCE_COMPARISON_V3":
+    if version in {"SOURCE_COMPARISON_V3", "SOURCE_COMPARISON_V4"}:
+        pair_scope = (
+            "MIXED SCREEN SCOPE V4. Inspect each screen independently. A large crop "
+            "is still only a detail if part of the photographed product is missing. "
+            "Report DOMINANT or SUPPORTING only for an actually complete product. "
+            "Then set the pair comparison_scope to the broadest scope actually seen "
+            "on either screen: VISIBLE_COMPLETE_PRODUCT, then VISIBLE_IDENTITY_TOKEN, "
+            "then NO_VISIBLE_PRODUCT. A pair with one complete view and one detail "
+            "uses VISIBLE_COMPLETE_PRODUCT. Keep every negative finding.\n"
+            if version == "SOURCE_COMPARISON_V4" else ""
+        )
         return (
-            "EXTERNAL COPY INSPECTION V3. For joint and per-screen ocr_text read ONLY "
+            pair_scope
+            + "EXTERNAL COPY INSPECTION V3. For joint and per-screen ocr_text read ONLY "
             "the separately attached external-copy-inspection.png (screen 1 left, "
             "screen 2 right). Ignore its English inspection headers. It contains actual "
             "final pixels with verified opaque source subjects masked gray. Transcribe "

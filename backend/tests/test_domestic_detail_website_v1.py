@@ -230,3 +230,33 @@ def test_native_negative_ocr_uses_bounded_repair_without_accepting_model_pass(
     assert len(_gateway(client).image_calls) == 5
     state = json.loads((detail_workspace(job["id"]) / "session.json").read_bytes())
     assert state["modules"][0]["status"] == "COMPLETE_WITH_RESIDUALS"
+
+
+def test_mixed_scope_pair_preserves_original_observation_and_names_failed_screen():
+    from app.domestic_detail import website_review
+
+    evidence = "上部横向排列三款商品局部，下方留白。"
+    judgment = {
+        "module_judgments": [{
+            "module_id": "M05",
+            "observations": {
+                "composition_observation": evidence,
+                "product_presence_observed": "IDENTITY_TOKEN_ONLY",
+            },
+        }],
+        "material_failures": [{
+            "module_id": "M05", "check": "approved_plan_fidelity",
+            "visible_evidence": evidence,
+        }],
+    }
+    modules = [{"id": "M05", "plan": {"complete_product_role": "SUPPORTING"}}]
+    original = deepcopy(judgment)
+    [finding] = website_review.repair_findings(judgment, modules)
+    assert finding["visible_evidence"] == evidence
+    assert "M05 完整商品出镜要求为 SUPPORTING" in finding["required_change"]
+    assert "实际观察为 IDENTITY_TOKEN_ONLY" in finding["required_change"]
+    assert judgment == original
+    old = website_review.prompt({"review_prompt_version": "SOURCE_COMPARISON_V3"}, {})
+    new = website_review.prompt({"review_prompt_version": "SOURCE_COMPARISON_V4"}, {})
+    assert "MIXED SCREEN SCOPE" not in old
+    assert "broadest scope actually seen" in new

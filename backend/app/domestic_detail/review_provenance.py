@@ -100,6 +100,8 @@ def pair_review_contract(
         )
     if any(row["role"] == "external_copy_inspection" for row in inventory):
         value["review_prompt_version"] = "SOURCE_COMPARISON_V3"
+        if native.get("pair_scope_review_version") == "MIXED_SCREEN_SCOPES_V1":
+            value["review_prompt_version"] = "SOURCE_COMPARISON_V4"
     from .revision_review import baseline_inventory, local_model_context
 
     local = local_model_context(native)

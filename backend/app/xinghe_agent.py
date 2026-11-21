@@ -7564,7 +7564,7 @@ class XingheImageProvider:
                         or f"M{int(configuration.get('page') or 1):02d}"
                     ),
                     "material_failures": (
-                        repair_findings(last_judgment)
+                        repair_findings(last_judgment, native_session_value["modules"])
                         if native_session_value["plan"].get("website_contract_version") == "WEBSITE_LEAN_V1"
                         else list(last_judgment.get("material_failures") or [])
                     ) or [{"visible_evidence": "像素审计发现需要修正的可见问题"}],
@@ -7641,6 +7641,7 @@ class XingheImageProvider:
         if native_request.get("review_profile") == "WEBSITE_LEAN_V1":
             native_request["review_transport_version"] = "WEBSITE_OWNED_METADATA_V2"
             native_request["source_comparison_version"] = "SOURCE_COMPARISON_V2"
+            native_request["pair_scope_review_version"] = "MIXED_SCREEN_SCOPES_V1"
         native_request["product_information"] = list(review_authority["product_information"])
         native_request["product_name"] = review_authority["product_name"]
         # Keep the blank format canvas local, as required by the Skill provider protocol.
