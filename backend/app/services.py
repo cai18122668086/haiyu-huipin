@@ -440,7 +440,7 @@ def allowed_actions(
                 actions.extend(["edit_plan", "confirm_plan"])
     if _creative_reissue_blocked(job, items):
         return actions
-    needs_upload = job.error_code in SOURCE_UPLOAD_MESSAGES or any(
+    needs_upload = getattr(job, "error_code", None) in SOURCE_UPLOAD_MESSAGES or any(
         item.error_code in SOURCE_UPLOAD_MESSAGES for item in items
     )
     if current in {
