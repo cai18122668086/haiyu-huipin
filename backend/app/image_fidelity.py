@@ -178,7 +178,7 @@ def detail_review_views(
                 )
             )
             scale = min(4.0, 1536 / max(crop.size))
-            size = tuple(max(1, round(v * scale)) for v in crop.size)
+            size = max(1, round(crop.width * scale)), max(1, round(crop.height * scale))
             stream = BytesIO()
             crop.resize(size, Image.Resampling.NEAREST).save(stream, format="PNG")
         data = stream.getvalue()
