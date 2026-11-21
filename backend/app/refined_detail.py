@@ -329,6 +329,9 @@ def validate_strategy(value: Mapping[str, Any], page_count: int) -> None:
     if errors:
         error = errors[0]
         pointer = "/" + "/".join(str(part) for part in error.absolute_path)
+        if error.validator == "required" and isinstance(error.instance, dict):
+            missing = next(key for key in error.validator_value if key not in error.instance)
+            pointer = pointer.rstrip("/") + "/" + missing
         raise XingheAgentError(
             "REFINED_DETAIL_PLAN_INVALID",
             f"详情页方案的 {pointer} 字段未通过结构校验（{error.validator}），请重新生成方案。",
@@ -406,6 +409,8 @@ def planner_prompt(request: PlannerRequest) -> str:
         "specific copy and scene. Start each image_prompt with exactly 'vertical 3:4 e-commerce "
         "detail page image'. The website performs no layout assembly or prompt rewriting. "
         "Ranks are consecutive from 1. module_plan page/role/buyer_demand_id must match screens.\n"
+        "Include analysis.product_type_strategy with all three fields: type, rationale, "
+        "and priority. Base this decision on the supplied product and buying evidence.\n"
         f"Return exactly {request.page_count} separate entries in each of module_plan, "
         "visual_rhythm_plan, design_strength_lock.rhythm_map, and screens, in the same "
         "page order. Never combine several numbered pages in a single rhythm entry.\n"

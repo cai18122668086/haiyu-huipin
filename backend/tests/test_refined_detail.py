@@ -353,8 +353,9 @@ def test_strategy_field_location_preserves_content_and_rejects_conflicts(
         refined_detail.normalize_strategy(conflict)
     missing = deepcopy(value)
     del missing["product_type_strategy"]
-    with pytest.raises(XingheAgentError, match="required"):
+    with pytest.raises(XingheAgentError, match="required") as exc:
         refined_detail.validate_strategy(refined_detail.normalize_strategy(missing), 8)
+    assert exc.value.json_pointer == "/analysis/product_type_strategy"
 
 
 def test_top_level_screens_preserve_the_complete_authored_plan(client):
