@@ -3277,6 +3277,58 @@ def _normalize_parallel_set_audit_payload(
 ) -> dict[str, Any]:
     """Bind equivalent provider output to the native six-page Harness contract."""
 
+    roles = payload.get("page_roles")
+    cover = payload.get("search_listing_cover")
+    checks = payload.get("checks")
+    if (
+        isinstance(roles, list)
+        and len(roles) == len(sources) == 6
+        and isinstance(cover, dict)
+        and cover.get("page_order_index") == 0
+        and cover.get("asset_id") == sources[0].asset_id
+        and cover.get("filename") == sources[0].filename
+        and cover.get("is_alone") is True
+        and cover.get("is_search_listing_cover") is True
+        and payload.get("all_material_deficiencies") == []
+        and isinstance(checks, list)
+        and checks
+        and all(
+            isinstance(c, dict)
+            and str(c.get("status")).lower() == "pass"
+            and c.get("evidence")
+            for c in checks
+        )
+        and all(
+            isinstance(row, dict)
+            and type(row.get("page_order_index")) is int
+            and row["page_order_index"] == i
+            and row.get("asset_id") == sources[i].asset_id
+            and row.get("filename") == sources[i].filename
+            and row.get("image_sha256") in (None, sources[i].sha256)
+            and row.get("is_search_listing_cover") is (i == 0)
+            and row.get("pixel_evidence")
+            and (
+                i == 0
+                or isinstance(row.get("not_cover_reason"), str)
+                and row["not_cover_reason"].strip()
+            )
+            for i, row in enumerate(roles)
+        )
+    ):
+        payload.setdefault("identified_search_page_index", 0)
+        payload.setdefault("search_role_is_unique", True)
+        payload.setdefault(
+            "search_identification_evidence",
+            " ".join(_flatten_style_evidence(roles[0]["pixel_evidence"])),
+        )
+        payload.setdefault(
+            "carousel_distinctions",
+            [
+                {"page_index": i, "why_not_search_cover": row["not_cover_reason"]}
+                for i, row in enumerate(roles)
+                if i
+            ],
+        )
     observation = _normalize_set_role_audit_payload(payload)
     observation["agent_pixel_reviewed"] = True
     observation["review_mode"] = "BLIND_SIX_PAGE_ROLE_COMPARISON"

@@ -13,8 +13,20 @@ CONTENT_REJECTION_MESSAGE = (
 )
 PREPARATION_FAILED = "IMAGE_FIDELITY_PREPARATION_FAILED"
 PREPARATION_FAILED_MESSAGE = (
-    "商品素材未通过生图前检查，本次未发送生图请求。请核对商品位置与印字是否清晰后重试。"
+    "生图前检查未能完成，本次未开始生成。请稍后重试。"
 )
+SUBJECT_UNCLEAR = "SOURCE_PRODUCT_UNCLEAR"
+PRINT_UNREADABLE = "SOURCE_PRINT_UNREADABLE"
+SOURCE_UPLOAD_MESSAGES = {
+    SUBJECT_UNCLEAR: (
+        "照片里看不清商品的完整轮廓，这一项已停止生成。"
+        "请把商品放在纯色背景前，移开遮挡物，拍清主体和配件后重新上传。"
+    ),
+    PRINT_UNREADABLE: (
+        "原图上的商品印字看不清，这一项已停止生成。"
+        "请对焦印字，避开反光，重新上传能看清文字的原图。"
+    ),
+}
 FIDELITY_REJECTED = "IMAGE_FIDELITY_REJECTED"
 FIDELITY_REJECTED_MESSAGE = (
     "生成图未通过商品保真审核，候选图已保留。请核对商品外观、图案与文字要求。"
@@ -42,6 +54,8 @@ def preparation_message(stage: object) -> str:
 def public_failure_message(
     code: str | None, stored: str | None, details: object = None,
 ) -> str | None:
+    if code in SOURCE_UPLOAD_MESSAGES:
+        return SOURCE_UPLOAD_MESSAGES[code]
     # Read historical generic adapter errors without rewriting task history.
     if code == "IMAGE_REQUEST_FAILED" and isinstance(details, Mapping):
         error = details.get("provider_error")
@@ -213,17 +227,18 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
         result["image_fidelity"] = {
             key: value
             for key, value in fidelity.items()
-            if (key in {"accepted", "costs_aggregated"} and type(value) is bool)
+            if (key in {"accepted", "costs_aggregated", "independent_ocr_matched"} and type(value) is bool)
             or (
                 key in {"image_requests", "planning_requests"}
                 and type(value) is int
                 and 0 <= value <= MAX_PROVIDER_ATTEMPTS
             )
             or (
-                key in {"version", "candidate_sha256", "retained_asset_id"}
+                key in {"version", "candidate_sha256", "retained_asset_id", "detail_review_version"}
                 and isinstance(value, str)
                 and len(value) <= 255
             )
+            or (key == "print_verification" and value == "original_rgb_exact")
             or (
                 key == "preparation_stage"
                 and isinstance(value, str)

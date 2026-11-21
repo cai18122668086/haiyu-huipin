@@ -359,11 +359,44 @@ failure summary alone is incomplete; preserve negative findings in complete JSON
 """
 
 
+_SURFACE_PRINT_REVIEW = """SOURCE PRINT AND ADDED COPY REVIEW V2
+Read the full canvas and each slice. For every visible inscription, determine
+its physical location by direct comparison of the actual source and candidate.
+In observations.ocr_text and joint ocr_text transcribe ALL independently laid
+out marketing text, labels, watermarks, captions and marks outside the product.
+In identity evidence describe and transcribe original printing on the photographed
+product, identifying the specific surface and location on BOTH sides of each
+comparison. Inspect every visible design. Only printing verified at its original
+location on the same subject belongs in this identity evidence. Reject altered,
+replaced, missing or newly introduced product printing under identity or facts.
+If provenance cannot be determined, report uncertainty. Unapproved overlaid
+copy, logos and off-product duplicates remain material even if their text also
+appears on a genuine product. Never omit uncertain lettering to obtain a pass.
+"""
+
+
 def prompt(context: dict[str, Any], schema: dict[str, Any]) -> str:
     base = _owned_metadata_prompt(context, schema)
     version = context.get("review_prompt_version")
     if version is None:
         return base
+    if version == "SOURCE_COMPARISON_V3":
+        return (
+            "EXTERNAL COPY INSPECTION V3. For joint and per-screen ocr_text read ONLY "
+            "the separately attached external-copy-inspection.png (screen 1 left, "
+            "screen 2 right). Ignore its English inspection headers. It contains actual "
+            "final pixels with verified opaque source subjects masked gray. Transcribe "
+            "all visible editorial copy literally without annotations or commentary. "
+            "Any unauthorized text outside the photographed product must still fail. "
+            "Use the unmasked original photo, full canvas, fixed slices and pixel pairs "
+            "for identity, all on-product text, layout, visual proof and continuity. "
+            "Record photographed inscriptions in identity evidence.\n"
+            + _SURFACE_PRINT_REVIEW
+            + _SOURCE_COMPARISON_PROMPT_V1
+            + base
+        )
+    if version == "SOURCE_COMPARISON_V2":
+        return _SURFACE_PRINT_REVIEW + _SOURCE_COMPARISON_PROMPT_V1 + base
     if version != "SOURCE_COMPARISON_V1":
         raise ValueError("Unknown immutable native review prompt version")
     return _SOURCE_COMPARISON_PROMPT_V1 + base

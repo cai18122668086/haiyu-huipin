@@ -18,6 +18,7 @@ from PIL import Image, UnidentifiedImageError
 from .models import JobRecord, ReplicaDocumentRecord, utc_now
 from .native_portrait_delivery import (
     STYLE_NATIVE_POLICY,
+    follows_native_square,
     style_native_budget_matches,
 )
 from .provider import ProviderOutcome, ProviderRequest, ProviderResult
@@ -145,6 +146,22 @@ def validate_source(
         raise ReplicaImageOutcomeUnknown("存在结果尚未核实的生图请求，禁止自动重发。")
 
 
+def _approved_native_square(
+    run: NativeReplicaRun, expected: list[int], size: list[int], sha: str, target: str | None
+) -> bool:
+    """Accept the larger native square only for a ratio-selected style preset."""
+    if size != [2000, 2000] or not follows_native_square(getattr(run, "context", {}), expected):
+        return False
+    ledger = run.root / "invocations.json"
+    return ledger.is_file() and any(
+        target is not None and row.get("target") == target and row.get("state") == "returned"
+        and row.get("haiyu_native_canvas") == "2000x2000"
+        and row.get("actual_size") == size
+        and row.get("sha256") == sha
+        for row in read_json(ledger).values()
+    )
+
+
 def inspect_artwork(
     run: NativeReplicaRun,
     path: str,
@@ -179,13 +196,14 @@ def inspect_artwork(
             raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
     record: dict[str, Any] = {"artwork": str(file), "sha256": sha, "size": size}
     if not detail and size != job["canvas"]:
-        if not style_native_budget_matches(job["canvas"], (size[0], size[1])):
+        native_square = _approved_native_square(run, job["canvas"], size, sha, job.get("id"))
+        if not native_square and not style_native_budget_matches(job["canvas"], (size[0], size[1])):
             raise ReplicaCanvasMismatch(job["canvas"], (size[0], size[1]))
         # Keep the approved plan intact; record actual dimensions separately.
         # The provider bytes are delivered unchanged, including after recovery.
         record["delivery_canvas"] = {
             **delivery_receipt(job["canvas"], (size[0], size[1]), sha),
-            "policy": STYLE_NATIVE_POLICY,
+            "policy": "style-follow-reference-native-square-v1" if native_square else STYLE_NATIVE_POLICY,
         }
     return record
 

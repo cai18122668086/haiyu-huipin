@@ -104,6 +104,59 @@ def _image_payload(color: tuple[int, int, int]) -> bytes:
     return output.getvalue()
 
 
+def test_unusable_photo_exposes_reupload_message_and_blocks_same_input_reissue(client):
+    from app.provider_diagnostics import SOURCE_UPLOAD_MESSAGES, SUBJECT_UNCLEAR
+
+    job_id = _create_job(client)
+    url = f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job_id}"
+    with client.app.state.session_factory.begin() as db:
+        job = db.get(JobRecord, job_id)
+        item = db.scalar(select(JobItemRecord).where(JobItemRecord.job_id == job_id))
+        job.status = item.status = "failed"
+        job.finished_at = utc_now()
+        job.failed_item_count = 1
+        job.error_code = item.error_code = SUBJECT_UNCLEAR
+    result = client.get(url).json()
+    assert result["error_message"] == result["items"][0]["error_message"] == SOURCE_UPLOAD_MESSAGES[SUBJECT_UNCLEAR]
+    assert {"retry", "clone"}.isdisjoint(result["allowed_actions"])
+    for route, body in [("retry", {"scope": "failed"}), ("clone", {})]:
+        response = client.post(f"{url}/{route}", json=body, headers={"Idempotency-Key": str(uuid4())})
+        assert response.status_code == 409
+        assert SUBJECT_UNCLEAR in response.text
+
+
+def test_selected_retry_keeps_the_other_items_reupload_requirement(client):
+    from app.provider_diagnostics import SUBJECT_UNCLEAR
+    from tests.test_api import upload_asset
+
+    source = upload_asset(client)
+    base = f"/api/v1/workspaces/{WORKSPACE_ID}/jobs"
+    created = client.post(base, headers={"Idempotency-Key": str(uuid4())}, json={
+        "type": "product_image", "intent": "submit",
+        "input": {"product_asset_ids": [source["id"]]},
+        "configuration": {"task_type": "change_background", "image_count": 2,
+                          "instruction": "保留商品并更换背景"},
+    })
+    assert created.status_code == 202
+    job_id = created.json()["id"]
+    with client.app.state.session_factory.begin() as db:
+        job = db.get(JobRecord, job_id)
+        photos, service = db.scalars(select(JobItemRecord).where(
+            JobItemRecord.job_id == job_id).order_by(JobItemRecord.ordinal)).all()
+        job.status = photos.status = service.status = "failed"
+        job.finished_at = utc_now()
+        job.failed_item_count = 2
+        photos.error_code = SUBJECT_UNCLEAR
+        service.error_code = "IMAGE_REQUEST_FAILED"
+        retry_id = service.id
+    response = client.post(f"{base}/{job_id}/retry", headers={"Idempotency-Key": str(uuid4())},
+                           json={"scope": "selected", "item_ids": [retry_id]})
+    assert response.status_code == 201, response.text
+    preserved, pending = response.json()["items"]
+    assert preserved["error_code"] == SUBJECT_UNCLEAR and preserved["status"] == "skipped"
+    assert pending["status"] == "pending" and not pending["error_code"]
+
+
 def _create_job(client: TestClient) -> str:
     asset_ids: list[str] = []
     for index, media_kind in enumerate(["image", "mask"]):

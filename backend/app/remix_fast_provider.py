@@ -21,7 +21,7 @@ from PIL import Image
 from .config import default_aurora_work_root
 from .models import JobItemRecord, JobRecord
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
-from .provider_diagnostics import retained_metrics
+from .provider_diagnostics import SOURCE_UPLOAD_MESSAGES, retained_metrics
 from .remix_fast_contract import (
     CHECKS,
     GEOMETRY_FIELDS,
@@ -130,7 +130,8 @@ class RemixFastProvider(XingheSingleImageProvider):
                     if identity.get("error"):
                         self._save_state(request, state)
                         return self._result(
-                            state, error="REMIX_FAST_SOURCE_PREPARATION_FAILED"
+                            state, error=identity["error"] if identity["error"] in SOURCE_UPLOAD_MESSAGES
+                            else "REMIX_FAST_SOURCE_PREPARATION_FAILED",
                         )
                     if identity.get("enabled"):
                         planning_sources = sources + identity["sources"]
@@ -574,6 +575,7 @@ class RemixFastProvider(XingheSingleImageProvider):
             else ProviderOutcome.SUCCEEDED,
             error_code=error,
             error_message={
+                **SOURCE_UPLOAD_MESSAGES,
                 "REMIX_FAST_PREPARATION_FAILED": (
                     "商品与对标图分析服务暂时不可用，尚未开始生图；请查看任务详情。"
                 ),

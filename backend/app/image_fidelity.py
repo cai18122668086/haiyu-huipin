@@ -34,10 +34,21 @@ from .models import (
     ReplicaDocumentRecord,
 )
 from .provider import ProviderArtifact, ProviderOutcome
-from .provider_diagnostics import PREPARATION_FAILED, PREPARATION_FAILED_MESSAGE
+from .provider_diagnostics import (
+    PREPARATION_FAILED, PREPARATION_FAILED_MESSAGE, PRINT_UNREADABLE,
+    SOURCE_UPLOAD_MESSAGES, SUBJECT_UNCLEAR,
+)
 from .services import canonical_hash
 
 VERSION = "image-fidelity-v1"
+
+
+class SourcePhotoUnusable(ValueError):
+    def __init__(self, code: str):
+        super().__init__(SOURCE_UPLOAD_MESSAGES[code])
+        self.code = code
+
+
 PREPARE = "image_fidelity_prepare"
 REVIEW = "image_fidelity_review"
 READBACK = "image_fidelity_readback"
@@ -63,6 +74,7 @@ PHYSICAL_REVIEW_POLICY = (
     "An explicitly flat graphic/cutout layout requires no invented support. "
     "Never add an unrequested prop to make an isolated graphic look physical."
 )
+DETAIL_REVIEW_VERSION = "garment-pose-review-v2"
 GARMENT_REVIEW_VERSION = "garment-count-review-v1"
 GARMENT_REVIEW_POLICY = (
     "GARMENT COUNT REVIEW V1. When editing or wearing a referenced garment, "
@@ -106,6 +118,15 @@ POLICY = (
 
 
 def operation_policy(context: dict[str, Any]) -> str:
+    if context["settings"].get("task_type") == "try_on":
+        return POLICY + (
+            "\nImage 1 supplies the garment only. Image 2 supplies the person, "
+            "pose, background and any clothing the user wants to keep. Dress that "
+            "person in the complete garment from Image 1. Keep the whole front "
+            "opening visible from neckline to hem, outside the waistband, without "
+            "a fold, hand or overlapping garment hiding a fastening. Copy each "
+            "visible fastening once in its source order, including the lowest one."
+        )
     if context["settings"].get("task_type") == "change_model":
         return POLICY + (
             "\nTHIS REQUEST IS CHANGE_MODEL: actually replace the human face, "
@@ -118,6 +139,59 @@ def operation_policy(context: dict[str, Any]) -> str:
             "and shorts are forbidden clothing substitutes."
         )
     return POLICY
+
+
+def detail_review_kind(context: dict[str, Any]) -> str | None:
+    if context["settings"].get("task_type") == "try_on":
+        return "garment"
+    if context["job_type"] == "model_pose_transfer":
+        return "pose"
+    return None
+
+
+def detail_review_views(
+    sources: tuple[Any, ...], candidate: Any, kind: str
+) -> tuple[Any, ...]:
+    """Enlarge original pixels for comparison while retaining both full frames."""
+    authority = (
+        next((s for s in sources if s.source_role == "pose_reference"), None)
+        if kind == "pose"
+        else next(iter(sources), None)
+    )
+    if authority is None:
+        return ()
+    bounds = (0.15, 0.50, 0.85, 1.0) if kind == "pose" else (0.33, 0.13, 0.67, 0.81)
+    views = []
+    for source, role in ((authority, "authority"), (candidate, "candidate")):
+        with Image.open(BytesIO(source.payload)) as raw:
+            rgb = ImageOps.exif_transpose(raw).convert("RGB")
+            x0, y0, x1, y1 = bounds
+            crop = rgb.crop(
+                (
+                    round(x0 * rgb.width),
+                    round(y0 * rgb.height),
+                    round(x1 * rgb.width),
+                    round(y1 * rgb.height),
+                )
+            )
+            scale = min(4.0, 1536 / max(crop.size))
+            size = tuple(max(1, round(v * scale)) for v in crop.size)
+            stream = BytesIO()
+            crop.resize(size, Image.Resampling.NEAREST).save(stream, format="PNG")
+        data = stream.getvalue()
+        label = f"{role}-{kind}-detail"
+        views.append(
+            replace(
+                source,
+                asset_id=label,
+                filename=label + ".png",
+                source_role=label,
+                content_type="image/png",
+                payload=data,
+                sha256=hashlib.sha256(data).hexdigest(),
+            )
+        )
+    return tuple(views)
 
 
 def technical_contract(
@@ -538,6 +612,22 @@ def verify_source_print(result: Any, preparation: dict[str, Any]) -> bool:
         return False
 
 
+def incomplete_print_reading(result: Any, preparation: dict[str, Any]) -> bool:
+    """Allow another blind view only for unreadable marks, never a contradiction."""
+    if result.error_code or not isinstance(result.payload, dict):
+        return False
+    runs = result.payload.get("text_runs")
+    expected = preparation.get("literal_print_ledger")
+    if not isinstance(runs, list) or not isinstance(expected, list):
+        return False
+    if "UNREADABLE" not in runs or not all(isinstance(t, str) for t in runs):
+        return False
+    known = [t for t in runs if t != "UNREADABLE"]
+    return len(known) < len(expected) and readback_matches(
+        {"text_runs": expected}, {"literal_print_ledger": known, "selected_regions": []}
+    )
+
+
 def usable_optional_print_geometry(payload: object) -> object:
     from .source_print_evidence import REGIONS_SCHEMA, validate
 
@@ -583,7 +673,7 @@ class FidelityGateway:
         self.wrapped, self.sessions, self.storage = wrapped, sessions, storage
         self._prepared: dict[str, dict[str, Any] | None] = {}
         self._mattes: dict[
-            str, tuple[tuple[Any, ...], list[dict[str, Any]]] | None
+            str, tuple[tuple[Any, ...], list[dict[str, Any]]] | str | None
         ] = {}
         self._parent_key: str | None = None
         self._native_pair = False
@@ -604,6 +694,31 @@ class FidelityGateway:
             return await self.wrapped.edit(request)
         return await self._native_bound(request, parent, token).edit(request)
 
+    async def edit_replica(
+        self,
+        request: Any,
+        parent: Any,
+        *,
+        token: str,
+        format_attempt: int,
+    ) -> Any:
+        """Use the leased parent for storage and the native child key for dispatch."""
+        expected = f"replica-native:{parent.job_id}:{token}"
+        if format_attempt:
+            expected += f":format-{format_attempt + 1}"
+        if (
+            not token
+            or format_attempt < 0
+            or request.idempotency_key != expected
+            or self._context(request)["job_type"] != "reference_remix"
+            or any(
+                getattr(request, key) != getattr(parent, key)
+                for key in ("workspace_id", "job_id", "job_item_id", "attempt_id")
+            )
+        ):
+            raise ValueError("Native replica image parent binding changed")
+        return await self._bound_parent(parent.idempotency_key).edit(request)
+
     def _native_bound(self, request: Any, parent: Any, token: str) -> FidelityGateway:
         from .domestic_detail.generation import wire_idempotency_key
 
@@ -619,9 +734,13 @@ class FidelityGateway:
             != wire_idempotency_key(parent.idempotency_key, token)
         ):
             raise ValueError("Signed native image parent binding changed")
-        bound = FidelityGateway(self.wrapped, self.sessions, self.storage)
-        bound._parent_key = parent.idempotency_key
+        bound = self._bound_parent(parent.idempotency_key)
         bound._native_pair = True
+        return bound
+
+    def _bound_parent(self, key: str) -> FidelityGateway:
+        bound = FidelityGateway(self.wrapped, self.sessions, self.storage)
+        bound._parent_key = key
         bound._prepared, bound._locks = self._prepared, self._locks
         bound._mattes = self._mattes
         return bound
@@ -867,7 +986,10 @@ class FidelityGateway:
         if selection:
             # Spatial words refer to the first original product image;
             # extra reference images cannot redefine its rows/objects.
-            ids = ids[:1]
+            original_ids = tuple(
+                s.asset_id for s in authorities if s.source_role == "product_original"
+            )
+            ids = (original_ids or ids)[:1]
         if not ids:
             raise ValueError("Missing product identity authority")
         scope = canonical_hash(
@@ -901,6 +1023,8 @@ class FidelityGateway:
                     "Original source selection is unavailable; do not redispatch it"
                 )
             preparation = preparation or self._prepared.get(scope)
+            if preparation and preparation.get("source_issue") == SUBJECT_UNCLEAR:
+                raise SourcePhotoUnusable(SUBJECT_UNCLEAR)
             if preparation is None:
                 from .source_pixels import enabled_for as source_pixels_enabled_for
                 from .source_recolor import enabled as local_recolor_enabled
@@ -933,6 +1057,11 @@ class FidelityGateway:
                             "if": {"properties": {"visible_print": {"minItems": 1}}},
                             "then": {"properties": {"print_regions": {"minItems": 1}}},
                         }]
+                preparation_schema["properties"]["source_issue"] = {"const": SUBJECT_UNCLEAR}
+                preparation_schema["oneOf"] = [
+                    {"required": preparation_schema.pop("required"), "not": {"required": ["source_issue"]}},
+                    {"required": ["source_issue"], "maxProperties": 1},
+                ]
                 preparation_feedback = None
                 for preparation_attempt in range(2):
                     plan = await self._plan(
@@ -952,7 +1081,9 @@ class FidelityGateway:
                             ),
                             "spatial_selection_constraint": selection,
                             "instruction": "Select exactly the objects requested "
-                            "by the user from product sources. Give tight "
+                            "by the user from product sources. If the requested subject "
+                            "cannot be distinguished because of blur or occlusion, return "
+                            "only source_issue=SOURCE_PRODUCT_UNCLEAR. Never guess its boundaries. Give tight "
                             "complete-object boxes in normalized source-image "
                             "coordinates. Read the original physical printing, "
                             "not the style image's text. If unreadable, state "
@@ -1050,6 +1181,11 @@ class FidelityGateway:
                         if offer_print_geometry and not require_print_geometry:
                             payload = usable_optional_print_geometry(payload)
                         Draft202012Validator(preparation_schema).validate(payload)
+                        if payload.get("source_issue") == SUBJECT_UNCLEAR:
+                            if len(self._prepared) >= 128:
+                                self._prepared.clear()
+                            self._prepared[scope] = payload
+                            raise SourcePhotoUnusable(SUBJECT_UNCLEAR)
                         preparation = validate_preparation(
                             payload, ids, selection,
                             print_geometry=(
@@ -1120,23 +1256,27 @@ class FidelityGateway:
         async with lock:
             if key in self._mattes:
                 prior = self._mattes[key]
+                if isinstance(prior, str):
+                    raise SourcePhotoUnusable(prior)
                 if prior is None:
-                    raise ValueError(
-                        "Identical source extraction already failed acceptance"
-                    )
+                    raise ValueError("Prior source inspection could not be completed")
                 return prior[0], deepcopy(prior[1])
             if len(self._mattes) >= 8:
                 self._mattes.pop(next(iter(self._mattes)))
             # Do not re-review identical failed pixels on another suite item.
-            # Only a completed strict audit replaces this fail-closed marker.
+            # Keep an uncertain inspection distinct from a verified unusable photo.
             self._mattes[key] = None
-            layers = (
-                inherited_layers if inherited_layers is not None
-                else await asyncio.to_thread(
-                    source_pixels.extract_layers, original_sources, preparation,
-                    self.wrapped.image_fidelity_source_model_path,
-                )
-            )
+            async def extract(**options: Any) -> tuple[Any, ...]:
+                try:
+                    return await asyncio.to_thread(
+                        source_pixels.extract_layers, original_sources, preparation,
+                        self.wrapped.image_fidelity_source_model_path, **options,
+                    )
+                except source_pixels.SourceForegroundUnclear as exc:
+                    self._mattes[key] = SUBJECT_UNCLEAR
+                    raise SourcePhotoUnusable(SUBJECT_UNCLEAR) from exc
+
+            layers = inherited_layers if inherited_layers is not None else await extract()
             mask_audits = []
             for mask_review in range(2):
                 previews = []
@@ -1285,10 +1425,13 @@ class FidelityGateway:
                     ],
                     len(matte.payload["unresolved"]),
                 )
-                if mask_review:
-                    raise ValueError(
-                        "Source product extraction failed visual acceptance"
-                    )
+                if mask_review or (
+                    not matte.payload["complete_objects"] and not matte.payload["no_context_leak"]
+                ):
+                    if inherited_layers is not None:
+                        raise ValueError("Inherited source layer failed visual acceptance")
+                    self._mattes[key] = SUBJECT_UNCLEAR
+                    raise SourcePhotoUnusable(SUBJECT_UNCLEAR)
                 if matte.payload["repairs"] or matte.payload["edge_feather_px"]:
                     try:
                         layers = await asyncio.to_thread(
@@ -1303,12 +1446,10 @@ class FidelityGateway:
                             raise
                 if inherited_layers is not None:
                     raise ValueError("Inherited source layer failed visual acceptance")
-                alternate = await asyncio.to_thread(
-                    source_pixels.extract_layers, original_sources, preparation,
-                    self.wrapped.image_fidelity_source_model_path, tight_context=True,
-                )
+                alternate = await extract(tight_context=True)
                 if alternate == layers:
-                    raise ValueError("Source re-extraction produced identical evidence")
+                    self._mattes[key] = SUBJECT_UNCLEAR
+                    raise SourcePhotoUnusable(SUBJECT_UNCLEAR)
                 layers = alternate
             self._mattes[key] = (layers, deepcopy(mask_audits))
             return layers, mask_audits
@@ -1324,6 +1465,8 @@ class FidelityGateway:
         recolor_recipe = None
         recolor_artifact = None
         recolor_proof = None
+        inherited_recolor = None
+        retained_candidate = None
         inherited_white = None
         preparation_stage = "source_binding"
         try:
@@ -1379,6 +1522,22 @@ class FidelityGateway:
             )
             if frozen is not None:
                 preparation = frozen["preparation"]
+            elif (
+                not request.reconcile_only
+                and self.sessions is not None
+                and source_recolor.enabled(context, original_sources)
+                and getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False)
+            ):
+                from .fidelity_assets import prior_recolor_evidence
+
+                inherited_recolor = prior_recolor_evidence(
+                    self.sessions,
+                    request,
+                    next(s for s in original_sources if s.source_role == "product_reference"),
+                )
+                if inherited_recolor:
+                    preparation = inherited_recolor["preparation"]
+                    recolor_recipe = inherited_recolor["source_recolor_recipe"]
             if context["job_type"] in {
                 "product_image",
                 "creative_image",
@@ -1513,6 +1672,7 @@ class FidelityGateway:
                         "model_sha256": source_pixels.MODEL_SHA256,
                         "layers": saved_layers,
                         "mask_audits": mask_audits,
+                        **({"copy_inspection": "opaque-source-v1"} if self._native_pair else {}),
                         "cells": source_pixels.positions(context, len(layers)),
                     }
                     if (
@@ -1527,7 +1687,7 @@ class FidelityGateway:
                         )
                     if inherited_layers is not None and inherited_white is not None:
                         pixel_recipe["white_product_parent"] = inherited_white.binding
-                if frozen is None and crops and not pixel_mode:
+                if frozen is None and not inherited_recolor and crops and not pixel_mode:
                     preparation_stage = "source_readback"
                     readback_crops = tuple(crops)
                     recolor_readback = source_recolor.enabled(
@@ -1550,6 +1710,13 @@ class FidelityGateway:
                         ),
                     )
                     plans.append(source_readback)
+                    if (
+                        not source_readback.error_code
+                        and Draft202012Validator(response_schema(READBACK)).is_valid(source_readback.payload)
+                        and source_readback.payload["text_runs"]
+                        and all(t.strip().upper() == "UNREADABLE" for t in source_readback.payload["text_runs"])
+                    ):
+                        raise SourcePhotoUnusable(PRINT_UNREADABLE)
                     verified = verify_source_print(source_readback, preparation)
                     if (
                         not verified
@@ -1602,6 +1769,12 @@ class FidelityGateway:
                                 },
                             )
                     if not verified:
+                        if (
+                            not source_readback.error_code
+                            and Draft202012Validator(response_schema(READBACK)).is_valid(source_readback.payload)
+                            and any("UNREADABLE" in t.upper() for t in source_readback.payload["text_runs"])
+                        ):
+                            raise SourcePhotoUnusable(PRINT_UNREADABLE)
                         raise ValueError(
                             "Original physical printing could not be verified"
                         )
@@ -1616,6 +1789,7 @@ class FidelityGateway:
                 and not request.reconcile_only
                 and getattr(self.wrapped, "image_fidelity_source_pixels_enabled", False)
                 and source_recolor.enabled(context, original_sources)
+                and recolor_recipe is None
             ):
                 preparation_stage = "source_recolor"
                 source = next(
@@ -1716,6 +1890,24 @@ class FidelityGateway:
                         background_ids = [original_sources[1].asset_id]
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
+                    if (
+                        context["job_type"] == "amazon_visual_suite"
+                        or self._native_pair
+                    ) and not background_ids:
+                        background_schema["properties"]["scene_support"] = {
+                            "enum": ["upper_attachment", "resting_surface", "graphic"],
+                            "description": (
+                                "Classify the approved scene from the FINAL image contract, including both screens. "
+                                "For a hanging display case, rod, hook or bag loop pick "
+                                "upper_attachment. For a product resting on a surface choose "
+                                "resting_surface. Choose graphic for isolated design layouts. "
+                                "Describe how each placement is supported. An unattached "
+                                "subject in a lifestyle still life rests on the visible "
+                                "surface. For a top-down flat lay the support is the whole "
+                                "surface directly behind every object. Only require a loop "
+                                "at the placement whose contract actually specifies a loop."
+                            ),
+                        }
                     plain_white_eligible = (
                         context["job_type"] == "product_image"
                         and context["settings"].get("task_type") == "white_background"
@@ -2168,6 +2360,40 @@ class FidelityGateway:
                         placement_geometry,
                         continuous_pair=self._native_pair,
                     )
+                    support = pixel_recipe["background_projection"].get("scene_support")
+                    if support in {"upper_attachment", "resting_surface"}:
+                        import base64
+
+                        if support == "upper_attachment":
+                            pixel_recipe["support_registration"] = "visible-loop-v1"
+                        if support == "resting_surface":
+                            pixel_recipe["surface_shadow_version"] = "source-alpha-v1"
+                        guide = source_pixels.support_guide(
+                            (width, height),
+                            placement_geometry,
+                            support,
+                            cutouts,
+                            pixel_recipe["cells"],
+                        )
+                        pixel_recipe["format_png_base64"] = base64.b64encode(
+                            guide.payload
+                        ).decode("ascii")
+                        pixel_recipe["wire_prompt"] += (
+                            "\nThe attached diagram is a registration guide. Gray regions "
+                            "show where photographed products will cover the plate. Cyan crosses "
+                            "mark the contour at the support side. Gray silhouettes contain the actual "
+                            "openings in the photographed objects. Show the approved support (display-case pegs, rod, or fabric loop) "
+                            "passing behind the opening of the required clasp, clearly visible on "
+                            "both sides. Only depict actual approved attachment points. For resting "
+                            "items photograph the tabletop straight down so the flat photographed "
+                            "products rest along their backs on the surface. Replace EVERY diagram mark "
+                            "with the actual approved scene. No boxes, crosshairs or outlines "
+                            "may appear in the photograph. Position the required physical "
+                            "support behind its product so adjacent material and stitches, "
+                            "rail, strap or surface remain visible outside the gray region. An approved transparent display case is a real required scene object. Render its frame and mounting pegs at the indicated points; leaving empty reserved space does not depict the case. A flat "
+                            "lay uses a continuous supporting surface beneath every subject. "
+                            "Return an actual scene with all required props, no product."
+                        )
                 preparation_stage = "freeze_receipt"
                 frozen = self._frozen(
                     request,
@@ -2224,6 +2450,18 @@ class FidelityGateway:
                 recolor_artifact, recolor_proof = await asyncio.to_thread(
                     source_recolor.render, source, recolor_recipe
                 )
+            if (
+                detail_review_kind(context)
+                and not request.reconcile_only
+                and not pixel_recipe
+                and self.sessions is not None
+                and self.storage is not None
+            ):
+                from .fidelity_assets import prior_garment_candidate
+
+                retained_candidate = await prior_garment_candidate(
+                    self.sessions, self.storage, request, DETAIL_REVIEW_VERSION
+                )
         except Exception as exc:
             if isinstance(exc, ValidationError):
                 logger.warning(
@@ -2256,17 +2494,24 @@ class FidelityGateway:
                     0.0,
                     0,
                     estimated_cost_micros=0,
-                    error_code=PREPARATION_FAILED,
-                    error_message=PREPARATION_FAILED_MESSAGE,
+                    error_code=exc.code if isinstance(exc, SourcePhotoUnusable) else PREPARATION_FAILED,
+                    error_message=str(exc) if isinstance(exc, SourcePhotoUnusable) else PREPARATION_FAILED_MESSAGE,
                 ),
                 plans,
                 preparation_stage=preparation_stage,
             )
-        if recolor_artifact is not None:
+        if recolor_artifact is not None or retained_candidate is not None:
             result = ImageCallResult(
                 outcome=ProviderOutcome.SUCCEEDED,
                 provider_request_id=None,
-                raw_usage={"network_requests": 0, "source_recolor": recolor_proof},
+                raw_usage={
+                    "network_requests": 0,
+                    **(
+                        {"source_recolor": recolor_proof}
+                        if recolor_artifact
+                        else {"retained_review": True}
+                    ),
+                },
                 normalized_usage={
                     "reported": True,
                     "input_tokens": 0,
@@ -2276,7 +2521,7 @@ class FidelityGateway:
                 api_latency_seconds=0,
                 actual_cost_micros=0,
                 estimated_cost_micros=0,
-                artifact=recolor_artifact,
+                artifact=recolor_artifact or retained_candidate,
             )
         elif pixel_recipe and pixel_recipe.get("local_white_background"):
             # Older recipes have no local marker and keep their original supplier
@@ -2310,6 +2555,7 @@ class FidelityGateway:
         if result.outcome != ProviderOutcome.SUCCEEDED or result.artifact is None:
             return self._account(result, plans)
         pixel_proof = None
+        registered_cells = None
         if (
             pixel_recipe is not None
             and technical_contract(context, request, result.artifact)[
@@ -2328,8 +2574,29 @@ class FidelityGateway:
                 cutouts = source_pixels.crop_windows(
                     cutouts, pixel_recipe.get("source_windows")
                 )
+                cells = pixel_recipe["cells"]
+                if pixel_recipe.get(
+                    "support_registration"
+                ) == "visible-loop-v1" and not (
+                    pixel_recipe.get("text_recipe") or {}
+                ).get("blocks"):
+                    registered_cells = await asyncio.to_thread(
+                        source_pixels.register_hanging_cells,
+                        result.artifact,
+                        cutouts,
+                        cells,
+                    )
+                    cells = registered_cells
                 composed, pixel_proof = source_pixels.compose(
-                    result.artifact, cutouts, pixel_recipe["cells"]
+                    result.artifact,
+                    cutouts,
+                    cells,
+                    **(
+                        {"resting_shadow": True}
+                        if pixel_recipe.get("surface_shadow_version")
+                        == "source-alpha-v1"
+                        else {}
+                    ),
                 )
                 if pixel_recipe.get("text_recipe") is not None:
                     from . import source_typography
@@ -2395,7 +2662,13 @@ class FidelityGateway:
         if pixel_proof is not None:
             try:
                 review_sources += await self.paired_source_evidence(
-                    original_request, result.artifact
+                    original_request,
+                    result.artifact,
+                    **(
+                        {"registered_cells": registered_cells}
+                        if registered_cells is not None
+                        else {}
+                    ),
                 )
             except Exception as exc:
                 logger.warning(
@@ -2513,7 +2786,7 @@ class FidelityGateway:
         return tuple(cutouts)
 
     async def paired_source_evidence(
-        self, request: Any, candidate: Any
+        self, request: Any, candidate: Any, *, registered_cells: list[list[float]] | None = None
     ) -> tuple[Any, ...]:
         from .source_pixels import comparison_panels, crop_windows
         from .xinghe_agent import SourceImage
@@ -2527,9 +2800,9 @@ class FidelityGateway:
             cutouts = tuple(cutouts[i] for i in recipe["placement_indices"])
         cutouts = crop_windows(cutouts, recipe.get("source_windows"))
         pairs = await asyncio.to_thread(
-            comparison_panels, candidate, cutouts, recipe["cells"]
+            comparison_panels, candidate, cutouts, registered_cells or recipe["cells"]
         )
-        return tuple(
+        views = tuple(
             SourceImage(
                 f"source-candidate-pair-{i}",
                 request.group_key,
@@ -2541,6 +2814,25 @@ class FidelityGateway:
             )
             for i, pair in enumerate(pairs)
         )
+
+        if recipe.get("copy_inspection") == "opaque-source-v1":
+            from .source_pixels import marketing_text_view
+
+            frame = await asyncio.to_thread(
+                marketing_text_view, candidate, cutouts, recipe["cells"]
+            )
+            views += (
+                SourceImage(
+                    "external-copy-inspection",
+                    request.group_key,
+                    frame.filename,
+                    frame.content_type,
+                    frame.sha256,
+                    frame.payload,
+                    source_role="external_copy_inspection",
+                ),
+            )
+        return views
 
     def selected_source_evidence(self, request: Any) -> tuple[Any, ...]:
         """Return actual original crops bound to this frozen authorized call."""
@@ -2684,7 +2976,7 @@ class FidelityGateway:
             return {
                 "enabled": True,
                 "calls": plans,
-                "error": "SOURCE_IDENTITY_PREPARATION_FAILED",
+                "error": exc.code if isinstance(exc, SourcePhotoUnusable) else "SOURCE_IDENTITY_PREPARATION_FAILED",
             }
 
     async def review_existing(
@@ -2887,6 +3179,8 @@ class FidelityGateway:
             candidate.payload,
             source_role="candidate",
         )
+        kind = detail_review_kind(context)
+        views = detail_review_views(original_sources, review_source, kind) if kind else ()
         accepted = False
         failed = ["review_unavailable"]
         technical = technical_contract(context, request, candidate)
@@ -2951,13 +3245,27 @@ class FidelityGateway:
                 "extra products. Do not invent a changed transcription from "
                 "uncertain OCR when the actual source pixels were preserved.",
             }
+            if views:
+                review_context["detail_views"] = {
+                    "roles": [s.source_role for s in views],
+                    "inspection": (
+                        "Inspect the full source and candidate and their separate enlarged "
+                        "pixel crops. Enumerate visible closures top to bottom on EACH garment "
+                        "before comparing. Inspect the neckline and ribbed hem separately. "
+                        "Only count distinct actual buttons, never seams or shadows."
+                        if kind == "garment"
+                        else "Compare the actual pose reference with the candidate. Describe the "
+                        "stance, actual gaps or occlusion between ankles and shoes, weight "
+                        "bearing leg and which foot is forward. Check the full body as well."
+                    ),
+                }
             try:
                 review = await self._plan(
                     request,
                     REVIEW,
-                    original_sources + (review_source,),
+                    original_sources + views + (review_source,),
                     review_context,
-                    suffix=f":{attempt + 1}",
+                    suffix=f":{attempt + 1}" + (f":{DETAIL_REVIEW_VERSION}" if views else ""),
                 )
             except Exception as exc:
                 logger.warning(
@@ -2990,6 +3298,7 @@ class FidelityGateway:
                 continue
             except (ValueError, TypeError, KeyError):
                 continue
+        print_receipt: dict[str, Any] = {}
         if (
             accepted
             and preparation
@@ -3044,9 +3353,70 @@ class FidelityGateway:
                     suffix=":candidate-luminance-v1" if luminance_only else "",
                 )
                 plans.append(readback)
-                if readback.error_code or not readback_matches(
-                    readback.payload, preparation
+                from .source_print_evidence import identical_print_regions
+
+                unchanged_print = (
+                    luminance_only
+                    and not readback.error_code
+                    and not readback_matches(readback.payload, preparation)
+                    and identical_print_regions(
+                        next(
+                            s
+                            for s in original_sources
+                            if s.asset_id == candidate_asset_id
+                        ),
+                        review_source,
+                        preparation,
+                    )
+                )
+                if luminance_only and (
+                    unchanged_print or incomplete_print_reading(readback, preparation)
                 ):
+                    # Color can distinguish fine lettering from a similarly
+                    # bright label. Re-read the actual candidate with no answer
+                    # key, retaining the verified source ledger and all counts.
+                    color_views = self._literal_print_evidence(
+                        candidate_request,
+                        preparation,
+                        "candidate_detail",
+                    )
+                    if tuple(v.sha256 for v in color_views) != tuple(
+                        v.sha256 for v in readback_sources
+                    ):
+                        readback = await self._plan(
+                            request,
+                            READBACK,
+                            color_views,
+                            {"schema": response_schema(READBACK)},
+                            suffix=":candidate-print-color-v1",
+                        )
+                        plans.append(readback)
+                matched = not readback.error_code and readback_matches(
+                    readback.payload, preparation
+                )
+                # For this lossless, source-only operation every changed pixel has
+                # already been checked against the metal mask. Validate the final
+                # bytes against the complete photographed print rectangles as well.
+                # A transcription disagreement remains visible in the receipt.
+                if (
+                    not matched
+                    and not readback.error_code
+                    and unchanged_print
+                    and recolor_proof is not None
+                    and recolor_proof.get("result_sha256") == candidate.sha256
+                    and recolor_proof.get("outside_mask_changed_pixels") == 0
+                    and recolor_proof.get("source_sha256")
+                    == next(
+                        s.sha256
+                        for s in original_sources
+                        if s.asset_id == candidate_asset_id
+                    )
+                ):
+                    print_receipt = {
+                        "print_verification": "original_rgb_exact",
+                        "independent_ocr_matched": False,
+                    }
+                if not matched and not print_receipt:
                     accepted = False
                     failed.append("physical_text_readback")
             except Exception as exc:
@@ -3067,6 +3437,8 @@ class FidelityGateway:
                 "accepted": accepted,
                 "failed_checks": failed,
                 "candidate_sha256": candidate.sha256,
+                **print_receipt,
+                **({"detail_review_version": DETAIL_REVIEW_VERSION} if views else {}),
             },
         }
         if pixel_proof is not None:

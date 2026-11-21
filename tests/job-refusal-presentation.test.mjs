@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { jobNote, safeJobFailureSummary } from "../lib/jobs/presentation.ts";
 
+test("unclear photos request the right replacement while inspection outages stay retryable", () => {
+  for (const [code, advice] of [["SOURCE_PRODUCT_UNCLEAR", /完整轮廓/], ["SOURCE_PRINT_UNREADABLE", /对焦印字/]]) {
+    const message = safeJobFailureSummary(code);
+    assert.match(message, advice);
+    assert.match(message, /重新上传/);
+    assert.equal(jobNote({ status: "partial", items: [{ status: "failed", error_code: code }] }), message);
+  }
+  assert.doesNotMatch(safeJobFailureSummary("IMAGE_FIDELITY_PREPARATION_FAILED"), /重新上传/);
+});
+
 test("content refusal has an actionable safe summary for new and historical jobs", () => {
   const summary = safeJobFailureSummary("IMAGE_CONTENT_REJECTED");
   assert.match(summary, /内容限制/);

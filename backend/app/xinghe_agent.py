@@ -290,6 +290,7 @@ _GATEWAY_NATIVE_REQUEST_SIZE = {
 # The Haiyu image-2.5 edit endpoint accepts these same-aspect native canvases.
 # Each new cross-border plan pins its wire size before the first image dispatch.
 _HAIYU_CROSSBORDER_CANVAS = {
+    "2048x1152": "auto",
     "1000x1000": "1024x1024",
     "1200x1200": "2000x2000",
     "1600x1600": "2000x2000",
@@ -1102,6 +1103,22 @@ def validate_planner_payload(
             json_pointer=_json_pointer("plan", "screens"),
         )
     rhythm_map = design_lock.get("rhythm_map")
+    if (
+        require_cross_page_locks
+        and isinstance(rhythm_map, list)
+        and all(
+            isinstance(row, dict)
+            and set(row) == {"screen", "beat"}
+            and type(row["screen"]) is int
+            and row["screen"] == index
+            and isinstance(row["beat"], str)
+            and row["beat"].strip()
+            for index, row in enumerate(rhythm_map, 1)
+        )
+    ):
+        rhythm_map = [row["beat"] for row in rhythm_map]
+        design_lock = {**design_lock, "rhythm_map": rhythm_map}
+        plan = {**plan, "design_strength_lock": design_lock}
     if (
         not isinstance(rhythm_map, list)
         or len(rhythm_map) != page_count
@@ -3099,6 +3116,7 @@ class TengliOpenAICompatibleGateway:
             response: Mapping[str, Any] | None = None
             for route_index, route in enumerate(routes):
                 route_fields = list(fields)
+                route_files = files
                 if (
                     request.haiyu_native_canvas
                     and urlparse(route.image_base_url).hostname == "api.haiyushuke.com"
@@ -3108,6 +3126,34 @@ class TengliOpenAICompatibleGateway:
                         (key, request.haiyu_native_canvas if key == "size" else val)
                         for key, val in route_fields
                     ]
+                    if request.haiyu_native_canvas == "auto":
+                        # This relay has no explicit 16:9 edit preset. Supply
+                        # the target framing as a separate, non-product input.
+                        guide = BytesIO()
+                        Image.new("RGB", _parse_image_size(request.size), "white").save(
+                            guide, "PNG"
+                        )
+                        route_files = [
+                            *files,
+                            (
+                                "image",
+                                "output-framing.png",
+                                "image/png",
+                                guide.getvalue(),
+                            ),
+                        ]
+                        route_fields = [
+                            (
+                                key,
+                                val
+                                + f"\nThe final blank image defines the full {request.size} "
+                                "output frame only. Fill the entire frame with the requested page. "
+                                "All product and style references retain their original roles."
+                                if key == "prompt"
+                                else val,
+                            )
+                            for key, val in route_fields
+                        ]
                 route_fields[0] = ("model", route.image_model)
                 try:
                     self.external_network_request_count += 1
@@ -3124,7 +3170,7 @@ class TengliOpenAICompatibleGateway:
                             request.idempotency_key, route.image_api_key
                         ),
                         fields=route_fields,
-                        files=files,
+                        files=route_files,
                         timeout_seconds=self.timeout_seconds,
                         **resume_options,
                     )
@@ -7594,6 +7640,7 @@ class XingheImageProvider:
         native_request["review_authority"] = review_authority
         if native_request.get("review_profile") == "WEBSITE_LEAN_V1":
             native_request["review_transport_version"] = "WEBSITE_OWNED_METADATA_V2"
+            native_request["source_comparison_version"] = "SOURCE_COMPARISON_V2"
         native_request["product_information"] = list(review_authority["product_information"])
         native_request["product_name"] = review_authority["product_name"]
         # Keep the blank format canvas local, as required by the Skill provider protocol.
@@ -7784,7 +7831,7 @@ class XingheImageProvider:
             raise XingheAgentError(exc.code, str(exc)) from exc
         actual_comparisons = [
             {"asset_id": source.asset_id, "role": source.source_role, "sha256": source.sha256}
-            for source in sources if source.source_role == "source_candidate_comparison"
+            for source in sources if source.source_role in {"source_candidate_comparison", "external_copy_inspection"}
         ]
         if actual_comparisons != expected_comparisons:
             raise XingheAgentError(

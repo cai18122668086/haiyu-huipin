@@ -82,6 +82,41 @@ def validate(region: dict[str, Any]) -> None:
         polygons.append(points)
 
 
+def identical_print_regions(
+    source: Any, candidate: Any, preparation: dict[str, Any]
+) -> bool:
+    """Check every original protected print rectangle at native RGB resolution."""
+    if any(
+        hashlib.sha256(s.payload).hexdigest() != s.sha256 for s in (source, candidate)
+    ):
+        return False
+    with (
+        Image.open(BytesIO(source.payload)) as first,
+        Image.open(BytesIO(candidate.payload)) as second,
+    ):
+        a = ImageOps.exif_transpose(first).convert("RGB")
+        b = ImageOps.exif_transpose(second).convert("RGB")
+    if a.size != b.size:
+        return False
+    regions = preparation.get("selected_regions", [])
+    if not regions:
+        return False
+    for region in regions:
+        validate(region)
+        if region["asset_id"] != source.asset_id or not region.get("print_regions"):
+            return False
+        for quad in region["print_regions"]:
+            area = (
+                math.floor(min(quad[::2]) * a.width),
+                math.floor(min(quad[1::2]) * a.height),
+                math.ceil(max(quad[::2]) * a.width),
+                math.ceil(max(quad[1::2]) * a.height),
+            )
+            if a.crop(area).tobytes() != b.crop(area).tobytes():
+                return False
+    return True
+
+
 def crops(
     sources: tuple[Any, ...],
     preparation: dict[str, Any],

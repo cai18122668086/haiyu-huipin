@@ -26,6 +26,17 @@ Do not invent material, performance, measurements, claims or evidence. Backgroun
 watermarks are not the product brand. Adjacent screens share a continuous 3:8
 canvas, with a concrete background/material/light connection at the middle.
 Only product references define identity; style references only guide art direction.
+Apply user subject-selection restrictions to every screen, including source
+overview, evidence, comparison, crop and transition scenes. An observation of
+other items in the same photo never authorizes showing, counting, or describing
+them in the page. Use only approved variants even in scene-setting copy.
+Design each screen from the actual resolution of the selected product inside
+the photo. A tiny photographed fitting can be a small detail inset beside a
+larger product view. Do not require a full-screen macro from a few source
+pixels. Distinguish an upright cutout on a graphic background from a product
+physically hanging in a scene. Use the graphic treatment when the user only
+requests a pattern or variant display. Specify a physical hanger and contact
+only when a physical display scene is requested or needed to prove a user fact.
 """.strip()
 
 
@@ -98,7 +109,8 @@ def prompt(request: Any) -> str:
         "target_buyer": (request.intake_settings or {}).get("target_buyer"),
         "identity": (request.detail_intake or {}).get("identity"),
         "facts": [
-            {key: row.get(key) for key in ("id", "text", "conditions")} for row in facts
+            {key: row.get(key) for key in ("id", "text", "source_class", "conditions")}
+            for row in facts
         ],
         "user_fact_ids_to_cover": required,
         "style_reference_analysis": (request.detail_intake or {}).get(

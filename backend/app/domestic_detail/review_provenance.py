@@ -95,7 +95,11 @@ def pair_review_contract(
     if "review_transport_version" in native:
         value["review_transport_version"] = native["review_transport_version"]
     if any(row["role"] == "source_candidate_comparison" for row in inventory):
-        value["review_prompt_version"] = "SOURCE_COMPARISON_V1"
+        value["review_prompt_version"] = native.get(
+            "source_comparison_version", "SOURCE_COMPARISON_V1"
+        )
+    if any(row["role"] == "external_copy_inspection" for row in inventory):
+        value["review_prompt_version"] = "SOURCE_COMPARISON_V3"
     from .revision_review import baseline_inventory, local_model_context
 
     local = local_model_context(native)

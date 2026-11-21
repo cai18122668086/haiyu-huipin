@@ -123,7 +123,11 @@ def enabled_for(context: dict[str, Any]) -> bool:
     )
 
 
-class MatteFragmentError(ValueError):
+class SourceForegroundUnclear(ValueError):
+    """The original pixels do not provide a usable product boundary."""
+
+
+class MatteFragmentError(SourceForegroundUnclear):
     """The foreground is ambiguous; no image may be dispatched from this matte."""
 
 
@@ -172,7 +176,7 @@ def _alpha(
             first.paste(recovered, (alternate[0], alternate[1]))
         bounds = first.getbbox()
         if bounds is None:
-            raise ValueError("Source matte is empty")
+            raise SourceForegroundUnclear("Source matte is empty")
         # Recenter on the actual foreground before a second bounded inference.
         # Small metal fittings can be missed in a coarse, asymmetric context.
         # Union copies source alpha only; RGB is never generated or repaired.
@@ -237,7 +241,7 @@ def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
     prediction = net.forward()[0, 0]
     minimum, maximum = float(prediction.min()), float(prediction.max())
     if not math.isfinite(maximum) or maximum - minimum < 0.01:
-        raise ValueError("Source matte has no reliable foreground")
+        raise SourceForegroundUnclear("Source matte has no reliable foreground")
     confidence = cv.resize(
         ((prediction - minimum) * 255 / (maximum - minimum)).astype(np.uint8),
         crop.size,
@@ -248,7 +252,7 @@ def _segment(crop: Image.Image, cv: Any, np: Any, net: Any) -> Image.Image:
         np.where(confidence >= 230, cv.GC_FGD, cv.GC_PR_FGD),
     ).astype(np.uint8)
     if not np.any(labels == cv.GC_FGD) or not np.any(labels == cv.GC_BGD):
-        raise ValueError("Source matte lacks foreground/background evidence")
+        raise SourceForegroundUnclear("Source matte lacks foreground/background evidence")
     cv.setRNGSeed(0)
     cv.grabCut(
         cv.cvtColor(rgb, cv.COLOR_RGB2BGR),
@@ -273,7 +277,7 @@ def _single_product(mask: Image.Image, cv: Any, np: Any) -> Image.Image:
     alpha = np.array(mask)
     count, components, stats, _ = cv.connectedComponentsWithStats(alpha, 8)
     if count < 2:
-        raise ValueError("Source matte has no connected product")
+        raise SourceForegroundUnclear("Source matte has no connected product")
     largest = int(stats[1:, cv.CC_STAT_AREA].argmax()) + 1
     total = int(stats[1:, cv.CC_STAT_AREA].sum())
     if int(stats[largest, cv.CC_STAT_AREA]) < total * 0.95:
@@ -423,7 +427,7 @@ def extract_layers(
             alpha = alpha.resize((width, height), Image.Resampling.NEAREST)
         bounds = alpha.point(lambda value: 255 if value >= 128 else 0).getbbox()
         if bounds is None or (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]) < 64:
-            raise ValueError("Source layer is empty or incomplete")
+            raise SourceForegroundUnclear("Source layer is empty or incomplete")
         bounds = (
             max(0, bounds[0] - 8),
             max(0, bounds[1] - 8),
@@ -1021,6 +1025,36 @@ def placed_layer(
     return resized, (left, top, left + resized.width, top + resized.height), visible_box
 
 
+def support_guide(
+    size: tuple[int, int],
+    geometry: list[dict[str, Any]],
+    mode: str,
+    cutouts: tuple[ProviderArtifact, ...],
+    cells: list[list[float]],
+) -> ProviderArtifact:
+    """Map actual composited bounds to a guide that is never used as output."""
+    from PIL import ImageDraw
+
+    image = Image.new("RGB", size, "white")
+    draw = ImageDraw.Draw(image)
+    radius = max(3, round(min(size) * 0.012))
+    for item, cutout, cell in zip(geometry, cutouts, cells, strict=True):
+        layer, (left, top, _, _), _ = placed_layer(cutout, size, cell)
+        image.paste(
+            "#bdbdbd",
+            (left, top, left + layer.width, top + layer.height),
+            layer.getchannel("A"),
+        )
+        band = item[
+            "upper_contact_band" if mode == "upper_attachment" else "lower_contact_band"
+        ]
+        x = round((band[0] + band[2]) * size[0] / 2)
+        y = round((band[1] + band[3]) * size[1] / 2)
+        draw.line((x - radius, y, x + radius, y), fill="#007d88", width=3)
+        draw.line((x, y - radius, x, y + radius), fill="#007d88", width=3)
+    return artifact(image, "support-registration.png")
+
+
 def placement_geometry(
     cutout: ProviderArtifact, size: tuple[int, int], cell: list[float]
 ) -> dict[str, list[float]]:
@@ -1106,10 +1140,108 @@ def comparison_panels(
     return tuple(comparisons)
 
 
+def register_hanging_cells(
+    background: ProviderArtifact,
+    cutouts: tuple[ProviderArtifact, ...],
+    cells: list[list[float]],
+) -> list[list[float]]:
+    """Register clasps to nearby visible enclosed loops in a product-free plate."""
+    cv, np = importlib.import_module("cv2"), importlib.import_module("numpy")
+    with Image.open(BytesIO(background.payload)) as opened:
+        view = opened.convert("L")
+    view.thumbnail((900, 900))
+    gray = np.asarray(view)
+    edges = cv.Canny(cv.GaussianBlur(gray, (3, 3), 0), 14, 38)
+    edges = cv.morphologyEx(edges, cv.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+    contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    if hierarchy is None:
+        return cells
+    anchors = []
+    for contour, relatives in zip(contours, hierarchy[0], strict=True):
+        if relatives[3] < 0 or relatives[2] >= 0:
+            continue
+        x, y, w, h = cv.boundingRect(contour)
+        area = cv.contourArea(contour)
+        if (
+            not 0.006 < w / view.width < 0.07
+            or not 0.008 < h / view.height < 0.07
+            or not 0.18 < w / h < 2
+            or area < w * h * 0.32
+        ):
+            continue
+        anchors.append(((x + w * 0.5) / view.width, (y + h * 0.5) / view.height))
+    aligned = []
+    for cutout, cell in zip(cutouts, cells, strict=True):
+        band = placement_geometry(cutout, (background.width, background.height), cell)[
+            "upper_contact_band"
+        ]
+        px, py = (band[0] + band[2]) / 2, (band[1] + band[3]) / 2
+        near = [
+            (x - px, y - py)
+            for x, y in anchors
+            if abs(x - px) < 0.055 and abs(y - py) < 0.105
+        ]
+        if not near:
+            aligned.append(cell)
+            continue
+        dx, dy = min(near, key=lambda delta: delta[0] ** 2 + delta[1] ** 2)
+        if any(abs(dx - x) > 0.025 or abs(dy - y) > 0.025 for x, y in near):
+            aligned.append(cell)
+            continue
+        moved = [cell[0] + dx, cell[1] + dy, cell[2] + dx, cell[3] + dy]
+        aligned.append(moved if all(0.015 < v < 0.985 for v in moved) else cell)
+    if any(
+        min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1])
+        for i, a in enumerate(aligned)
+        for b in aligned[i + 1 :]
+    ):
+        return cells
+    return aligned
+
+
+def marketing_text_view(
+    candidate: ProviderArtifact,
+    cutouts: tuple[ProviderArtifact, ...],
+    cells: list[list[float]],
+) -> ProviderArtifact:
+    """Expose actual external copy, obscuring only verified opaque source RGB."""
+    from PIL import ImageDraw
+
+    with Image.open(BytesIO(candidate.payload)) as opened:
+        frame = opened.convert("RGB")
+    for cutout, cell in zip(cutouts, cells, strict=True):
+        layer, box, _ = placed_layer(cutout, frame.size, cell)
+        mask = layer.getchannel("A").point(lambda v: 255 if v == 255 else 0)
+        if ImageChops.multiply(
+            ImageChops.difference(frame.crop(box), layer.convert("RGB")),
+            mask.convert("RGB"),
+        ).getbbox():
+            raise ValueError(
+                "External copy may overlap protected original product pixels"
+            )
+        frame.paste("#bebebe", box, mask)
+    if frame.height % 2:
+        raise ValueError("Native marketing inspection requires an even pair")
+    half = frame.height // 2
+    sheet = Image.new("RGB", (2 * frame.width, half + 44), "white")
+    for index in range(2):
+        sheet.paste(
+            frame.crop((0, index * half, frame.width, (index + 1) * half)),
+            (index * frame.width, 44),
+        )
+        ImageDraw.Draw(sheet).text(
+            (index * frame.width + 10, 12),
+            f"SCREEN {index + 1} - EXTERNAL COPY ONLY",
+            fill="black",
+        )
+    return artifact(sheet, "external-copy-inspection.png")
+
+
 def compose(
     background: ProviderArtifact,
     cutouts: tuple[ProviderArtifact, ...],
     cells: list[list[float]],
+    *, resting_shadow: bool = False,
 ) -> tuple[ProviderArtifact, dict[str, Any]]:
     if len(cutouts) != len(cells):
         raise ValueError("Source layer placement count changed")
@@ -1130,6 +1262,19 @@ def compose(
             raise ValueError("Saved source product pixels changed")
         resized, box, visible_box = placed_layer(cutout, canvas.size, cell)
         left, top = box[:2]
+        if resting_shadow:
+            # A small occlusion shadow follows the actual source silhouette.
+            # The generated photograph still supplies the visible surface.
+            radius = max(1, round(min(canvas.size) * 0.003))
+            pad = radius * 4
+            shadow = Image.new("L", (resized.width + pad * 2, resized.height + pad * 2))
+            shadow.paste(resized.getchannel("A"), (pad, pad))
+            shadow = shadow.filter(ImageFilter.GaussianBlur(radius)).point(
+                lambda v: v * 0.23
+            )
+            tint = Image.new("RGBA", shadow.size, (46, 38, 32, 0))
+            tint.putalpha(shadow)
+            canvas.alpha_composite(tint, (left - pad + radius, top - pad + radius))
         canvas.alpha_composite(resized, (left, top))
         placements.append(
             {
@@ -1147,4 +1292,5 @@ def compose(
         "background_sha256": background.sha256,
         "composite_sha256": result.sha256,
         "placements": placements,
+        **({"contact_shadow": "source-alpha-v1"} if resting_shadow else {}),
     }

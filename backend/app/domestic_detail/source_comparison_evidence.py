@@ -16,7 +16,14 @@ from .review import DetailReviewError
 VERSION = "native-source-comparison-evidence-v1"
 ROLE = "source_candidate_comparison"
 _SHA = re.compile(r"[a-f0-9]{64}")
-_ASSET = re.compile(r"source-candidate-pair-[0-9]{1,2}")
+
+
+def valid_view(asset_id: Any, role: Any, index: int, count: int) -> bool:
+    if role == "external_copy_inspection":
+        return (
+            index > 0 and index == count - 1 and asset_id == "external-copy-inspection"
+        )
+    return role == ROLE and index < 12 and asset_id == f"source-candidate-pair-{index}"
 
 
 def _invalid() -> NoReturn:
@@ -70,15 +77,13 @@ def save_source_comparisons(
     """Persist only already-verified comparison bytes before the first review."""
     if not sources:
         return
-    if len(sources) > 12:
+    if len(sources) > 13:
         _invalid()
     binding = _binding(native, candidate_sha)
     rows = []
     for index, source in enumerate(sources):
         if (
-            source.source_role != ROLE
-            or not _ASSET.fullmatch(source.asset_id)
-            or source.asset_id != f"source-candidate-pair-{index}"
+            not valid_view(source.asset_id, source.source_role, index, len(sources))
             or not _SHA.fullmatch(source.sha256)
             or not 1 <= len(source.payload) <= 20 * 1024 * 1024
             or hashlib.sha256(source.payload).hexdigest() != source.sha256
@@ -87,7 +92,7 @@ def save_source_comparisons(
         filename = "source-comparison-view-" + source.sha256 + ".png"
         _write_once(_path(root, filename, create=True), source.payload)
         rows.append({
-            "asset_id": source.asset_id, "role": ROLE, "sha256": source.sha256,
+            "asset_id": source.asset_id, "role": source.source_role, "sha256": source.sha256,
             "filename": filename, "byte_size": len(source.payload),
         })
     value = {"version": VERSION, "binding": binding, "sources": rows}
@@ -119,7 +124,7 @@ def load_source_comparison_inventory(
                 key: item for key, item in value.items() if key != "manifest_sha256"
             })
             or not isinstance(value.get("sources"), list)
-            or not 1 <= len(value["sources"]) <= 12
+            or not 1 <= len(value["sources"]) <= 13
         ):
             _invalid()
         inventory = []
@@ -128,8 +133,7 @@ def load_source_comparison_inventory(
                 _invalid()
             if (
                 set(row) != {"asset_id", "role", "sha256", "filename", "byte_size"}
-                or row["asset_id"] != f"source-candidate-pair-{index}"
-                or row.get("role") != ROLE or not _ASSET.fullmatch(row["asset_id"])
+                or not valid_view(row["asset_id"], row["role"], index, len(value["sources"]))
                 or not _SHA.fullmatch(row["sha256"])
                 or row["filename"] != "source-comparison-view-" + row["sha256"] + ".png"
                 or type(row["byte_size"]) is not int

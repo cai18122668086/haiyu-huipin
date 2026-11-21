@@ -22,10 +22,7 @@ from .models import JobAttemptRecord, JobItemRecord, JobPlanRecord, JobRecord, u
 from .new_detail_skill_provider import BundledSkillManifestValidator
 from .provider import ProviderArtifact, ProviderOutcome, ProviderRequest, ProviderResult
 from .provider_diagnostics import (
-    FIDELITY_REJECTED,
-    FIDELITY_REJECTED_MESSAGE,
-    PREPARATION_FAILED,
-    preparation_message,
+    public_failure_message,
     retained_metrics,
     retained_request_count,
 )
@@ -497,15 +494,7 @@ class FastMainImageProvider:
                     else result.error_code or "FAST_MAIN_IMAGE_IMAGE_FAILED",
                     error_message="原生图结果尚未核实，请先核对原任务。"
                     if unknown
-                    else FIDELITY_REJECTED_MESSAGE
-                    if result.error_code == FIDELITY_REJECTED
-                    else preparation_message(
-                        usage.get("metrics", {}).get("image_fidelity", {}).get(
-                            "preparation_stage"
-                        )
-                    )
-                    if result.error_code == PREPARATION_FAILED
-                    else "本张主图生成未完成，可重试。",
+                    else public_failure_message(result.error_code, "本张主图生成未完成，可重试。"),
                     provider_request_id=result.provider_request_id,
                     raw_usage=usage,
                     usage_reported=bool(usage.get("reported")),

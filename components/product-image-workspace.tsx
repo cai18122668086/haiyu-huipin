@@ -1,4 +1,5 @@
 "use client";
+import { jobSourceUploadMessage } from "@/lib/jobs/presentation";
 import { CreationSettings, SettingField, QuantityControl, RatioControl } from "@/components/creation-settings";
 
 import { useDraftState } from "@/lib/hooks/use-creation-draft";
@@ -270,7 +271,17 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
     }
   };
 
+  const photoIssue = jobSourceUploadMessage(job.data);
   const resetTask = () => {
+    if (photoIssue) {
+      setProductAssetIds([]);
+      setReferenceAssetIds(referenceAssetIds);
+      setInstruction(instruction);
+      setTargetColor(targetColor);
+      setPlatformCode(platformCode);
+      setAspectRatio(aspectRatio);
+      setImageCount(imageCount);
+    }
     setJobId(undefined);
     setUiError(undefined);
     setHumanReviewComplete(false);
@@ -517,7 +528,7 @@ export function ProductImageWorkspace({ preset }: { preset: string }) {
             )}
             {jobId ? (
               <button type="button" className={styles.secondaryAction} onClick={resetTask}>
-                <RefreshCcw size={16} />新建任务
+                <RefreshCcw size={16} />{photoIssue ? "重新上传商品图" : "新建任务"}
               </button>
             ) : (
               <button
