@@ -211,6 +211,8 @@ def test_gateway_preserves_identity_flags_raw_bytes_and_nullable_cost(client):
     assert result.outcome == ProviderOutcome.SUCCEEDED
     assert gateway.requests[0].single_dispatch
     assert gateway.requests[0].preserve_provider_artifact
+    assert gateway.requests[0].size == "1440x1920"
+    assert gateway.requests[0].haiyu_native_canvas == "1200x1600"
     assert gateway.requests[0].quality == request.quality
     record = receipt(client, request)
     assert record["state"] == "returned"
@@ -551,7 +553,7 @@ def test_compact_private_key_saves_and_reuses_under_real_workspace_length(client
 
 
 @pytest.mark.parametrize(
-    "admission", ["unique", "missing", "ambiguous", "failed_query"]
+    "admission", ["unique", "missing", "ambiguous", "failed_query", "legacy_canvas"]
 )
 def test_failed_retry_recovers_only_unique_haiyu_accepted_task_with_gets(
     client, monkeypatch, tmp_path, admission
@@ -563,12 +565,13 @@ def test_failed_retry_recovers_only_unique_haiyu_accepted_task_with_gets(
         async def post_multipart(self, **kwargs):
             self.posts += 1
             assert self.posts == 1, "A recovery must never purchase another image"
+            assert dict(kwargs["fields"])["size"] == ("1440x1920" if admission == "legacy_canvas" else "1200x1600")
             return 202, {"id": "already-paid-task", "status": "queued"}
 
     class JournalTransport(HaiyuTransport):
         def __init__(self, delegate):
             super().__init__(
-                delegate, journal_dir=tmp_path / "journal", poll_interval=0
+                delegate, journal_dir=tmp_path / "journal", poll_interval=0, send_size=True
             )
             self.gets = []
 
@@ -596,7 +599,7 @@ def test_failed_retry_recovers_only_unique_haiyu_accepted_task_with_gets(
         api_key="synthetic-test-key",
         base_url="https://api.haiyushuke.com",
         planner_model="same-planner",
-        image_model="same-high-model",
+        image_model="image-2.5",
         transport=transport,
     )
     monkeypatch.setattr("app.haiyu_transport.download_result", lambda *_: pixels())
@@ -617,9 +620,10 @@ def test_failed_retry_recovers_only_unique_haiyu_accepted_task_with_gets(
     monkeypatch.setattr(storage, "save_validated", failed_save)
     durable = wrapper(client, gateway)
     original = make_request(client)
-    assert (
-        asyncio.run(durable.edit(original)).outcome == ProviderOutcome.OUTCOME_UNKNOWN
-    )
+    with monkeypatch.context() as initial:
+        if admission == "legacy_canvas":
+            initial.setattr("app.refined_detail.HAIYU_NATIVE_CANVASES", {})
+        assert asyncio.run(durable.edit(original)).outcome == ProviderOutcome.OUTCOME_UNKNOWN
     assert receipt(client, original)["state"] == "unknown"
     assert delegate.posts == 1 and len(transport.gets) == 1
     # Even accepted evidence never makes the same job automatically repeat.

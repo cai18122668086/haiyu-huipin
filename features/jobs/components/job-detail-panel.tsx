@@ -187,7 +187,7 @@ export function JobDetailPanel({
             <section className="job-detail-actions" aria-label="任务操作">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">可用操作</span><h3>继续处理</h3></div></div>
               <div className="job-action-buttons"><Link className="secondary-button" href={`/account?jobId=${encodeURIComponent(job.id)}#help`}>就此任务联系客服</Link>
-                {needsUpload && <Link className="primary-button" href={job.type === "domestic_main_image" ? jobWorkspaceHref(job) : jobWorkspaceHref(job).split("?")[0]}>重新上传商品图</Link>}
+                {needsUpload && <Link className="primary-button" href={["domestic_main_image", "detail_pack", "product_image"].includes(job.type) ? jobWorkspaceHref(job) : jobWorkspaceHref(job).split("?")[0]}>前往工作台换图</Link>}
                 {!needsUpload && allowsJobAction(permittedActions, "retry") && <button type="button" className="secondary-button" onClick={() => onRetry(job)} disabled={retryPending}><RotateCcw size={15} />重试失败项</button>}
                 {allowsJobAction(permittedActions, "cancel") && <button type="button" className="secondary-button danger-button" onClick={() => onCancel(job)} disabled={cancelPending}><Ban size={15} />取消任务</button>}
                 {allowsJobAction(permittedActions, "confirm_plan") && job.plan && <button type="button" className="primary-button" onClick={() => onConfirmPlan(job)} disabled={confirmPending}><Check size={15} />确认方案</button>}

@@ -119,7 +119,15 @@ export function jobNote(job: Job | JobDetail): string {
     if (failed?.error_code) return safeJobFailureSummary(failed.error_code, failed.error_details);
     if (job.error_code) return safeJobFailureSummary(job.error_code, job.error_details);
   }
-  if (job.status === "partial") return "部分结果已完成，可在详情中查看并重试失败项目。";
+  if (job.status === "partial") {
+    if ("items" in job) {
+      const heldCodes = ["PROVIDER_OUTCOME_UNKNOWN", "IMAGE_TASK_QUERY_UNCONFIRMED", "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED", "IMAGE_ASYNC_TASK_FAILED"];
+      const held = job.items.find(item => item.status === "failed" && heldCodes.includes(item.error_code ?? ""));
+      const code = held?.error_code ?? job.error_code;
+      if (code && heldCodes.includes(code)) return `部分结果已完成。${safeJobFailureSummary(code)}`;
+    }
+    return job.allowed_actions?.includes("retry") ? "部分结果已完成，可在详情中查看并重试失败项目。" : "部分结果已完成，可在详情中查看。";
+  }
   if (job.status === "failed") return "生成未完成，请查看详情中的安全错误摘要。";
   if (job.status === "awaiting_confirmation") return "生成方案已经就绪，等待确认后继续。";
   if (job.status === "cancelling") return "正在安全取消任务。";

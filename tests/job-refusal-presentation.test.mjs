@@ -42,3 +42,13 @@ test("failed original async tasks show the upstream failure without inviting a d
   assert.doesNotMatch(summary, /结果尚未确认|稍后重试/);
   assert.equal(jobNote({ status: "failed", items: [{ status: "failed", error_code: "IMAGE_ASYNC_TASK_FAILED" }] }), summary);
 });
+
+test("partial results with a held provider task direct users to reconciliation", () => {
+  const note = jobNote({ status: "partial", allowed_actions: [], items: [
+    { status: "succeeded" }, { status: "failed", error_code: "PROVIDER_OUTCOME_UNKNOWN" },
+  ] });
+  assert.match(note, /部分结果已完成.*核查原任务/);
+  assert.doesNotMatch(note, /重试失败项目|重新上传/);
+  assert.doesNotMatch(jobNote({ status: "partial", allowed_actions: [] }), /重试/);
+  assert.match(jobNote({ status: "partial", allowed_actions: ["retry"] }), /重试失败项目/);
+});

@@ -32,6 +32,7 @@ SKILL_ID = "xinghe-ecommerce-detail-domestic-4"
 PIPELINE_VERSION = "xinghe-domestic-detail-v4.0"
 PROFILE = "xinghe_domestic_detail_4"
 NATIVE_DELIVERY_POLICY = "refined-native-portrait-original-v1"
+HAIYU_NATIVE_CANVASES = {"1440x1920": "1200x1600"}
 
 
 def native_delivery_receipt(
@@ -304,6 +305,16 @@ def normalize_strategy(value: Mapping[str, Any]) -> dict[str, Any]:
             )
         plan["screens"] = result.pop("screens")
     if isinstance(plan, dict) and isinstance(plan.get("screens"), list):
+        count = len(plan["screens"])
+        visual_rhythm = plan.get("visual_rhythm_plan")
+        if (
+            count > 0
+            and isinstance(visual_rhythm, list)
+            and len(visual_rhythm) > count
+            and all(isinstance(entry, str) and entry.strip() for entry in visual_rhythm[:count])
+            and all(isinstance(entry, str) and not entry.strip() for entry in visual_rhythm[count:])
+        ):
+            plan["visual_rhythm_plan"] = visual_rhythm[:count]
         lock = plan.get("design_strength_lock")
         if not isinstance(lock, dict):
             return result
@@ -313,7 +324,6 @@ def normalize_strategy(value: Mapping[str, Any]) -> dict[str, Any]:
             # entry. Split only when every authored page is present in order.
             pages = re.split(r"[;；\n]\s*(?=[0-9]{1,2}\s+\S)", rhythm[0].strip())
             numbers = [re.match(r"([0-9]{1,2})\s+\S", page) for page in pages]
-            count = len(plan["screens"])
             if len(pages) == count > 1 and all(
                 match and int(match[1]) == page
                 for page, match in enumerate(numbers, 1)

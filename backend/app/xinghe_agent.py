@@ -5967,10 +5967,10 @@ class XinghePlanningCoordinator:
                 native_canvas = None
                 if request.planning_profile == "crossborder_detail":
                     native_canvas = _HAIYU_CROSSBORDER_CANVAS.get(request.size)
-                elif request.planning_profile == refined_detail.PROFILE and request.size == "1440x1920":
+                elif request.planning_profile == refined_detail.PROFILE:
                     # The refined contract accepts complete native 3:4 originals
                     # above its pixel budget. Never resize the delivered bytes.
-                    native_canvas = "1200x1600"
+                    native_canvas = refined_detail.HAIYU_NATIVE_CANVASES.get(request.size)
                 pair_canvas_size = (
                     f"{_parse_image_size(request.size)[0]}x{_parse_image_size(request.size)[1] * 2}"
                     if self.skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID

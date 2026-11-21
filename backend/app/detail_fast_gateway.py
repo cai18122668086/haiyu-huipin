@@ -91,6 +91,7 @@ class DurableFastDetailGateway:
             "attempt_id": receipt["attempt_id"],
             "idempotency_key": key,
             "accepted_task_id": matches[0],
+            "haiyu_native_canvas": receipt.get("haiyu_native_canvas"),
         }
 
     def _binding(self, request: ImageEditRequest) -> dict[str, Any]:
@@ -282,6 +283,9 @@ class DurableFastDetailGateway:
                 "idempotency_key": request.idempotency_key,
                 "binding": binding,
                 "binding_hash": _hash(binding),
+                "haiyu_native_canvas": (
+                    recovery["haiyu_native_canvas"] if recovery else request.haiyu_native_canvas
+                ),
                 "started_at": utc_now().isoformat(),
                 "finished_at": None,
                 "api_latency_seconds": None,
@@ -433,8 +437,14 @@ class DurableFastDetailGateway:
         )
 
     async def edit(self, request: ImageEditRequest) -> ImageCallResult:
+        from .refined_detail import HAIYU_NATIVE_CANVASES
+
         request = replace(
-            request, single_dispatch=True, preserve_provider_artifact=True
+            request,
+            single_dispatch=True,
+            preserve_provider_artifact=True,
+            haiyu_native_canvas=request.haiyu_native_canvas
+            or HAIYU_NATIVE_CANVASES.get(request.size),
         )
         recovery: dict[str, Any] | None = None
         try:
@@ -458,6 +468,7 @@ class DurableFastDetailGateway:
                 replace(
                     request,
                     idempotency_key=recovery["idempotency_key"],
+                    haiyu_native_canvas=recovery["haiyu_native_canvas"],
                     reconcile_only=True,
                 )
                 if recovery
