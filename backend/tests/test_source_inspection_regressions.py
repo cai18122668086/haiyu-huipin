@@ -146,3 +146,83 @@ def test_six_page_role_alias_requires_the_actual_six_attachments():
         assert not _normalize_parallel_set_audit_payload(bad, sources).get(
             "search_role_is_unique"
         )
+
+
+@pytest.mark.parametrize(
+    "outcome", ["correct", "unreadable", "reduced_preview", "technical", "still_wrong"]
+)
+def test_detail_window_checks_actual_pixels_before_acceptance(outcome):
+    import asyncio
+    from types import SimpleNamespace
+
+    from app import source_window_review
+    from app.image_fidelity import SourcePhotoUnusable
+    from app.provider_diagnostics import DETAIL_UNCLEAR
+
+    size = (1200, 150) if outcome == "reduced_preview" else (100, 150)
+    pixels = Image.new("RGBA", size, "white")
+    ImageDraw.Draw(pixels).ellipse((15, 80, 25, 92), fill="red")
+    layer = source_pixels.artifact(pixels, "input.png")
+    placements = [
+        {"panel": 0, "layer_index": 0},
+        {
+            "panel": 1,
+            "layer_index": 0,
+            "source_window": [0, 0.3, 1, 0.8],
+            "panel_box": [0.4, 0.2, 0.8, 0.6],
+        },
+    ]
+    corrected = [0.1, 0.5, 0.3, 0.65]
+    evidence = []
+
+    class Gateway:
+        async def _plan(self, request, profile, sources, context, suffix):
+            assert profile == source_window_review.PROFILE
+            if outcome == "reduced_preview":
+                assert len(sources) == 2 and sources[1].sha256 == layer.sha256
+                assert sources[1].payload == layer.payload
+            else:
+                assert len(sources) == 1
+            evidence.append(sources[0].sha256)
+            if outcome == "technical":
+                return SimpleNamespace(error_code="PLANNER_TIMEOUT", payload=None)
+            verdict = (
+                "unreadable_source"
+                if outcome in {"unreadable", "reduced_preview"}
+                else "wrong_window"
+                if len(evidence) == 1 or outcome == "still_wrong"
+                else "matches"
+            )
+            return SimpleNamespace(
+                error_code=None,
+                payload={
+                    "crops": [
+                        {
+                            "placement": 1,
+                            "verdict": verdict,
+                            "evidence": "Actual source and detail compared on both views.",
+                            "window": corrected
+                            if verdict == "wrong_window"
+                            else placements[1]["source_window"],
+                        }
+                    ]
+                },
+            )
+
+    req = SimpleNamespace(
+        prompt="Show the red mark in the second panel", group_key="fixture"
+    )
+    call = source_window_review.check(Gateway(), req, (layer,), placements, [], 0)
+    if outcome == "correct":
+        receipts = asyncio.run(call)
+        assert len(receipts) == len(set(evidence)) == 2
+        assert placements[1]["source_window"] == corrected
+        assert "source_window" not in placements[0]
+    elif outcome in {"unreadable", "reduced_preview"}:
+        with pytest.raises(SourcePhotoUnusable) as exc:
+            asyncio.run(call)
+        assert exc.value.code == DETAIL_UNCLEAR and len(evidence) == 1
+    else:
+        with pytest.raises(RuntimeError):
+            asyncio.run(call)
+        assert len(evidence) == (2 if outcome == "still_wrong" else 1)

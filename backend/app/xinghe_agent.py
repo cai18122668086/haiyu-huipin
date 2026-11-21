@@ -242,7 +242,7 @@ PLANNER_DIAGNOSTICS_SCHEMA = "xinghe-planner-diagnostics"
 _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "replica_native_contract", "replica_exact_compact",
     refined_detail.PROFILE, detail_fast.PROFILE, "amazon_visual_suite",
-    "image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background",
+    "image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
     "aurora_domestic_intake", "aurora_domestic_detail",
     "aurora_domestic_plan_repair", "aurora_domestic_modules_completion",
     "aurora_domestic_campaign_completion",
@@ -2668,17 +2668,17 @@ class TengliOpenAICompatibleGateway:
         response: Mapping[str, Any] | None = None
         try:
             routes = self._ordered_routes()
-            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
+            if request.planning_profile in NATIVE_PLANNER_PROFILES or request.planning_profile in {"replica_fast_suite", "aurora_native_fast_identity", detail_fast.PROFILE, "amazon_visual_suite_fast", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
                 routes = routes[:1]
             last_route_index = len(routes) - 1
             for route_index, route in enumerate(routes):
                 route_payload = {**payload, "model": route.planner_model}
-                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
+                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
                     route_payload["model"] = (
                         self.image_fidelity_precision_model
                         if request.planning_profile in {
                             "image_fidelity_readback", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare",
-                            "image_fidelity_matte", "image_fidelity_background",
+                            "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
                         } and self.image_fidelity_precision_model
                         else route.planner_model
                         if request.planning_profile == "image_fidelity_prepare"
@@ -2721,7 +2721,7 @@ class TengliOpenAICompatibleGateway:
                             route_payload["max_completion_tokens"] = 16384
                         if request.planning_profile in {
                             "image_fidelity_prepare",
-                            "image_fidelity_matte", "image_fidelity_background",
+                            "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
                         } and not precise_print_geometry:
                             route_payload["thinking"] = {"type": "disabled"}
                     elif route_payload["model"].casefold().startswith("doubao"):
@@ -2734,7 +2734,7 @@ class TengliOpenAICompatibleGateway:
                     }:
                         route_payload["max_completion_tokens"] = 8192
                 planner_key = request.idempotency_key
-                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
+                if request.planning_profile in {"image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background", "aurora_remix_fast_review", "image_fidelity_color_mask", "image_fidelity_prepare"}:
                     planner_key += ":literal-ocr:" + hashlib.sha256(
                         route_payload["model"].encode()
                     ).hexdigest()[:12]
@@ -11249,7 +11249,7 @@ def _aurora_structure_zone_counts(structure: Mapping[str, Any]) -> dict[str, int
 
 
 def _planner_response_format(request: PlannerRequest) -> dict[str, Any]:
-    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "image_fidelity_color_mask"}:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background", "image_fidelity_color_mask"}:
         context = json.loads(request.product_information[0])
         return {"type": "json_schema", "json_schema": {"name": request.planning_profile,
                 "strict": True, "schema": context["schema"]}}
@@ -11575,7 +11575,7 @@ def _planner_prompt(request: PlannerRequest) -> str:
 
 
 def _planner_prompt_body(request: PlannerRequest) -> str:
-    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_background", "image_fidelity_color_mask"}:
+    if request.planning_profile in {"image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background", "image_fidelity_color_mask"}:
         return "Inspect the actual attached source/candidate images for this preservation task only. JSON only.\n" + "\n".join(request.product_information)
     if request.planning_profile == "aurora_native_fast_identity":
         return _planner_prompt_body(replace(request, planning_profile="aurora_identity")) + "\nReturn the complete identity response_schema:\n" + json.dumps(_aurora_identity_json_schema(), ensure_ascii=False)

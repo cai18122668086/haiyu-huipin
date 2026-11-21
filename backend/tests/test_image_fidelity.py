@@ -851,6 +851,13 @@ class PixelGateway(Gateway):
                 "repairs": [],
                 "edge_feather_px": 0,
             }
+        elif call.planning_profile == "image_fidelity_source_window":
+            rows = json.loads(call.product_information[0])["placements_in_image_order"]
+            payload = {"crops": [
+                {"placement": row["index"], "window": row["source_window"],
+                 "verdict": "matches", "evidence": "Synthetic approved crop"}
+                for row in rows
+            ]}
         elif call.planning_profile == BACKGROUND:
             payload = {
                 "background_description": "Pure white empty background",

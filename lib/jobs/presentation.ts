@@ -133,6 +133,7 @@ export function jobNote(job: Job | JobDetail): string {
 }
 
 export function sourceUploadMessage(errorCode?: string | null): string | undefined {
+  if (errorCode === "SOURCE_DETAIL_UNCLEAR") return "原图里看不清这处商品细节，这一项已停止生成。请上传商品全图，并附上一张对焦清楚的细节近照。";
   if (errorCode === "SOURCE_PRODUCT_UNCLEAR") {
     return "照片里看不清商品的完整轮廓，这一项已停止生成。请把商品放在纯色背景前，移开遮挡物，拍清主体和配件后重新上传。";
   }

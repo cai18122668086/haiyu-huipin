@@ -3,10 +3,10 @@ import test from "node:test";
 import { jobNote, safeJobFailureSummary } from "../lib/jobs/presentation.ts";
 
 test("unclear photos request the right replacement while inspection outages stay retryable", () => {
-  for (const [code, advice] of [["SOURCE_PRODUCT_UNCLEAR", /完整轮廓/], ["SOURCE_PRINT_UNREADABLE", /对焦印字/]]) {
+  for (const [code, advice] of [["SOURCE_PRODUCT_UNCLEAR", /完整轮廓/], ["SOURCE_PRINT_UNREADABLE", /对焦印字/], ["SOURCE_DETAIL_UNCLEAR", /细节近照/]]) {
     const message = safeJobFailureSummary(code);
     assert.match(message, advice);
-    assert.match(message, /重新上传/);
+    assert.match(message, /上传/);
     assert.equal(jobNote({ status: "partial", items: [{ status: "failed", error_code: code }] }), message);
   }
   assert.doesNotMatch(safeJobFailureSummary("IMAGE_FIDELITY_PREPARATION_FAILED"), /重新上传/);

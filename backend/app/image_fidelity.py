@@ -938,6 +938,8 @@ class FidelityGateway:
                     "missing body, context leakage or unresolved defect fails. "
                     "Return the exact supplied JSON schema."
                     if profile == MATTE
+                    else "Independently inspect the actual original-product crop against the requested detail. JSON only."
+                    if profile == "image_fidelity_source_window"
                     else "Project ONLY the background/style and approved "
                     "marketing copy from the final-image contract into the "
                     "supplied schema. A compositor adds original photographed "
@@ -2162,6 +2164,15 @@ class FidelityGateway:
                                         check_overlap=False,
                                     )
                                 )
+                                if self._native_pair:
+                                    from . import source_window_review
+
+                                    window_checks = await source_window_review.check(
+                                        self, request, source_cutouts, projection["placements"],
+                                        plans, projection_attempt,
+                                    )
+                                    if window_checks:
+                                        trial_recipe["source_window_reviews"] = window_checks
                                 windows = [
                                     p.get("source_window", [0, 0, 1, 1])
                                     for p in projection["placements"]
@@ -2244,6 +2255,8 @@ class FidelityGateway:
                                 ),
                                 (text_width, text_height),
                             )
+                        except SourcePhotoUnusable:
+                            raise
                         except (ValidationError, ValueError) as projection_error:
                             if isinstance(projection_error, ValidationError):
                                 projection_error.fidelity_profile = BACKGROUND
