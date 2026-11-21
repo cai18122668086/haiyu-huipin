@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections import Counter
 from collections.abc import Mapping
 from contextlib import suppress
@@ -277,7 +278,7 @@ def strategy_schema(page_count: int) -> dict[str, Any]:
 
 
 def normalize_strategy(value: Mapping[str, Any]) -> dict[str, Any]:
-    """Relocate a model-authored field without changing its content."""
+    """Normalize the structure of existing model-authored content."""
     from .xinghe_agent import XingheAgentError
 
     result = deepcopy(dict(value))
@@ -302,6 +303,22 @@ def normalize_strategy(value: Mapping[str, Any]) -> dict[str, Any]:
                 "Conflicting screen plans cannot be reconciled locally.",
             )
         plan["screens"] = result.pop("screens")
+    if isinstance(plan, dict) and isinstance(plan.get("screens"), list):
+        lock = plan.get("design_strength_lock")
+        if not isinstance(lock, dict):
+            return result
+        rhythm = lock.get("rhythm_map")
+        if isinstance(rhythm, list) and len(rhythm) == 1 and isinstance(rhythm[0], str):
+            # Some models put multiple explicitly numbered pages into one
+            # entry. Split only when every authored page is present in order.
+            pages = re.split(r"[;；\n]\s*(?=[0-9]{1,2}\s+\S)", rhythm[0].strip())
+            numbers = [re.match(r"([0-9]{1,2})\s+\S", page) for page in pages]
+            count = len(plan["screens"])
+            if len(pages) == count > 1 and all(
+                match and int(match[1]) == page
+                for page, match in enumerate(numbers, 1)
+            ):
+                lock["rhythm_map"] = pages
     return result
 
 
@@ -313,7 +330,9 @@ def validate_strategy(value: Mapping[str, Any], page_count: int) -> None:
         error = errors[0]
         pointer = "/" + "/".join(str(part) for part in error.absolute_path)
         raise XingheAgentError(
-            "REFINED_DETAIL_PLAN_INVALID", error.message, json_pointer=pointer
+            "REFINED_DETAIL_PLAN_INVALID",
+            f"详情页方案的 {pointer} 字段未通过结构校验（{error.validator}），请重新生成方案。",
+            json_pointer=pointer,
         )
     analysis, plan = value["analysis"], value["plan"]
     demands = analysis["buyer_demand_map"]
@@ -387,6 +406,9 @@ def planner_prompt(request: PlannerRequest) -> str:
         "specific copy and scene. Start each image_prompt with exactly 'vertical 3:4 e-commerce "
         "detail page image'. The website performs no layout assembly or prompt rewriting. "
         "Ranks are consecutive from 1. module_plan page/role/buyer_demand_id must match screens.\n"
+        f"Return exactly {request.page_count} separate entries in each of module_plan, "
+        "visual_rhythm_plan, design_strength_lock.rhythm_map, and screens, in the same "
+        "page order. Never combine several numbered pages in a single rhythm entry.\n"
         "Never mention skill names, authors, model names or versions in buyer-facing copy or strategy prose.\n"
         + json.dumps(strategy_schema(request.page_count), ensure_ascii=False)
     )

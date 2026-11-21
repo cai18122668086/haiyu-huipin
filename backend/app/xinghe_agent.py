@@ -287,6 +287,17 @@ IMAGE_FORMAT = "png"
 _GATEWAY_NATIVE_REQUEST_SIZE = {
     "2048x1152": "1536x864",
 }
+# The Haiyu image-2.5 edit endpoint accepts these same-aspect native canvases.
+# Each new cross-border plan pins its wire size before the first image dispatch.
+_HAIYU_CROSSBORDER_CANVAS = {
+    "1000x1000": "1024x1024",
+    "1200x1200": "2000x2000",
+    "1600x1600": "2000x2000",
+    "2048x2048": "2000x2000",
+    "2200x2200": "2000x2000",
+    "750x1000": "1200x1600",
+    "900x1200": "1200x1600",
+}
 JPEG_QUALITY = 92
 DEFAULT_MEDIUM_PRICE_MICROS = 45_000
 DEFAULT_HIGH_PRICE_MICROS = 90_000
@@ -637,6 +648,7 @@ class ImageEditRequest:
     preserve_provider_artifact: bool = False
     single_dispatch: bool = False
     reconcile_only: bool = False
+    haiyu_native_canvas: str | None = None
 
 
 @dataclass(frozen=True)
@@ -2724,7 +2736,7 @@ class TengliOpenAICompatibleGateway:
                     route_payload["reasoning_effort"] = "low"
                 if (
                     request.planning_profile
-                    in _BOUNDED_JSON_PLANNER_PROFILES | {"amazon_visual_suite_fast"}
+                    in _BOUNDED_JSON_PLANNER_PROFILES | {"amazon_visual_suite_fast", "aurora_v20_visual_audit"}
                     and route_payload["model"].casefold().startswith("deepseek")
                 ):
                     # This provider includes reasoning in the output allowance.
@@ -2736,8 +2748,10 @@ class TengliOpenAICompatibleGateway:
                     # OpenAI json_schema parameter. The COMPLETE schema remains
                     # in the original user envelope and is validated locally.
                     route_payload["response_format"] = {"type": "json_object"}
+                    if request.planning_profile == "aurora_v20_visual_audit":
+                        planner_key += ":visual-audit-wire-v2"
                     route_payload["messages"] = deepcopy(payload["messages"])
-                    if request.planning_profile in {"amazon_visual_suite", "aurora_detail_pair_audit", "aurora_detail_campaign_audit"} or request.authoring_stage == "direct":
+                    if request.planning_profile in {"amazon_visual_suite", "aurora_detail_pair_audit", "aurora_detail_campaign_audit", "aurora_v20_visual_audit"} or request.authoring_stage == "direct":
                         # This prompt previously relied on the transport schema.
                         # json_object must still receive the ENTIRE contract;
                         # local validation and all 21 rows remain unchanged.
@@ -3085,6 +3099,15 @@ class TengliOpenAICompatibleGateway:
             response: Mapping[str, Any] | None = None
             for route_index, route in enumerate(routes):
                 route_fields = list(fields)
+                if (
+                    request.haiyu_native_canvas
+                    and urlparse(route.image_base_url).hostname == "api.haiyushuke.com"
+                    and route.image_model == "image-2.5"
+                ):
+                    route_fields = [
+                        (key, request.haiyu_native_canvas if key == "size" else val)
+                        for key, val in route_fields
+                    ]
                 route_fields[0] = ("model", route.image_model)
                 try:
                     self.external_network_request_count += 1
@@ -5895,6 +5918,13 @@ class XinghePlanningCoordinator:
             ):
                 pages: list[dict[str, Any]] = []
                 screens = structured["plan"]["screens"]
+                native_canvas = None
+                if request.planning_profile == "crossborder_detail":
+                    native_canvas = _HAIYU_CROSSBORDER_CANVAS.get(request.size)
+                elif request.planning_profile == refined_detail.PROFILE and request.size == "1440x1920":
+                    # The refined contract accepts complete native 3:4 originals
+                    # above its pixel budget. Never resize the delivered bytes.
+                    native_canvas = "1200x1600"
                 pair_canvas_size = (
                     f"{_parse_image_size(request.size)[0]}x{_parse_image_size(request.size)[1] * 2}"
                     if self.skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID
@@ -6014,6 +6044,7 @@ class XinghePlanningCoordinator:
                                 for source in request.sources
                             ],
                             "size": request.size,
+                            **({"haiyu_native_canvas": native_canvas} if native_canvas else {}),
                             "output_format": IMAGE_FORMAT,
                             "jpeg_quality": JPEG_QUALITY,
                         }
@@ -6702,6 +6733,7 @@ class XingheImageProvider:
             ),
             single_dispatch=pair_mode,
             preserve_provider_artifact=detail_fast_runtime.independent_skill(self.skill_id),
+            haiyu_native_canvas=configuration.get("haiyu_native_canvas"),
             size=(
                 native_size or str(configuration.get("pair_canvas_size"))
                 if self.skill_id == _AURORA_DOMESTIC_DETAIL_SKILL_ID

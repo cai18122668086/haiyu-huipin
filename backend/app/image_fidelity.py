@@ -812,9 +812,10 @@ class FidelityGateway:
                     "background generation. The original product photos are "
                     "authority. Checkerboard previews show source RGB with a "
                     "predicted alpha mask, not generated artwork. Verify every "
-                    "selected object is complete: all hardware, face, tag and "
-                    "printed marks, with clean edges and NO rack, neighboring "
-                    "product fragment or background streak. Any clipping, "
+                    "selected object is complete, including all parts and markings "
+                    "visible on that product, with clean edges and no external "
+                    "support, neighboring product fragment or background streak. "
+                    "Any clipping, "
                     "missing body, context leakage or unresolved defect fails. "
                     "Return the exact supplied JSON schema."
                     if profile == MATTE
@@ -1172,6 +1173,7 @@ class FidelityGateway:
                             source_role="matte_original_candidate_pair",
                         )
                     )
+                schema = response_schema(MATTE)
                 matte = await self._plan(
                     request,
                     MATTE,
@@ -1186,7 +1188,7 @@ class FidelityGateway:
                     )
                     + tuple(previews),
                     {
-                        "schema": response_schema(MATTE),
+                        "schema": schema,
                         "correction_contract": {
                             "layer_indices": list(range(len(layers))),
                             "coordinates": (
@@ -1237,7 +1239,7 @@ class FidelityGateway:
                 if matte.error_code:
                     raise ValueError("Source matte review unavailable")
                 try:
-                    Draft202012Validator(response_schema(MATTE)).validate(matte.payload)
+                    Draft202012Validator(schema).validate(matte.payload)
                 except ValidationError as exc:
                     exc.fidelity_profile = MATTE
                     raise
@@ -1283,18 +1285,31 @@ class FidelityGateway:
                     ],
                     len(matte.payload["unresolved"]),
                 )
-                if mask_review or not (
-                    matte.payload["repairs"] or matte.payload["edge_feather_px"]
-                ):
+                if mask_review:
                     raise ValueError(
                         "Source product extraction failed visual acceptance"
                     )
-                layers = await asyncio.to_thread(
-                    source_pixels.repair_layers,
-                    layers,
-                    matte.payload["repairs"],
-                    matte.payload["edge_feather_px"],
+                if matte.payload["repairs"] or matte.payload["edge_feather_px"]:
+                    try:
+                        layers = await asyncio.to_thread(
+                            source_pixels.repair_layers, layers,
+                            matte.payload["repairs"], matte.payload["edge_feather_px"],
+                        )
+                        continue
+                    except ValueError:
+                        # A proposed alpha edit can fall outside the repair
+                        # contract. Never apply it; use fresh source pixels.
+                        if inherited_layers is not None:
+                            raise
+                if inherited_layers is not None:
+                    raise ValueError("Inherited source layer failed visual acceptance")
+                alternate = await asyncio.to_thread(
+                    source_pixels.extract_layers, original_sources, preparation,
+                    self.wrapped.image_fidelity_source_model_path, tight_context=True,
                 )
+                if alternate == layers:
+                    raise ValueError("Source re-extraction produced identical evidence")
+                layers = alternate
             self._mattes[key] = (layers, deepcopy(mask_audits))
             return layers, mask_audits
 
@@ -1500,6 +1515,16 @@ class FidelityGateway:
                         "mask_audits": mask_audits,
                         "cells": source_pixels.positions(context, len(layers)),
                     }
+                    if (
+                        context["job_type"] == "creative_image"
+                        and len(authorities) == 1
+                        and source_pixels.background_only(
+                            str(context["settings"].get("instruction", ""))
+                        )
+                    ):
+                        pixel_recipe["cells"] = source_pixels.original_positions(
+                            layers, authorities[0], request.size,
+                        )
                     if inherited_layers is not None and inherited_white is not None:
                         pixel_recipe["white_product_parent"] = inherited_white.binding
                 if frozen is None and crops and not pixel_mode:

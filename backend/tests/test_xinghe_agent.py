@@ -2472,13 +2472,25 @@ def test_image_artifact_uses_requested_canvas_size_contract() -> None:
     assert exc_info.value.code == "IMAGE_RESPONSE_SIZE_INVALID"
 
 
-def test_crossborder_16_9_requests_native_canvas_and_delivers_2k() -> None:
+@pytest.mark.parametrize(
+    ("host", "size", "pinned_canvas", "wire_size"),
+    [
+        ("api.example.test", "2048x1152", None, "1536x864"),
+        ("api.haiyushuke.com", "1600x1600", "2000x2000", "2000x2000"),
+        ("api.haiyushuke.com", "900x1200", "1200x1600", "1200x1600"),
+        ("api.haiyushuke.com", "1600x1600", None, "1600x1600"),
+        ("api.example.test", "1600x1600", "2000x2000", "1600x1600"),
+    ],
+)
+def test_crossborder_native_canvas_and_exact_delivery(
+    host, size, pinned_canvas, wire_size
+) -> None:
     transport = _RecordingTransport()
     adapter = TengliOpenAICompatibleGateway(
         api_key="test-placeholder-key",
-        base_url="https://api.example.test",
+        base_url=f"https://{host}",
         planner_model="gpt-5.6-terra",
-        image_model="gpt-image-2",
+        image_model="image-2.5",
         transport=transport,
     )
     source = SourceImage(
@@ -2503,17 +2515,18 @@ def test_crossborder_16_9_requests_native_canvas_and_delivers_2k() -> None:
                 prompt="16:9 product detail module",
                 quality="high",
                 idempotency_key="image-idem",
-                size="2048x1152",
+                size=size,
+                haiyu_native_canvas=pinned_canvas,
             )
         )
     )
 
     fields = dict(transport.multipart_calls[0]["fields"])
-    assert fields["size"] == "1536x864"
+    assert fields["size"] == wire_size
     assert image.artifact is not None
-    assert (image.artifact.width, image.artifact.height) == (2048, 1152)
-    assert image.artifact.locally_resampled is True
-    assert (image.artifact.provider_width, image.artifact.provider_height) == (1536, 864)
+    assert f"{image.artifact.width}x{image.artifact.height}" == size
+    assert image.artifact.locally_resampled is (size != wire_size)
+    assert f"{image.artifact.provider_width}x{image.artifact.provider_height}" == wire_size
 
 
 def test_near_16_9_provider_canvas_is_cover_cropped_onto_delivery_size() -> None:

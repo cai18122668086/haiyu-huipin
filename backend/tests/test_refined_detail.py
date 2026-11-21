@@ -171,7 +171,9 @@ def test_refined_generates_each_authored_prompt_once_and_delivers_original_bytes
         page["image_prompt"] for page in pages
     ]
     assert all(
-        call.size == "1440x1920" and call.preserve_provider_artifact
+        call.size == "1440x1920"
+        and call.haiyu_native_canvas == "1200x1600"
+        and call.preserve_provider_artifact
         for call in gateway.image_calls
     )
     archive = client.get(
@@ -315,6 +317,18 @@ def test_refined_native_admission_keeps_preview_aspect_and_resampling_guards(
     else:
         assert result.outcome == ProviderOutcome.FAILED
         assert result.error_code == "DETAIL_OUTPUT_DIMENSIONS_INVALID"
+
+
+@pytest.mark.parametrize("second", ["02", "01", "03"])
+def test_numbered_rhythm_entries_must_cover_the_exact_screen_sequence(second):
+    text = f"01 商品全景；{second} 五金细节"
+    raw = {"plan": {
+        "screens": [{}, {}], "design_strength_lock": {"rhythm_map": [text]},
+    }}
+    result = refined_detail.normalize_strategy(raw)
+    expected = ["01 商品全景", "02 五金细节"] if second == "02" else [text]
+    assert result["plan"]["design_strength_lock"]["rhythm_map"] == expected
+    assert raw["plan"]["design_strength_lock"]["rhythm_map"] == [text]
 
 
 def test_strategy_field_location_preserves_content_and_rejects_conflicts(

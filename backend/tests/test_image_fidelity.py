@@ -916,7 +916,12 @@ def pixel_extraction(sources, preparation, model):
     return (PixelLayer(layer, sources[0].asset_id, sources[0].sha256, (0, 0, 40, 40)),)
 
 
-def test_creative_pixel_path_does_not_require_readback_crop_geometry(monkeypatch):
+@pytest.mark.parametrize("instruction", [
+    "换背景，保留原商品图案", "增加图案桌布背景，不额外增加内容",
+])
+def test_creative_pixel_path_does_not_require_readback_crop_geometry(
+    monkeypatch, instruction,
+):
     from app import source_pixels
 
     class CreativePixelGuard(PixelGuard):
@@ -924,7 +929,7 @@ def test_creative_pixel_path_does_not_require_readback_crop_geometry(monkeypatch
             return {
                 "job_type": "creative_image",
                 "item_key": "image-001",
-                "settings": {"instruction": "换背景，保留原商品图案"},
+                "settings": {"instruction": instruction},
             }
 
     monkeypatch.setattr(source_pixels, "extract_layers", pixel_extraction)
@@ -1235,8 +1240,8 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
 ):
     extractions = []
 
-    def extraction(*args):
-        extractions.append(1)
+    def extraction(*args, tight_context=False):
+        extractions.append(tight_context)
         return pixel_extraction(*args)
 
     monkeypatch.setattr("app.source_pixels.extract_layers", extraction)
@@ -1268,7 +1273,7 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
             )
         )
     )
-    assert len(extractions) == 1
+    assert extractions == ([False] if accepted else [False, True])
     assert len([p for p in gateway.plans if p.planning_profile == MATTE]) == 1
     if accepted:
         assert one.outcome == two.outcome == ProviderOutcome.SUCCEEDED
@@ -1283,14 +1288,15 @@ def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_fail
 
 
 @pytest.mark.parametrize("second_pass", [True, False])
+@pytest.mark.parametrize("use_alternate", [True, False])
 def test_one_changed_source_mask_is_reaudited_before_any_image(
-    monkeypatch, second_pass
+    monkeypatch, second_pass, use_alternate
 ):
     from PIL import ImageDraw
 
     from app import source_pixels
 
-    def extraction(sources, preparation, model):
+    def extraction(sources, preparation, model, *, tight_context=False):
         layer = pixel_extraction(sources, preparation, model)[0]
         with Image.open(BytesIO(layer.artifact.payload)) as opened:
             rgba = opened.convert("RGBA")
@@ -1298,7 +1304,7 @@ def test_one_changed_source_mask_is_reaudited_before_any_image(
         draw = ImageDraw.Draw(alpha)
         draw.rectangle((18, 2, 22, 8), fill=255)
         draw.rectangle((8, 9, 32, 38), fill=255)
-        alpha.putpixel((20, 5), 0)
+        alpha.putpixel((20, 5), 255 if tight_context else 0)
         rgba.putalpha(alpha)
         return (replace(layer, artifact=source_pixels.artifact(rgba, "source.png")),)
 
@@ -1313,7 +1319,7 @@ def test_one_changed_source_mask_is_reaudited_before_any_image(
                     result.payload.update(
                         complete_objects=False,
                         unresolved=["Missing source edge"],
-                        repairs=[
+                        repairs=[] if use_alternate else [
                             {
                                 "layer_index": 0,
                                 "action": "restore_foreground",

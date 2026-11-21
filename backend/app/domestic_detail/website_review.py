@@ -181,6 +181,10 @@ def bind_pixel_metadata(
     for identity in identities:
         if not isinstance(identity, dict):
             continue
+        # One relay emits this empty annotation beside its actual boolean.
+        # Keep any substantive or conflicting note for strict schema rejection.
+        if identity.get("colorway_consistent_note") == "":
+            del identity["colorway_consistent_note"]
         features = identity.get("visible_features")
         if (
             isinstance(features, list)

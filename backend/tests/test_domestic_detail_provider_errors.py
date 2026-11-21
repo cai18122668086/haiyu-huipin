@@ -116,7 +116,8 @@ def test_provider_intake_root_is_plain_object_and_local_conditions_remain():
     assert '"allOf"' in _planner_prompt(value)
 
 
-def test_deepseek_direct_brief_has_complete_schema_and_output_allowance():
+@pytest.mark.parametrize("visual_audit", [False, True])
+def test_deepseek_brief_and_visual_audit_have_schema_and_output_allowance(visual_audit):
     from app.xinghe_agent import _planner_response_format
 
     class Transport:
@@ -149,6 +150,10 @@ def test_deepseek_direct_brief_has_complete_schema_and_output_allowance():
             "observed_facts": [],
         },
     )
+    if visual_audit:
+        value = replace(
+            value, planning_profile="aurora_v20_visual_audit", authoring_stage=""
+        )
     result = asyncio.run(gateway.plan(value))
     assert result.error_code is None
     payload = transport.payload

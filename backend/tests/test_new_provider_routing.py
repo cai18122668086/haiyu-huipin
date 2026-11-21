@@ -601,6 +601,20 @@ def test_crossborder_detail_flag_switches_only_the_international_real_route(
     )
 
 
+@pytest.mark.parametrize(
+    "platform", ["ebay", "walmart", "etsy", "shopee", "mercado-libre"]
+)
+def test_crossborder_website_marketplaces_keep_their_name_and_export_size(platform):
+    from app.crossborder_detail_provider import crossborder_detail_prompt_configuration
+
+    result = crossborder_detail_prompt_configuration(
+        {"platform_code": platform, "size": "1600x1600", "page_count": 8}
+    )
+    assert result["platform_code"] == platform.replace("-", "_")
+    assert result["profile_id"] == "crossborder_generic_crossborder_pdp_v1"
+    assert result["resolved_size"] == "1600x1600"
+
+
 def test_crossborder_unsupported_platform_fails_before_provider_calls(
     client: TestClient,
 ) -> None:

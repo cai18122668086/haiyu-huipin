@@ -1796,9 +1796,11 @@ class XingheSingleImageProvider:
             from .provider_diagnostics import (
                 CONTENT_REJECTION_CODE,
                 CONTENT_REJECTION_MESSAGE,
+                FIDELITY_REJECTED,
+                FIDELITY_REJECTED_MESSAGE,
                 PREPARATION_FAILED,
-                PREPARATION_FAILED_MESSAGE,
                 image_content_refusal,
+                preparation_message,
             )
 
             content_rejected = call_result.outcome == ProviderOutcome.FAILED and (
@@ -1815,7 +1817,13 @@ class XingheSingleImageProvider:
                     CONTENT_REJECTION_MESSAGE if content_rejected else
                     "服务已返回结果，但读取图片失败；请核对原任务，勿重复生成。"
                     if call_result.error_code == "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED"
-                    else PREPARATION_FAILED_MESSAGE
+                    else FIDELITY_REJECTED_MESSAGE
+                    if call_result.error_code == FIDELITY_REJECTED
+                    else preparation_message(
+                        raw_usage.get("metrics", {}).get("image_fidelity", {}).get(
+                            "preparation_stage"
+                        )
+                    )
                     if call_result.error_code == PREPARATION_FAILED
                     else "Image provider returned a controlled failure."
                 ),

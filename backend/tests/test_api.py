@@ -1124,6 +1124,25 @@ def test_idempotency_key_reuse_with_different_request_is_rejected(
     assert conflict.json()["error"]["code"] == "IDEMPOTENCY_KEY_REUSED"
 
 
+def test_historical_fidelity_errors_are_explained_without_mutating_the_job(client):
+    source = upload_asset(client)
+    mask = upload_asset(client, media_kind="mask")
+    job = create_local_edit_job(client, source["id"], mask["id"])
+    stored = "Image provider returned a controlled failure."
+    with client.app.state.session_factory.begin() as session:
+        record = session.get(JobRecord, job["id"])
+        record.error_code, record.error_message = "IMAGE_FIDELITY_REJECTED", stored
+        item = session.get(JobItemRecord, job["items"][0]["id"])
+        item.error_code = "IMAGE_FIDELITY_PREPARATION_FAILED"
+        item.error_message = stored
+        item.error_details = {"image_fidelity": {"preparation_stage": "source_matte"}}
+    result = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{job['id']}").json()
+    assert "保真审核" in result["error_message"]
+    assert "商品轮廓" in result["items"][0]["error_message"]
+    with client.app.state.session_factory() as session:
+        assert session.get(JobRecord, job["id"]).error_message == stored
+
+
 def test_job_uses_relational_items_outbox_and_exact_costs(
     client: TestClient,
 ) -> None:

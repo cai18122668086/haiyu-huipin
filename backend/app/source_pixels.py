@@ -11,6 +11,7 @@ import hashlib
 import importlib
 import json
 import math
+import re
 import threading
 from dataclasses import dataclass, replace
 from io import BytesIO
@@ -76,6 +77,19 @@ class PixelLayer:
     source_box: tuple[int, int, int, int]
 
 
+def background_only(instruction: str) -> bool:
+    # A background-only edit implicitly preserves the subject. Match the
+    # entire instruction so an additional product-edit clause stays editable.
+    description = r"(?:(?!同时|并|以及|连同|再把|再将|和|与)[^、，,。.!！；;\n])"
+    return re.fullmatch(
+        r"(?:请)?(?:只|仅)?"
+        rf"(?:(?:增加|添加|更换|替换|换成|换){description}{{0,64}}背景"
+        rf"|(?:把|将)?背景(?:更换为|替换为|改成|换成|改为){description}{{1,64}})"
+        r"(?:[，, ]*(?:不额外增加(?:其他)?内容|不(?:再)?添加其他内容))?[。.!！]?",
+        instruction.strip(),
+    ) is not None
+
+
 def enabled_for(context: dict[str, Any]) -> bool:
     settings = context["settings"]
     if context["job_type"] == "product_image":
@@ -90,6 +104,8 @@ def enabled_for(context: dict[str, Any]) -> bool:
     if context["job_type"] == "domestic_main_image":
         return settings.get("main_image_speed") == "native_fast"
     instruction = str(settings.get("instruction", "")).lower()
+    if context["job_type"] == "creative_image" and background_only(instruction):
+        return True
     return (
         context["job_type"] in {"creative_image", "reference_remix"}
         and ("背景" in instruction or "background" in instruction)
@@ -321,6 +337,8 @@ def extract_layers(
     sources: tuple[Any, ...],
     preparation: dict[str, Any],
     model_path: Path,
+    *,
+    tight_context: bool = False,
 ) -> tuple[PixelLayer, ...]:
     regions = preparation["selected_regions"]
     if not 1 <= len(regions) <= 6:
@@ -345,6 +363,11 @@ def extract_layers(
                 )
             ),
         )
+        if tight_context:
+            # Re-segment the complete original selection with less surrounding
+            # scenery after visual rejection. Never trim the selected box.
+            short_side = min((x1 - x0) * image.width, (y1 - y0) * image.height)
+            pad = max(4, round(short_side * 0.05))
         left, top = (
             max(0, math.floor(x0 * image.width) - pad),
             max(0, math.floor(y0 * image.height) - pad),
@@ -652,6 +675,36 @@ def repair_layers(
     return tuple(result)
 
 
+def original_positions(
+    layers: tuple[PixelLayer, ...], source: Any, target_size: str,
+) -> list[list[float]]:
+    """Fit the entire source frame, keeping each subject at its original position."""
+    with Image.open(BytesIO(source.payload)) as image:
+        width, height = ImageOps.exif_transpose(image).size
+    target_w, target_h = (int(v) for v in target_size.split("x"))
+    scale = min(target_w / width, target_h / height)
+    dx, dy = (target_w - width * scale) / 2, (target_h - height * scale) / 2
+    cells = []
+    for layer in layers:
+        if (layer.source_asset_id, layer.source_sha256) != (
+            source.asset_id, source.sha256,
+        ):
+            raise ValueError("Original placement requires one verified source frame")
+        with Image.open(BytesIO(layer.artifact.payload)) as image:
+            visible = image.getchannel("A").getbbox()
+        if visible is None:
+            raise ValueError("Original placement has no visible product")
+        left, top, _, _ = layer.source_box
+        x0, y0, x1, y1 = visible
+        cells.append([
+            (dx + (left + x0) * scale) / target_w,
+            (dy + (top + y0) * scale) / target_h,
+            min(1.0, math.nextafter((dx + (left + x1) * scale) / target_w, 1.0)),
+            min(1.0, math.nextafter((dy + (top + y1) * scale) / target_h, 1.0)),
+        ])
+    return cells
+
+
 def positions(context: dict[str, Any], count: int) -> list[list[float]]:
     """Reserve product cells without hiding contract text or changing canvas."""
     if not 1 <= count <= 6:
@@ -686,7 +739,8 @@ def background_prompt(
 ) -> str:
     return (
         "BACKGROUND PLATE ONLY. The server will add ORIGINAL PHOTOGRAPHED "
-        "PRODUCT PIXELS afterwards. Do not draw products, characters, charms, "
+        "PRODUCT PIXELS afterwards. Do not draw products, "
+        "characters on those products, charms, "
         "packaging, labels-on-products, silhouettes or placeholders. Preserve "
         "the described background/style, placing approved marketing copy "
         "outside the reserved product cells. "
@@ -726,9 +780,12 @@ def background_prompt(
         + "\nAPPROVED MARKETING COPY (empty means NO TEXT): "
         + json.dumps(copy, ensure_ascii=False)
         + "\nFINAL REQUIREMENT: empty background plate only, with absolutely "
-        "no product, character, keychain, charm, metal clasp, tag, "
+        "no duplicate product, freestanding character, keychain, charm, "
+        "metal clasp, tag, "
         "silhouette, placeholder or lettering on a product. Exclude any source "
-        "display rack unless the approved scene explicitly requires that support."
+        "display rack unless the approved scene explicitly requires that support. "
+        "If the approved background is a printed surface, preserve its explicitly "
+        "requested flat motif on that surface without adding standalone objects."
         + (
             "\nREQUIRED VISIBLE MARKETING TEXT: Render EVERY approved copy "
             "string above exactly, using the approved panel layout and hierarchy "

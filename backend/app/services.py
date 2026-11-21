@@ -46,6 +46,7 @@ from .models import (
     WorkspaceLimitRecord,
     utc_now,
 )
+from .provider_diagnostics import public_failure_message
 from .schemas_v1 import (
     AssetResponse,
     CostSummary,
@@ -580,7 +581,9 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
         retry_scope=job.retry_scope,
         state_version=job.state_version,
         error_code=job.error_code,
-        error_message=job.error_message,
+        error_message=public_failure_message(
+            job.error_code, job.error_message, job.error_details
+        ),
         error_details=job.error_details,
         api_request_count=job.api_request_count,
         cancel_requested_at=job.cancel_requested_at,
@@ -597,7 +600,9 @@ def job_detail_response(session: Session, job: JobRecord) -> JobDetailResponse:
                 quality=item.quality,
                 result_source=item.result_source,
                 error_code=item.error_code,
-                error_message=item.error_message,
+                error_message=public_failure_message(
+                    item.error_code, item.error_message, item.error_details
+                ),
                 error_details=item.error_details,
                 started_at=item.started_at,
                 finished_at=item.finished_at,

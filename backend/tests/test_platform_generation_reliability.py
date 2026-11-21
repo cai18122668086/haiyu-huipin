@@ -29,6 +29,16 @@ def test_explicit_route_rejection_uses_backup_and_preserves_primary_receipt(code
     assert result.raw_usage["network_requests"] == 2
 
 
+def test_explicit_model_size_rejection_can_use_another_configured_route():
+    from app.provider_diagnostics import known_image_route_rejection
+
+    error = {"error": {"code": "unsupported_size", "type": "invalid_request_error"}}
+    result, calls, _ = dispatch(error)
+    assert result.outcome == ProviderOutcome.SUCCEEDED and len(calls) == 2
+    for accepted_id in ("id", "task_id", "generation_id"):
+        assert not known_image_route_rejection(400, {**error, accepted_id: "accepted"})
+
+
 def test_unknown_400_is_diagnostic_and_never_blindly_resent():
     result, calls, _ = dispatch(
         {

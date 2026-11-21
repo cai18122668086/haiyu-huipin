@@ -306,6 +306,44 @@ def test_source_pixel_mode_cannot_undo_requested_garment_or_color_changes():
     assert not source_pixels.enabled_for({"job_type": "detail_pack", "settings": {}})
 
 
+@pytest.mark.parametrize(("instruction", "enabled"), [
+    ("增加图案背景，不额外增加内容", True),
+    ("更换吸引外国客户购买的背景，不额外增加内容", True),
+    ("替换背景，同时修改商品颜色", False),
+    ("添加配件并更换背景", False),
+    ("添加项链和蓝色背景", False),
+    ("把背景换成浅灰色", True),
+    ("将背景改成红色再把商品放大", False),
+    ("修改图案，不额外增加内容", False),
+])
+def test_creative_background_only_selection(instruction, enabled):
+    assert source_pixels.enabled_for({
+        "job_type": "creative_image", "settings": {"instruction": instruction},
+    }) is enabled
+
+
+@pytest.mark.parametrize(("target", "expected"), [
+    ("200x100", (61, 40, 91, 66)), ("200x200", (61, 90, 91, 116)),
+])
+def test_background_edit_preserves_subject_size_and_position(target, expected):
+    from types import SimpleNamespace
+
+    full = source_pixels.artifact(Image.new("RGB", (200, 100), "white"), "source.png")
+    source = SimpleNamespace(
+        asset_id="source", sha256=full.sha256, payload=full.payload,
+    )
+    cutout = Image.new("RGBA", (50, 35))
+    cutout.paste((10, 25, 60, 255), (5, 4, 35, 30))
+    layer = source_pixels.PixelLayer(
+        source_pixels.artifact(cutout, "layer.png"), "source", full.sha256,
+        (56, 36, 106, 71),
+    )
+    cell, = source_pixels.original_positions((layer,), source, target)
+    w, h = map(int, target.split("x"))
+    _, bounds, _ = source_pixels.placed_layer(layer.artifact, (w, h), cell)
+    assert bounds == expected
+
+
 def repair_fixture():
     from PIL import ImageDraw
 

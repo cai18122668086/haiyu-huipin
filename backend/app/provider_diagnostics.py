@@ -15,10 +15,55 @@ PREPARATION_FAILED = "IMAGE_FIDELITY_PREPARATION_FAILED"
 PREPARATION_FAILED_MESSAGE = (
     "商品素材未通过生图前检查，本次未发送生图请求。请核对商品位置与印字是否清晰后重试。"
 )
+FIDELITY_REJECTED = "IMAGE_FIDELITY_REJECTED"
+FIDELITY_REJECTED_MESSAGE = (
+    "生成图未通过商品保真审核，候选图已保留。请核对商品外观、图案与文字要求。"
+)
 _FIDELITY_PREPARATION_STAGES = frozenset({
     "source_binding", "source_selection", "source_matte", "source_readback",
     "source_recolor", "background_layout", "freeze_receipt",
 })
+
+
+def preparation_message(stage: object) -> str:
+    if stage == "source_matte":
+        return (
+            "商品轮廓未能与背景完整分开，本次未发送生图请求。"
+            "请换用主体完整、周围没有遮挡物的商品实拍图。"
+        )
+    if stage == "source_readback":
+        return (
+            "商品原图上的文字未能核对，本次未发送生图请求。"
+            "请上传能看清印字的原图。"
+        )
+    return PREPARATION_FAILED_MESSAGE
+
+
+def public_failure_message(
+    code: str | None, stored: str | None, details: object = None,
+) -> str | None:
+    # Read historical generic adapter errors without rewriting task history.
+    if code == "IMAGE_REQUEST_FAILED" and isinstance(details, Mapping):
+        error = details.get("provider_error")
+        if (
+            details.get("http_status") == 400 and isinstance(error, Mapping)
+            and error.get("code") == "unsupported_size"
+        ):
+            return "生成服务不支持所选尺寸。请更换图片尺寸后重新提交。"
+    if stored in {
+        None,
+        "Image provider returned a controlled failure.",
+        "本张主图生成未完成，可重试。",
+    }:
+        if code == PREPARATION_FAILED:
+            if isinstance(details, Mapping):
+                fidelity = details.get("image_fidelity")
+                if isinstance(fidelity, Mapping):
+                    return preparation_message(fidelity.get("preparation_stage"))
+            return PREPARATION_FAILED_MESSAGE
+        if code == FIDELITY_REJECTED:
+            return FIDELITY_REJECTED_MESSAGE
+    return stored
 
 
 def image_content_refusal(payload: Mapping[str, Any]) -> bool:
@@ -112,6 +157,10 @@ def known_image_route_rejection(status: int, payload: Mapping[str, Any]) -> bool
     ):
         return False
     code = error.get("code")
+    if code == "unsupported_size":
+        # This model rejected the unchanged dimensions at admission.
+        # An accepted task must be reconciled instead of being redispatched.
+        return error.get("type") == "invalid_request_error" and not payload.get("id")
     if code == "upstream_text_reply":
         return error.get("type") == "invalid_request_error"
     return code in {
