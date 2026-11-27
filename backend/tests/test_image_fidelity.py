@@ -112,6 +112,45 @@ def test_character_name_cannot_replace_original_copyright():
     assert readback_matches({"text_runs": ["モモンガ", "©nagano"]}, value)
     with pytest.raises(ValidationError):
         validate_preparation(value, ("product",))
+
+
+@pytest.mark.parametrize("focused,isolated,may_check,accepted", [
+    ("GREEN", "GREEN", True, True),
+    ("GREEN", "GREN", True, False),
+    ("GREEN", "UNREADABLE", True, False),
+    ("GREN", "GREEN", False, False),
+    ("OTHER", "OTHER", False, False),
+])
+def test_inventory_spelling_requires_two_agreeing_views_and_its_own_source_crop(
+    focused, isolated, may_check, accepted,
+):
+    from types import SimpleNamespace
+
+    class Reader(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            return replace(result, payload={"text_runs": [isolated, "12+"]})
+
+    def reading(word):
+        return SimpleNamespace(error_code=None, payload={"text_runs": [word, "12+"]})
+
+    value = preparation()
+    value["selected_regions"][0]["visible_print"] = ["GREN", "12+"]
+    value["source_inventory"] = deepcopy(value["selected_regions"])
+    reader = Reader()
+    req = request(reader)
+    plans = []
+    corrected = asyncio.run(ScopedFidelity(reader, None, None)._reread_source_spelling(
+        req, req.sources[:1], value, reading("GREEN"), reading(focused), plans,
+    ))
+    assert bool(plans) == may_check
+    assert (corrected is not None) == accepted
+    assert value["selected_regions"][0]["visible_print"] == ["GREN", "12+"]
+    if accepted:
+        assert corrected["source_inventory"] == corrected["selected_regions"]
+        assert corrected["selected_regions"][0]["visible_print"] == ["GREEN", "12+"]
+        assert not readback_matches({"text_runs": ["GREN", "12+"]}, corrected)
+        assert json.loads(reader.plans[0].product_information[0]).keys() == {"schema"}
     assert validate_preparation(value, ("product",), allow_stored=True) == value
 
 

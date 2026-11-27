@@ -340,6 +340,7 @@ def test_fast_explicit_retry_cannot_resubmit_unknown_paid_outcome(client, tmp_pa
             outcome=ProviderOutcome.OUTCOME_UNKNOWN,
             artifact=None,
             error_code="OFFLINE_UNKNOWN",
+            provider_request_id="upstream-original-remix-order",
             retryable=False,
         )
 
@@ -359,6 +360,19 @@ def test_fast_explicit_retry_cannot_resubmit_unknown_paid_outcome(client, tmp_pa
     assert retry.status_code in {201, 409}, retry.text
     if retry.status_code == 201:
         dispatch_pending(client)
+        child_id = retry.json()["id"]
+        child = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{child_id}").json()
+        assert child["status"] == "failed"
+        detail = child["items"][0]["error_details"]
+        assert detail["image_recovery"]["original_task_id"] == (
+            "upstream-original-remix-order"
+        )
+        with client.app.state.session_factory() as session:
+            event = session.scalar(
+                select(UsageEventRecord).where(UsageEventRecord.job_id == child_id)
+            )
+            assert event.provider_request_id is None
+            assert event.actual_cost_micros == event.raw_usage["network_requests"] == 0
     assert len(gateway.image_calls) == 1
 
 

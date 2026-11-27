@@ -639,6 +639,41 @@ def verify_source_print(result: Any, preparation: dict[str, Any]) -> bool:
         return False
 
 
+def repeated_glyph_disagreement(
+    preparation: dict[str, Any], first: Any, focused: Any,
+) -> tuple[int, list[str]] | None:
+    """Locate one possible doubled-letter error in the *source inventory*."""
+    if first.error_code or focused.error_code or first.payload != focused.payload:
+        return None
+    if not Draft202012Validator(response_schema(READBACK)).is_valid(first.payload):
+        return None
+    runs = first.payload["text_runs"]
+    groups = [r["visible_print"] for r in preparation["selected_regions"]]
+    expected = [run for group in groups for run in group]
+    if len(expected) != len(runs) or "UNREADABLE" in expected + runs:
+        return None
+    differences = [
+        i for i, (a, b) in enumerate(zip(expected, runs, strict=True)) if a != b
+    ]
+    if len(differences) != 1:
+        return None
+    index = differences[0]
+    short, long = sorted((expected[index], runs[index]), key=len)
+    if not any(
+        long[:i] + long[i + 1:] == short
+        for i in range(1, len(long))
+        if long[i].isalpha() and long[i] == long[i - 1]
+    ):
+        return None
+    start = 0
+    for region, group in enumerate(groups):
+        end = start + len(group)
+        if start <= index < end:
+            return region, runs[start:end]
+        start = end
+    return None
+
+
 def incomplete_print_reading(result: Any, preparation: dict[str, Any]) -> bool:
     """Allow another blind view only for unreadable marks, never a contradiction."""
     if result.error_code or not isinstance(result.payload, dict):
@@ -1264,6 +1299,31 @@ class FidelityGateway:
         assert isinstance(preparation, dict)
         return preparation
 
+    async def _reread_source_spelling(
+        self, request: Any, crops: tuple[Any, ...], preparation: dict[str, Any],
+        first: Any, focused: Any, plans: list[Any],
+    ) -> dict[str, Any] | None:
+        if len(crops) != len(preparation["selected_regions"]):
+            return None
+        difference = repeated_glyph_disagreement(preparation, first, focused)
+        if difference is None:
+            return None
+        region, expected = difference
+        single = await self._plan(
+            request, READBACK, (crops[region],), {"schema": response_schema(READBACK)},
+            suffix=f":source-print-object-{region}",
+        )
+        plans.append(single)
+        if single.error_code or single.payload != {"text_runs": expected}:
+            return None
+        corrected = deepcopy(preparation)
+        selected = corrected["selected_regions"][region]
+        for entry in corrected.get("source_inventory", []):
+            if entry == selected:
+                entry["visible_print"] = expected
+        selected["visible_print"] = expected
+        return corrected if verify_source_print(focused, corrected) else None
+
     async def _review_matte_contract(
         self, request: Any, sources: tuple[Any, ...], context: dict[str, Any],
         plans: list[Any], suffix: str,
@@ -1834,6 +1894,7 @@ class FidelityGateway:
                                 if isinstance(text, str)
                                 and "UNREADABLE" not in text.upper()
                             ] if isinstance(runs, list) else []
+                            whole_product_read = source_readback
                             source_readback = await self._plan(
                                 request, READBACK, print_views,
                                 {"schema": response_schema(READBACK)},
@@ -1849,6 +1910,14 @@ class FidelityGateway:
                                     "selected_regions": [],
                                 },
                             )
+                            if not verified:
+                                corrected = await self._reread_source_spelling(
+                                    request, readback_crops, preparation,
+                                    whole_product_read, source_readback, plans,
+                                )
+                                if corrected is not None:
+                                    preparation = corrected
+                                    verified = True
                     if not verified:
                         if (
                             not source_readback.error_code

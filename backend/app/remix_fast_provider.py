@@ -475,7 +475,14 @@ class RemixFastProvider(XingheSingleImageProvider):
             )
             if state and state.get("owner_job_id") != request.job_id:
                 if state.get("phase") in {"image_started", "image_unknown"}:
-                    return {**state, "calls": [], "owner_job_id": request.job_id}
+                    # This retry made no upstream call. Keep the original receipt
+                    # available for reconciliation on the attempt that owns it.
+                    return {
+                        **state, "calls": [], "owner_job_id": request.job_id,
+                        "inherited_unknown": True,
+                        "original_task_id": state.get("provider_request_id"),
+                        "provider_request_id": None,
+                    }
                 return {}
             return state
 
@@ -528,8 +535,11 @@ class RemixFastProvider(XingheSingleImageProvider):
         unknown: bool = False,
     ) -> ProviderResult:
         calls = state.get("calls", [])
+        inherited = state.get("inherited_unknown") is True and not calls
 
         def total(field: str) -> int | None:
+            if inherited:
+                return 0
             return (
                 sum(c[field] for c in calls)
                 if calls and all(isinstance(c.get(field), int) for c in calls)
@@ -550,7 +560,7 @@ class RemixFastProvider(XingheSingleImageProvider):
                 "reported": bool(calls) and all(c.get("reported") for c in calls),
                 "network_requests": sum(c.get("network_requests", 1) for c in calls),
                 "request_count": len(calls),
-                "input_images": 2,
+                "input_images": 0 if inherited else 2,
                 "output_images": int(artifact is not None),
                 "metrics": {
                     **{
@@ -562,6 +572,10 @@ class RemixFastProvider(XingheSingleImageProvider):
                     "skill_version": "1.0.0",
                     "quick_check": state.get("review"),
                     "automatic_redraw": False,
+                    **({"image_recovery": {
+                        "original_task_id": state["original_task_id"],
+                        "can_resume_original": False,
+                    }} if inherited and state.get("original_task_id") else {}),
                     "prompt_sha256": hashlib.sha256(
                         str(state.get("prompt", "")).encode()
                     ).hexdigest(),

@@ -67,6 +67,17 @@ def fast_request():
     )
 
 
+def test_eight_page_deepseek_plan_has_room_for_reasoning_and_all_pages():
+    transport = EnvelopeTransport()
+    adapter = gateway(transport, "deepseek-v4.1-flash-1017")
+    req = replace(fast_request(), page_count=8)
+    result = asyncio.run(adapter.plan(req))
+    assert result.error_code is None
+    sent = transport.calls[0]["payload"]
+    assert sent["max_completion_tokens"] == 49152
+    assert sent["reasoning_effort"] == "low"
+
+
 @pytest.mark.parametrize("model", ["deepseek-v4.1-flash-1017", "configured-planner"])
 def test_fast_budget_includes_reasoning_without_lowering_model_or_full_schema(model):
     transport = EnvelopeTransport()

@@ -2771,6 +2771,11 @@ class TengliOpenAICompatibleGateway:
                     # OpenAI json_schema parameter. The COMPLETE schema remains
                     # in the original user envelope and is validated locally.
                     route_payload["response_format"] = {"type": "json_object"}
+                    if request.planning_profile == detail_fast.PROFILE and request.page_count >= 8:
+                        # Observed eight-page plans exhausted 32768 tokens including
+                        # reasoning before the final page could close.
+                        route_payload["max_completion_tokens"] = 49152
+                        planner_key += ":long-fast-detail-v2"
                     if request.planning_profile == "aurora_v20_visual_audit":
                         planner_key += ":visual-audit-wire-v2"
                     route_payload["messages"] = deepcopy(payload["messages"])
