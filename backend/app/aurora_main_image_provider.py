@@ -57,6 +57,13 @@ from .xinghe_agent import (
 
 logger = logging.getLogger(__name__)
 
+_SET_AUDIT_SYSTEM_PROMPT = (
+    "You are the blind six-page Aurora campaign reviewer. Compare the actual "
+    "attached pixels in order, independently of the intended page roles. "
+    "Return only the JSON fields requested for this set review. The application "
+    "binds the reviewed images to their stored hashes."
+)
+
 _AUDIT_SYSTEM_PROMPT = """
 You are the direct-pixel quality reviewer for the Aurora domestic e-commerce
 six-image Skill. Inspect the generated candidate itself. Compare original
@@ -1653,7 +1660,7 @@ class AuroraMainImageProvider:
                 platform_code="TAOBAO_AURORA_V20_SET_AUDIT",
                 size="1024x1024",
                 idempotency_key=f"{job_id}:aurora-v20-set-audit:v1",
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
+                system_prompt=_SET_AUDIT_SYSTEM_PROMPT,
                 planning_profile="aurora_set_audit",
             )
         )
@@ -1754,7 +1761,7 @@ class AuroraMainImageProvider:
                 platform_code="TAOBAO_AURORA_V20_SET_AUDIT",
                 size="1024x1024",
                 idempotency_key=f"{job_id}:aurora-v20-sequential-set-audit:v1",
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
+                system_prompt=_SET_AUDIT_SYSTEM_PROMPT,
                 planning_profile="aurora_set_audit",
             )
         )
@@ -2018,7 +2025,7 @@ class AuroraMainImageProvider:
                 platform_code="TAOBAO_AURORA_SET_ROLE_AUDIT",
                 size="1024x1024",
                 idempotency_key=f"{request.job_id}:aurora-set-role-audit:v1",
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
+                system_prompt=_SET_AUDIT_SYSTEM_PROMPT,
                 planning_profile="aurora_set_audit",
             )
         )

@@ -11765,11 +11765,19 @@ def _planner_prompt_body(request: PlannerRequest) -> str:
         )
     if request.planning_profile == "aurora_set_audit":
         return (
-            "Blindly compare all six attached accepted Aurora pages in their supplied "
-            "page order. Return the complete set-role-distinction JSON contract. "
-            "Identify whether page 0 alone is visibly the search listing cover and "
-            "give concrete pixel evidence explaining why each page 1 through 5 is "
-            "not a search cover. Use the exact supplied image hashes."
+            "Blindly compare the six attached Aurora pages in order 0 through 5. "
+            "Return one JSON object with exactly these top-level fields: "
+            "identified_search_page_index (the observed cover index, or null when "
+            "there is no unique cover), search_role_is_unique (boolean), "
+            "confusable_page_indexes (array of indexes that could also be mistaken "
+            "for the cover), search_identification_evidence (a concrete account of "
+            "the visible composition, lettering and supporting proof), and "
+            "carousel_distinctions (five objects with page_index and "
+            "why_not_search_cover, one each for pages 1 through 5). "
+            "If a carousel page also looks like a cover, describe the visible "
+            "overlap and include its index in confusable_page_indexes. "
+            "Use the supplied order to report indexes. The application records "
+            "which images were reviewed, so omit image hashes."
         )
     if request.planning_profile == "aurora_visual_audit":
         return (
