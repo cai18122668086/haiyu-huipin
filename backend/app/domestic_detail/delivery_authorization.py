@@ -211,8 +211,23 @@ def job_receipt_authorization(db: Any, job: Any, plan: Any) -> dict[str, Any] | 
     # field must still equal the original plan, including cost and asset views.
     mutable = {"usage", "planner_diagnostics", "metrics", "state"}
 
-    def scope(p: Mapping[str, Any]) -> str:
+    def scope(p: Mapping[str, Any], *, completed_retry: bool = False) -> str:
         view = {k: v for k, v in p.items() if k not in mutable}
+        if completed_retry and "final_manifest" in view:
+            # Finalization writes two copies of this output after plan approval.
+            # ZIP delivery independently verifies it against the native files.
+            manifest = view["final_manifest"]
+            native = view.get("aurora_v4_3")
+            if (
+                not isinstance(manifest, dict)
+                or not isinstance(native, dict)
+                or canonical_hash(native.get("delivery")) != canonical_hash(manifest)
+                or canonical_hash(manifest.get("automatic_delivery_authorization"))
+                != canonical_hash(authority)
+            ):
+                raise DetailPlanError("Final retry delivery differs from its authority")
+            view.pop("final_manifest")
+            view["aurora_v4_3"] = {k: v for k, v in native.items() if k != "delivery"}
         if isinstance(view.get("cost"), Mapping):
             view["cost"] = {
                 k: v
@@ -226,7 +241,9 @@ def job_receipt_authorization(db: Any, job: Any, plan: Any) -> dict[str, Any] | 
             }
         return canonical_hash(view)
 
-    if scope(origin.payload) != scope(payload):
+    if scope(origin.payload) != scope(
+        payload, completed_retry=getattr(job, "status", None) == "completed"
+    ):
         raise DetailPlanError("A retry cannot change its original approved plan")
     current = job
     seen: set[str] = set()

@@ -57,6 +57,10 @@ def test_failed_aggregate_scope_preserves_comparisons_and_original_reply(pair_st
     [
         None,
         "earlier_intake_failure",
+        "completed_delivery",
+        "different_delivery_copies",
+        "wrong_delivery_authority",
+        "premature_delivery",
         "clone",
         "request",
         "workspace",
@@ -127,6 +131,20 @@ def test_retry_authority_checks_original_plan_and_real_retry_lineage(
         child.retry_of_job_id = child.id
     if tamper == "manual":
         payload["aurora_v4_3"]["approval_receipt"]["confirmation_source"] = "manual"
+    if tamper in {
+        "completed_delivery",
+        "different_delivery_copies",
+        "wrong_delivery_authority",
+        "premature_delivery",
+    }:
+        child.status = "running" if tamper == "premature_delivery" else "completed"
+        manifest = {"automatic_delivery_authorization": deepcopy(quote)}
+        if tamper == "wrong_delivery_authority":
+            manifest["automatic_delivery_authorization"]["actor_user_id"] = "changed"
+        payload["final_manifest"] = manifest
+        payload["aurora_v4_3"]["delivery"] = deepcopy(manifest)
+        if tamper == "different_delivery_copies":
+            payload["aurora_v4_3"]["delivery"]["unexpected"] = True
     db = Obj(
         get=lambda model, key: (
             origin
@@ -135,7 +153,7 @@ def test_retry_authority_checks_original_plan_and_real_retry_lineage(
         ),
         scalar=lambda query: request,
     )
-    if tamper and tamper != "earlier_intake_failure":
+    if tamper and tamper not in {"earlier_intake_failure", "completed_delivery"}:
         with pytest.raises(DetailPlanError):
             job_receipt_authorization(db, child, plan)
     else:
