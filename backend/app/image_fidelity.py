@@ -1251,6 +1251,14 @@ class FidelityGateway:
                         raise ValueError("Preparation unavailable")
                     try:
                         payload = plan.payload
+                        if (
+                            isinstance(payload, dict)
+                            and payload.get("type") == "json_object"
+                        ):
+                            # The planner can echo its JSON response-format tag.
+                            payload = {
+                                k: v for k, v in payload.items() if k != "type"
+                            }
                         if offer_print_geometry and not require_print_geometry:
                             payload = usable_optional_print_geometry(payload)
                         Draft202012Validator(preparation_schema).validate(payload)

@@ -377,6 +377,28 @@ def test_preparation_contract_correction_is_bounded_before_image_dispatch(
         assert len(gateway.plans) == 2 and not gateway.edits
 
 
+@pytest.mark.parametrize(
+    ("extra", "accepted"),
+    [({"type": "json_object"}, True), ({"type": "other"}, False),
+     ({"type": "json_object", "unknown": 1}, False)],
+)
+def test_prepare_accepts_only_echoed_json_format_tag(extra, accepted):
+    class TaggedGateway(Gateway):
+        async def plan(self, call):
+            if call.planning_profile != PREPARE:
+                return await super().plan(call)
+            self.plans.append(call)
+            payload = {**preparation(), **extra}
+            return PlannerCallResult(payload, "source", {}, {"reported": True}, 0.1, 2)
+
+    gateway = TaggedGateway()
+    asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    assert len([p for p in gateway.plans if p.planning_profile == PREPARE]) == (
+        1 if accepted else 2
+    )
+    assert len(gateway.edits) == int(accepted)
+
+
 def test_invalid_selection_geometry_is_corrected_with_the_original_sources():
     class InvertedBoxGateway(Gateway):
         async def plan(self, call):
