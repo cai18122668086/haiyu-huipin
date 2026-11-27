@@ -71,6 +71,7 @@ class DetailSkillRoute:
     skill_id: str
     market_region: str
     configure_prompt: Callable[[Mapping[str, Any]], dict[str, Any]]
+    alternate_delivery_content_types: tuple[str, ...] = ()
 
 
 class NewDetailSkillProvider:
@@ -229,15 +230,15 @@ class NewDetailSkillProvider:
                 raw_usage["metrics"] = metrics
                 result = replace(result, raw_usage=raw_usage)
         expected_type = delivery.get("content_type")
-        if (
-            isinstance(expected_type, str)
-            and artifact.content_type.lower() != expected_type
-        ):
+        if not isinstance(expected_type, str):
+            return result
+        allowed_types = (expected_type, *self.route.alternate_delivery_content_types)
+        if artifact.content_type.lower() not in allowed_types:
             return replace(
                 result,
                 outcome=ProviderOutcome.FAILED,
                 error_code="DETAIL_OUTPUT_FORMAT_INVALID",
-                error_message=(f"Generated detail output must use {expected_type}."),
+                error_message=f"Generated detail output must use {' or '.join(allowed_types)}.",
                 retryable=False,
                 artifact=None,
                 persisted_artifact=None,
