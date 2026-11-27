@@ -248,6 +248,44 @@ def pack_references(
     return [("image", "references.png", "image/png", output.getvalue())], note
 
 
+def _small_native_reference(
+    part: tuple[str, str, str, bytes],
+) -> tuple[str, str, str, bytes]:
+    """Reduce the supplier's transfer time without altering source pixels."""
+    role, name, mime, data = part
+    if mime != "image/png" or len(data) < 1024 * 1024:
+        return part
+    try:
+        with Image.open(BytesIO(data)) as original:
+            if (
+                original.format != "PNG"
+                or original.mode != "RGB"
+                or original.info
+                or original.is_animated
+                or original.width * original.height > 8_000_000
+            ):
+                return part
+            buf = BytesIO()
+            original.save(buf, "WEBP", lossless=True, method=3)
+            if buf.tell() >= len(data):
+                return part
+            buf.seek(0)
+            with Image.open(buf) as encoded:
+                if (
+                    encoded.size != original.size
+                    or encoded.convert("RGB").tobytes() != original.tobytes()
+                ):
+                    return part
+            return (
+                role,
+                Path(name).with_suffix(".webp").name,
+                "image/webp",
+                buf.getvalue(),
+            )
+    except (OSError, ValueError, KeyError):
+        return part
+
+
 def _legacy_pack_references(
     files: Sequence[tuple[str, str, str, bytes]],
 ) -> tuple[list, str]:
@@ -718,6 +756,12 @@ class HaiyuTransport:
                 # sending reverts to unknown, never to a replayable rejection.
                 receipt.update(state="dispatching", rate_limit_retries=rate_retries + 1)
                 self._save_journal(journal, receipt)
+            # Journal the original references. Querying an existing receipt never
+            # re-encodes its material or submits it again.
+            if self.native_references and values.get("model") == "image-2.5":
+                wire_files = await asyncio.to_thread(
+                    lambda: [_small_native_reference(part) for part in wire_files]
+                )
             status, payload = await self.delegate.post_multipart(
                 url=url,
                 headers=wire_headers,

@@ -70,11 +70,22 @@ def public_failure_message(
                 "商品识别服务拒绝了本次检查请求，尚未开始生图。"
                 "请联系客服并提供任务编号。"
             )
+    if isinstance(details, Mapping):
+        error = details.get("provider_error")
+        if (
+            isinstance(error, Mapping)
+            and error.get("code") == "image_reference_fetch_timeout"
+        ):
+            return (
+                "生成服务下载参考图超时，未返回图片。"
+                "原订单号已保留，请联系客服核查，避免重复提交。"
+            )
     # Read historical generic adapter errors without rewriting task history.
     if code == "IMAGE_REQUEST_FAILED" and isinstance(details, Mapping):
         error = details.get("provider_error")
         if (
-            details.get("http_status") == 400 and isinstance(error, Mapping)
+            details.get("http_status") == 400
+            and isinstance(error, Mapping)
             and error.get("code") == "unsupported_size"
         ):
             return "生成服务不支持所选尺寸。请更换图片尺寸后重新提交。"
