@@ -255,6 +255,46 @@ def test_source_preserving_planning_receives_real_render_capabilities(enabled):
     assert any("SOURCE PHOTOGRAPH RENDER CAPABILITIES" in t for t in texts) is enabled
 
 
+@pytest.mark.parametrize("profile", [
+    "image_fidelity_prepare", "image_fidelity_readback", "image_fidelity_color_mask",
+    "image_fidelity_source_window", "image_fidelity_background",
+    "aurora_remix_fast_review",
+])
+def test_deepseek_precision_checks_keep_json_contract_and_original_photo(
+    profile, monkeypatch
+):
+    from app.xinghe_agent import SourceImage
+
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="deepseek-v4.1-flash-1017", image_model="image-model",
+        transport=transport,
+    )
+    gateway.image_fidelity_precision_model = gateway.planner_model
+    img = SourceImage("product", "group", "product.png", "image/png", "hash", b"photo")
+    monkeypatch.setattr("app.xinghe_agent._planner_prompt", actual_planner_prompt)
+    monkeypatch.setattr(
+        "app.xinghe_agent._planner_response_format", actual_planner_response_format
+    )
+    contract = json.dumps({"schema": {"required": ["review_marker"]}})
+    asyncio.run(gateway.plan(replace(
+        request(profile), sources=(img,), product_information=(contract,),
+    )))
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == "deepseek-v4.1-flash-1017"
+    assert payload["response_format"] == {"type": "json_object"}
+    assert payload["reasoning_effort"] == "low"
+    assert payload["max_completion_tokens"] == 32768
+    assert "thinking" not in payload and "enable_thinking" not in payload
+    parts = payload["messages"][1]["content"]
+    assert any(contract in part.get("text", "") for part in parts)
+    assert any(
+        part.get("image_url", {}).get("url") == "data:image/png;base64,cGhvdG8="
+        for part in parts
+    )
+
+
 @pytest.mark.parametrize("context", [
     {"literal_print_geometry_required": True},
     {"contract_feedback": {"diagnostic": {"reason": "known_output_truncation"}}},

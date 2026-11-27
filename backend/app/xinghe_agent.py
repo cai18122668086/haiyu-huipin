@@ -243,6 +243,7 @@ _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "replica_native_contract", "replica_exact_compact",
     refined_detail.PROFILE, detail_fast.PROFILE, "amazon_visual_suite",
     "image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
+    "image_fidelity_color_mask", "aurora_remix_fast_review",
     "aurora_domestic_intake", "aurora_domestic_detail",
     "aurora_domestic_plan_repair", "aurora_domestic_modules_completion",
     "aurora_domestic_campaign_completion",
