@@ -2045,10 +2045,19 @@ class FidelityGateway:
                         background_ids = [original_sources[1].asset_id]
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
+                    action_scene = (
+                        context["job_type"] == "domestic_main_image"
+                        and "原型=ACTION_DIAGONAL_SCENE" in request.prompt
+                    )
+                    pair_with_reference = self._native_pair and bool(background_ids)
                     if (
-                        context["job_type"] == "amazon_visual_suite"
+                        action_scene
                         or self._native_pair
-                    ) and not background_ids:
+                        or (
+                            context["job_type"] == "amazon_visual_suite"
+                            and not background_ids
+                        )
+                    ) and len(background_ids) < 16:
                         background_schema["properties"]["scene_support"] = {
                             "enum": ["upper_attachment", "resting_surface", "graphic"],
                             "description": (
@@ -2072,6 +2081,12 @@ class FidelityGateway:
                                 "a loop."
                             ),
                         }
+                        if action_scene or pair_with_reference:
+                            background_schema["required"].append("scene_support")
+                        if action_scene:
+                            background_schema["properties"]["scene_support"]["enum"] = [
+                                "upper_attachment", "resting_surface"
+                            ]
                     plain_white_eligible = (
                         context["job_type"] == "product_image"
                         and context["settings"].get("task_type") == "white_background"
@@ -2565,8 +2580,18 @@ class FidelityGateway:
                         pixel_recipe["format_png_base64"] = base64.b64encode(
                             guide.payload
                         ).decode("ascii")
+                        pixel_recipe["append_support_guide"] = bool(background_ids)
+                        if action_scene:
+                            pixel_recipe["wire_prompt"] = (
+                                "ACTION SCENE: Show a hand or real scene object "
+                                "visibly in contact with the reserved contour. Render "
+                                "the support reaching that contour even if the empty "
+                                "background description omits props. Keep the product "
+                                "itself for the compositor.\n"
+                                + pixel_recipe["wire_prompt"]
+                            )
                         pixel_recipe["wire_prompt"] += (
-                            "\nThe attached diagram is a registration guide. Gray "
+                            "\nThe LAST attached image is a registration guide. Gray "
                             "regions "
                             "show where photographed products will cover the plate. "
                             "Cyan crosses "
@@ -2622,13 +2647,14 @@ class FidelityGateway:
                         for s in original_sources
                         if s.asset_id in pixel_recipe["background_source_ids"]
                     )
-                    if not wire_sources:
+                    if not wire_sources or pixel_recipe.get("append_support_guide"):
                         import base64
 
                         data = base64.b64decode(
                             pixel_recipe["format_png_base64"], validate=True
                         )
                         wire_sources = (
+                            *wire_sources,
                             SourceImage(
                                 "source-pixel-format",
                                 request.group_key,

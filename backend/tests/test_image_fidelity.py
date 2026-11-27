@@ -1641,3 +1641,49 @@ def test_native_pair_composes_only_approved_source_layers_after_one_background(
             assert image.getpixel((20, 20)) == (255, 0, 0, 255)
             assert image.getpixel((20, 60)) == (255, 0, 0, 255)
         assert original.prompt == "Change the person; retain source clothes"
+
+
+def test_action_main_image_requires_and_forwards_physical_support(monkeypatch):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class ActionGuard(PixelGuard):
+        def _context(self, call):
+            return {
+                "job_type": "domestic_main_image",
+                "item_key": "MAIN-04",
+                "settings": {
+                    "instruction": "场景操作页呈现真实接触关系",
+                    "main_image_speed": "native_fast",
+                },
+            }
+
+    class ActionGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == BACKGROUND:
+                schema = json.loads(call.product_information[0])["schema"]
+                assert "scene_support" in schema["required"]
+                assert "graphic" not in schema["properties"]["scene_support"]["enum"]
+                result.payload.update(
+                    scene_support="resting_surface",
+                    placements=[
+                        {
+                            "layer_index": 0,
+                            "panel": 0,
+                            "panel_box": [0.2, 0.2, 0.8, 0.8],
+                        }
+                    ],
+                )
+            return result
+
+    gateway = ActionGateway()
+    guard = ActionGuard(gateway, None, None)
+    call = replace(
+        request(gateway), prompt="【页面版式合同】原型=ACTION_DIAGONAL_SCENE"
+    )
+    result = asyncio.run(guard.edit(call))
+    # The 40px fixture also exercises the real domestic canvas rejection.
+    assert result.raw_usage["metrics"]["image_fidelity"]["failed_checks"] == ["canvas"]
+    assert gateway.edits[0].prompt.startswith("ACTION SCENE")
+    assert "registration guide" in gateway.edits[0].prompt
+    assert guard.frozen["pixel_recipe"]["surface_shadow_version"] == "source-alpha-v1"
