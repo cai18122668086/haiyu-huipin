@@ -528,3 +528,33 @@ def test_ambiguous_source_matte_changes_context_without_relaxing_fragment_guard(
     with pytest.raises(source_pixels.MatteFragmentError):
         source_pixels._alpha(Image.new("RGB", (100, 100)), tmp_path, (30, 30, 70, 70))
     assert len(seen) == 2
+
+
+def test_complementary_context_requires_connected_evidence_for_both_ends():
+    cv = pytest.importorskip("cv2")
+    np = pytest.importorskip("numpy")
+    from PIL import ImageDraw
+
+    original = Image.new("L", (120, 32))
+    ImageDraw.Draw(original).rectangle((10, 10, 109, 19), fill=255)
+
+    def fragments(gap, box=None):
+        mask = original.copy()
+        ImageDraw.Draw(mask).line((gap, 10, gap, 19), fill=0)
+        if box:
+            mask = mask.crop(box)
+        with pytest.raises(source_pixels.MatteFragmentError) as exc:
+            source_pixels._single_product(mask, cv, np)
+        return exc.value
+
+    full = fragments(24)
+    subset = (6, 6, 115, 24)
+    tight = fragments(95, subset)
+    combined = source_pixels._combine_contexts(full, tight, subset[:2], cv, np)
+    assert combined.tobytes() == original.tobytes()
+    # Both contexts missing the same joint cannot establish a connection.
+    with pytest.raises(source_pixels.MatteFragmentError):
+        source_pixels._combine_contexts(full, fragments(24, subset), subset[:2], cv, np)
+    # If the main objects disagree spatially, a bit of overlap proves nothing.
+    with pytest.raises(source_pixels.MatteFragmentError):
+        source_pixels._combine_contexts(full, tight, (32, 6), cv, np)
