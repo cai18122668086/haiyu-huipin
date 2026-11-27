@@ -13,7 +13,7 @@ from botocore.client import BaseClient
 from botocore.config import Config as BotoConfig
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
 
 from .config import Settings
 from .errors import UploadValidationError
@@ -105,6 +105,28 @@ def build_image_storage(settings: Settings) -> ImageStorage:
     return LocalImageStorage(settings.storage_dir, validator)
 
 
+def _display_size(image: Image.Image) -> tuple[int, int]:
+    if image.getexif().get(274) in (5, 6, 7, 8):
+        return image.height, image.width
+    return image.size
+
+
+def _verified_raster_header(
+    payload: bytes, max_pixels: int | None = None,
+) -> tuple[str, int, int]:
+    with Image.open(BytesIO(payload)) as image:
+        image_format = image.format or ""
+        width, height = image.size
+        image.verify()
+    if image_format in ALLOWED_IMAGE_FORMATS and (
+        max_pixels is None or width * height <= max_pixels
+    ):
+        # PNG can read past IDAT to find EXIF. Keep verify() on a fresh stream.
+        with Image.open(BytesIO(payload)) as image:
+            width, height = _display_size(image)
+    return image_format, width, height
+
+
 class ImageValidator:
     def __init__(self, max_upload_bytes: int, max_image_pixels: int) -> None:
         self.max_upload_bytes = max_upload_bytes
@@ -125,11 +147,13 @@ class ImageValidator:
             )
 
         try:
-            with Image.open(BytesIO(payload)) as image:
-                image_format = image.format
-                width, height = image.size
-                image.verify()
-        except (UnidentifiedImageError, OSError, SyntaxError, ValueError) as exc:
+            image_format, width, height = _verified_raster_header(
+                payload, self.max_image_pixels,
+            )
+        except (
+            Image.DecompressionBombError, UnidentifiedImageError,
+            OSError, SyntaxError, ValueError,
+        ) as exc:
             raise UploadValidationError(
                 "INVALID_IMAGE",
                 "文件不是可识别的 JPG/JPEG、PNG 或 WebP 图片。",
@@ -411,10 +435,7 @@ def _describe_stored_image(
     version: str = "",
     etag: str | None = None,
 ) -> StoredImage:
-    with Image.open(BytesIO(payload)) as image:
-        width, height = image.size
-        image_format = image.format
-        image.verify()
+    image_format, width, height = _verified_raster_header(payload)
     contract = ALLOWED_IMAGE_FORMATS.get(image_format or "")
     if contract is None:
         raise ValueError("Stored object is not a supported raster")
@@ -486,7 +507,7 @@ def validate_prepared_image(
         with Image.open(BytesIO(image.payload)) as opened:
             image_format = str(opened.format or "")
             opened.load()
-            width, height = ImageOps.exif_transpose(opened).size
+            width, height = _display_size(opened)
     except (
         Image.DecompressionBombError,
         UnidentifiedImageError,

@@ -5,6 +5,7 @@ import hashlib
 from io import BytesIO
 
 import pytest
+from fastapi import UploadFile
 from PIL import Image
 
 from app.errors import UploadValidationError
@@ -93,3 +94,20 @@ def test_storage_preserves_user_filename_when_bytes_have_another_extension(
 
     assert stored.filename == "original-upload.png"
     assert stored.content_type == "image/jpeg"
+
+@pytest.mark.parametrize("fmt", ["JPEG", "PNG", "WEBP"])
+@pytest.mark.parametrize("orientation", range(1, 9))
+def test_phone_photo_dimensions_and_bytes_round_trip(tmp_path, fmt, orientation):
+    out = BytesIO()
+    exif = Image.Exif()
+    exif[274] = orientation
+    Image.new("RGB", (84, 60), "green").save(out, format=fmt, exif=exif)
+    original = out.getvalue()
+    storage = LocalImageStorage(tmp_path, ImageValidator(100_000, 10_000))
+    upload = UploadFile(file=BytesIO(original), filename="source-photo")
+    asset = asyncio.run(storage.save_image(upload, "ws_test"))
+    content, metadata = asyncio.run(storage.read_stored_image(asset.object_key))
+    expected = (60, 84) if orientation in (5, 6, 7, 8) else (84, 60)
+    assert (asset.width, asset.height) == (metadata.width, metadata.height) == expected
+    assert content == original
+    assert metadata.sha256 == asset.sha256 == hashlib.sha256(original).hexdigest()
