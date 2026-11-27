@@ -238,7 +238,9 @@ class NewDetailSkillProvider:
                 result,
                 outcome=ProviderOutcome.FAILED,
                 error_code="DETAIL_OUTPUT_FORMAT_INVALID",
-                error_message=f"Generated detail output must use {' or '.join(allowed_types)}.",
+                error_message=(
+                    f"Generated detail output must use {' or '.join(allowed_types)}."
+                ),
                 retryable=False,
                 artifact=None,
                 persisted_artifact=None,
