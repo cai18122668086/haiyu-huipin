@@ -133,6 +133,13 @@ def test_comparison_checks_real_candidate_opaque_pixels_without_approving_qualit
     candidate, _ = source_pixels.compose(background, (cutout,), cells)
     panels = source_pixels.comparison_panels(candidate, (cutout,), cells)
     assert len(panels) == 1
+    with Image.open(BytesIO(panels[0].payload)) as opened:
+        rgb = opened.convert("RGB")
+        left = rgb.crop((0, 0, rgb.width // 2, rgb.height))
+        right = rgb.crop((rgb.width // 2, 0, rgb.width, rgb.height))
+        # Blue exists only on the real canvas, outside the solid red rectangle.
+        assert (0, 0, 255) not in set(left.getdata())
+        assert (0, 0, 255) in set(right.getdata())
     with Image.open(BytesIO(candidate.payload)) as opened:
         changed = opened.convert("RGBA")
     changed.putpixel((40, 40), (0, 255, 0, 255))

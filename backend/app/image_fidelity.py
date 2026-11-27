@@ -3489,6 +3489,10 @@ class FidelityGateway:
                 "and full-canvas checks still apply."
             )
         feedback = None
+        comparison_crops = any(
+            source.source_role == "source_candidate_comparison"
+            for source in original_sources
+        )
         for attempt in range(2):
             review_context = {
                 **context,
@@ -3542,6 +3546,16 @@ class FidelityGateway:
                 "extra products. Do not invent a changed transcription from "
                 "uncertain OCR when the actual source pixels were preserved.",
             }
+            if comparison_crops:
+                review_context["comparison_crop_instruction"] = (
+                    "These paired panels are aligned close-ups. The right panel shows "
+                    "a crop of the delivered image with its real surroundings. Decide "
+                    "canvas-edge clipping on the full candidate. For repeated details "
+                    "such as buttons or fasteners, inspect corresponding positions "
+                    "from top to bottom in both crops and check the original photo. "
+                    "Report the location of any missing detail. A real omission in "
+                    "the source cutout or candidate still fails."
+                )
             if views:
                 review_context["detail_views"] = {
                     "roles": [s.source_role for s in views],
@@ -3569,6 +3583,7 @@ class FidelityGateway:
                     original_sources + views + (review_source,),
                     review_context,
                     suffix=f":{attempt + 1}"
+                    + (":comparison-crop-v2" if comparison_crops else "")
                     + (f":{DETAIL_REVIEW_VERSION}" if views else ""),
                 )
             except Exception as exc:

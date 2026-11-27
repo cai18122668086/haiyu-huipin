@@ -1184,12 +1184,20 @@ def comparison_panels(
                 raise ValueError(
                     "Candidate differs from original opaque product pixels"
                 )
-        pair = Image.new("RGBA", (source.width * 2 + 24, source.height + 32), "#dddddd")
-        pair.alpha_composite(source, (8, 24))
-        pair.alpha_composite(actual, (source.width + 16, 24))
+        # Show real surrounding canvas so the inspection crop's edge does
+        # not look like a truncated cuff or fitting. Never extend the canvas.
+        pad = max(8, min(48, round(min(source.size) * 0.08)))
+        left, top = max(0, box[0] - pad), max(0, box[1] - pad)
+        window = (left, top, min(canvas.width, box[2] + pad),
+                  min(canvas.height, box[3] + pad))
+        surrounding = canvas.crop(window)
+        width, height = surrounding.size
+        pair = Image.new("RGBA", (width * 2 + 24, height + 32), "#dddddd")
+        pair.alpha_composite(source, (8 + box[0] - left, 24 + box[1] - top))
+        pair.alpha_composite(surrounding, (width + 16, 24))
         draw = ImageDraw.Draw(pair)
-        draw.text((8, 5), "SOURCE", fill="black")
-        draw.text((source.width + 16, 5), "CANDIDATE", fill="black")
+        draw.text((8, 5), "SOURCE CROP", fill="black")
+        draw.text((width + 16, 5), "OUTPUT CROP", fill="black")
         factor = min(4, max(1, 1024 // max(pair.size)))
         pair = pair.resize(
             (pair.width * factor, pair.height * factor), Image.Resampling.NEAREST
