@@ -150,6 +150,12 @@ def validate_planner_payload(
     )
     from .xinghe_agent import XingheAgentError
 
+    if (
+        isinstance(payload, dict) and set(payload) == {"type", "analysis", "plan"}
+        and payload["type"] == "json_object"
+    ):
+        # The planner can echo the response_format tag beside its data instance.
+        payload = {"analysis": payload["analysis"], "plan": payload["plan"]}
     error = next(Draft202012Validator(planner_json_schema()).iter_errors(payload), None)
     if error is not None:
         path = "/" + "/".join(str(value) for value in error.absolute_path)
