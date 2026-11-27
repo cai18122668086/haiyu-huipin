@@ -2059,6 +2059,7 @@ class FidelityGateway:
                         )
                     ) and len(background_ids) < 16:
                         background_schema["properties"]["scene_support"] = {
+                            "type": "string",
                             "enum": ["upper_attachment", "resting_surface", "graphic"],
                             "description": (
                                 "Classify the approved scene from the FINAL image "
@@ -2253,7 +2254,8 @@ class FidelityGateway:
                                 "plain_white_plate_approval": (
                                     "Inspect the original request and fill "
                                     "plain_white_plate according to the schema."
-                                    if plain_white_eligible else None
+                                    if plain_white_eligible
+                                    else None
                                 ),
                                 "copy_layout_contract": (
                                     "Keep ALL approved marketing copy with its "
@@ -2332,10 +2334,22 @@ class FidelityGateway:
                             raise ValueError("Background projection unavailable")
                         trial_recipe = deepcopy(pixel_recipe)
                         try:
-                            Draft202012Validator(background_schema).validate(
-                                background_plan.payload
-                            )
                             projection = deepcopy(background_plan.payload)
+                            if isinstance(projection, dict):
+                                support = projection.get("scene_support")
+                                if (
+                                    isinstance(support, dict)
+                                    and set(support)
+                                    in (
+                                        {"enum", "description"},
+                                        {"type", "description"},
+                                    )
+                                    and isinstance(support["description"], str)
+                                ):
+                                    projection["scene_support"] = support.get(
+                                        "enum", support.get("type")
+                                    )
+                            Draft202012Validator(background_schema).validate(projection)
                             trial_recipe["background_projection"] = projection
                             detail_box_limits = {}
                             if crop_allowed:

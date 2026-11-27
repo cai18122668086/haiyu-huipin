@@ -1643,7 +1643,10 @@ def test_native_pair_composes_only_approved_source_layers_after_one_background(
         assert original.prompt == "Change the person; retain source clothes"
 
 
-def test_action_main_image_requires_and_forwards_physical_support(monkeypatch):
+@pytest.mark.parametrize("envelope", ["scalar", "enum", "type", "ambiguous"])
+def test_action_main_image_requires_and_forwards_physical_support(
+    monkeypatch, envelope
+):
     monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
 
     class ActionGuard(PixelGuard):
@@ -1664,8 +1667,19 @@ def test_action_main_image_requires_and_forwards_physical_support(monkeypatch):
                 schema = json.loads(call.product_information[0])["schema"]
                 assert "scene_support" in schema["required"]
                 assert "graphic" not in schema["properties"]["scene_support"]["enum"]
+                support = (
+                    "resting_surface"
+                    if envelope == "scalar"
+                    else {envelope: "resting_surface", "description": "visible surface"}
+                )
+                if envelope == "ambiguous":
+                    support = {
+                        "type": "graphic",
+                        "enum": "resting_surface",
+                        "description": "conflicting choices",
+                    }
                 result.payload.update(
-                    scene_support="resting_surface",
+                    scene_support=support,
                     placements=[
                         {
                             "layer_index": 0,
@@ -1682,6 +1696,10 @@ def test_action_main_image_requires_and_forwards_physical_support(monkeypatch):
         request(gateway), prompt="【页面版式合同】原型=ACTION_DIAGONAL_SCENE"
     )
     result = asyncio.run(guard.edit(call))
+    if envelope == "ambiguous":
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert not gateway.edits
+        return
     # The 40px fixture also exercises the real domestic canvas rejection.
     assert result.raw_usage["metrics"]["image_fidelity"]["failed_checks"] == ["canvas"]
     assert gateway.edits[0].prompt.startswith("ACTION SCENE")
