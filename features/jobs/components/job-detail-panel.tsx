@@ -177,7 +177,7 @@ export function JobDetailPanel({
               </section>
             )}
 
-            {job.error_code && <section className="job-detail-error" role="alert"><FileWarning size={18} /><div><strong>任务未完成</strong><p>{safeJobFailureSummary(job.error_code)}</p><small>错误码：{job.error_code}</small></div></section>}
+            {job.error_code && <section className="job-detail-error" role="alert"><FileWarning size={18} /><div><strong>任务未完成</strong><p>{safeJobFailureSummary(job.error_code, job.error_details)}</p><small>错误码：{job.error_code}</small></div></section>}
 
             <section className="job-detail-section">
               <div className="job-detail-section__head"><div><span className="job-section-eyebrow">执行明细</span><h3>分项状态</h3></div><small>{job.items.length} 项</small></div>

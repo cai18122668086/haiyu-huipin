@@ -71,7 +71,13 @@ def prompt_configuration(settings: Mapping[str, Any]) -> dict[str, Any]:
 class FastDetailProvider(NewDetailSkillProvider):
     def __init__(self, delegate: Provider) -> None:
         super().__init__(
-            delegate, DetailSkillRoute(SKILL_ID, "domestic", prompt_configuration)
+            delegate,
+            DetailSkillRoute(
+                SKILL_ID,
+                "domestic",
+                prompt_configuration,
+                alternate_delivery_content_types=("image/webp",),
+            ),
         )
 
     def _native_delivery_receipt(

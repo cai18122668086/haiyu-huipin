@@ -23,6 +23,15 @@ test("content refusal has an actionable safe summary for new and historical jobs
   assert.doesNotMatch(summary, /sk-private|provider/);
 });
 
+test("a rejected source inspection directs the user to support with the job id", () => {
+  const code = "IMAGE_FIDELITY_PREPARATION_FAILED";
+  const details = { image_fidelity: { preparation_stage: "source_selection", planner_http_status: 400 } };
+  const note = jobNote({ status: "failed", items: [{ status: "failed", error_code: code, error_details: details }] });
+  assert.match(note, /联系客服并提供任务编号/);
+  assert.doesNotMatch(note, /稍后重试|重新上传/);
+  assert.match(safeJobFailureSummary(code), /稍后重试/);
+});
+
 test("technical rejection and unknown outcome keep their distinct recovery messages", () => {
   assert.match(safeJobFailureSummary("IMAGE_REQUEST_FAILED", { provider_error: { code: "invalid_image" } }), /暂时不可用/);
   assert.match(safeJobFailureSummary("PROVIDER_OUTCOME_UNKNOWN"), /结果尚未确认/);
@@ -51,4 +60,12 @@ test("partial results with a held provider task direct users to reconciliation",
   assert.doesNotMatch(note, /重试失败项目|重新上传/);
   assert.doesNotMatch(jobNote({ status: "partial", allowed_actions: [] }), /重试/);
   assert.match(jobNote({ status: "partial", allowed_actions: ["retry"] }), /重试失败项目/);
+});
+
+test("a reference download timeout keeps its specific recovery message on partial jobs", () => {
+  const item = { status: "failed", error_code: "PROVIDER_OUTCOME_UNKNOWN",
+    error_details: { provider_error: { code: "image_reference_fetch_timeout", message: "private supplier trace" } } };
+  const note = jobNote({ status: "partial", items: [item] });
+  assert.match(note, /部分结果已完成.*下载参考图超时.*核查原任务/);
+  assert.doesNotMatch(note, /private supplier trace|稍后重试/);
 });

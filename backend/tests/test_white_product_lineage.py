@@ -428,3 +428,47 @@ def test_inherited_alpha_still_needs_a_fresh_complete_matte_audit(
             with pytest.raises(ValueError):
                 asyncio.run(guard._approved_source_layers(*args))
     assert len(gateway.plans) == 1 and gateway.edits == []
+
+
+@pytest.mark.parametrize("last_passes", [True, False])
+def test_large_matte_reviews_each_original_at_full_resolution(
+    ancestry, monkeypatch, last_passes
+):
+    from app.image_fidelity import SourcePhotoUnusable
+    from tests.test_image_fidelity import PixelGuard
+
+    original = load(ancestry)
+    layer = original.layers[0]
+    first = next(s for s in original.sources if s.asset_id == layer.source_asset_id)
+    second = replace(first, asset_id="second-photo")
+    layers = (layer, replace(layer, source_asset_id=second.asset_id))
+    captured = []
+
+    class Reviewer(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            source, preview = call.sources
+            assert preview.source_role == "matte_original_candidate_pair"
+            captured.append((source.asset_id, source.sha256, call.idempotency_key))
+            if source == second and not last_passes:
+                result.payload.update(complete_objects=False, no_context_leak=False)
+            return result
+
+    monkeypatch.setattr("app.image_fidelity.MATTE_REVIEW_GROUP_BYTES", 1)
+    monkeypatch.setattr(source_pixels, "extract_layers", lambda *args: layers)
+    gateway = Reviewer()
+    guard = PixelGuard(gateway, None, None)
+    sources = (first, second)
+    preparation = {"selected_regions": [
+        {"asset_id": s.asset_id, "box": [0, 0, 1, 1]} for s in sources
+    ]}
+    args = (ancestry.call, sources, sources, preparation, [])
+    if last_passes:
+        actual, audits = asyncio.run(guard._approved_source_layers(*args))
+        assert actual == layers and [a["layer_index"] for a in audits] == [0, 1]
+    else:
+        for _ in range(2):
+            with pytest.raises(SourcePhotoUnusable):
+                asyncio.run(guard._approved_source_layers(*args))
+    assert [(i, h) for i, h, _ in captured] == [(s.asset_id, s.sha256) for s in sources]
+    assert captured[0][2] != captured[1][2] and gateway.edits == []

@@ -133,6 +133,13 @@ def test_comparison_checks_real_candidate_opaque_pixels_without_approving_qualit
     candidate, _ = source_pixels.compose(background, (cutout,), cells)
     panels = source_pixels.comparison_panels(candidate, (cutout,), cells)
     assert len(panels) == 1
+    with Image.open(BytesIO(panels[0].payload)) as opened:
+        rgb = opened.convert("RGB")
+        left = rgb.crop((0, 0, rgb.width // 2, rgb.height))
+        right = rgb.crop((rgb.width // 2, 0, rgb.width, rgb.height))
+        # Blue exists only on the real canvas, outside the solid red rectangle.
+        assert (0, 0, 255) not in set(left.getdata())
+        assert (0, 0, 255) in set(right.getdata())
     with Image.open(BytesIO(candidate.payload)) as opened:
         changed = opened.convert("RGBA")
     changed.putpixel((40, 40), (0, 255, 0, 255))
@@ -505,6 +512,21 @@ def test_ambiguous_source_matte_changes_context_without_relaxing_fragment_guard(
     assert result.size == (100, 100)
     seen.clear()
 
+    def ambiguous_refinement(crop, *args):
+        seen.append(crop.size)
+        if len(seen) == 2:
+            raise source_pixels.MatteFragmentError("fragmented recentered crop")
+        mask = Image.new("L", crop.size)
+        ImageDraw.Draw(mask).rectangle((20, 20, 70, 70), fill=255)
+        return mask
+
+    monkeypatch.setattr(source_pixels, "_segment", ambiguous_refinement)
+    recovered = source_pixels._alpha(
+        Image.new("RGB", (100, 100)), tmp_path, (15, 15, 75, 75)
+    )
+    assert len(seen) == 2 and recovered.getbbox() == (20, 20, 71, 71)
+    seen.clear()
+
     def always_ambiguous(*args):
         seen.append(1)
         raise source_pixels.MatteFragmentError("ambiguous foreground")
@@ -513,3 +535,33 @@ def test_ambiguous_source_matte_changes_context_without_relaxing_fragment_guard(
     with pytest.raises(source_pixels.MatteFragmentError):
         source_pixels._alpha(Image.new("RGB", (100, 100)), tmp_path, (30, 30, 70, 70))
     assert len(seen) == 2
+
+
+def test_complementary_context_requires_connected_evidence_for_both_ends():
+    cv = pytest.importorskip("cv2")
+    np = pytest.importorskip("numpy")
+    from PIL import ImageDraw
+
+    original = Image.new("L", (120, 32))
+    ImageDraw.Draw(original).rectangle((10, 10, 109, 19), fill=255)
+
+    def fragments(gap, box=None):
+        mask = original.copy()
+        ImageDraw.Draw(mask).line((gap, 10, gap, 19), fill=0)
+        if box:
+            mask = mask.crop(box)
+        with pytest.raises(source_pixels.MatteFragmentError) as exc:
+            source_pixels._single_product(mask, cv, np)
+        return exc.value
+
+    full = fragments(24)
+    subset = (6, 6, 115, 24)
+    tight = fragments(95, subset)
+    combined = source_pixels._combine_contexts(full, tight, subset[:2], cv, np)
+    assert combined.tobytes() == original.tobytes()
+    # Both contexts missing the same joint cannot establish a connection.
+    with pytest.raises(source_pixels.MatteFragmentError):
+        source_pixels._combine_contexts(full, fragments(24, subset), subset[:2], cv, np)
+    # If the main objects disagree spatially, a bit of overlap proves nothing.
+    with pytest.raises(source_pixels.MatteFragmentError):
+        source_pixels._combine_contexts(full, tight, (32, 6), cv, np)

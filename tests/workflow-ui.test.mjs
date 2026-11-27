@@ -140,7 +140,8 @@ test("job detail renders explicit output, empty, download, and safe failure stat
   assert.match(source, /<JobResultImage/);
   assert.match(source, /<JobDeliverablesDownload/);
   assert.match(source, /输入素材不会被当作生成结果/);
-  assert.match(source, /safeJobFailureSummary/);
-  assert.doesNotMatch(source, /error_details/);
+  const safeSummary = "safeJobFailureSummary(job.error_code, job.error_details)";
+  assert.ok(source.includes(safeSummary));
+  assert.doesNotMatch(source.replaceAll(safeSummary, ""), /error_details/);
   assert.doesNotMatch(source, /error_message/);
 });

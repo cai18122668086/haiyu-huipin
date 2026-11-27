@@ -115,13 +115,17 @@ def synthetic_images(
         Image.new("RGB", size, (request.page_number, 50, 90)).save(output, image_format)
         payload = output.getvalue()
         originals[request.page_number] = payload
+        suffix, content_type = {
+            "PNG": ("png", "image/png"),
+            "JPEG": ("jpg", "image/jpeg"),
+            "WEBP": ("webp", "image/webp"),
+        }[image_format]
         return replace(
             result,
             artifact=ProviderArtifact(
                 payload=payload,
-                filename=f"page-{request.page_number:03d}."
-                + ("png" if image_format == "PNG" else "jpg"),
-                content_type="image/png" if image_format == "PNG" else "image/jpeg",
+                filename=f"page-{request.page_number:03d}.{suffix}",
+                content_type=content_type,
                 width=size[0],
                 height=size[1],
                 sha256=hashlib.sha256(payload).hexdigest(),
@@ -563,7 +567,7 @@ def test_fast_native_policy_rejects_preview_pixels_and_wrong_aspect(
         assert next(iter(receipts.values()))["state"] == "returned"
 
 
-def test_fast_keeps_original_png_format_contract_and_rejects_jpeg(client, monkeypatch):
+def test_fast_rejects_jpeg_outside_delivery_contract(client, monkeypatch):
     gateway, _ = synthetic_images(client, monkeypatch, image_format="JPEG")
     job = planned(client, 1)
     confirm(client, job)
@@ -572,4 +576,32 @@ def test_fast_keeps_original_png_format_contract_and_rejects_jpeg(client, monkey
     assert final["status"] == "failed", final
     assert final["items"][0]["error_code"] == "DETAIL_OUTPUT_FORMAT_INVALID"
     assert final["output_asset_count"] == 0
+    assert len(gateway.image_calls) == 1
+
+
+def test_fast_delivers_native_webp_without_changing_provider_bytes(client, monkeypatch):
+    size = (1200, 1600)
+    gateway, originals = synthetic_images(
+        client, monkeypatch, size=size, image_format="WEBP"
+    )
+    job = planned(client, 1)
+    confirm(client, job)
+    dispatch_pending(client)
+    final = client.get(BASE + f"/jobs/{job['id']}").json()
+    assert final["status"] == "completed", final
+    output = next(asset for asset in final["assets"] if asset["direction"] == "output")
+    link = client.post(
+        BASE + f"/assets/{output['asset_id']}/access-url",
+        json={"variant": "original", "disposition": "attachment"},
+    )
+    assert link.status_code == 200
+    downloaded = client.get(link.json()["url"])
+    assert downloaded.status_code == 200
+    assert downloaded.headers["content-type"] == "image/webp"
+    assert downloaded.content == originals[1]
+    archive = client.get(BASE + f"/jobs/{job['id']}/deliverables.zip")
+    assert archive.status_code == 200
+    with ZipFile(BytesIO(archive.content)) as bundle:
+        assert bundle.namelist() == ["page-001.webp"]
+        assert bundle.read("page-001.webp") == originals[1]
     assert len(gateway.image_calls) == 1

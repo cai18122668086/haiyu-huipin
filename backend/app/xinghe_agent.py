@@ -243,6 +243,7 @@ _BOUNDED_JSON_PLANNER_PROFILES = frozenset({
     "replica_native_contract", "replica_exact_compact",
     refined_detail.PROFILE, detail_fast.PROFILE, "amazon_visual_suite",
     "image_fidelity_prepare", "image_fidelity_review", "image_fidelity_readback", "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
+    "image_fidelity_color_mask", "aurora_remix_fast_review",
     "aurora_domestic_intake", "aurora_domestic_detail",
     "aurora_domestic_plan_repair", "aurora_domestic_modules_completion",
     "aurora_domestic_campaign_completion",
@@ -1103,6 +1104,16 @@ def validate_planner_payload(
             json_pointer=_json_pointer("plan", "screens"),
         )
     rhythm_map = design_lock.get("rhythm_map")
+    if require_cross_page_locks and isinstance(rhythm_map, dict):
+        for keys in (
+            [str(i) for i in range(1, page_count + 1)],
+            [f"{i:02d}" for i in range(1, page_count + 1)],
+        ):
+            if set(rhythm_map) == set(keys):
+                rhythm_map = [rhythm_map[key] for key in keys]
+                design_lock = {**design_lock, "rhythm_map": rhythm_map}
+                plan = {**plan, "design_strength_lock": design_lock}
+                break
     if (
         require_cross_page_locks
         and isinstance(rhythm_map, list)
@@ -2707,23 +2718,19 @@ class TengliOpenAICompatibleGateway:
                             "response_format": {"type": "json_object"},
                             "max_completion_tokens": 8192,
                         })
-                        precise_print_geometry = (
-                            request.planning_profile == "image_fidelity_prepare"
-                            and bool(request.product_information)
-                            and json.loads(request.product_information[0]).get(
-                                "literal_print_geometry_required"
-                            ) is True
-                        )
-                        if precise_print_geometry or request.planning_profile in {
+                        if request.planning_profile == "image_fidelity_prepare" and request.product_information:
+                            context = json.loads(request.product_information[0])
+                            feedback = context.get("contract_feedback") or {}
+                            if (
+                                context.get("literal_print_geometry_required") is True
+                                or feedback.get("diagnostic", {}).get("reason") == "known_output_truncation"
+                            ):
+                                route_payload["max_completion_tokens"] = 16384
+                        if request.planning_profile in {
                             "image_fidelity_color_mask", "image_fidelity_readback",
                             "aurora_remix_fast_review",
                         }:
                             route_payload["max_completion_tokens"] = 16384
-                        if request.planning_profile in {
-                            "image_fidelity_prepare",
-                            "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
-                        } and not precise_print_geometry:
-                            route_payload["thinking"] = {"type": "disabled"}
                     elif route_payload["model"].casefold().startswith("doubao"):
                         route_payload.update({
                             "response_format": {"type": "json_object"},
@@ -2738,6 +2745,15 @@ class TengliOpenAICompatibleGateway:
                     planner_key += ":literal-ocr:" + hashlib.sha256(
                         route_payload["model"].encode()
                     ).hexdigest()[:12]
+                    if (
+                        request.planning_profile in {
+                            "image_fidelity_prepare", "image_fidelity_matte",
+                            "image_fidelity_source_window", "image_fidelity_background",
+                        }
+                        and route_payload["model"].casefold().startswith("kimi")
+                    ):
+                        # Avoid replaying a rejected thinking-disabled request.
+                        planner_key += ":fidelity-default-thinking-v2"
                 if request.planning_profile == "aurora_remix_fast_review":
                     # The complete review schema and reasoning allowance changed.
                     # Never replay a provider-cached truncated response under
@@ -2765,6 +2781,11 @@ class TengliOpenAICompatibleGateway:
                     # OpenAI json_schema parameter. The COMPLETE schema remains
                     # in the original user envelope and is validated locally.
                     route_payload["response_format"] = {"type": "json_object"}
+                    if request.planning_profile == detail_fast.PROFILE and request.page_count >= 8:
+                        # Observed eight-page plans exhausted 32768 tokens including
+                        # reasoning before the final page could close.
+                        route_payload["max_completion_tokens"] = 49152
+                        planner_key += ":long-fast-detail-v2"
                     if request.planning_profile == "aurora_v20_visual_audit":
                         planner_key += ":visual-audit-wire-v2"
                     route_payload["messages"] = deepcopy(payload["messages"])
@@ -11744,11 +11765,19 @@ def _planner_prompt_body(request: PlannerRequest) -> str:
         )
     if request.planning_profile == "aurora_set_audit":
         return (
-            "Blindly compare all six attached accepted Aurora pages in their supplied "
-            "page order. Return the complete set-role-distinction JSON contract. "
-            "Identify whether page 0 alone is visibly the search listing cover and "
-            "give concrete pixel evidence explaining why each page 1 through 5 is "
-            "not a search cover. Use the exact supplied image hashes."
+            "Blindly compare the six attached Aurora pages in order 0 through 5. "
+            "Return one JSON object with exactly these top-level fields: "
+            "identified_search_page_index (the observed cover index, or null when "
+            "there is no unique cover), search_role_is_unique (boolean), "
+            "confusable_page_indexes (array of indexes that could also be mistaken "
+            "for the cover), search_identification_evidence (a concrete account of "
+            "the visible composition, lettering and supporting proof), and "
+            "carousel_distinctions (five objects with page_index and "
+            "why_not_search_cover, one each for pages 1 through 5). "
+            "If a carousel page also looks like a cover, describe the visible "
+            "overlap and include its index in confusable_page_indexes. "
+            "Use the supplied order to report indexes. The application records "
+            "which images were reviewed, so omit image hashes."
         )
     if request.planning_profile == "aurora_visual_audit":
         return (

@@ -19,6 +19,7 @@ from collections import Counter
 from copy import deepcopy
 from dataclasses import replace
 from io import BytesIO
+from itertools import accumulate
 from typing import Any
 
 from jsonschema import Draft202012Validator, ValidationError
@@ -56,6 +57,7 @@ PREPARE = "image_fidelity_prepare"
 REVIEW = "image_fidelity_review"
 READBACK = "image_fidelity_readback"
 MATTE = "image_fidelity_matte"
+MATTE_REVIEW_GROUP_BYTES = 16 * 1024 * 1024
 BACKGROUND = "image_fidelity_background"
 CHECKS = (
     "subject_selection",
@@ -601,7 +603,30 @@ def readback_matches(payload: object, preparation: dict[str, Any]) -> bool:
         canonical(text) for text in required_runs if text.upper() != "UNREADABLE"
     )
     actual = Counter(canonical(text) for text in payload["text_runs"])
-    return all(actual[text] >= count for text, count in expected.items())
+    if all(actual[text] >= count for text, count in expected.items()):
+        return True
+
+    # Two readers can return a multi-word printed line as one run or several.
+    # Require the entire ledger in order, with an actual run boundary between
+    # products. Never split words, pool substrings or discard duplicate marks.
+    def words(runs: list[str]) -> list[str]:
+        return unicodedata.normalize("NFC", " ".join(runs)).split()
+
+    regions = [
+        words(region["visible_print"])
+        for region in preparation.get("selected_regions", [])
+    ]
+    source_words = [word for region_words in regions for word in region_words]
+    if not source_words or "UNREADABLE" in source_words:
+        return False
+    if source_words != words(required_runs):
+        return False
+    observed = payload["text_runs"]
+    if words(observed) != source_words:
+        return False
+    region_ends = accumulate(len(group) for group in regions if group)
+    run_ends = set(accumulate(len(words([run])) for run in observed))
+    return all(end in run_ends for end in region_ends)
 
 
 def verify_source_print(result: Any, preparation: dict[str, Any]) -> bool:
@@ -613,6 +638,41 @@ def verify_source_print(result: Any, preparation: dict[str, Any]) -> bool:
         )
     except ValidationError:
         return False
+
+
+def repeated_glyph_disagreement(
+    preparation: dict[str, Any], first: Any, focused: Any,
+) -> tuple[int, list[str]] | None:
+    """Locate one possible doubled-letter error in the *source inventory*."""
+    if first.error_code or focused.error_code or first.payload != focused.payload:
+        return None
+    if not Draft202012Validator(response_schema(READBACK)).is_valid(first.payload):
+        return None
+    runs = first.payload["text_runs"]
+    groups = [r["visible_print"] for r in preparation["selected_regions"]]
+    expected = [run for group in groups for run in group]
+    if len(expected) != len(runs) or "UNREADABLE" in expected + runs:
+        return None
+    differences = [
+        i for i, (a, b) in enumerate(zip(expected, runs, strict=True)) if a != b
+    ]
+    if len(differences) != 1:
+        return None
+    index = differences[0]
+    short, long = sorted((expected[index], runs[index]), key=len)
+    if not any(
+        long[:i] + long[i + 1:] == short
+        for i in range(1, len(long))
+        if long[i].isalpha() and long[i] == long[i - 1]
+    ):
+        return None
+    start = 0
+    for region, group in enumerate(groups):
+        end = start + len(group)
+        if start <= index < end:
+            return region, runs[start:end]
+        start = end
+    return None
 
 
 def incomplete_print_reading(result: Any, preparation: dict[str, Any]) -> bool:
@@ -1192,6 +1252,14 @@ class FidelityGateway:
                         raise ValueError("Preparation unavailable")
                     try:
                         payload = plan.payload
+                        if (
+                            isinstance(payload, dict)
+                            and payload.get("type") == "json_object"
+                        ):
+                            # The planner can echo its JSON response-format tag.
+                            payload = {
+                                k: v for k, v in payload.items() if k != "type"
+                            }
                         if offer_print_geometry and not require_print_geometry:
                             payload = usable_optional_print_geometry(payload)
                         Draft202012Validator(preparation_schema).validate(payload)
@@ -1240,6 +1308,60 @@ class FidelityGateway:
         assert isinstance(preparation, dict)
         return preparation
 
+    async def _reread_source_spelling(
+        self, request: Any, crops: tuple[Any, ...], preparation: dict[str, Any],
+        first: Any, focused: Any, plans: list[Any],
+    ) -> dict[str, Any] | None:
+        if len(crops) != len(preparation["selected_regions"]):
+            return None
+        difference = repeated_glyph_disagreement(preparation, first, focused)
+        if difference is None:
+            return None
+        region, expected = difference
+        single = await self._plan(
+            request, READBACK, (crops[region],), {"schema": response_schema(READBACK)},
+            suffix=f":source-print-object-{region}",
+        )
+        plans.append(single)
+        if single.error_code or single.payload != {"text_runs": expected}:
+            return None
+        corrected = deepcopy(preparation)
+        selected = corrected["selected_regions"][region]
+        for entry in corrected.get("source_inventory", []):
+            if entry == selected:
+                entry["visible_print"] = expected
+        selected["visible_print"] = expected
+        return corrected if verify_source_print(focused, corrected) else None
+
+    async def _review_matte_contract(
+        self, request: Any, sources: tuple[Any, ...], context: dict[str, Any],
+        plans: list[Any], suffix: str,
+    ) -> Any:
+        validator = Draft202012Validator(context["schema"])
+        for attempt in range(2):
+            matte = await self._plan(request, MATTE, sources, context, suffix=suffix)
+            plans.append(matte)
+            if matte.error_code:
+                raise ValueError("Source matte review unavailable")
+            try:
+                validator.validate(matte.payload)
+                return matte
+            except ValidationError as exc:
+                if attempt:
+                    exc.fidelity_profile = MATTE
+                    raise
+                context = {**context, "contract_feedback": {
+                    "diagnostic": contract_diagnostic(exc),
+                    "previous_payload": matte.payload,
+                    "instruction": (
+                        "Inspect the same pixels and return the full schema. "
+                        "Spell every required field exactly, including unresolved. "
+                        "Preserve reported defects, even when proposing a correction."
+                    ),
+                }}
+                suffix += ":contract-1"
+        raise AssertionError("Unreachable matte review state")
+
     async def _approved_source_layers(
         self,
         request: Any,
@@ -1248,6 +1370,9 @@ class FidelityGateway:
         preparation: dict[str, Any],
         plans: list[Any],
         inherited_layers: tuple[Any, ...] | None = None,
+        *,
+        extracted_layer: Any = None,
+        review_suffix: str = "",
     ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
         from . import source_pixels
         from .xinghe_agent import SourceImage
@@ -1260,6 +1385,9 @@ class FidelityGateway:
                 "model": source_pixels.MODEL_SHA256,
                 "sources": [(s.asset_id, s.sha256) for s in authorities],
                 "preparation": preparation,
+                "extracted_layer": (
+                    extracted_layer.artifact.sha256 if extracted_layer else None
+                ),
                 "inherited_layers": (
                     [layer.artifact.sha256 for layer in inherited_layers]
                     if inherited_layers is not None else None
@@ -1290,10 +1418,13 @@ class FidelityGateway:
                     self._mattes[key] = SUBJECT_UNCLEAR
                     raise SourcePhotoUnusable(SUBJECT_UNCLEAR) from exc
 
-            layers = (
-                inherited_layers if inherited_layers is not None else await extract()
-            )
-            mask_audits = []
+            if inherited_layers is not None:
+                layers = inherited_layers
+            elif extracted_layer is not None:
+                layers = (extracted_layer,)
+            else:
+                layers = await extract()
+            mask_audits: list[dict[str, Any]] = []
             for mask_review in range(2):
                 previews = []
                 for index, layer in enumerate(layers):
@@ -1329,20 +1460,40 @@ class FidelityGateway:
                             source_role="matte_original_candidate_pair",
                         )
                     )
+                regions = preparation["selected_regions"]
+                selected_ids = {region["asset_id"] for region in regions}
+                originals = tuple(s for s in authorities if s.asset_id in selected_ids)
+                review_sources = originals + tuple(previews)
+                # Base64 expands a combined phone-photo review by another third.
+                # Split its evidence by layer, preserving full-resolution pixels.
+                review_bytes = sum(len(s.payload) for s in review_sources)
+                if len(layers) > 1 and review_bytes > MATTE_REVIEW_GROUP_BYTES:
+                    reviewed = []
+                    for index, (layer, region) in enumerate(
+                        zip(layers, regions, strict=True)
+                    ):
+                        try:
+                            (result,), audit = await self._approved_source_layers(
+                                request, original_sources, authorities,
+                                {**preparation, "selected_regions": [region]}, plans,
+                                (layer,) if inherited_layers is not None else None,
+                                extracted_layer=layer,
+                                review_suffix=f"{review_suffix}:layer-{index}",
+                            )
+                        except SourcePhotoUnusable as exc:
+                            self._mattes[key] = exc.code
+                            raise
+                        reviewed.append(replace(result, artifact=replace(
+                            result.artifact, filename=layer.artifact.filename
+                        )))
+                        mask_audits.extend(
+                            {**entry, "layer_index": index} for entry in audit
+                        )
+                    layers = tuple(reviewed)
+                    break
                 schema = response_schema(MATTE)
-                matte = await self._plan(
-                    request,
-                    MATTE,
-                    tuple(
-                        source
-                        for source in authorities
-                        if source.asset_id
-                        in {
-                            region["asset_id"]
-                            for region in preparation["selected_regions"]
-                        }
-                    )
-                    + tuple(previews),
+                matte = await self._review_matte_contract(
+                    request, review_sources,
                     {
                         "schema": schema,
                         "correction_contract": {
@@ -1389,16 +1540,8 @@ class FidelityGateway:
                             "If clean, repairs=[] and edge_feather_px=0."
                         ),
                     },
-                    suffix=f":mask-{mask_review}",
+                    plans, suffix=f"{review_suffix}:mask-{mask_review}",
                 )
-                plans.append(matte)
-                if matte.error_code:
-                    raise ValueError("Source matte review unavailable")
-                try:
-                    Draft202012Validator(schema).validate(matte.payload)
-                except ValidationError as exc:
-                    exc.fidelity_profile = MATTE
-                    raise
                 accepted = (
                     not matte.payload["unresolved"]
                     and all(
@@ -1790,6 +1933,7 @@ class FidelityGateway:
                                 if isinstance(text, str)
                                 and "UNREADABLE" not in text.upper()
                             ] if isinstance(runs, list) else []
+                            whole_product_read = source_readback
                             source_readback = await self._plan(
                                 request, READBACK, print_views,
                                 {"schema": response_schema(READBACK)},
@@ -1805,6 +1949,14 @@ class FidelityGateway:
                                     "selected_regions": [],
                                 },
                             )
+                            if not verified:
+                                corrected = await self._reread_source_spelling(
+                                    request, readback_crops, preparation,
+                                    whole_product_read, source_readback, plans,
+                                )
+                                if corrected is not None:
+                                    preparation = corrected
+                                    verified = True
                     if not verified:
                         if (
                             not source_readback.error_code
@@ -1932,11 +2084,21 @@ class FidelityGateway:
                         background_ids = [original_sources[1].asset_id]
                     pixel_recipe["background_source_ids"] = background_ids
                     background_schema = response_schema(BACKGROUND)
+                    action_scene = (
+                        context["job_type"] == "domestic_main_image"
+                        and "原型=ACTION_DIAGONAL_SCENE" in request.prompt
+                    )
+                    pair_with_reference = self._native_pair and bool(background_ids)
                     if (
-                        context["job_type"] == "amazon_visual_suite"
+                        action_scene
                         or self._native_pair
-                    ) and not background_ids:
+                        or (
+                            context["job_type"] == "amazon_visual_suite"
+                            and not background_ids
+                        )
+                    ) and len(background_ids) < 16:
                         background_schema["properties"]["scene_support"] = {
+                            "type": "string",
                             "enum": ["upper_attachment", "resting_surface", "graphic"],
                             "description": (
                                 "Classify the approved scene from the FINAL image "
@@ -1959,6 +2121,12 @@ class FidelityGateway:
                                 "a loop."
                             ),
                         }
+                        if action_scene or pair_with_reference:
+                            background_schema["required"].append("scene_support")
+                        if action_scene:
+                            background_schema["properties"]["scene_support"]["enum"] = [
+                                "upper_attachment", "resting_surface"
+                            ]
                     plain_white_eligible = (
                         context["job_type"] == "product_image"
                         and context["settings"].get("task_type") == "white_background"
@@ -2125,7 +2293,8 @@ class FidelityGateway:
                                 "plain_white_plate_approval": (
                                     "Inspect the original request and fill "
                                     "plain_white_plate according to the schema."
-                                    if plain_white_eligible else None
+                                    if plain_white_eligible
+                                    else None
                                 ),
                                 "copy_layout_contract": (
                                     "Keep ALL approved marketing copy with its "
@@ -2204,10 +2373,22 @@ class FidelityGateway:
                             raise ValueError("Background projection unavailable")
                         trial_recipe = deepcopy(pixel_recipe)
                         try:
-                            Draft202012Validator(background_schema).validate(
-                                background_plan.payload
-                            )
                             projection = deepcopy(background_plan.payload)
+                            if isinstance(projection, dict):
+                                support = projection.get("scene_support")
+                                if (
+                                    isinstance(support, dict)
+                                    and set(support)
+                                    in (
+                                        {"enum", "description"},
+                                        {"type", "description"},
+                                    )
+                                    and isinstance(support["description"], str)
+                                ):
+                                    projection["scene_support"] = support.get(
+                                        "enum", support.get("type")
+                                    )
+                            Draft202012Validator(background_schema).validate(projection)
                             trial_recipe["background_projection"] = projection
                             detail_box_limits = {}
                             if crop_allowed:
@@ -2452,8 +2633,18 @@ class FidelityGateway:
                         pixel_recipe["format_png_base64"] = base64.b64encode(
                             guide.payload
                         ).decode("ascii")
+                        pixel_recipe["append_support_guide"] = bool(background_ids)
+                        if action_scene:
+                            pixel_recipe["wire_prompt"] = (
+                                "ACTION SCENE: Show a hand or real scene object "
+                                "visibly in contact with the reserved contour. Render "
+                                "the support reaching that contour even if the empty "
+                                "background description omits props. Keep the product "
+                                "itself for the compositor.\n"
+                                + pixel_recipe["wire_prompt"]
+                            )
                         pixel_recipe["wire_prompt"] += (
-                            "\nThe attached diagram is a registration guide. Gray "
+                            "\nThe LAST attached image is a registration guide. Gray "
                             "regions "
                             "show where photographed products will cover the plate. "
                             "Cyan crosses "
@@ -2509,13 +2700,14 @@ class FidelityGateway:
                         for s in original_sources
                         if s.asset_id in pixel_recipe["background_source_ids"]
                     )
-                    if not wire_sources:
+                    if not wire_sources or pixel_recipe.get("append_support_guide"):
                         import base64
 
                         data = base64.b64decode(
                             pixel_recipe["format_png_base64"], validate=True
                         )
                         wire_sources = (
+                            *wire_sources,
                             SourceImage(
                                 "source-pixel-format",
                                 request.group_key,
@@ -2565,11 +2757,12 @@ class FidelityGateway:
                 )
             logger.warning(
                 "image_fidelity_preparation_failed "
-                "job_id=%s item_id=%s stage=%s reason=%s",
+                "job_id=%s item_id=%s stage=%s reason=%s planner_http_status=%s",
                 request.job_id,
                 request.job_item_id,
                 preparation_stage,
                 type(exc).__name__,
+                plans[-1].http_status if plans and plans[-1].error_code else None,
             )
             return self._account(
                 ImageCallResult(
@@ -3296,6 +3489,10 @@ class FidelityGateway:
                 "and full-canvas checks still apply."
             )
         feedback = None
+        comparison_crops = any(
+            source.source_role == "source_candidate_comparison"
+            for source in original_sources
+        )
         for attempt in range(2):
             review_context = {
                 **context,
@@ -3349,6 +3546,16 @@ class FidelityGateway:
                 "extra products. Do not invent a changed transcription from "
                 "uncertain OCR when the actual source pixels were preserved.",
             }
+            if comparison_crops:
+                review_context["comparison_crop_instruction"] = (
+                    "These paired panels are aligned close-ups. The right panel shows "
+                    "a crop of the delivered image with its real surroundings. Decide "
+                    "canvas-edge clipping on the full candidate. For repeated details "
+                    "such as buttons or fasteners, inspect corresponding positions "
+                    "from top to bottom in both crops and check the original photo. "
+                    "Report the location of any missing detail. A real omission in "
+                    "the source cutout or candidate still fails."
+                )
             if views:
                 review_context["detail_views"] = {
                     "roles": [s.source_role for s in views],
@@ -3376,6 +3583,7 @@ class FidelityGateway:
                     original_sources + views + (review_source,),
                     review_context,
                     suffix=f":{attempt + 1}"
+                    + (":comparison-crop-v2" if comparison_crops else "")
                     + (f":{DETAIL_REVIEW_VERSION}" if views else ""),
                 )
             except Exception as exc:
@@ -3636,6 +3844,8 @@ class FidelityGateway:
         }
         if preparation_stage is not None:
             fidelity_metrics["preparation_stage"] = preparation_stage
+            if plans and plans[-1].error_code and plans[-1].http_status is not None:
+                fidelity_metrics["planner_http_status"] = plans[-1].http_status
         raw["metrics"] = {
             **raw.get("metrics", {}),
             "image_fidelity": fidelity_metrics,

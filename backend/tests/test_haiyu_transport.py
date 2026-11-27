@@ -917,3 +917,60 @@ def test_receipt_disk_failure_preserves_accepted_task_and_prevents_resubmit(tmp_
     with pytest.raises(XingheAgentError, match="reconciliation"):
         request(HaiyuTransport(delegate, journal_dir=tmp_path))
     assert len(delegate.calls) == 1
+
+def test_large_native_reference_retains_exact_pixels_and_journal_identity(tmp_path):
+    from PIL.PngImagePlugin import PngInfo
+
+    from app.haiyu_transport import _small_native_reference
+
+    source = Image.new("RGB", (800, 800), (73, 90, 35))
+
+    def part(info=None):
+        output = BytesIO()
+        source.save(output, "PNG", compress_level=0, pnginfo=info)
+        return ("image", "garment.png", "image/png", output.getvalue())
+
+    original = part()
+    role, name, mime, encoded = _small_native_reference(original)
+    assert (role, name, mime) == ("image", "garment.webp", "image/webp")
+    assert len(encoded) < len(original[3])
+    with Image.open(BytesIO(encoded)) as restored:
+        assert (
+            restored.size == source.size
+            and restored.convert("RGB").tobytes() == source.tobytes()
+        )
+    metadata = PngInfo()
+    metadata.add_text("Description", "Reference with metadata")
+    tagged = part(metadata)
+    assert _small_native_reference(tagged) is tagged
+    delegate = Transport([(202, {"id": "original-task", "status": "queued"})])
+    task_result = (200, {"status": "succeeded", "result": image_response()[1]})
+    transport = PollingTransport(
+        delegate, [task_result, task_result], journal_dir=tmp_path
+    )
+    transport.native_references = True
+
+    async def run(reconcile_only):
+        return await transport.post_multipart(
+            url="https://api.haiyushuke.com/v1/images/edits",
+            headers={"Idempotency-Key": "large-product"},
+            fields=[("model", "image-2.5"), ("prompt", "retain original"), ("n", "1")],
+            files=[original],
+            timeout_seconds=10,
+            reconcile_only=reconcile_only,
+        )
+
+    assert asyncio.run(run(False))[0] == 200
+    assert delegate.calls[0]["files"][0][2] == "image/webp"
+    assert asyncio.run(run(True))[0] == 200
+    assert len(delegate.calls) == 1
+
+
+def test_reference_timeout_public_message_requires_specific_receipt():
+    from app.provider_diagnostics import public_failure_message
+
+    details = {"provider_error": {"code": "image_reference_fetch_timeout"}}
+    assert "下载参考图超时" in public_failure_message(
+        "PROVIDER_OUTCOME_UNKNOWN", "", details
+    )
+    assert public_failure_message("PROVIDER_OUTCOME_UNKNOWN", "核查中", {}) == "核查中"

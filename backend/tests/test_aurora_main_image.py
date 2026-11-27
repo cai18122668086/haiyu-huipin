@@ -280,6 +280,10 @@ def test_v20_visual_judgment_normalizes_fractional_scores_and_routes_baseline_to
     assert [
         item["check"] for item in normalized["all_material_deficiencies"]
     ] == ["baseline_performance_match"]
+    correction = normalized["all_material_deficiencies"][0]["required_change"]
+    assert "四个可辨认的文字角色" in correction
+    assert "已核实的商品事实" in correction
+    assert "提高主标题" not in correction
 
 
 def test_v20_visual_judgment_routes_overlong_search_headline_to_repair() -> None:
@@ -336,6 +340,12 @@ def test_v20_visual_judgment_routes_overlong_search_headline_to_repair() -> None
         check = next(item for item in normalized["checks"] if item["name"] == name)
         assert check["passed"] is False
         assert check["score"] == 69
+    thumbnail = next(
+        item for item in normalized["all_material_deficiencies"]
+        if item["check"] == "thumbnail_success"
+    )
+    assert "20 个有效字符" in thumbnail["visible_problem"]
+    assert "12 个有效字符以内" in thumbnail["required_change"]
 
 
 @pytest.mark.parametrize("bad_observations", ["像素观察文本", [], None])
@@ -2028,6 +2038,46 @@ def test_parallel_v20_provider_uses_native_snapshot_and_page_local_audit(
         "image_path": str(generated_path),
     }
     assert judgment["audit_complete"] is True
+
+
+@pytest.mark.parametrize("consistent_on_correction", [True, False])
+def test_v20_rechecks_contradictory_dominance_on_same_pixels(
+    tmp_path, consistent_on_correction,
+):
+    calls = []
+    raw = b"original candidate pixels"
+    artifact = ProviderArtifact(
+        raw, "original.jpg", "image/jpeg", 100, 100, hashlib.sha256(raw).hexdigest(),
+    )
+
+    template = _fake_v20_judgment_payload("source")
+
+    class Reviewer:
+        async def plan(self, request):
+            calls.append(request)
+            value = {**template, "observations": dict(template["observations"])}
+            value["observations"]["evidence_is_primary_visual"] = (
+                consistent_on_correction and len(calls) == 2
+            )
+            return SimpleNamespace(
+                error_code=None, payload=value, normalized_usage={"calls": 1},
+                actual_cost_micros=3,
+            )
+
+    provider = AuroraMainImageProvider(None, Reviewer(), None, work_root=tmp_path)
+    check = provider._audit_v20_candidate(
+        SimpleNamespace(workspace_id="ws", job_id="job", idempotency_key="review"),
+        {"page_index": 0}, tmp_path / "candidate.jpg", artifact, identity_sources=(),
+    )
+    if consistent_on_correction:
+        result, usage, cost = asyncio.run(check)
+        assert result["image_sha256"] == artifact.sha256
+        assert cost == 6 and usage["prior_dominance_review_usage"] == {"calls": 1}
+    else:
+        with pytest.raises(AuroraPlanningError, match="contradicts"):
+            asyncio.run(check)
+    assert len(calls) == 2 and calls[0].sources == calls[1].sources
+    assert calls[0].idempotency_key != calls[1].idempotency_key
 
 
 def _fake_v20_judgment_payload(job_id: str) -> dict[str, Any]:

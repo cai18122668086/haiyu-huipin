@@ -340,6 +340,7 @@ def test_fast_explicit_retry_cannot_resubmit_unknown_paid_outcome(client, tmp_pa
             outcome=ProviderOutcome.OUTCOME_UNKNOWN,
             artifact=None,
             error_code="OFFLINE_UNKNOWN",
+            provider_request_id="upstream-original-remix-order",
             retryable=False,
         )
 
@@ -359,6 +360,19 @@ def test_fast_explicit_retry_cannot_resubmit_unknown_paid_outcome(client, tmp_pa
     assert retry.status_code in {201, 409}, retry.text
     if retry.status_code == 201:
         dispatch_pending(client)
+        child_id = retry.json()["id"]
+        child = client.get(f"/api/v1/workspaces/{WORKSPACE_ID}/jobs/{child_id}").json()
+        assert child["status"] == "failed"
+        detail = child["items"][0]["error_details"]
+        assert detail["image_recovery"]["original_task_id"] == (
+            "upstream-original-remix-order"
+        )
+        with client.app.state.session_factory() as session:
+            event = session.scalar(
+                select(UsageEventRecord).where(UsageEventRecord.job_id == child_id)
+            )
+            assert event.provider_request_id is None
+            assert event.actual_cost_micros == event.raw_usage["network_requests"] == 0
     assert len(gateway.image_calls) == 1
 
 
@@ -437,3 +451,40 @@ def test_fast_analysis_failure_retains_upstream_diagnostics_without_an_image(
     assert call["error_code"] == "PLANNER_RATE_LIMITED"
     assert call["http_status"] == 429
     assert call["provider_request_id"] == "analysis_down"
+
+@pytest.mark.parametrize("complete", [True, False])
+def test_partial_fast_plan_gets_one_correction_before_image_dispatch(
+    harness, tmp_path, complete
+):
+    from dataclasses import replace
+
+    provider, request = install(harness, tmp_path)
+    gateway = harness.gateway
+    normal = gateway.plan
+    preparations = []
+
+    async def partial(call):
+        result = await normal(call)
+        if call.planning_profile == PREPARE_PROFILE:
+            preparations.append(call)
+            if len(preparations) == 1 or not complete:
+                result = replace(
+                    result,
+                    payload={
+                        "geometry_lock": brief()["geometry_lock"],
+                        "identity_constraints": brief()["identity_constraints"],
+                    },
+                )
+        return result
+
+    gateway.plan = partial
+    result = asyncio.run(provider.execute(request))
+    assert len(preparations) == 2
+    assert preparations[1].sources == preparations[0].sources
+    assert preparations[0].idempotency_key != preparations[1].idempotency_key
+    assert "generation_brief" in preparations[1].product_information[-1]
+    assert len(gateway.requests) == int(complete)
+    if complete:
+        assert result.outcome == ProviderOutcome.SUCCEEDED
+    else:
+        assert result.error_code == "REMIX_FAST_CONTRACT_INVALID"

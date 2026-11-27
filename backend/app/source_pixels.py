@@ -130,6 +130,49 @@ class SourceForegroundUnclear(ValueError):
 class MatteFragmentError(SourceForegroundUnclear):
     """The foreground is ambiguous; no image may be dispatched from this matte."""
 
+    def __init__(
+        self,
+        message: str,
+        mask: Image.Image | None = None,
+        dominant: Image.Image | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.mask = mask
+        self.dominant = dominant
+
+
+def _combine_contexts(
+    full: MatteFragmentError,
+    tight: MatteFragmentError,
+    offset: tuple[int, int],
+    cv: Any,
+    np: Any,
+) -> Image.Image:
+    """Recover a joint only when an independent crop sees it attached."""
+    if (
+        full.mask is None or full.dominant is None
+        or tight.mask is None or tight.dominant is None
+    ):
+        raise tight
+    tight_mask = Image.new("L", full.mask.size)
+    tight_mask.paste(tight.mask, offset)
+    tight_body = Image.new("L", full.mask.size)
+    tight_body.paste(tight.dominant, offset)
+    body = ImageChops.lighter(full.dominant, tight_body)
+    # Both crops must identify the same main body. Together their connected
+    # components must explain essentially all foreground in each observation.
+    # These are binary alpha masks; counting white pixels avoids materializing
+    # a second full-resolution NumPy array per comparison.
+    shared = ImageChops.darker(full.mask, tight_mask).histogram()[255]
+    observed = full.mask.histogram()[255] + tight_mask.histogram()[255]
+    if 2 * shared < 0.90 * observed:
+        raise tight
+    for mask in (full.mask, tight_mask):
+        explained = ImageChops.darker(mask, body).histogram()[255]
+        if explained < 0.95 * mask.histogram()[255]:
+            raise tight
+    return _single_product(body, cv, np)
+
 
 class DetailResolutionError(ValueError):
     def __init__(self, message: str, diagnostic: dict[str, Any]) -> None:
@@ -155,7 +198,7 @@ def _alpha(
             _loaded_path = model_path
         try:
             first = _segment(crop, cv, np, _net)
-        except MatteFragmentError:
+        except MatteFragmentError as full:
             if selection_box is None:
                 raise
             # Narrow only the surrounding source context, retaining the entire
@@ -171,9 +214,13 @@ def _alpha(
             )
             if alternate == (0, 0, crop.width, crop.height):
                 raise
-            recovered = _segment(crop.crop(alternate), cv, np, _net)
-            first = Image.new("L", crop.size)
-            first.paste(recovered, (alternate[0], alternate[1]))
+            try:
+                recovered = _segment(crop.crop(alternate), cv, np, _net)
+            except MatteFragmentError as tight:
+                first = _combine_contexts(full, tight, alternate[:2], cv, np)
+            else:
+                first = Image.new("L", crop.size)
+                first.paste(recovered, (alternate[0], alternate[1]))
         bounds = first.getbbox()
         if bounds is None:
             raise SourceForegroundUnclear("Source matte is empty")
@@ -188,10 +235,16 @@ def _alpha(
             min(crop.width, right + pad),
             min(crop.height, bottom + pad),
         )
-        refined = _segment(crop.crop(box), cv, np, _net)
-        second = Image.new("L", crop.size)
-        second.paste(refined, (box[0], box[1]))
-        coarse = ImageChops.lighter(first, second)
+        try:
+            refined = _segment(crop.crop(box), cv, np, _net)
+        except MatteFragmentError:
+            # The full-context mask already passed the connected-object check.
+            # A fragmented refinement contributes no pixels to the final matte.
+            coarse = first
+        else:
+            second = Image.new("L", crop.size)
+            second.paste(refined, (box[0], box[1]))
+            coarse = ImageChops.lighter(first, second)
         refined = _recover_fine_edges(crop, coarse, cv, np)
         return _single_product(refined, cv, np)
 
@@ -282,10 +335,13 @@ def _single_product(mask: Image.Image, cv: Any, np: Any) -> Image.Image:
         raise SourceForegroundUnclear("Source matte has no connected product")
     largest = int(stats[1:, cv.CC_STAT_AREA].argmax()) + 1
     total = int(stats[1:, cv.CC_STAT_AREA].sum())
-    if int(stats[largest, cv.CC_STAT_AREA]) < total * 0.95:
-        raise MatteFragmentError("Source matte contains disconnected product fragments")
     alpha[components != largest] = 0
-    return Image.fromarray(alpha, "L")
+    dominant = Image.fromarray(alpha, "L")
+    if int(stats[largest, cv.CC_STAT_AREA]) < total * 0.95:
+        raise MatteFragmentError(
+            "Source matte contains disconnected product fragments", mask, dominant
+        )
+    return dominant
 
 
 def _trim_white_matte_edge(crop: Image.Image, mask: Image.Image) -> Image.Image:
@@ -1128,12 +1184,20 @@ def comparison_panels(
                 raise ValueError(
                     "Candidate differs from original opaque product pixels"
                 )
-        pair = Image.new("RGBA", (source.width * 2 + 24, source.height + 32), "#dddddd")
-        pair.alpha_composite(source, (8, 24))
-        pair.alpha_composite(actual, (source.width + 16, 24))
+        # Show real surrounding canvas so the inspection crop's edge does
+        # not look like a truncated cuff or fitting. Never extend the canvas.
+        pad = max(8, min(48, round(min(source.size) * 0.08)))
+        left, top = max(0, box[0] - pad), max(0, box[1] - pad)
+        window = (left, top, min(canvas.width, box[2] + pad),
+                  min(canvas.height, box[3] + pad))
+        surrounding = canvas.crop(window)
+        width, height = surrounding.size
+        pair = Image.new("RGBA", (width * 2 + 24, height + 32), "#dddddd")
+        pair.alpha_composite(source, (8 + box[0] - left, 24 + box[1] - top))
+        pair.alpha_composite(surrounding, (width + 16, 24))
         draw = ImageDraw.Draw(pair)
-        draw.text((8, 5), "SOURCE", fill="black")
-        draw.text((source.width + 16, 5), "CANDIDATE", fill="black")
+        draw.text((8, 5), "SOURCE CROP", fill="black")
+        draw.text((width + 16, 5), "OUTPUT CROP", fill="black")
         factor = min(4, max(1, 1024 // max(pair.size)))
         pair = pair.resize(
             (pair.width * factor, pair.height * factor), Image.Resampling.NEAREST

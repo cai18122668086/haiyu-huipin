@@ -172,6 +172,7 @@ def test_remix_literal_review_uses_configured_vision_and_never_falls_back(failur
         ("image_fidelity_readback", "kimi-k2.6"),
         ("aurora_remix_fast_review", "kimi-k2.6"),
         ("image_fidelity_matte", "kimi-k2.6"),
+        ("image_fidelity_source_window", "kimi-k2.6"),
         ("image_fidelity_background", "kimi-k2.6"),
         ("image_fidelity_prepare", "kimi-k2.6"),
         ("image_fidelity_color_mask", "kimi-k2.6"),
@@ -200,15 +201,7 @@ def test_precision_model_is_explicit_and_scoped_to_literal_checks(profile, expec
                 "aurora_remix_fast_review",
             } else 8192
         )
-    precise = profile in {
-        "image_fidelity_color_mask", "image_fidelity_readback",
-        "aurora_remix_fast_review",
-    }
-    if profile.startswith("image_fidelity_") and not precise:
-        assert payload["thinking"] == {"type": "disabled"}
-        assert payload["max_completion_tokens"] == 8192
-    elif precise:
-        assert "thinking" not in payload
+    assert "thinking" not in payload
 
 
 @pytest.mark.parametrize(
@@ -262,7 +255,51 @@ def test_source_preserving_planning_receives_real_render_capabilities(enabled):
     assert any("SOURCE PHOTOGRAPH RENDER CAPABILITIES" in t for t in texts) is enabled
 
 
-def test_precise_print_surface_selection_keeps_its_reasoning_budget():
+@pytest.mark.parametrize("profile", [
+    "image_fidelity_prepare", "image_fidelity_readback", "image_fidelity_color_mask",
+    "image_fidelity_source_window", "image_fidelity_background",
+    "aurora_remix_fast_review",
+])
+def test_deepseek_precision_checks_keep_json_contract_and_original_photo(
+    profile, monkeypatch
+):
+    from app.xinghe_agent import SourceImage
+
+    transport = Transport()
+    gateway = TengliOpenAICompatibleGateway(
+        api_key="offline", base_url="https://primary.offline.invalid/",
+        planner_model="deepseek-v4.1-flash-1017", image_model="image-model",
+        transport=transport,
+    )
+    gateway.image_fidelity_precision_model = gateway.planner_model
+    img = SourceImage("product", "group", "product.png", "image/png", "hash", b"photo")
+    monkeypatch.setattr("app.xinghe_agent._planner_prompt", actual_planner_prompt)
+    monkeypatch.setattr(
+        "app.xinghe_agent._planner_response_format", actual_planner_response_format
+    )
+    contract = json.dumps({"schema": {"required": ["review_marker"]}})
+    asyncio.run(gateway.plan(replace(
+        request(profile), sources=(img,), product_information=(contract,),
+    )))
+    payload = transport.calls[0]["payload"]
+    assert payload["model"] == "deepseek-v4.1-flash-1017"
+    assert payload["response_format"] == {"type": "json_object"}
+    assert payload["reasoning_effort"] == "low"
+    assert payload["max_completion_tokens"] == 32768
+    assert "thinking" not in payload and "enable_thinking" not in payload
+    parts = payload["messages"][1]["content"]
+    assert any(contract in part.get("text", "") for part in parts)
+    assert any(
+        part.get("image_url", {}).get("url") == "data:image/png;base64,cGhvdG8="
+        for part in parts
+    )
+
+
+@pytest.mark.parametrize("context", [
+    {"literal_print_geometry_required": True},
+    {"contract_feedback": {"diagnostic": {"reason": "known_output_truncation"}}},
+])
+def test_detailed_or_previously_truncated_selection_has_a_larger_budget(context):
     transport = Transport()
     gateway = TengliOpenAICompatibleGateway(
         api_key="offline", base_url="https://primary.offline.invalid/",
@@ -271,7 +308,7 @@ def test_precise_print_surface_selection_keeps_its_reasoning_budget():
     gateway.image_fidelity_precision_model = "kimi-k2.6"
     asyncio.run(gateway.plan(replace(
         request("image_fidelity_prepare"),
-        product_information=(json.dumps({"literal_print_geometry_required": True}),),
+        product_information=(json.dumps(context),),
     )))
     payload = transport.calls[0]["payload"]
     assert payload["model"] == "kimi-k2.6"

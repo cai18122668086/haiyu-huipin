@@ -85,6 +85,26 @@ def test_independent_literal_readback_rejects_wrong_or_unknown_print(transcripti
     assert readback_matches({"text_runs": ["モ\nモ\nン\nガ"]}, preparation()) is True
 
 
+@pytest.mark.parametrize(
+    "runs,accepted",
+    [
+        (["12+", "ROSE & LILY", "12+", "MINT & SAGE"], True),
+        (["12+", "ROSE LILY", "12+", "MINT & SAGE"], False),
+        (["12+", "ROSE & LILV", "12+", "MINT & SAGE"], False),
+        (["12+", "ROSE & LILY", "MINT & SAGE"], False),
+        (["12+", "ROSE & LILY 12+", "MINT & SAGE"], False),
+        (["12+", "ROSE & SAGE", "12+", "MINT & LILY"], False),
+    ],
+)
+def test_ocr_word_grouping_preserves_each_products_complete_print(runs, accepted):
+    groups = [["12+", "ROSE", "&", "LILY"], ["12+", "MINT", "&", "SAGE"]]
+    source = {
+        "selected_regions": [{"visible_print": group} for group in groups],
+        "literal_print_ledger": groups[0] + groups[1],
+    }
+    assert readback_matches({"text_runs": runs}, source) is accepted
+
+
 def test_character_name_cannot_replace_original_copyright():
     value = preparation()
     value["literal_print_ledger"] = ["モモンガ", "©nagano"]
@@ -92,6 +112,45 @@ def test_character_name_cannot_replace_original_copyright():
     assert readback_matches({"text_runs": ["モモンガ", "©nagano"]}, value)
     with pytest.raises(ValidationError):
         validate_preparation(value, ("product",))
+
+
+@pytest.mark.parametrize("focused,isolated,may_check,accepted", [
+    ("GREEN", "GREEN", True, True),
+    ("GREEN", "GREN", True, False),
+    ("GREEN", "UNREADABLE", True, False),
+    ("GREN", "GREEN", False, False),
+    ("OTHER", "OTHER", False, False),
+])
+def test_inventory_spelling_requires_two_agreeing_views_and_its_own_source_crop(
+    focused, isolated, may_check, accepted,
+):
+    from types import SimpleNamespace
+
+    class Reader(Gateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            return replace(result, payload={"text_runs": [isolated, "12+"]})
+
+    def reading(word):
+        return SimpleNamespace(error_code=None, payload={"text_runs": [word, "12+"]})
+
+    value = preparation()
+    value["selected_regions"][0]["visible_print"] = ["GREN", "12+"]
+    value["source_inventory"] = deepcopy(value["selected_regions"])
+    reader = Reader()
+    req = request(reader)
+    plans = []
+    corrected = asyncio.run(ScopedFidelity(reader, None, None)._reread_source_spelling(
+        req, req.sources[:1], value, reading("GREEN"), reading(focused), plans,
+    ))
+    assert bool(plans) == may_check
+    assert (corrected is not None) == accepted
+    assert value["selected_regions"][0]["visible_print"] == ["GREN", "12+"]
+    if accepted:
+        assert corrected["source_inventory"] == corrected["selected_regions"]
+        assert corrected["selected_regions"][0]["visible_print"] == ["GREEN", "12+"]
+        assert not readback_matches({"text_runs": ["GREN", "12+"]}, corrected)
+        assert json.loads(reader.plans[0].product_information[0]).keys() == {"schema"}
     assert validate_preparation(value, ("product",), allow_stored=True) == value
 
 
@@ -318,6 +377,28 @@ def test_preparation_contract_correction_is_bounded_before_image_dispatch(
         assert len(gateway.plans) == 2 and not gateway.edits
 
 
+@pytest.mark.parametrize(
+    ("extra", "accepted"),
+    [({"type": "json_object"}, True), ({"type": "other"}, False),
+     ({"type": "json_object", "unknown": 1}, False)],
+)
+def test_prepare_accepts_only_echoed_json_format_tag(extra, accepted):
+    class TaggedGateway(Gateway):
+        async def plan(self, call):
+            if call.planning_profile != PREPARE:
+                return await super().plan(call)
+            self.plans.append(call)
+            payload = {**preparation(), **extra}
+            return PlannerCallResult(payload, "source", {}, {"reported": True}, 0.1, 2)
+
+    gateway = TaggedGateway()
+    asyncio.run(ScopedFidelity(gateway, None, None).edit(request(gateway)))
+    assert len([p for p in gateway.plans if p.planning_profile == PREPARE]) == (
+        1 if accepted else 2
+    )
+    assert len(gateway.edits) == int(accepted)
+
+
 def test_invalid_selection_geometry_is_corrected_with_the_original_sources():
     class InvertedBoxGateway(Gateway):
         async def plan(self, call):
@@ -488,6 +569,16 @@ def test_only_acknowledged_transient_source_planning_repeats(
         assert calls[0].sources == calls[1].sources
         assert calls[0].product_information == calls[1].product_information
         assert calls[0].idempotency_key != calls[1].idempotency_key
+    else:
+        from app.provider_diagnostics import public_failure_message, retained_metrics
+
+        details = retained_metrics(result.raw_usage)
+        assert details["image_fidelity"]["planner_http_status"] == status
+        if status == 400:
+            message = public_failure_message(
+                result.error_code, result.error_message, details
+            )
+            assert message and "商品识别服务拒绝" in message
     assert result.actual_cost_micros == 2 * len(gateway.plans) + 10 * len(gateway.edits)
 
 
@@ -1241,6 +1332,29 @@ def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image
     assert len([p for p in gateway.plans if p.planning_profile == PREPARE]) == 1
 
 
+@pytest.mark.parametrize("repeats", [False, True])
+def test_malformed_matte_has_one_schema_correction_before_dispatch(
+    monkeypatch, repeats
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class MalformedMatte(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == MATTE and (
+                repeats or not call.idempotency_key.endswith(":contract-1")
+            ):
+                result.payload["un"] = result.payload.pop("unresolved")
+            return result
+
+    gateway = MalformedMatte()
+    result = asyncio.run(PixelGuard(gateway, None, None).edit(request(gateway)))
+    audits = [p for p in gateway.plans if p.planning_profile == MATTE]
+    assert len(audits) == 2 and audits[0].sources == audits[1].sources
+    assert bool(gateway.edits) is not repeats
+    assert (result.error_code is None) is not repeats
+
+
 @pytest.mark.parametrize("accepted", [True, False])
 def test_suite_reuses_only_identical_audited_source_pixels_and_never_fishes_failures(
     monkeypatch, accepted
@@ -1549,3 +1663,67 @@ def test_native_pair_composes_only_approved_source_layers_after_one_background(
             assert image.getpixel((20, 20)) == (255, 0, 0, 255)
             assert image.getpixel((20, 60)) == (255, 0, 0, 255)
         assert original.prompt == "Change the person; retain source clothes"
+
+
+@pytest.mark.parametrize("envelope", ["scalar", "enum", "type", "ambiguous"])
+def test_action_main_image_requires_and_forwards_physical_support(
+    monkeypatch, envelope
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class ActionGuard(PixelGuard):
+        def _context(self, call):
+            return {
+                "job_type": "domestic_main_image",
+                "item_key": "MAIN-04",
+                "settings": {
+                    "instruction": "场景操作页呈现真实接触关系",
+                    "main_image_speed": "native_fast",
+                },
+            }
+
+    class ActionGateway(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == BACKGROUND:
+                schema = json.loads(call.product_information[0])["schema"]
+                assert "scene_support" in schema["required"]
+                assert "graphic" not in schema["properties"]["scene_support"]["enum"]
+                support = (
+                    "resting_surface"
+                    if envelope == "scalar"
+                    else {envelope: "resting_surface", "description": "visible surface"}
+                )
+                if envelope == "ambiguous":
+                    support = {
+                        "type": "graphic",
+                        "enum": "resting_surface",
+                        "description": "conflicting choices",
+                    }
+                result.payload.update(
+                    scene_support=support,
+                    placements=[
+                        {
+                            "layer_index": 0,
+                            "panel": 0,
+                            "panel_box": [0.2, 0.2, 0.8, 0.8],
+                        }
+                    ],
+                )
+            return result
+
+    gateway = ActionGateway()
+    guard = ActionGuard(gateway, None, None)
+    call = replace(
+        request(gateway), prompt="【页面版式合同】原型=ACTION_DIAGONAL_SCENE"
+    )
+    result = asyncio.run(guard.edit(call))
+    if envelope == "ambiguous":
+        assert result.error_code == "IMAGE_FIDELITY_PREPARATION_FAILED"
+        assert not gateway.edits
+        return
+    # The 40px fixture also exercises the real domestic canvas rejection.
+    assert result.raw_usage["metrics"]["image_fidelity"]["failed_checks"] == ["canvas"]
+    assert gateway.edits[0].prompt.startswith("ACTION SCENE")
+    assert "registration guide" in gateway.edits[0].prompt
+    assert guard.frozen["pixel_recipe"]["surface_shadow_version"] == "source-alpha-v1"

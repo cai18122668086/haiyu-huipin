@@ -37,6 +37,12 @@ def layout_schema(panels: int) -> dict[str, Any]:
                 "panel": {"type": "integer", "enum": list(range(panels))},
                 "panel_box": {
                     "type": "array",
+                    "description": (
+                        "Panel-relative [left, top, right, bottom] corners. "
+                        "Right must exceed left and bottom must exceed top. "
+                        "For a box at (.52,.10) of size (.42,.16), send "
+                        "[.52,.10,.94,.26]."
+                    ),
                     "minItems": 4,
                     "maxItems": 4,
                     "items": {"type": "number", "minimum": 0.04, "maximum": 0.96},
@@ -149,7 +155,11 @@ def recipe(
         if not (x0 < x1 and y0 < y1) or any(
             not math.isfinite(v) for v in row["panel_box"]
         ):
-            raise ValueError("Invalid text placement")
+            raise ValueError(
+                f"Invalid text placement at text_layout[{layout_index}]: "
+                f"panel_box={row['panel_box']} must use increasing "
+                "[left, top, right, bottom] corners."
+            )
         box = [x0, (row["panel"] + y0) / panels, x1, (row["panel"] + y1) / panels]
         product_collisions = [
             index for index, other in enumerate(cells) if _overlap(box, other)

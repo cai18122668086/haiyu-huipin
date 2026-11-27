@@ -7,6 +7,7 @@ import json
 import logging
 import re
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -55,6 +56,13 @@ from .xinghe_agent import (
 )
 
 logger = logging.getLogger(__name__)
+
+_SET_AUDIT_SYSTEM_PROMPT = (
+    "You are the blind six-page Aurora campaign reviewer. Compare the actual "
+    "attached pixels in order, independently of the intended page roles. "
+    "Return only the JSON fields requested for this set review. The application "
+    "binds the reviewed images to their stored hashes."
+)
 
 _AUDIT_SYSTEM_PROMPT = """
 You are the direct-pixel quality reviewer for the Aurora domestic e-commerce
@@ -830,28 +838,44 @@ class AuroraMainImageProvider:
                 layout_contract.get("evidence_topology") or ""
             ),
         }
-        result = await self.gateway.plan(
-            PlannerRequest(
-                workspace_id=request.workspace_id,
-                job_id=request.job_id,
-                group_key=f"{request.job_id}:v20-audit:{page_index}",
-                sources=tuple(sources),
-                page_count=page_index + 1,
-                language="zh-CN",
-                product_name="Aurora v2.0 direct-pixel audit",
-                product_information=(
-                    json.dumps(audit_contract, ensure_ascii=False),
-                ),
-                platform_code="TAOBAO_AURORA_V20_PIXEL_AUDIT",
-                size="1024x1024",
-                idempotency_key=(
-                    f"{request.idempotency_key}:v20-audit:{page_index}:"
-                    f"{generation_request.get('revision', 0)}{audit_suffix}"
-                ),
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
-                planning_profile="aurora_v20_visual_audit",
-            )
+        review = PlannerRequest(
+            workspace_id=request.workspace_id,
+            job_id=request.job_id,
+            group_key=f"{request.job_id}:v20-audit:{page_index}",
+            sources=tuple(sources),
+            page_count=page_index + 1,
+            language="zh-CN",
+            product_name="Aurora v2.0 direct-pixel audit",
+            product_information=(
+                json.dumps(audit_contract, ensure_ascii=False),
+            ),
+            platform_code="TAOBAO_AURORA_V20_PIXEL_AUDIT",
+            size="1024x1024",
+            idempotency_key=(
+                f"{request.idempotency_key}:v20-audit:{page_index}:"
+                f"{generation_request.get('revision', 0)}{audit_suffix}"
+            ),
+            system_prompt=_AUDIT_SYSTEM_PROMPT,
+            planning_profile="aurora_v20_visual_audit",
         )
+        result = await self.gateway.plan(review)
+        first_usage = None
+        first_cost = 0
+        if not result.error_code and _contradictory_dominance_review(result.payload):
+            first_usage = dict(result.normalized_usage)
+            first_cost = int(result.actual_cost_micros or 0)
+            feedback = {
+                "correction": "Inspect the same candidate again. Your previous review "
+                "marked evidence_is_primary_visual false and "
+                "selling_point_visual_dominance "
+                "passed. Reassess both against the pixels. Return the full judgment. "
+                "Record genuine deficiencies. Do not invent prices or offers.",
+            }
+            result = await self.gateway.plan(replace(
+                review,
+                product_information=(*review.product_information, json.dumps(feedback)),
+                idempotency_key=review.idempotency_key + ":dominance-review",
+            ))
         if result.error_code or not isinstance(result.payload, Mapping):
             raise _v20_gateway_error(
                 result,
@@ -868,6 +892,10 @@ class AuroraMainImageProvider:
             # bounded response-shape diagnostics for the next investigation.
             exc.aurora_gateway_diagnostics = _safe_planner_diagnostics(result)
             raise
+        if _contradictory_dominance_review(judgment):
+            raise AuroraPlanningError(
+                "Visual review still contradicts its primary evidence observation"
+            )
         judgment["page_index"] = page_index
         judgment["image_sha256"] = artifact.sha256
         reviewer = _mapping(judgment.get("reviewer"))
@@ -879,11 +907,10 @@ class AuroraMainImageProvider:
             }
         )
         judgment["reviewer"] = reviewer
-        return (
-            judgment,
-            dict(result.normalized_usage),
-            int(result.actual_cost_micros or 0),
-        )
+        usage = dict(result.normalized_usage)
+        if first_usage is not None:
+            usage["prior_dominance_review_usage"] = first_usage
+        return judgment, usage, first_cost + int(result.actual_cost_micros or 0)
 
     async def _calibrate_parallel_style(
         self,
@@ -1351,6 +1378,7 @@ class AuroraMainImageProvider:
                 raise AuroraPlanningError("Aurora v2 check evidence is missing")
 
         observations = _mapping(payload.get("observations"))
+        native_repairs: dict[str, str] = {}
         if expected_page == 0:
             copy_contract = _mapping(
                 _mapping(generation_request.get("page_contract")).get(
@@ -1383,30 +1411,53 @@ class AuroraMainImageProvider:
                         check["passed"] = False
                         check["score"] = min(float(check.get("score", 69)), 69)
                         check["observed_evidence"] = (
-                            "搜索主标题超过已批准显示文案合同的硬上限，需压缩后再验收。"
+                            f"搜索主标题实测 {len(headline)} 个有效字符、"
+                            f"{observations.get('headline_line_count')} 行，"
+                            f"合同上限为 {int(hard_max)} 个字符、{int(max_lines)} 行。"
+                        )
+                        native_repairs[check_name] = (
+                            f"把主标题压缩到 {int(hard_max)} 个有效字符以内、最多 "
+                            f"{int(max_lines)} 行。保留原意和必要限定，把其余已核实"
+                            "文案放到副标题或证据图注，排版前重新计数字符和行数。"
                         )
         if expected_page == 0:
-            baseline_visible = (
-                observations.get("type_roles_seen", 0) >= 4
-                and observations.get("headline_rank") in {"FIRST", "JOINT_FIRST"}
-                and observations.get("depth_layers", 0) >= 2
-                and observations.get("commercial_closure_visible") is True
-                and bool(observations.get("physical_evidence"))
-            )
+            missing_baseline_elements = [
+                correction
+                for visible, correction in (
+                    (
+                        observations.get("type_roles_seen", 0) >= 4,
+                        "把已批准的信息分成四个可辨认的文字角色，"
+                        "可用商品名、主标题、副标题和证据图注",
+                    ),
+                    (
+                        observations.get("headline_rank") in {"FIRST", "JOINT_FIRST"},
+                        "提高主标题的视觉优先级",
+                    ),
+                    (observations.get("depth_layers", 0) >= 2, "拉开商品与背景的层次"),
+                    (
+                        observations.get("commercial_closure_visible") is True,
+                        "用已核实的商品事实帮助买家决策，不添加未授权价格或交易承诺",
+                    ),
+                    (
+                        bool(observations.get("physical_evidence")),
+                        "展示与卖点对应的真实商品细节",
+                    ),
+                )
+                if not visible
+            ]
             baseline_check = next(
                 item
                 for item in checks
                 if item.get("name") == "baseline_performance_match"
             )
-            if baseline_check.get("passed") is True and not baseline_visible:
+            if baseline_check.get("passed") is True and missing_baseline_elements:
                 baseline_check["passed"] = False
                 baseline_check["score"] = min(
                     float(baseline_check.get("score", 69)), 69
                 )
-                baseline_check["observed_evidence"] = (
-                    "搜索页像素未同时呈现四级文字角色、强标题、纵深、"
-                    "真实物理证据和已核验事实闭合。"
-                )
+                correction = "。".join(missing_baseline_elements) + "。"
+                baseline_check["observed_evidence"] = "搜索页尚需调整。" + correction
+                native_repairs["baseline_performance_match"] = correction
 
         # A contradictory passed=true/score<70 response must become a normal
         # material failure so the Harness can enter its one-repair state rather
@@ -1448,8 +1499,9 @@ class AuroraMainImageProvider:
                         "root_cause": (
                             "当前候选图未满足该材料性 Aurora v2 页面合同。"
                         ),
-                        "required_change": (
-                            "仅修正该失败层，保留商品身份、已核验事实和其余通过层。"
+                        "required_change": native_repairs.get(
+                            name,
+                            "仅修正该失败层，保留商品身份、已核验事实和其余通过层。",
                         ),
                     },
                 )
@@ -1608,7 +1660,7 @@ class AuroraMainImageProvider:
                 platform_code="TAOBAO_AURORA_V20_SET_AUDIT",
                 size="1024x1024",
                 idempotency_key=f"{job_id}:aurora-v20-set-audit:v1",
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
+                system_prompt=_SET_AUDIT_SYSTEM_PROMPT,
                 planning_profile="aurora_set_audit",
             )
         )
@@ -1709,7 +1761,7 @@ class AuroraMainImageProvider:
                 platform_code="TAOBAO_AURORA_V20_SET_AUDIT",
                 size="1024x1024",
                 idempotency_key=f"{job_id}:aurora-v20-sequential-set-audit:v1",
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
+                system_prompt=_SET_AUDIT_SYSTEM_PROMPT,
                 planning_profile="aurora_set_audit",
             )
         )
@@ -1973,7 +2025,7 @@ class AuroraMainImageProvider:
                 platform_code="TAOBAO_AURORA_SET_ROLE_AUDIT",
                 size="1024x1024",
                 idempotency_key=f"{request.job_id}:aurora-set-role-audit:v1",
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
+                system_prompt=_SET_AUDIT_SYSTEM_PROMPT,
                 planning_profile="aurora_set_audit",
             )
         )
@@ -2157,6 +2209,20 @@ def _bounded_visual_audit_sources(
 
     identity_limit = _MAX_VISUAL_AUDIT_IMAGES - 1
     return (*tuple(identity_sources[:identity_limit]), candidate)
+
+
+def _contradictory_dominance_review(payload: object) -> bool:
+    if not isinstance(payload, Mapping):
+        return False
+    observations, checks = payload.get("observations"), payload.get("checks")
+    return (
+        isinstance(observations, Mapping)
+        and observations.get("evidence_is_primary_visual") is False
+        and isinstance(checks, list)
+        and any(isinstance(check, Mapping)
+                and check.get("name") == "selling_point_visual_dominance"
+                and check.get("passed") is True for check in checks)
+    )
 
 
 def _merge_identity_coverage_judgment(

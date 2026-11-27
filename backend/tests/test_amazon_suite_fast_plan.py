@@ -64,6 +64,11 @@ def test_complete_compact_plan_expands_only_canonical_metadata() -> None:
     frozen = deepcopy(raw)
     assert Draft202012Validator(fast.planner_json_schema()).is_valid(raw)
     result = fast.validate_planner_payload(raw, sources=req.sources)
+    assert fast.validate_planner_payload(
+        {"type": "json_object", **raw}, sources=req.sources,
+    ) == result
+    with pytest.raises(XingheAgentError):
+        fast.validate_planner_payload({"type": "json_object", **raw, "other": "x"})
     assert raw == frozen
     assert result["analysis"] == raw["analysis"]
     assert [row["item_key"] for row in result["plan"]["screens"]] == list(

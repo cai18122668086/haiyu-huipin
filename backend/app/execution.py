@@ -66,7 +66,14 @@ from .provider import (
     ProviderResult,
 )
 from .provider_quota_ledger import ProviderQuotaLedgerError, usage_request_count
-from .services import canonical_hash, new_id, settle_credits, transition_job
+from .services import (
+    canonical_hash,
+    missing_main_page_message,
+    new_id,
+    requires_main_page_sequence,
+    settle_credits,
+    transition_job,
+)
 from .skill_runtime import build_fake_skill_runtime_provider
 from .storage import ImageStorage, ValidatedImage
 
@@ -1662,6 +1669,7 @@ class ExecutionCoordinator:
                 | (JobItemRecord.next_attempt_at.is_(None))
                 | (JobItemRecord.next_attempt_at <= utc_now()),
             )
+            plan = None
             calibrated_parallel = False
             if job.type == JobType.DOMESTIC_MAIN_IMAGE.value:
                 plan = session.scalar(
@@ -1688,27 +1696,39 @@ class ExecutionCoordinator:
                 item_query = item_query.where(
                     JobItemRecord.ordinal == int(succeeded_pages or 0)
                 )
-            elif (
-                job.type == JobType.DOMESTIC_MAIN_IMAGE.value
-                and not self._job_uses_parallel_aurora(session, job.id)
-                and not self._fast_main_image_record(job)
-            ):
-                # Aurora owns a strict page-by-page protocol. Outbox delivery is
-                # at-least-once, so a duplicate process_job invocation may enter
-                # while the preceding page is still running. Keep the configured
-                # site concurrency unchanged and make only the next contiguous
-                # page claimable at the database boundary.
-                succeeded_pages = session.scalar(
-                    select(func.count())
-                    .select_from(JobItemRecord)
-                    .where(
+            elif requires_main_page_sequence(job, plan):
+                # Reused later pages do not advance the contiguous prefix.
+                first = session.scalar(select(JobItemRecord).where(
+                    JobItemRecord.job_id == job.id,
+                    JobItemRecord.status.not_in(SUCCESS_ITEM_STATUSES),
+                ).order_by(JobItemRecord.ordinal).limit(1))
+                if first is None:
+                    return None
+                if (
+                    job.retry_of_job_id and not active
+                    and first.status in TERMINAL_ITEM_STATUSES
+                ):
+                    # Older selected retries could skip an unfinished prerequisite.
+                    # Close downstream pages that never had a provider attempt.
+                    waiting = session.scalars(select(JobItemRecord).where(
                         JobItemRecord.job_id == job.id,
-                        JobItemRecord.status.in_(SUCCESS_ITEM_STATUSES),
-                    )
-                )
-                item_query = item_query.where(
-                    JobItemRecord.ordinal == int(succeeded_pages or 0)
-                )
+                        JobItemRecord.ordinal > first.ordinal,
+                        JobItemRecord.status.in_(("pending", "queued")),
+                        JobItemRecord.attempt_count == 0,
+                    ).with_for_update()).all()
+                    if waiting:
+                        job.error_code = "AURORA_RETRY_PREREQUISITE_MISSING"
+                        job.error_message = missing_main_page_message(first.ordinal)
+                        for row in waiting:
+                            row.status = JobItemStatus.SKIPPED.value
+                            row.stage = "blocked_by_previous_page"
+                            row.error_code = job.error_code
+                            row.error_message = job.error_message
+                            row.finished_at = utc_now()
+                            row.state_version += 1
+                        session.commit()
+                    return None
+                item_query = item_query.where(JobItemRecord.id == first.id)
             elif self._is_domestic_detail_job_record(job):
                 # Aurora detail pages are rendered as one pair canvas followed
                 # by its deterministic second slice.  Enforce this dependency
@@ -1868,21 +1888,6 @@ class ExecutionCoordinator:
                 session.rollback()
                 return None
             return self._lease_from_records(job, item, lease)
-
-    @staticmethod
-    def _job_uses_parallel_aurora(session: Session, job_id: str) -> bool:
-        plan = session.scalar(
-            select(JobPlanRecord)
-            .where(JobPlanRecord.job_id == job_id)
-            .order_by(JobPlanRecord.revision.desc())
-            .limit(1)
-        )
-        if plan is None or not isinstance(plan.payload, Mapping):
-            return False
-        policy = plan.payload.get("execution_policy")
-        return isinstance(policy, Mapping) and is_parallel_aurora_mode(
-            policy.get("execution_mode")
-        )
 
     @staticmethod
     def _is_domestic_detail_job_record(job: JobRecord) -> bool:
