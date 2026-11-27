@@ -280,6 +280,10 @@ def test_v20_visual_judgment_normalizes_fractional_scores_and_routes_baseline_to
     assert [
         item["check"] for item in normalized["all_material_deficiencies"]
     ] == ["baseline_performance_match"]
+    correction = normalized["all_material_deficiencies"][0]["required_change"]
+    assert "四个可辨认的文字角色" in correction
+    assert "已核实的商品事实" in correction
+    assert "提高主标题" not in correction
 
 
 def test_v20_visual_judgment_routes_overlong_search_headline_to_repair() -> None:
@@ -336,6 +340,12 @@ def test_v20_visual_judgment_routes_overlong_search_headline_to_repair() -> None
         check = next(item for item in normalized["checks"] if item["name"] == name)
         assert check["passed"] is False
         assert check["score"] == 69
+    thumbnail = next(
+        item for item in normalized["all_material_deficiencies"]
+        if item["check"] == "thumbnail_success"
+    )
+    assert "20 个有效字符" in thumbnail["visible_problem"]
+    assert "12 个有效字符以内" in thumbnail["required_change"]
 
 
 @pytest.mark.parametrize("bad_observations", ["像素观察文本", [], None])
