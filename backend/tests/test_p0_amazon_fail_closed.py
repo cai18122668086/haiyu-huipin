@@ -356,6 +356,24 @@ def test_amazon_validator_allows_safe_copy_when_other_information_is_unknown() -
     assert structured["plan"]["screens"][1]["headline"] == ("See the visible structure")
 
 
+def test_crossborder_numbered_rhythm_preserves_page_order_and_rejects_gaps() -> None:
+    request = _planner_request(page_count=8, planning_profile="crossborder_detail")
+    payload = _fake_plan(request)
+    lock = payload["plan"]["design_strength_lock"]
+    authored = lock["rhythm_map"]
+    beats = {f"{n:02d}": authored[n - 1] for n in reversed(range(1, 9))}
+    lock["rhythm_map"] = beats
+    result = validate_planner_payload(
+        payload, 8, preserve_protocol_fields=True, require_cross_page_locks=True,
+    )
+    assert result["plan"]["design_strength_lock"]["rhythm_map"] == authored
+    beats["09"] = beats.pop("04")
+    with pytest.raises(XingheAgentError, match="rhythm map"):
+        validate_planner_payload(
+            payload, 8, preserve_protocol_fields=True, require_cross_page_locks=True,
+        )
+
+
 def test_crossborder_validator_rejects_excessive_composition_reuse() -> None:
     request = _planner_request(
         page_count=8,

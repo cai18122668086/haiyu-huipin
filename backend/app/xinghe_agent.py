@@ -1104,6 +1104,16 @@ def validate_planner_payload(
             json_pointer=_json_pointer("plan", "screens"),
         )
     rhythm_map = design_lock.get("rhythm_map")
+    if require_cross_page_locks and isinstance(rhythm_map, dict):
+        for keys in (
+            [str(i) for i in range(1, page_count + 1)],
+            [f"{i:02d}" for i in range(1, page_count + 1)],
+        ):
+            if set(rhythm_map) == set(keys):
+                rhythm_map = [rhythm_map[key] for key in keys]
+                design_lock = {**design_lock, "rhythm_map": rhythm_map}
+                plan = {**plan, "design_strength_lock": design_lock}
+                break
     if (
         require_cross_page_locks
         and isinstance(rhythm_map, list)
