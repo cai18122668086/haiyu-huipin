@@ -261,7 +261,7 @@ def _small_native_reference(
                 original.format != "PNG"
                 or original.mode != "RGB"
                 or original.info
-                or original.is_animated
+                or getattr(original, "is_animated", False)
                 or original.width * original.height > 8_000_000
             ):
                 return part
