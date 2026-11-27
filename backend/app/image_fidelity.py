@@ -57,6 +57,7 @@ PREPARE = "image_fidelity_prepare"
 REVIEW = "image_fidelity_review"
 READBACK = "image_fidelity_readback"
 MATTE = "image_fidelity_matte"
+MATTE_REVIEW_GROUP_BYTES = 16 * 1024 * 1024
 BACKGROUND = "image_fidelity_background"
 CHECKS = (
     "subject_selection",
@@ -1369,6 +1370,9 @@ class FidelityGateway:
         preparation: dict[str, Any],
         plans: list[Any],
         inherited_layers: tuple[Any, ...] | None = None,
+        *,
+        extracted_layer: Any = None,
+        review_suffix: str = "",
     ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
         from . import source_pixels
         from .xinghe_agent import SourceImage
@@ -1381,6 +1385,9 @@ class FidelityGateway:
                 "model": source_pixels.MODEL_SHA256,
                 "sources": [(s.asset_id, s.sha256) for s in authorities],
                 "preparation": preparation,
+                "extracted_layer": (
+                    extracted_layer.artifact.sha256 if extracted_layer else None
+                ),
                 "inherited_layers": (
                     [layer.artifact.sha256 for layer in inherited_layers]
                     if inherited_layers is not None else None
@@ -1411,10 +1418,13 @@ class FidelityGateway:
                     self._mattes[key] = SUBJECT_UNCLEAR
                     raise SourcePhotoUnusable(SUBJECT_UNCLEAR) from exc
 
-            layers = (
-                inherited_layers if inherited_layers is not None else await extract()
-            )
-            mask_audits = []
+            if inherited_layers is not None:
+                layers = inherited_layers
+            elif extracted_layer is not None:
+                layers = (extracted_layer,)
+            else:
+                layers = await extract()
+            mask_audits: list[dict[str, Any]] = []
             for mask_review in range(2):
                 previews = []
                 for index, layer in enumerate(layers):
@@ -1450,19 +1460,40 @@ class FidelityGateway:
                             source_role="matte_original_candidate_pair",
                         )
                     )
+                regions = preparation["selected_regions"]
+                selected_ids = {region["asset_id"] for region in regions}
+                originals = tuple(s for s in authorities if s.asset_id in selected_ids)
+                review_sources = originals + tuple(previews)
+                # Base64 expands a combined phone-photo review by another third.
+                # Split its evidence by layer, preserving full-resolution pixels.
+                review_bytes = sum(len(s.payload) for s in review_sources)
+                if len(layers) > 1 and review_bytes > MATTE_REVIEW_GROUP_BYTES:
+                    reviewed = []
+                    for index, (layer, region) in enumerate(
+                        zip(layers, regions, strict=True)
+                    ):
+                        try:
+                            (result,), audit = await self._approved_source_layers(
+                                request, original_sources, authorities,
+                                {**preparation, "selected_regions": [region]}, plans,
+                                (layer,) if inherited_layers is not None else None,
+                                extracted_layer=layer,
+                                review_suffix=f"{review_suffix}:layer-{index}",
+                            )
+                        except SourcePhotoUnusable as exc:
+                            self._mattes[key] = exc.code
+                            raise
+                        reviewed.append(replace(result, artifact=replace(
+                            result.artifact, filename=layer.artifact.filename
+                        )))
+                        mask_audits.extend(
+                            {**entry, "layer_index": index} for entry in audit
+                        )
+                    layers = tuple(reviewed)
+                    break
                 schema = response_schema(MATTE)
                 matte = await self._review_matte_contract(
-                    request,
-                    tuple(
-                        source
-                        for source in authorities
-                        if source.asset_id
-                        in {
-                            region["asset_id"]
-                            for region in preparation["selected_regions"]
-                        }
-                    )
-                    + tuple(previews),
+                    request, review_sources,
                     {
                         "schema": schema,
                         "correction_contract": {
@@ -1509,7 +1540,7 @@ class FidelityGateway:
                             "If clean, repairs=[] and edge_feather_px=0."
                         ),
                     },
-                    plans, suffix=f":mask-{mask_review}",
+                    plans, suffix=f"{review_suffix}:mask-{mask_review}",
                 )
                 accepted = (
                     not matte.payload["unresolved"]
