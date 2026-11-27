@@ -61,3 +61,11 @@ test("partial results with a held provider task direct users to reconciliation",
   assert.doesNotMatch(jobNote({ status: "partial", allowed_actions: [] }), /重试/);
   assert.match(jobNote({ status: "partial", allowed_actions: ["retry"] }), /重试失败项目/);
 });
+
+test("a reference download timeout keeps its specific recovery message on partial jobs", () => {
+  const item = { status: "failed", error_code: "PROVIDER_OUTCOME_UNKNOWN",
+    error_details: { provider_error: { code: "image_reference_fetch_timeout", message: "private supplier trace" } } };
+  const note = jobNote({ status: "partial", items: [item] });
+  assert.match(note, /部分结果已完成.*下载参考图超时.*核查原任务/);
+  assert.doesNotMatch(note, /private supplier trace|稍后重试/);
+});
