@@ -7,6 +7,7 @@ import json
 import logging
 import re
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -830,28 +831,44 @@ class AuroraMainImageProvider:
                 layout_contract.get("evidence_topology") or ""
             ),
         }
-        result = await self.gateway.plan(
-            PlannerRequest(
-                workspace_id=request.workspace_id,
-                job_id=request.job_id,
-                group_key=f"{request.job_id}:v20-audit:{page_index}",
-                sources=tuple(sources),
-                page_count=page_index + 1,
-                language="zh-CN",
-                product_name="Aurora v2.0 direct-pixel audit",
-                product_information=(
-                    json.dumps(audit_contract, ensure_ascii=False),
-                ),
-                platform_code="TAOBAO_AURORA_V20_PIXEL_AUDIT",
-                size="1024x1024",
-                idempotency_key=(
-                    f"{request.idempotency_key}:v20-audit:{page_index}:"
-                    f"{generation_request.get('revision', 0)}{audit_suffix}"
-                ),
-                system_prompt=_AUDIT_SYSTEM_PROMPT,
-                planning_profile="aurora_v20_visual_audit",
-            )
+        review = PlannerRequest(
+            workspace_id=request.workspace_id,
+            job_id=request.job_id,
+            group_key=f"{request.job_id}:v20-audit:{page_index}",
+            sources=tuple(sources),
+            page_count=page_index + 1,
+            language="zh-CN",
+            product_name="Aurora v2.0 direct-pixel audit",
+            product_information=(
+                json.dumps(audit_contract, ensure_ascii=False),
+            ),
+            platform_code="TAOBAO_AURORA_V20_PIXEL_AUDIT",
+            size="1024x1024",
+            idempotency_key=(
+                f"{request.idempotency_key}:v20-audit:{page_index}:"
+                f"{generation_request.get('revision', 0)}{audit_suffix}"
+            ),
+            system_prompt=_AUDIT_SYSTEM_PROMPT,
+            planning_profile="aurora_v20_visual_audit",
         )
+        result = await self.gateway.plan(review)
+        first_usage = None
+        first_cost = 0
+        if not result.error_code and _contradictory_dominance_review(result.payload):
+            first_usage = dict(result.normalized_usage)
+            first_cost = int(result.actual_cost_micros or 0)
+            feedback = {
+                "correction": "Inspect the same candidate again. Your previous review "
+                "marked evidence_is_primary_visual false and "
+                "selling_point_visual_dominance "
+                "passed. Reassess both against the pixels. Return the full judgment. "
+                "Record genuine deficiencies. Do not invent prices or offers.",
+            }
+            result = await self.gateway.plan(replace(
+                review,
+                product_information=(*review.product_information, json.dumps(feedback)),
+                idempotency_key=review.idempotency_key + ":dominance-review",
+            ))
         if result.error_code or not isinstance(result.payload, Mapping):
             raise _v20_gateway_error(
                 result,
@@ -868,6 +885,10 @@ class AuroraMainImageProvider:
             # bounded response-shape diagnostics for the next investigation.
             exc.aurora_gateway_diagnostics = _safe_planner_diagnostics(result)
             raise
+        if _contradictory_dominance_review(judgment):
+            raise AuroraPlanningError(
+                "Visual review still contradicts its primary evidence observation"
+            )
         judgment["page_index"] = page_index
         judgment["image_sha256"] = artifact.sha256
         reviewer = _mapping(judgment.get("reviewer"))
@@ -879,11 +900,10 @@ class AuroraMainImageProvider:
             }
         )
         judgment["reviewer"] = reviewer
-        return (
-            judgment,
-            dict(result.normalized_usage),
-            int(result.actual_cost_micros or 0),
-        )
+        usage = dict(result.normalized_usage)
+        if first_usage is not None:
+            usage["prior_dominance_review_usage"] = first_usage
+        return judgment, usage, first_cost + int(result.actual_cost_micros or 0)
 
     async def _calibrate_parallel_style(
         self,
@@ -2157,6 +2177,20 @@ def _bounded_visual_audit_sources(
 
     identity_limit = _MAX_VISUAL_AUDIT_IMAGES - 1
     return (*tuple(identity_sources[:identity_limit]), candidate)
+
+
+def _contradictory_dominance_review(payload: object) -> bool:
+    if not isinstance(payload, Mapping):
+        return False
+    observations, checks = payload.get("observations"), payload.get("checks")
+    return (
+        isinstance(observations, Mapping)
+        and observations.get("evidence_is_primary_visual") is False
+        and isinstance(checks, list)
+        and any(isinstance(check, Mapping)
+                and check.get("name") == "selling_point_visual_dominance"
+                and check.get("passed") is True for check in checks)
+    )
 
 
 def _merge_identity_coverage_judgment(
