@@ -158,14 +158,24 @@ export function jobSourceUploadMessage(job?: Job | JobDetail): string | undefine
 export function safeJobFailureSummary(errorCode?: string | null, errorDetails?: unknown): string {
   const upload = sourceUploadMessage(errorCode);
   if (upload) return upload;
-  if (errorCode === "IMAGE_FIDELITY_PREPARATION_FAILED") return "生图前检查未能完成，本次未开始生成。请稍后重试。";
+  const details = errorDetails && typeof errorDetails === "object" ? errorDetails as Record<string, unknown> : {};
+  if (errorCode === "IMAGE_FIDELITY_PREPARATION_FAILED") {
+    const check = details.image_fidelity;
+    if (
+      check && typeof check === "object" &&
+      "preparation_stage" in check && check.preparation_stage === "source_selection" &&
+      "planner_http_status" in check && check.planner_http_status === 400
+    ) {
+      return "商品识别服务拒绝了本次检查请求，尚未开始生图。请联系客服并提供任务编号。";
+    }
+    return "生图前检查未能完成，本次未开始生成。请稍后重试。";
+  }
   if (errorCode === "IMAGE_ASYNC_TASK_FAILED") {
     return "生成服务报告原任务异常，本站尚未取得图片。原任务编号和素材已保留，请先核查原任务，避免重复生成。";
   }
   if (errorCode === "PROVIDER_OUTCOME_UNKNOWN" || errorCode === "IMAGE_TASK_QUERY_UNCONFIRMED" || errorCode === "IMAGE_RESULT_DOWNLOAD_UNCONFIRMED") {
     return "生成请求的结果尚未确认，系统已停止自动重试。请把本站任务编号发给客服核查原任务，避免重复生成。";
   }
-  const details = errorDetails && typeof errorDetails === "object" ? errorDetails as Record<string, unknown> : {};
   const providerError = details.provider_error && typeof details.provider_error === "object" ? details.provider_error as Record<string, unknown> : {};
   if (errorCode === "IMAGE_CONTENT_REJECTED" || ["content_policy_violation", "content_policy_rejected", "safety_violation", "moderation_blocked"].includes(String(providerError.code))) {
     return "生成服务因内容限制拒绝了本次请求，未返回图片。原素材和要求已保留。";

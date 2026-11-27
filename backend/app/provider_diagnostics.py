@@ -59,6 +59,17 @@ def public_failure_message(
 ) -> str | None:
     if code in SOURCE_UPLOAD_MESSAGES:
         return SOURCE_UPLOAD_MESSAGES[code]
+    if code == PREPARATION_FAILED and isinstance(details, Mapping):
+        fidelity = details.get("image_fidelity")
+        if (
+            isinstance(fidelity, Mapping)
+            and fidelity.get("preparation_stage") == "source_selection"
+            and fidelity.get("planner_http_status") == 400
+        ):
+            return (
+                "商品识别服务拒绝了本次检查请求，尚未开始生图。"
+                "请联系客服并提供任务编号。"
+            )
     # Read historical generic adapter errors without rewriting task history.
     if code == "IMAGE_REQUEST_FAILED" and isinstance(details, Mapping):
         error = details.get("provider_error")
@@ -251,6 +262,10 @@ def retained_metrics(raw_usage: object) -> dict[str, Any]:
                 and len(value) <= 255
             )
             or (key == "print_verification" and value == "original_rgb_exact")
+            or (
+                key == "planner_http_status" and type(value) is int
+                and 100 <= value <= 599
+            )
             or (
                 key == "preparation_stage"
                 and isinstance(value, str)

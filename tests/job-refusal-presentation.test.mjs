@@ -23,6 +23,15 @@ test("content refusal has an actionable safe summary for new and historical jobs
   assert.doesNotMatch(summary, /sk-private|provider/);
 });
 
+test("a rejected source inspection directs the user to support with the job id", () => {
+  const code = "IMAGE_FIDELITY_PREPARATION_FAILED";
+  const details = { image_fidelity: { preparation_stage: "source_selection", planner_http_status: 400 } };
+  const note = jobNote({ status: "failed", items: [{ status: "failed", error_code: code, error_details: details }] });
+  assert.match(note, /联系客服并提供任务编号/);
+  assert.doesNotMatch(note, /稍后重试|重新上传/);
+  assert.match(safeJobFailureSummary(code), /稍后重试/);
+});
+
 test("technical rejection and unknown outcome keep their distinct recovery messages", () => {
   assert.match(safeJobFailureSummary("IMAGE_REQUEST_FAILED", { provider_error: { code: "invalid_image" } }), /暂时不可用/);
   assert.match(safeJobFailureSummary("PROVIDER_OUTCOME_UNKNOWN"), /结果尚未确认/);

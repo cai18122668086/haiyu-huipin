@@ -19,6 +19,7 @@ from collections import Counter
 from copy import deepcopy
 from dataclasses import replace
 from io import BytesIO
+from itertools import accumulate
 from typing import Any
 
 from jsonschema import Draft202012Validator, ValidationError
@@ -601,7 +602,30 @@ def readback_matches(payload: object, preparation: dict[str, Any]) -> bool:
         canonical(text) for text in required_runs if text.upper() != "UNREADABLE"
     )
     actual = Counter(canonical(text) for text in payload["text_runs"])
-    return all(actual[text] >= count for text, count in expected.items())
+    if all(actual[text] >= count for text, count in expected.items()):
+        return True
+
+    # Two readers can return a multi-word printed line as one run or several.
+    # Require the entire ledger in order, with an actual run boundary between
+    # products. Never split words, pool substrings or discard duplicate marks.
+    def words(runs: list[str]) -> list[str]:
+        return unicodedata.normalize("NFC", " ".join(runs)).split()
+
+    regions = [
+        words(region["visible_print"])
+        for region in preparation.get("selected_regions", [])
+    ]
+    source_words = [word for region_words in regions for word in region_words]
+    if not source_words or "UNREADABLE" in source_words:
+        return False
+    if source_words != words(required_runs):
+        return False
+    observed = payload["text_runs"]
+    if words(observed) != source_words:
+        return False
+    region_ends = accumulate(len(group) for group in regions if group)
+    run_ends = set(accumulate(len(words([run])) for run in observed))
+    return all(end in run_ends for end in region_ends)
 
 
 def verify_source_print(result: Any, preparation: dict[str, Any]) -> bool:
@@ -1240,6 +1264,35 @@ class FidelityGateway:
         assert isinstance(preparation, dict)
         return preparation
 
+    async def _review_matte_contract(
+        self, request: Any, sources: tuple[Any, ...], context: dict[str, Any],
+        plans: list[Any], suffix: str,
+    ) -> Any:
+        validator = Draft202012Validator(context["schema"])
+        for attempt in range(2):
+            matte = await self._plan(request, MATTE, sources, context, suffix=suffix)
+            plans.append(matte)
+            if matte.error_code:
+                raise ValueError("Source matte review unavailable")
+            try:
+                validator.validate(matte.payload)
+                return matte
+            except ValidationError as exc:
+                if attempt:
+                    exc.fidelity_profile = MATTE
+                    raise
+                context = {**context, "contract_feedback": {
+                    "diagnostic": contract_diagnostic(exc),
+                    "previous_payload": matte.payload,
+                    "instruction": (
+                        "Inspect the same pixels and return the full schema. "
+                        "Spell every required field exactly, including unresolved. "
+                        "Preserve reported defects, even when proposing a correction."
+                    ),
+                }}
+                suffix += ":contract-1"
+        raise AssertionError("Unreachable matte review state")
+
     async def _approved_source_layers(
         self,
         request: Any,
@@ -1330,9 +1383,8 @@ class FidelityGateway:
                         )
                     )
                 schema = response_schema(MATTE)
-                matte = await self._plan(
+                matte = await self._review_matte_contract(
                     request,
-                    MATTE,
                     tuple(
                         source
                         for source in authorities
@@ -1389,16 +1441,8 @@ class FidelityGateway:
                             "If clean, repairs=[] and edge_feather_px=0."
                         ),
                     },
-                    suffix=f":mask-{mask_review}",
+                    plans, suffix=f":mask-{mask_review}",
                 )
-                plans.append(matte)
-                if matte.error_code:
-                    raise ValueError("Source matte review unavailable")
-                try:
-                    Draft202012Validator(schema).validate(matte.payload)
-                except ValidationError as exc:
-                    exc.fidelity_profile = MATTE
-                    raise
                 accepted = (
                     not matte.payload["unresolved"]
                     and all(
@@ -2565,11 +2609,12 @@ class FidelityGateway:
                 )
             logger.warning(
                 "image_fidelity_preparation_failed "
-                "job_id=%s item_id=%s stage=%s reason=%s",
+                "job_id=%s item_id=%s stage=%s reason=%s planner_http_status=%s",
                 request.job_id,
                 request.job_item_id,
                 preparation_stage,
                 type(exc).__name__,
+                plans[-1].http_status if plans and plans[-1].error_code else None,
             )
             return self._account(
                 ImageCallResult(
@@ -3636,6 +3681,8 @@ class FidelityGateway:
         }
         if preparation_stage is not None:
             fidelity_metrics["preparation_stage"] = preparation_stage
+            if plans and plans[-1].error_code and plans[-1].http_status is not None:
+                fidelity_metrics["planner_http_status"] = plans[-1].http_status
         raw["metrics"] = {
             **raw.get("metrics", {}),
             "image_fidelity": fidelity_metrics,

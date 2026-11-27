@@ -2707,23 +2707,19 @@ class TengliOpenAICompatibleGateway:
                             "response_format": {"type": "json_object"},
                             "max_completion_tokens": 8192,
                         })
-                        precise_print_geometry = (
-                            request.planning_profile == "image_fidelity_prepare"
-                            and bool(request.product_information)
-                            and json.loads(request.product_information[0]).get(
-                                "literal_print_geometry_required"
-                            ) is True
-                        )
-                        if precise_print_geometry or request.planning_profile in {
+                        if request.planning_profile == "image_fidelity_prepare" and request.product_information:
+                            context = json.loads(request.product_information[0])
+                            feedback = context.get("contract_feedback") or {}
+                            if (
+                                context.get("literal_print_geometry_required") is True
+                                or feedback.get("diagnostic", {}).get("reason") == "known_output_truncation"
+                            ):
+                                route_payload["max_completion_tokens"] = 16384
+                        if request.planning_profile in {
                             "image_fidelity_color_mask", "image_fidelity_readback",
                             "aurora_remix_fast_review",
                         }:
                             route_payload["max_completion_tokens"] = 16384
-                        if request.planning_profile in {
-                            "image_fidelity_prepare",
-                            "image_fidelity_matte", "image_fidelity_source_window", "image_fidelity_background",
-                        } and not precise_print_geometry:
-                            route_payload["thinking"] = {"type": "disabled"}
                     elif route_payload["model"].casefold().startswith("doubao"):
                         route_payload.update({
                             "response_format": {"type": "json_object"},
@@ -2738,6 +2734,15 @@ class TengliOpenAICompatibleGateway:
                     planner_key += ":literal-ocr:" + hashlib.sha256(
                         route_payload["model"].encode()
                     ).hexdigest()[:12]
+                    if (
+                        request.planning_profile in {
+                            "image_fidelity_prepare", "image_fidelity_matte",
+                            "image_fidelity_source_window", "image_fidelity_background",
+                        }
+                        and route_payload["model"].casefold().startswith("kimi")
+                    ):
+                        # Avoid replaying a rejected thinking-disabled request.
+                        planner_key += ":fidelity-default-thinking-v2"
                 if request.planning_profile == "aurora_remix_fast_review":
                     # The complete review schema and reasoning allowance changed.
                     # Never replay a provider-cached truncated response under

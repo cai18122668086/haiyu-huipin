@@ -85,6 +85,26 @@ def test_independent_literal_readback_rejects_wrong_or_unknown_print(transcripti
     assert readback_matches({"text_runs": ["モ\nモ\nン\nガ"]}, preparation()) is True
 
 
+@pytest.mark.parametrize(
+    "runs,accepted",
+    [
+        (["12+", "ROSE & LILY", "12+", "MINT & SAGE"], True),
+        (["12+", "ROSE LILY", "12+", "MINT & SAGE"], False),
+        (["12+", "ROSE & LILV", "12+", "MINT & SAGE"], False),
+        (["12+", "ROSE & LILY", "MINT & SAGE"], False),
+        (["12+", "ROSE & LILY 12+", "MINT & SAGE"], False),
+        (["12+", "ROSE & SAGE", "12+", "MINT & LILY"], False),
+    ],
+)
+def test_ocr_word_grouping_preserves_each_products_complete_print(runs, accepted):
+    groups = [["12+", "ROSE", "&", "LILY"], ["12+", "MINT", "&", "SAGE"]]
+    source = {
+        "selected_regions": [{"visible_print": group} for group in groups],
+        "literal_print_ledger": groups[0] + groups[1],
+    }
+    assert readback_matches({"text_runs": runs}, source) is accepted
+
+
 def test_character_name_cannot_replace_original_copyright():
     value = preparation()
     value["literal_print_ledger"] = ["モモンガ", "©nagano"]
@@ -488,6 +508,16 @@ def test_only_acknowledged_transient_source_planning_repeats(
         assert calls[0].sources == calls[1].sources
         assert calls[0].product_information == calls[1].product_information
         assert calls[0].idempotency_key != calls[1].idempotency_key
+    else:
+        from app.provider_diagnostics import public_failure_message, retained_metrics
+
+        details = retained_metrics(result.raw_usage)
+        assert details["image_fidelity"]["planner_http_status"] == status
+        if status == 400:
+            message = public_failure_message(
+                result.error_code, result.error_message, details
+            )
+            assert message and "商品识别服务拒绝" in message
     assert result.actual_cost_micros == 2 * len(gateway.plans) + 10 * len(gateway.edits)
 
 
@@ -1239,6 +1269,29 @@ def test_source_geometry_precedes_brief_without_freezing_or_dispatching_an_image
     assert result.outcome == ProviderOutcome.SUCCEEDED
     assert len(gateway.edits) == 1
     assert len([p for p in gateway.plans if p.planning_profile == PREPARE]) == 1
+
+
+@pytest.mark.parametrize("repeats", [False, True])
+def test_malformed_matte_has_one_schema_correction_before_dispatch(
+    monkeypatch, repeats
+):
+    monkeypatch.setattr("app.source_pixels.extract_layers", pixel_extraction)
+
+    class MalformedMatte(PixelGateway):
+        async def plan(self, call):
+            result = await super().plan(call)
+            if call.planning_profile == MATTE and (
+                repeats or not call.idempotency_key.endswith(":contract-1")
+            ):
+                result.payload["un"] = result.payload.pop("unresolved")
+            return result
+
+    gateway = MalformedMatte()
+    result = asyncio.run(PixelGuard(gateway, None, None).edit(request(gateway)))
+    audits = [p for p in gateway.plans if p.planning_profile == MATTE]
+    assert len(audits) == 2 and audits[0].sources == audits[1].sources
+    assert bool(gateway.edits) is not repeats
+    assert (result.error_code is None) is not repeats
 
 
 @pytest.mark.parametrize("accepted", [True, False])
