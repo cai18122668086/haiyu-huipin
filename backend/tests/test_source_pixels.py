@@ -505,6 +505,21 @@ def test_ambiguous_source_matte_changes_context_without_relaxing_fragment_guard(
     assert result.size == (100, 100)
     seen.clear()
 
+    def ambiguous_refinement(crop, *args):
+        seen.append(crop.size)
+        if len(seen) == 2:
+            raise source_pixels.MatteFragmentError("fragmented recentered crop")
+        mask = Image.new("L", crop.size)
+        ImageDraw.Draw(mask).rectangle((20, 20, 70, 70), fill=255)
+        return mask
+
+    monkeypatch.setattr(source_pixels, "_segment", ambiguous_refinement)
+    recovered = source_pixels._alpha(
+        Image.new("RGB", (100, 100)), tmp_path, (15, 15, 75, 75)
+    )
+    assert len(seen) == 2 and recovered.getbbox() == (20, 20, 71, 71)
+    seen.clear()
+
     def always_ambiguous(*args):
         seen.append(1)
         raise source_pixels.MatteFragmentError("ambiguous foreground")

@@ -188,10 +188,16 @@ def _alpha(
             min(crop.width, right + pad),
             min(crop.height, bottom + pad),
         )
-        refined = _segment(crop.crop(box), cv, np, _net)
-        second = Image.new("L", crop.size)
-        second.paste(refined, (box[0], box[1]))
-        coarse = ImageChops.lighter(first, second)
+        try:
+            refined = _segment(crop.crop(box), cv, np, _net)
+        except MatteFragmentError:
+            # The full-context mask already passed the connected-object check.
+            # A fragmented refinement contributes no pixels to the final matte.
+            coarse = first
+        else:
+            second = Image.new("L", crop.size)
+            second.paste(refined, (box[0], box[1]))
+            coarse = ImageChops.lighter(first, second)
         refined = _recover_fine_edges(crop, coarse, cv, np)
         return _single_product(refined, cv, np)
 
