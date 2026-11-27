@@ -22,6 +22,7 @@ from app.domain import (
     PlanValidationStatus,
     UsageCompleteness,
 )
+from app.errors import ApiError
 from app.execution import ExecutionCoordinator
 from app.models import (
     AmazonSuiteReviewAttemptRecord,
@@ -36,6 +37,7 @@ from app.models import (
 )
 from app.outbox import publish_pending_events
 from app.provider import FakeProvider, ProviderOutcome, ProviderResult
+from app.services import validate_main_page_retry
 
 WORKSPACE_ID = "ws_test"
 
@@ -917,6 +919,60 @@ def _expand_job_to_three_items(client: TestClient, job_id: str) -> None:
                 )
             )
         session.commit()
+
+
+def test_sequential_main_retry_with_missing_predecessor(client: TestClient) -> None:
+    parent_id = _create_job(client)
+    job_id = _create_job(client)
+    _expand_job_to_three_items(client, job_id)
+    with client.app.state.session_factory() as session:
+        job = session.get(JobRecord, job_id)
+        assert job is not None
+        job.type = JobType.DOMESTIC_MAIN_IMAGE.value
+        job.status = JobStatus.PROCESSING.value
+        job.retry_of_job_id = parent_id
+        pages = session.scalars(select(JobItemRecord).where(
+            JobItemRecord.job_id == job_id
+        ).order_by(JobItemRecord.ordinal)).all()
+        pages[0].status = JobItemStatus.REUSED.value
+        pages[1].status = JobItemStatus.SKIPPED.value
+        session.commit()
+        with pytest.raises(ApiError) as blocked:
+            validate_main_page_retry(session, job, [pages[2].id])
+        assert blocked.value.code == "AURORA_RETRY_PREREQUISITE_MISSING"
+        assert blocked.value.details == {"page": 2}
+        validate_main_page_retry(session, job, [pages[1].id, pages[2].id])
+
+    coordinator = _coordinator(client, FakeProvider(), "sequential-retry")
+    for _ in range(2):
+        assert coordinator.claim_next_item(job_id) is None
+        assert coordinator.finalize_job(job_id) == JobStatus.PARTIAL
+    assert _counts(client, job_id) == (0, 0)
+    with client.app.state.session_factory() as session:
+        job = session.get(JobRecord, job_id)
+        assert job is not None and job.error_code == "AURORA_RETRY_PREREQUISITE_MISSING"
+
+
+def test_sequential_main_claims_gap_before_later_reused_page(
+    client: TestClient,
+) -> None:
+    job_id = _create_job(client)
+    _expand_job_to_three_items(client, job_id)
+    with client.app.state.session_factory() as session:
+        job = session.get(JobRecord, job_id)
+        assert job is not None
+        job.type = JobType.DOMESTIC_MAIN_IMAGE.value
+        job.status = JobStatus.PROCESSING.value
+        pages = session.scalars(select(JobItemRecord).where(
+            JobItemRecord.job_id == job_id
+        ).order_by(JobItemRecord.ordinal)).all()
+        pages[0].status = pages[2].status = JobItemStatus.REUSED.value
+        missing_id = pages[1].id
+        session.commit()
+    coordinator = _coordinator(client, FakeProvider(), "sequential-prefix")
+    lease = coordinator.claim_next_item(job_id)
+    assert lease is not None and lease.item_id == missing_id
+    assert coordinator.claim_next_item(job_id) is None
 
 
 def _counts(client: TestClient, job_id: str) -> tuple[int, int]:

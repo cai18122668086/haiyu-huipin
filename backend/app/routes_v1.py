@@ -169,6 +169,7 @@ from .services import (
     retry_item_ids,
     settle_credits,
     transition_job,
+    validate_main_page_retry,
 )
 from .services import (
     reserve_image_credits as reserve_credits,
@@ -2314,6 +2315,7 @@ async def retry_job(
             "JOB_NOT_RETRYABLE",
             "当前重试范围内没有可重试条目。",
         )
+    validate_main_page_retry(session, source, selected)
     _validate_domestic_detail_retry(session, source, selected)
     retried = _copy_job_for_retry(session, source, payload.scope, selected)
     if free_replica_restart:

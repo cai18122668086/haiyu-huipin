@@ -12,7 +12,7 @@ from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, object_session
 
-from .aurora_execution_modes import is_v20_aurora_mode
+from .aurora_execution_modes import is_parallel_aurora_mode, is_v20_aurora_mode
 from .domain import (
     TERMINAL_JOB_STATUSES,
     AssetLifecycleStatus,
@@ -1234,6 +1234,66 @@ def decode_cursor(cursor: str, scope: str) -> tuple[str, str]:
             "INVALID_CURSOR",
             "分页游标无效或与当前筛选条件不匹配。",
         ) from exc
+
+
+def requires_main_page_sequence(job: JobRecord, plan: JobPlanRecord | None) -> bool:
+    if job.type != JobType.DOMESTIC_MAIN_IMAGE.value:
+        return False
+    from .aurora_main_image_fast import selected as fast_main_selected
+
+    if fast_main_selected(job.configuration):
+        return False
+    policy = (
+        plan.payload.get("execution_policy")
+        if plan is not None and isinstance(plan.payload, Mapping) else None
+    )
+    return not (
+        isinstance(policy, Mapping)
+        and is_parallel_aurora_mode(policy.get("execution_mode"))
+    )
+
+
+def missing_main_page_message(ordinal: int) -> str:
+    return (
+        "标准主图须按顺序生成。"
+        f"请先在原任务中核对第 {ordinal + 1} 页的结果，再继续后续页面。"
+    )
+
+
+def validate_main_page_retry(
+    session: Session, source: JobRecord, selected: list[str],
+) -> None:
+    if not selected or source.type != JobType.DOMESTIC_MAIN_IMAGE.value:
+        return
+    plan = session.scalar(
+        select(JobPlanRecord).where(JobPlanRecord.job_id == source.id)
+        .order_by(JobPlanRecord.revision.desc()).limit(1)
+    )
+    if not requires_main_page_sequence(source, plan):
+        return
+    pages = session.scalars(
+        select(JobItemRecord).where(JobItemRecord.job_id == source.id)
+        .order_by(JobItemRecord.ordinal)
+    ).all()
+    selected_ids = set(selected)
+    last = max(page.ordinal for page in pages if page.id in selected_ids)
+    for page in pages:
+        if page.ordinal >= last:
+            break
+        if page.id in selected_ids or page.status in {"succeeded", "reused"}:
+            continue
+        if page.error_code == "AURORA_SET_AUDIT_FAILED" and session.scalar(
+            select(JobAssetRecord.id).where(
+                JobAssetRecord.job_id == source.id,
+                JobAssetRecord.job_item_id == page.id,
+                JobAssetRecord.is_deliverable.is_(True),
+            ).limit(1)
+        ):
+            continue
+        raise ApiError(
+            409, "AURORA_RETRY_PREREQUISITE_MISSING",
+            missing_main_page_message(page.ordinal), {"page": page.ordinal + 1},
+        )
 
 
 def retry_item_ids(
